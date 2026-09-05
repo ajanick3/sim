@@ -12,7 +12,7 @@ Make an attack cost read Energy types instead of counting cards.
 ## Answer
 
 Resolved 2026-09-05 on branch `feat/energy-types-in-a-cost`, commits `836d221`,
-`e0d4a0e`, and the retreat commit on the same branch.
+`3f16f0a`, `400712c`, and `ad18d53`.
 
 An attack cost is now one entry per Energy. A `Colorless` entry takes any
 Energy; every other entry takes its own type. The named types are matched
