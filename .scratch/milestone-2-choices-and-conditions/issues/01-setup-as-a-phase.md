@@ -1,7 +1,7 @@
 # Setup as a phase
 
 Type: task
-Status: ready-for-agent
+Status: claimed
 
 Give setup its own phase, so the player makes the choices Milestone 1 made
 for them.
