@@ -1,6 +1,6 @@
 # Pokémon TCG Simulator — design record
 
-Status: **design settled, not started.** Written 2026-09-03.
+Status: **Milestone 1 done.** Written 2026-09-03, updated 2026-09-05.
 Resume by reading this file top to bottom; everything needed is here.
 
 ## 1. What this is
@@ -17,7 +17,7 @@ should be re-derived, not overridden, if the goal changes.
 | Topic        | Decision                                                                                                |
 | ------------ | ------------------------------------------------------------------------------------------------------- |
 | Language     | Rust                                                                                                    |
-| Repo         | `sim`, separate from `pkmn`. Local only; no GitHub remote yet                                            |
+| Repo         | `sim`, separate from `pkmn`. Remote: `github.com/ajanick3/sim`                                           |
 | Reuse        | Write our own engine. No code taken from any existing project                                           |
 | Scope        | **Deep engine, near-zero cards.** NOT the Standard pool, NOT 3000 cards                                 |
 | Milestone 1  | Two synthetic Basic Pokémon that attack until someone wins                                              |
@@ -37,38 +37,20 @@ So: deep engine, tiny synthetic card set.
 
 ### Why arena/index state
 
-A card-game state is a graph of mutable cross-referencing objects — the worst
-possible fit for the borrow checker. The reflex is `Rc<RefCell<T>>`; it will be
-miserable and teach bad habits. Use `Vec`s + typed indices. This is how games
-are written in Rust and is friendlier to a beginner. **Take this advice.**
+Recorded in [ADR 0001](docs/adr/0001-arena-and-index-state.md).
 
 ### Why the engine must not touch Turso
 
-A simulator that reaches out to a DB mid-game can't be replayed from a seed,
-can't run thousands of games, and drags `tokio` + async lifetimes into the first
-Rust code ever written — the fastest way to make Rust feel awful.
-
-Three layers instead:
-
-1. **`pkmn` (the sibling repo)** owns Turso and the crawl. Add one export script.
-2. **A JSON artifact** — the seam between the repos.
-3. **`sim`** reads that JSON at startup, then runs entirely in memory.
-
-The export script lives in **`pkmn`**, because it queries a schema that repo
-owns and holds the Turso credentials.
-
-Note: Milestone 1 needs **no card data at all** — the cards are four literals in
-a test file. Build the bridge later.
+Recorded in [ADR 0002](docs/adr/0002-pure-engine-with-a-json-seam.md). Note that
+Milestone 1 needs **no card data at all** — the cards are literals in
+`src/cards.rs`. Build the bridge later.
 
 ## 3. Still open
 
-- **Naming (unresolved).** `CONTEXT.md` already defines **Deck** as a tournament
-  fact (one player's decklist for one tournament). The sim needs two more
-  concepts. Recommendation: **Decklist** = the 60-card input to a game;
-  **Library** = the in-game draw pile. Leaves `Deck` untouched. Not confirmed.
-- **Rust is not installed.** No `cargo`, no `rustc`. Nick runs:
-  `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-- Public/private GitHub repo — deferred, local-only for now.
+- **Card data bridge.** The export script in `pkmn` and the JSON format are not
+  written. Nothing needs them until the engine outgrows literal cards.
+- The naming question is settled: **Decklist** and **Library** join the domain
+  glossary, and `Deck` keeps its tournament meaning.
 
 ## 4. Deferred, with findings already banked
 
@@ -89,13 +71,8 @@ Do not re-research these.
 - **Card identity:** key implementations by **name + behaviour version** with a
   print-id → implementation lookup, not by print id. Same class of problem as
   the existing "Canonical card" glossary entry.
-- **`legalActions(state) -> Vec<Action>`** should be the primary API. A bot is
-  `(state, legal_actions) -> chosen action`; the text UI is the same function
-  backed by a human.
-- **Mid-effect choices as ordinary game states** (each with their own
-  `legalActions`), NOT coroutines/generators. Rust makes this the natural path.
 - **Randomness:** seeded PRNG stored in state, plus an injectable scripted
-  sequence for tests. Gives reproducible replays.
+  sequence for tests. Gives reproducible replays. Built in `src/rng.rs`.
 
 ## 5. Data sources
 
@@ -295,12 +272,27 @@ Series: **Mega Evolution**, 8 sets, 2025-09-25 → 2026-07-17:
 `mee` (Mega Evolution Energy), `mep` (promos), `me01` MEG, `me02` PFL,
 `me02.5` ASC, `me03` POR, `me04` CRI, `me05` PBL (Pitch Black).
 
-## 10. Next actions on resume
+## 10. Where the code stands
 
-1. Confirm the naming question in §3.
-2. Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-3. Add `Cargo.toml` and `src/` to this repo.
-4. Build Milestone 1: two synthetic Basics that attack until someone wins —
-   setup, turn loop, damage, KO, prizes, win condition. Cards as literals.
-   Claude writes it with narrated reasoning.
-5. Nick writes the next card unaided once it compiles and a game finishes.
+Milestone 1 is built and its tests pass: setup with mulligans, the turn loop,
+the damage order, knockouts, Prizes, and the three win conditions, driven either
+by `cargo run` as a text game or by a bot through the same action list.
+
+Two synthetic Basics and one Energy live in `src/cards.rs`. The interface is
+[ADR 0003](docs/adr/0003-legal-actions-is-the-engine-interface.md).
+
+Deliberate Milestone 1 shortcuts, each waiting for its own milestone:
+
+- Setup places the first Basic as Active and the rest on the Bench instead of
+  asking, and skips the coin flip for who goes first.
+- An attack cost counts Energy; it does not match types.
+- No Special Conditions, so Pokémon Checkup has nothing to do.
+- No evolution, Trainers, Abilities, or Stadiums.
+
+## 11. Next actions on resume
+
+1. Nick writes the next card unaided — a third Basic, added to `src/cards.rs`.
+2. Give Setup its own phase, so placement and the opening coin flip become
+   ordinary legal actions.
+3. Match Energy types in an attack cost.
+4. Special Conditions and the Pokémon Checkup between turns.
