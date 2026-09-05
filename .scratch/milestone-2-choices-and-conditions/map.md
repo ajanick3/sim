@@ -14,9 +14,12 @@ starts at ticket 01.
 
 Ticket 01 resolved 2026-09-05: setup became four phases and every choice in it is the player's; details under [the ticket's Answer](issues/01-setup-as-a-phase.md).
 Ticket 02 resolved 2026-09-05: an attack cost names Energy types, and the player chooses which Energy a retreat discards; details under [the ticket's Answer](issues/02-energy-types-in-a-cost.md).
+Ticket 03 resolved 2026-09-05: the five Special Conditions and the Pokémon Checkup work, and a player orders their own between-turn effects; details under [the ticket's Answer](issues/03-special-conditions-and-checkup.md).
 
 ## Fog
 
 - Whether a Benched attacker applies Weakness and Resistance is unanswered, and
   it blocks nothing until a card can attack from the Bench.
+- Nothing removes a condition except the checkup, a retreat, and a knockout. A
+  Trainer or an Ability that heals one has nowhere to hook in yet.
 - The card data bridge has no format. Ticket 06 opens the question.
