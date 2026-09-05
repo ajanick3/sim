@@ -5,6 +5,7 @@
 //! `(state, legal_actions) -> Action`. Neither can reach a state the other
 //! cannot, and neither can cheat by acting outside the list.
 
+use crate::card::Condition;
 use crate::ids::{CardId, PlayerId, PokemonId};
 use crate::state::{BENCH_LIMIT, GameState, Phase};
 
@@ -31,6 +32,11 @@ pub enum Action {
     Retreat { to: PokemonId },
     /// Discard one attached Energy toward a Retreat Cost.
     DiscardEnergy { card: CardId },
+    /// Resolve one of your own between-turn effects.
+    ResolveCheckup {
+        pokemon: PokemonId,
+        condition: Condition,
+    },
     /// Attack with the Active. The turn ends after it.
     Attack { index: usize },
     /// End the turn without attacking.
@@ -50,6 +56,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::PlacingActive { player } => Some(player),
         Phase::PlacingBench { player } => Some(player),
         Phase::DiscardingForRetreat { player, .. } => Some(player),
+        Phase::Checkup { player } => Some(player),
         Phase::Over => None,
     }
 }
@@ -94,6 +101,17 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::FinishPlacing);
+            return actions;
+        }
+        Phase::Checkup { player: whose } => {
+            for (owner, pokemon, condition) in &state.checkup_pending {
+                if *owner == whose {
+                    actions.push(Action::ResolveCheckup {
+                        pokemon: *pokemon,
+                        condition: *condition,
+                    });
+                }
+            }
             return actions;
         }
         Phase::DiscardingForRetreat { .. } => {
@@ -193,5 +211,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DiscardEnergy { card } => {
             format!("Discard {} to retreat", state.def_of(card).name())
         }
+        Action::ResolveCheckup { pokemon, condition } => format!(
+            "Resolve {condition:?} on {}",
+            state.pokemon_def(pokemon).name
+        ),
     }
 }

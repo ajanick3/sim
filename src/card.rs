@@ -18,6 +18,16 @@ pub enum Type {
     Colorless,
 }
 
+/// A Special Condition. Only the Active can carry one (rule 49).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Condition {
+    Asleep,
+    Paralyzed,
+    Confused,
+    Burned,
+    Poisoned,
+}
+
 /// An attack as printed.
 #[derive(Debug, Clone)]
 pub struct Attack {
@@ -27,6 +37,8 @@ pub struct Attack {
     pub cost: Vec<Type>,
     /// Damage before Weakness, Resistance, and any other effect.
     pub base_damage: u32,
+    /// The Special Condition the attack puts on the defending Pokémon.
+    pub inflicts: Option<Condition>,
 }
 
 /// A Pokémon as printed. Milestone 1 carries only Basics, so there is no

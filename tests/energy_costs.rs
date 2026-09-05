@@ -174,6 +174,7 @@ fn a_free_retreat_asks_nothing() {
             name: "Drift",
             cost: vec![Type::Colorless],
             base_damage: 10,
+            inflicts: None,
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {

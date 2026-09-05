@@ -31,11 +31,13 @@ pub fn milestone1() -> Milestone1 {
                 name: "Nibble",
                 cost: vec![Type::Lightning],
                 base_damage: 10,
+                inflicts: None,
             },
             Attack {
                 name: "Spark Tackle",
                 cost: vec![Type::Lightning, Type::Colorless],
                 base_damage: 30,
+                inflicts: None,
             },
         ],
     }));
@@ -53,6 +55,7 @@ pub fn milestone1() -> Milestone1 {
             name: "Ember",
             cost: vec![Type::Fire, Type::Fire],
             base_damage: 40,
+                inflicts: None,
         }],
     }));
 
