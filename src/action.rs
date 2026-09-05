@@ -5,6 +5,7 @@
 //! `(state, legal_actions) -> Action`. Neither can reach a state the other
 //! cannot, and neither can cheat by acting outside the list.
 
+use crate::card::Condition;
 use crate::ids::{CardId, PlayerId, PokemonId};
 use crate::state::{BENCH_LIMIT, GameState, Phase};
 
@@ -31,6 +32,11 @@ pub enum Action {
     Retreat { to: PokemonId },
     /// Discard one attached Energy toward a Retreat Cost.
     DiscardEnergy { card: CardId },
+    /// Resolve one of your own between-turn effects.
+    ResolveCheckup {
+        pokemon: PokemonId,
+        condition: Condition,
+    },
     /// Attack with the Active. The turn ends after it.
     Attack { index: usize },
     /// End the turn without attacking.
@@ -50,6 +56,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::PlacingActive { player } => Some(player),
         Phase::PlacingBench { player } => Some(player),
         Phase::DiscardingForRetreat { player, .. } => Some(player),
+        Phase::Checkup { player } => Some(player),
         Phase::Over => None,
     }
 }
@@ -96,6 +103,17 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::FinishPlacing);
             return actions;
         }
+        Phase::Checkup { player: whose } => {
+            for (owner, pokemon, condition) in &state.checkup_pending {
+                if *owner == whose {
+                    actions.push(Action::ResolveCheckup {
+                        pokemon: *pokemon,
+                        condition: *condition,
+                    });
+                }
+            }
+            return actions;
+        }
         Phase::DiscardingForRetreat { .. } => {
             let active = side.active.expect("a retreat starts from an Active");
             for card in &state.pokemon(active).attached {
@@ -130,18 +148,25 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         }
     }
 
+    // Rules 50-51: Asleep and Paralyzed stop both an attack and a retreat.
+    // Confused stops neither; it flips when the attack happens.
+    let held = |active| {
+        state.has_condition(active, Condition::Asleep)
+            || state.has_condition(active, Condition::Paralyzed)
+    };
+
     // Rules 23-24: once per turn, pay the Retreat Cost in Energy, and only
     // with somewhere to retreat to.
     if let Some(active) = side.active {
         let cost = state.pokemon_def(active).retreat_cost;
-        if !side.retreated_this_turn && state.energy_attached(active) >= cost {
+        if !side.retreated_this_turn && !held(active) && state.energy_attached(active) >= cost {
             for pokemon in &side.bench {
                 actions.push(Action::Retreat { to: *pokemon });
             }
         }
 
         // Rule 17: the player going first skips their attack step.
-        if !state.is_first_turn_of_game() {
+        if !state.is_first_turn_of_game() && !held(active) {
             for (index, attack) in state.pokemon_def(active).attacks.iter().enumerate() {
                 if state.pays_cost(active, &attack.cost) {
                     actions.push(Action::Attack { index });
@@ -193,5 +218,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DiscardEnergy { card } => {
             format!("Discard {} to retreat", state.def_of(card).name())
         }
+        Action::ResolveCheckup { pokemon, condition } => format!(
+            "Resolve {condition:?} on {}",
+            state.pokemon_def(pokemon).name
+        ),
     }
 }

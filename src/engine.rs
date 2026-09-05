@@ -1,6 +1,7 @@
 //! Applying an action to the state.
 
 use crate::action::{Action, legal_actions};
+use crate::card::Condition;
 use crate::ids::{PlayerId, PokemonId};
 use crate::state::{GameState, Outcome, Phase, WinReason};
 
@@ -119,6 +120,11 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::ResolveCheckup { pokemon, condition } => {
+            resolve_checkup(state, pokemon, condition);
+            settle(state);
+        }
+
         Action::Promote { pokemon } => {
             let player = match state.phase {
                 Phase::Promoting(player) => player,
@@ -209,6 +215,8 @@ fn promote_from_retreat(state: &mut GameState, player: PlayerId, to: PokemonId) 
     let active = state.players[player.index()]
         .active
         .expect("retreating needs an Active");
+    // Rule 27: moving to the Bench removes all Special Conditions.
+    state.clear_conditions(active);
     let side = &mut state.players[player.index()];
     side.bench.retain(|p| *p != to);
     side.bench.push(active);
@@ -230,10 +238,26 @@ fn attack(state: &mut GameState, index: usize) {
         return;
     };
 
+    // Rule 30: Confusion flips before the attack happens. Rule 52: on tails
+    // the attack does not happen and 3 damage counters go on your own Pokémon.
+    if state.has_condition(attacker, Condition::Confused) && !state.rng.flip() {
+        state.pokemon[attacker.index()].damage += 30;
+        let name = state.pokemon_def(attacker).name;
+        state
+            .log
+            .push(format!("{name} is Confused and hurts itself."));
+        return;
+    }
+
     let attack = state.pokemon_def(attacker).attacks[index].clone();
     let damage = damage_dealt(state, attacker, defender, attack.base_damage);
 
     state.pokemon[defender.index()].damage += damage;
+    if let Some(condition) = attack.inflicts {
+        state.inflict(defender, condition);
+        let name = state.pokemon_def(defender).name;
+        state.log.push(format!("{name} is now {condition:?}."));
+    }
 
     let attacker_name = state.pokemon_def(attacker).name;
     let defender_name = state.pokemon_def(defender).name;
@@ -270,8 +294,8 @@ pub fn damage_dealt(state: &GameState, attacker: PokemonId, defender: PokemonId,
 }
 
 /// Carry the state forward until it is waiting on a player again: settle
-/// knockouts, check for a winner, ask for a promotion, and end the turn if one
-/// is owed.
+/// knockouts, check for a winner, ask for a promotion, run the checkup, and
+/// start the next turn when one is owed.
 fn settle(state: &mut GameState) {
     loop {
         if state.is_over() {
@@ -299,17 +323,119 @@ fn settle(state: &mut GameState) {
             }
         }
 
-        if !state.pending_end_turn {
+        // Rule 45: the checkup runs after a turn ends and before the next one.
+        if state.pending_end_turn {
+            state.pending_end_turn = false;
+            fill_checkup(state);
+            clear_paralysis(state);
+            state.pending_turn_start = true;
+        }
+
+        if let Some(player) = next_checkup_player(state) {
+            state.phase = Phase::Checkup { player };
+            return;
+        }
+
+        if !state.pending_turn_start {
             state.phase = Phase::Main;
             return;
         }
 
-        state.pending_end_turn = false;
-        end_turn(state);
+        // Rule 48: the knockouts above have settled, so the next turn starts.
+        state.pending_turn_start = false;
+        start_next_turn(state);
         if state.is_over() {
             state.phase = Phase::Over;
             return;
         }
+    }
+}
+
+/// Queue every between-turn effect the conditions owe. Rule 49 keeps a
+/// condition on the Active, so nothing on the Bench is queued.
+fn fill_checkup(state: &mut GameState) {
+    for player in [PlayerId::One, PlayerId::Two] {
+        let Some(active) = state.player(player).active else {
+            continue;
+        };
+        for condition in state.pokemon(active).conditions.clone() {
+            if has_checkup_effect(condition) {
+                state.checkup_pending.push((player, active, condition));
+            }
+        }
+    }
+}
+
+/// Rule 51: Paralysis recovers at the checkup after its owner's next turn.
+/// The owner has just taken that turn, so this is that checkup.
+fn clear_paralysis(state: &mut GameState) {
+    let owner = state.current;
+    let Some(active) = state.player(owner).active else {
+        return;
+    };
+    if state.has_condition(active, Condition::Paralyzed) {
+        state.remove_condition(active, Condition::Paralyzed);
+        let name = state.pokemon_def(active).name;
+        state.log.push(format!("{name} is no longer Paralyzed."));
+    }
+}
+
+/// Whether a condition does anything at the checkup.
+fn has_checkup_effect(condition: Condition) -> bool {
+    match condition {
+        Condition::Poisoned | Condition::Burned | Condition::Asleep => true,
+        Condition::Paralyzed | Condition::Confused => false,
+    }
+}
+
+/// The damage a condition puts on at the checkup.
+fn checkup_damage(condition: Condition) -> u32 {
+    match condition {
+        // Rule 54: 1 damage counter.
+        Condition::Poisoned => 10,
+        // Rule 53: 2 damage counters, then a flip.
+        Condition::Burned => 20,
+        Condition::Asleep | Condition::Paralyzed | Condition::Confused => 0,
+    }
+}
+
+/// Whose effects the checkup is waiting on. The player whose turn just ended
+/// resolves their own first.
+fn next_checkup_player(state: &GameState) -> Option<PlayerId> {
+    let owed = |player: PlayerId| state.checkup_pending.iter().any(|(p, _, _)| *p == player);
+    if owed(state.current) {
+        Some(state.current)
+    } else if owed(state.current.opponent()) {
+        Some(state.current.opponent())
+    } else {
+        None
+    }
+}
+
+fn resolve_checkup(state: &mut GameState, pokemon: PokemonId, condition: Condition) {
+    let damage = checkup_damage(condition);
+    if damage > 0 {
+        state.pokemon[pokemon.index()].damage += damage;
+        let name = state.pokemon_def(pokemon).name;
+        state
+            .log
+            .push(format!("{name} takes {damage} from {condition:?}."));
+    }
+
+    // Rules 50 and 53: Asleep and Burned each flip, and heads removes them.
+    if matches!(condition, Condition::Burned | Condition::Asleep) && state.rng.flip() {
+        state.remove_condition(pokemon, condition);
+        let name = state.pokemon_def(pokemon).name;
+        state
+            .log
+            .push(format!("{name} is no longer {condition:?}."));
+    }
+    if let Some(at) = state
+        .checkup_pending
+        .iter()
+        .position(|(_, p, c)| *p == pokemon && *c == condition)
+    {
+        state.checkup_pending.remove(at);
     }
 }
 
@@ -365,9 +491,7 @@ fn take_prizes(state: &mut GameState, player: PlayerId, count: usize) {
     }
 }
 
-fn end_turn(state: &mut GameState) {
-    // Milestone 1 has no Special Conditions, so Pokémon Checkup (rules 45-48)
-    // has nothing to do between the turns yet.
+fn start_next_turn(state: &mut GameState) {
     state.current = state.current.opponent();
     state.turn_number += 1;
     state.begin_turn();
