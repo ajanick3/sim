@@ -13,7 +13,9 @@ The rules that bind every session in this repository.
 
 ## What this repository is
 
-[TBD]
+A Pokémon TCG rules engine in Rust. The engine is pure and the card set is
+synthetic and small. The `pkmn` repository is a sibling; it owns the card
+database and the crawl.
 
 ## Agent skills
 
