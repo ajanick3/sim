@@ -8,6 +8,9 @@ value: give it a seed and a list of actions and it replays exactly.
 ```sh
 cargo run      # play a game in the terminal
 cargo test     # run the engine's tests
+
+cargo run --release --bin selfplay -- 5000        # headless games
+cargo run --release --bin selfplay -- 5000 views  # the same, through masked views
 ```
 
 ## Scope
@@ -32,7 +35,9 @@ yet: evolution, Trainers, Abilities, and Stadiums.
 | `src/cards.rs`  | The card set, as literals                                 |
 | `src/ids.rs`    | The typed indices into the arenas                         |
 | `src/rng.rs`    | A seeded generator, and a scripted one for tests          |
+| `src/view.rs`   | What one player is allowed to see                         |
 | `src/main.rs`   | The text interface                                        |
+| `src/bin/`      | `selfplay`, a headless loop for measuring                 |
 
 ## The documents
 
