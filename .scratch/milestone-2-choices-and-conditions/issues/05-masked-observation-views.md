@@ -1,7 +1,7 @@
 # Masked observation views
 
 Type: research
-Status: ready-for-agent
+Status: claimed
 
 Decide how a player sees only their own hidden zones, before any bot exists.
 
