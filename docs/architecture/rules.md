@@ -27,7 +27,7 @@ The operator read them against the rulebook and corrected them.
 12. **Draw a card.** Deck empty and cannot draw → **you lose**.
 13. **Do any of these, in any order:**
     - Put Basic Pokémon from hand onto Bench — any number (Bench cap 5)
-    - Evolve — any number
+    - Evolve any number of Pokémon, each once per turn
     - Attach an Energy from hand — **once per turn**
     - Play Trainers — Items any number, Tools any number, **1 Supporter**, **1 Stadium**
     - Retreat — **once per turn**
