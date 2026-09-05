@@ -6,28 +6,29 @@
 //! else names it by index. An index is `Copy`, so passing one around never
 //! borrows the arena that holds the object.
 
-/// Which of the two players. `PlayerId` doubles as an index into
+/// Which seat. A seat is not a turn order: the opening coin flip decides who
+/// goes first, so either seat may start. `PlayerId` doubles as an index into
 /// [`crate::state::GameState::players`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum PlayerId {
-    /// The player who took the first turn.
-    First,
-    /// The player who took the second turn.
-    Second,
+    /// The first seat.
+    One,
+    /// The second seat.
+    Two,
 }
 
 impl PlayerId {
     pub fn opponent(self) -> PlayerId {
         match self {
-            PlayerId::First => PlayerId::Second,
-            PlayerId::Second => PlayerId::First,
+            PlayerId::One => PlayerId::Two,
+            PlayerId::Two => PlayerId::One,
         }
     }
 
     pub fn index(self) -> usize {
         match self {
-            PlayerId::First => 0,
-            PlayerId::Second => 1,
+            PlayerId::One => 0,
+            PlayerId::Two => 1,
         }
     }
 }

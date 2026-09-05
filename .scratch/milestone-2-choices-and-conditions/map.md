@@ -12,7 +12,7 @@ starts at ticket 01.
 
 ## Decisions so far
 
-Nothing resolved yet.
+Ticket 01 resolved 2026-09-05: setup became four phases and every choice in it is the player's; details under [the ticket's Answer](issues/01-setup-as-a-phase.md).
 
 ## Fog
 
