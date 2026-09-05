@@ -72,8 +72,19 @@ impl PlayerState {
 }
 
 /// What the engine is waiting for.
+///
+/// Setup is four phases, not a function that runs to completion. Every choice
+/// the rulebook gives a player at setup is an ordinary legal action.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Phase {
+    /// The coin flip landed and this player chooses who takes the first turn.
+    ChoosingWhoGoesFirst { winner: PlayerId },
+    /// This player may draw one card for each mulligan the opponent took.
+    TakingBonusDraws { player: PlayerId, remaining: usize },
+    /// This player places a Basic from hand face down as their Active.
+    PlacingActive { player: PlayerId },
+    /// This player fills the Bench, and stops when they choose to.
+    PlacingBench { player: PlayerId },
     /// The current player is taking their turn.
     Main,
     /// This player lost their Active and must promote one from the Bench.
@@ -112,6 +123,10 @@ pub struct GameState {
     /// An attack ends the turn, but a knockout it caused is settled first.
     /// The flag remembers that the turn still owes its ending.
     pub pending_end_turn: bool,
+    /// Setup bookkeeping: the bonus draws each player has not yet taken or
+    /// declined, and whether they have finished their Bench.
+    pub bonus_draws: [usize; 2],
+    pub bench_placed: [bool; 2],
     pub outcome: Option<Outcome>,
     pub rng: Box<dyn Rng>,
     /// What happened, in order, for the text interface and for tests.
@@ -119,21 +134,21 @@ pub struct GameState {
 }
 
 impl GameState {
-    /// Deal a new game: shuffle, mulligan, place Pokémon, set Prizes.
+    /// Deal a new game and stop at the first choice.
     ///
-    /// Milestone 1 shortcut: the coin flip for who goes first is skipped —
-    /// [`PlayerId::First`] starts — and setup places the first Basic in hand as
-    /// Active and the rest on the Bench rather than asking. Both become
-    /// ordinary choices once the Setup phase grows its own legal actions.
+    /// Shuffling, drawing, and mulliganing are not choices, so they happen
+    /// here. Everything the rulebook lets a player decide — who goes first,
+    /// the bonus draws, where each Pokémon goes — is a setup phase, and the
+    /// caller drives it through [`crate::action::legal_actions`].
     pub fn new(db: CardDb, decklists: [Vec<CardDefId>; 2], rng: Box<dyn Rng>) -> GameState {
         let mut cards = Vec::new();
         let mut players = [PlayerState::empty(), PlayerState::empty()];
 
         for (slot, decklist) in decklists.iter().enumerate() {
             let owner = if slot == 0 {
-                PlayerId::First
+                PlayerId::One
             } else {
-                PlayerId::Second
+                PlayerId::Two
             };
             for def in decklist {
                 let id = CardId(cards.len() as u32);
@@ -148,37 +163,35 @@ impl GameState {
             pokemon: Vec::new(),
             players,
             turn_number: 0,
-            current: PlayerId::First,
+            current: PlayerId::One,
             phase: Phase::Main,
             pending_end_turn: false,
+            bonus_draws: [0, 0],
+            bench_placed: [false, false],
             outcome: None,
             rng,
             log: Vec::new(),
         };
 
         let mulligans = [
-            state.deal_opening_hand(PlayerId::First),
-            state.deal_opening_hand(PlayerId::Second),
+            state.deal_opening_hand(PlayerId::One),
+            state.deal_opening_hand(PlayerId::Two),
         ];
 
-        // Rule 8: for each mulligan the opponent took, you may draw 1 extra.
-        // Milestone 1 always takes them.
-        for player in [PlayerId::First, PlayerId::Second] {
-            let extra = mulligans[player.opponent().index()];
-            for _ in 0..extra {
-                state.draw(player);
-            }
+        // Rule 8: each mulligan the opponent took is worth one extra card, and
+        // the player may take it or leave it.
+        for player in [PlayerId::One, PlayerId::Two] {
+            state.bonus_draws[player.index()] = mulligans[player.opponent().index()];
         }
 
-        for player in [PlayerId::First, PlayerId::Second] {
-            state.place_opening_pokemon(player);
-            state.set_prizes(player);
-        }
-
-        state
-            .log
-            .push(format!("Turn {} begins.", state.turn_number + 1));
-        state.begin_turn();
+        // Rule 5: the coin flip decides who chooses, not who starts.
+        let winner = if state.rng.flip() {
+            PlayerId::One
+        } else {
+            PlayerId::Two
+        };
+        state.log.push(format!("{winner:?} wins the coin flip."));
+        state.phase = Phase::ChoosingWhoGoesFirst { winner };
         state
     }
 
@@ -210,27 +223,7 @@ impl GameState {
             .any(|c| self.def_of(*c).is_basic_pokemon())
     }
 
-    fn place_opening_pokemon(&mut self, player: PlayerId) {
-        let slot = player.index();
-        let basics: Vec<CardId> = self.players[slot]
-            .hand
-            .iter()
-            .copied()
-            .filter(|c| self.def_of(*c).is_basic_pokemon())
-            .take(1 + BENCH_LIMIT)
-            .collect();
-        for (position, card) in basics.into_iter().enumerate() {
-            self.remove_from_hand(player, card);
-            let pokemon = self.put_into_play(player, card);
-            if position == 0 {
-                self.players[slot].active = Some(pokemon);
-            } else {
-                self.players[slot].bench.push(pokemon);
-            }
-        }
-    }
-
-    fn set_prizes(&mut self, player: PlayerId) {
+    pub fn set_prizes(&mut self, player: PlayerId) {
         let slot = player.index();
         for _ in 0..PRIZE_COUNT {
             match self.players[slot].library.pop() {

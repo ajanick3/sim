@@ -5,17 +5,23 @@ use sim::cards::{Milestone1, milestone1, starter_decklist};
 use sim::engine::{apply, damage_dealt};
 use sim::ids::PlayerId;
 use sim::rng::SeededRng;
-use sim::state::{GameState, WinReason};
+use sim::state::{GameState, Phase, WinReason};
 
+/// Deal a game and drive setup with the first choice offered each time, which
+/// takes every bonus card and fills both Benches.
 fn game(seed: u64) -> (Milestone1, GameState) {
     let set = milestone1();
     let decklist = starter_decklist(&set);
     let db = set.db.clone();
-    let state = GameState::new(
+    let mut state = GameState::new(
         db,
         [decklist.clone(), decklist],
         Box::new(SeededRng::new(seed)),
     );
+    while state.phase != Phase::Main {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
     (set, state)
 }
 
@@ -37,7 +43,7 @@ fn choose(state: &GameState) -> Action {
 #[test]
 fn setup_deals_a_legal_opening_board() {
     let (_, state) = game(7);
-    for player in [PlayerId::First, PlayerId::Second] {
+    for player in [PlayerId::One, PlayerId::Two] {
         let side = state.player(player);
         assert!(side.active.is_some(), "each player starts with an Active");
         assert_eq!(side.prizes.len(), 6, "each player sets 6 Prizes aside");
@@ -61,8 +67,8 @@ fn the_first_player_cannot_attack_on_the_first_turn() {
 #[test]
 fn weakness_doubles_and_damage_lands_in_tens() {
     let (_, state) = game(3);
-    let attacker = state.player(PlayerId::First).active.unwrap();
-    let defender = state.player(PlayerId::Second).active.unwrap();
+    let attacker = state.player(PlayerId::One).active.unwrap();
+    let defender = state.player(PlayerId::Two).active.unwrap();
 
     let attacker_type = state.pokemon_def(attacker).kind;
     let weak = state.pokemon_def(defender).weakness == Some(attacker_type);
@@ -93,13 +99,13 @@ fn a_knockout_takes_a_prize() {
     while state.is_first_turn_of_game() {
         apply(&mut state, Action::EndTurn).unwrap();
     }
-    while state.current != PlayerId::First {
+    while state.current != PlayerId::One {
         let action = choose(&state);
         apply(&mut state, action).unwrap();
     }
 
-    let attacker = state.player(PlayerId::First).active.unwrap();
-    let defender = state.player(PlayerId::Second).active.unwrap();
+    let attacker = state.player(PlayerId::One).active.unwrap();
+    let defender = state.player(PlayerId::Two).active.unwrap();
     let hp = state.pokemon_def(defender).hp;
     state.pokemon[defender.index()].damage = hp - 10;
 
@@ -113,20 +119,20 @@ fn a_knockout_takes_a_prize() {
         .unwrap();
     while state.energy_attached(attacker) < cost {
         let energy = *state
-            .player(PlayerId::First)
+            .player(PlayerId::One)
             .hand
             .iter()
             .find(|c| state.def_of(**c).is_energy())
             .expect("the deck is mostly Energy");
-        state.remove_from_hand(PlayerId::First, energy);
+        state.remove_from_hand(PlayerId::One, energy);
         state.pokemon[attacker.index()].attached.push(energy);
     }
 
-    let before = state.player(PlayerId::First).prizes.len();
+    let before = state.player(PlayerId::One).prizes.len();
     let attack = legal_actions(&state)
         .into_iter()
-        .filter(|a| matches!(a, Action::Attack { .. }))
-        .next_back()
+        .rev()
+        .find(|a| matches!(a, Action::Attack { .. }))
         .expect("a paid-for Active can attack");
     apply(&mut state, attack).unwrap();
 
@@ -135,7 +141,7 @@ fn a_knockout_takes_a_prize() {
         "damage past HP knocks a Pokémon out"
     );
     assert_eq!(
-        state.player(PlayerId::First).prizes.len(),
+        state.player(PlayerId::One).prizes.len(),
         before - 1,
         "rule 39: the opponent of the knocked-out player takes a Prize"
     );

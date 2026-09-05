@@ -15,6 +15,48 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
     }
 
     match action {
+        Action::ChooseWhoGoesFirst { first } => {
+            state.current = first;
+            state.log.push(format!("{first:?} takes the first turn."));
+            advance_setup(state);
+        }
+
+        Action::TakeBonusDraw => {
+            let player = setup_player(state)?;
+            state.draw(player);
+            state.bonus_draws[player.index()] -= 1;
+            state.log.push(format!("{player:?} takes a bonus card."));
+            advance_setup(state);
+        }
+
+        Action::DeclineBonusDraws => {
+            let player = setup_player(state)?;
+            state.bonus_draws[player.index()] = 0;
+            advance_setup(state);
+        }
+
+        Action::PlaceActive { card } => {
+            let player = setup_player(state)?;
+            state.remove_from_hand(player, card);
+            let pokemon = state.put_into_play(player, card);
+            state.players[player.index()].active = Some(pokemon);
+            advance_setup(state);
+        }
+
+        Action::PlaceOnBench { card } => {
+            let player = setup_player(state)?;
+            state.remove_from_hand(player, card);
+            let pokemon = state.put_into_play(player, card);
+            state.players[player.index()].bench.push(pokemon);
+            advance_setup(state);
+        }
+
+        Action::FinishPlacing => {
+            let player = setup_player(state)?;
+            state.bench_placed[player.index()] = true;
+            advance_setup(state);
+        }
+
         Action::PlayBasic { card } => {
             let player = state.current;
             state.remove_from_hand(player, card);
@@ -65,6 +107,54 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
     }
 
     Ok(())
+}
+
+fn setup_player(state: &GameState) -> Result<PlayerId, IllegalAction> {
+    match state.phase {
+        Phase::TakingBonusDraws { player, .. }
+        | Phase::PlacingActive { player }
+        | Phase::PlacingBench { player } => Ok(player),
+        _ => Err(IllegalAction),
+    }
+}
+
+/// Move setup to the next choice it owes, or start the game.
+///
+/// The rulebook has both players set up at once. Nothing at setup is visible
+/// to the opponent, so the engine asks one player for all of it — the bonus
+/// draws, the Active, the Bench — before it turns to the other.
+fn advance_setup(state: &mut GameState) {
+    for player in [PlayerId::One, PlayerId::Two] {
+        let remaining = state.bonus_draws[player.index()];
+        if remaining > 0 {
+            state.phase = Phase::TakingBonusDraws { player, remaining };
+            return;
+        }
+        if state.player(player).active.is_none() {
+            state.phase = Phase::PlacingActive { player };
+            return;
+        }
+        if !state.bench_placed[player.index()] {
+            state.phase = Phase::PlacingBench { player };
+            return;
+        }
+    }
+
+    // Rule 10: the Prizes come off the top after the Pokémon are down.
+    for player in [PlayerId::One, PlayerId::Two] {
+        state.set_prizes(player);
+    }
+    state.phase = Phase::Main;
+    state.begin_turn();
+    state
+        .log
+        .push(format!("Turn {} begins.", state.turn_number + 1));
+
+    // Rule 15: the player going first draws, they only skip the attack.
+    if !state.draw(state.current) {
+        win(state, state.current.opponent(), WinReason::CouldNotDraw);
+        state.phase = Phase::Over;
+    }
 }
 
 fn retreat(state: &mut GameState, to: PokemonId) {
@@ -163,7 +253,7 @@ fn settle(state: &mut GameState) {
         }
 
         // Rule 40: the player whose Active was knocked out chooses the next one.
-        for player in [PlayerId::First, PlayerId::Second] {
+        for player in [PlayerId::One, PlayerId::Two] {
             if state.player(player).active.is_none() {
                 if state.player(player).bench.is_empty() {
                     // Rule 42: no Pokémon to promote loses the game.
@@ -191,7 +281,7 @@ fn settle(state: &mut GameState) {
 }
 
 fn knock_out_the_dead(state: &mut GameState) {
-    for player in [PlayerId::First, PlayerId::Second] {
+    for player in [PlayerId::One, PlayerId::Two] {
         for pokemon in state.player(player).in_play() {
             if state.remaining_hp(pokemon) > 0 {
                 continue;
