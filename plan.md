@@ -5,8 +5,8 @@ Resume by reading this file top to bottom; everything needed is here.
 
 ## 1. What this is
 
-A Pokémon TCG rules engine written in Rust, in a **new separate repo**
-(`/home/nick/nick/pkmn-sim`, sibling of this one).
+A Pokémon TCG rules engine written in Rust, in this repo
+(`/home/nick/nick/sim`). The `pkmn` repo is a sibling.
 
 **The primary goal is learning Rust.** The simulator is the vehicle. Process
 matters more than outcome. Every scope decision below follows from that and
@@ -17,7 +17,7 @@ should be re-derived, not overridden, if the goal changes.
 | Topic        | Decision                                                                                                |
 | ------------ | ------------------------------------------------------------------------------------------------------- |
 | Language     | Rust                                                                                                    |
-| Repo         | New, separate: `pkmn-sim`. Local `git init` only; no GitHub remote yet                                  |
+| Repo         | `sim`, separate from `pkmn`. Local only; no GitHub remote yet                                            |
 | Reuse        | Write our own engine. No code taken from any existing project                                           |
 | Scope        | **Deep engine, near-zero cards.** NOT the Standard pool, NOT 3000 cards                                 |
 | Milestone 1  | Two synthetic Basic Pokémon that attack until someone wins                                              |
@@ -50,11 +50,11 @@ Rust code ever written — the fastest way to make Rust feel awful.
 
 Three layers instead:
 
-1. **`pkmn` (this repo)** owns Turso and the crawl. Add one export script.
+1. **`pkmn` (the sibling repo)** owns Turso and the crawl. Add one export script.
 2. **A JSON artifact** — the seam between the repos.
-3. **`pkmn-sim`** reads that JSON at startup, then runs entirely in memory.
+3. **`sim`** reads that JSON at startup, then runs entirely in memory.
 
-The export script lives in **`pkmn`**, because it queries a schema this repo
+The export script lives in **`pkmn`**, because it queries a schema that repo
 owns and holds the Turso credentials.
 
 Note: Milestone 1 needs **no card data at all** — the cards are four literals in
@@ -299,7 +299,7 @@ Series: **Mega Evolution**, 8 sets, 2025-09-25 → 2026-07-17:
 
 1. Confirm the naming question in §3.
 2. Install Rust: `curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`
-3. `git init` a new repo at `/home/nick/nick/pkmn-sim`.
+3. Add `Cargo.toml` and `src/` to this repo.
 4. Build Milestone 1: two synthetic Basics that attack until someone wins —
    setup, turn loop, damage, KO, prizes, win condition. Cards as literals.
    Claude writes it with narrated reasoning.
