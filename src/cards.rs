@@ -10,8 +10,10 @@ pub struct Milestone1 {
     pub db: CardDb,
     pub sparkmouse: CardDefId,
     pub cinderpup: CardDefId,
+    pub aquabear: CardDefId,
     pub lightning_energy: CardDefId,
     pub fire_energy: CardDefId,
+    pub water_energy: CardDefId,
 }
 
 pub fn milestone1() -> Milestone1 {
@@ -42,19 +44,36 @@ pub fn milestone1() -> Milestone1 {
         ],
     }));
 
-    // Weak to Lightning, so Sparkmouse doubles into it. Resistant to Lightning
+    // Weak to Water, so Sparkmouse doubles into it. Resistant to Water
     // it is not — the two modifiers must not be testable at once by accident.
     let cinderpup = db.add(CardDef::Pokemon(Pokemon {
         name: "Cinderpup",
         hp: 70,
         kind: Type::Fire,
-        weakness: Some(Type::Lightning),
+        weakness: Some(Type::Water),
         resistance: None,
         retreat_cost: 2,
         attacks: vec![Attack {
             name: "Ember",
             cost: vec![Type::Fire, Type::Fire],
             base_damage: 40,
+            inflicts: None,
+        }],
+    }));
+
+    // Weak to Lightning, so Aquabear doubles into it. Resistant to Fire
+    // it is not — the two modifiers must not be testable at once by accident.
+    let aquabear = db.add(CardDef::Pokemon(Pokemon {
+        name: "Aquabear",
+        hp: 70,
+        kind: Type::Water,
+        weakness: Some(Type::Fire),
+        resistance: None,
+        retreat_cost: 1,
+        attacks: vec![Attack {
+            name: "Bubblebeam",
+            cost: vec![Type::Water, Type::Colorless],
+            base_damage: 30,
             inflicts: None,
         }],
     }));
@@ -69,12 +88,19 @@ pub fn milestone1() -> Milestone1 {
         kind: Type::Fire,
     }));
 
+    let water_energy = db.add(CardDef::Energy(Energy {
+        name: "Water Energy",
+        kind: Type::Water,
+    }));
+
     Milestone1 {
         db,
         sparkmouse,
         cinderpup,
+        aquabear,
         lightning_energy,
         fire_energy,
+        water_energy,
     }
 }
 
@@ -88,9 +114,13 @@ pub fn starter_decklist(set: &Milestone1) -> Vec<CardDefId> {
     for _ in 0..4 {
         decklist.push(set.cinderpup);
     }
+    for _ in 0..4 {
+        decklist.push(set.aquabear);
+    }
     while decklist.len() < 60 {
         decklist.push(set.lightning_energy);
         decklist.push(set.fire_energy);
+        decklist.push(set.water_energy);
     }
     decklist
 }
