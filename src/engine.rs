@@ -314,6 +314,7 @@ fn settle(state: &mut GameState) {
         if state.pending_end_turn {
             state.pending_end_turn = false;
             fill_checkup(state);
+            clear_paralysis(state);
             state.pending_turn_start = true;
         }
 
@@ -345,20 +346,45 @@ fn fill_checkup(state: &mut GameState) {
             continue;
         };
         for condition in state.pokemon(active).conditions.clone() {
-            if checkup_effect_of(condition).is_some() {
+            if has_checkup_effect(condition) {
                 state.checkup_pending.push((player, active, condition));
             }
         }
     }
 }
 
-/// What a condition does at the checkup, in damage. `None` means it does
-/// nothing there.
-fn checkup_effect_of(condition: Condition) -> Option<u32> {
+/// Rule 51: Paralysis recovers at the checkup after its owner's next turn.
+/// The owner has just taken that turn, so this is that checkup.
+fn clear_paralysis(state: &mut GameState) {
+    let owner = state.current;
+    let Some(active) = state.player(owner).active else {
+        return;
+    };
+    if state.has_condition(active, Condition::Paralyzed) {
+        state.remove_condition(active, Condition::Paralyzed);
+        let name = state.pokemon_def(active).name;
+        state
+            .log
+            .push(format!("{name} is no longer Paralyzed."));
+    }
+}
+
+/// Whether a condition does anything at the checkup.
+fn has_checkup_effect(condition: Condition) -> bool {
+    match condition {
+        Condition::Poisoned | Condition::Burned | Condition::Asleep => true,
+        Condition::Paralyzed | Condition::Confused => false,
+    }
+}
+
+/// The damage a condition puts on at the checkup.
+fn checkup_damage(condition: Condition) -> u32 {
     match condition {
         // Rule 54: 1 damage counter.
-        Condition::Poisoned => Some(10),
-        Condition::Asleep | Condition::Paralyzed | Condition::Confused | Condition::Burned => None,
+        Condition::Poisoned => 10,
+        // Rule 53: 2 damage counters, then a flip.
+        Condition::Burned => 20,
+        Condition::Asleep | Condition::Paralyzed | Condition::Confused => 0,
     }
 }
 
@@ -376,12 +402,22 @@ fn next_checkup_player(state: &GameState) -> Option<PlayerId> {
 }
 
 fn resolve_checkup(state: &mut GameState, pokemon: PokemonId, condition: Condition) {
-    if let Some(damage) = checkup_effect_of(condition) {
+    let damage = checkup_damage(condition);
+    if damage > 0 {
         state.pokemon[pokemon.index()].damage += damage;
         let name = state.pokemon_def(pokemon).name;
         state
             .log
             .push(format!("{name} takes {damage} from {condition:?}."));
+    }
+
+    // Rules 50 and 53: Asleep and Burned each flip, and heads removes them.
+    if matches!(condition, Condition::Burned | Condition::Asleep) && state.rng.flip() {
+        state.remove_condition(pokemon, condition);
+        let name = state.pokemon_def(pokemon).name;
+        state
+            .log
+            .push(format!("{name} is no longer {condition:?}."));
     }
     if let Some(at) = state
         .checkup_pending

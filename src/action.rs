@@ -148,18 +148,25 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         }
     }
 
+    // Rules 50-51: Asleep and Paralyzed stop both an attack and a retreat.
+    // Confused stops neither; it flips when the attack happens.
+    let held = |active| {
+        state.has_condition(active, Condition::Asleep)
+            || state.has_condition(active, Condition::Paralyzed)
+    };
+
     // Rules 23-24: once per turn, pay the Retreat Cost in Energy, and only
     // with somewhere to retreat to.
     if let Some(active) = side.active {
         let cost = state.pokemon_def(active).retreat_cost;
-        if !side.retreated_this_turn && state.energy_attached(active) >= cost {
+        if !side.retreated_this_turn && !held(active) && state.energy_attached(active) >= cost {
             for pokemon in &side.bench {
                 actions.push(Action::Retreat { to: *pokemon });
             }
         }
 
         // Rule 17: the player going first skips their attack step.
-        if !state.is_first_turn_of_game() {
+        if !state.is_first_turn_of_game() && !held(active) {
             for (index, attack) in state.pokemon_def(active).attacks.iter().enumerate() {
                 if state.pays_cost(active, &attack.cost) {
                     actions.push(Action::Attack { index });

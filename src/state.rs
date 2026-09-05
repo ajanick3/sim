@@ -364,6 +364,10 @@ impl GameState {
         }
     }
 
+    pub fn remove_condition(&mut self, id: PokemonId, condition: Condition) {
+        self.pokemon[id.index()].conditions.retain(|c| *c != condition);
+    }
+
     pub fn is_over(&self) -> bool {
         self.outcome.is_some()
     }
