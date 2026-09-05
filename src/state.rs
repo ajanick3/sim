@@ -1,8 +1,17 @@
 //! The whole game, as one value.
 
-use crate::card::{CardDb, CardDef, Pokemon, Type};
+use crate::card::{CardDb, CardDef, Condition, Pokemon, Type};
 use crate::ids::{CardDefId, CardId, PlayerId, PokemonId};
 use crate::rng::{Rng, shuffle};
+
+/// Whether a condition rotates the card, which is what makes Asleep,
+/// Confused, and Paralyzed exclude each other.
+fn rotates(condition: Condition) -> bool {
+    matches!(
+        condition,
+        Condition::Asleep | Condition::Confused | Condition::Paralyzed
+    )
+}
 
 /// The bench holds 5.
 pub const BENCH_LIMIT: usize = 5;
@@ -30,6 +39,8 @@ pub struct PokemonInPlay {
     /// The turn this Pokémon came into play. Evolution reads it; Milestone 1
     /// records it so the rule has somewhere to land.
     pub played_on_turn: u32,
+    /// The Special Conditions on this Pokémon. Only the Active carries any.
+    pub conditions: Vec<Condition>,
     pub knocked_out: bool,
 }
 
@@ -85,6 +96,9 @@ pub enum Phase {
     PlacingActive { player: PlayerId },
     /// This player fills the Bench, and stops when they choose to.
     PlacingBench { player: PlayerId },
+    /// This player resolves their own between-turn effects, in the order they
+    /// choose (rule 47).
+    Checkup { player: PlayerId },
     /// This player is retreating and chooses which Energy pays the cost.
     DiscardingForRetreat {
         player: PlayerId,
@@ -131,6 +145,10 @@ pub struct GameState {
     /// An attack ends the turn, but a knockout it caused is settled first.
     /// The flag remembers that the turn still owes its ending.
     pub pending_end_turn: bool,
+    /// The between-turn effects still to resolve, oldest first.
+    pub checkup_pending: Vec<(PlayerId, PokemonId, Condition)>,
+    /// The checkup has finished and the next turn is owed.
+    pub pending_turn_start: bool,
     /// Setup bookkeeping: the bonus draws each player has not yet taken or
     /// declined, and whether they have finished their Bench.
     pub bonus_draws: [usize; 2],
@@ -174,6 +192,8 @@ impl GameState {
             current: PlayerId::One,
             phase: Phase::Main,
             pending_end_turn: false,
+            checkup_pending: Vec::new(),
+            pending_turn_start: false,
             bonus_draws: [0, 0],
             bench_placed: [false, false],
             outcome: None,
@@ -249,6 +269,7 @@ impl GameState {
             damage: 0,
             attached: Vec::new(),
             played_on_turn: self.turn_number,
+            conditions: Vec::new(),
             knocked_out: false,
         });
         id
@@ -339,6 +360,36 @@ impl GameState {
         let slot = self.current.index();
         self.players[slot].energy_attached_this_turn = false;
         self.players[slot].retreated_this_turn = false;
+    }
+
+    pub fn has_condition(&self, id: PokemonId, condition: Condition) -> bool {
+        self.pokemon(id).conditions.contains(&condition)
+    }
+
+    /// Put a Special Condition on a Pokémon.
+    ///
+    /// Rule 55: Asleep, Confused, and Paralyzed all rotate the card, so the
+    /// newest replaces whichever of them was there. Rule 56: Burned and
+    /// Poisoned are independent of that and of each other. Rule 57: a second
+    /// Burn or Poison replaces the first rather than stacking.
+    pub fn inflict(&mut self, id: PokemonId, condition: Condition) {
+        if rotates(condition) {
+            self.pokemon[id.index()].conditions.retain(|c| !rotates(*c));
+        } else {
+            self.remove_condition(id, condition);
+        }
+        self.pokemon[id.index()].conditions.push(condition);
+    }
+
+    /// Rule 27: a Pokémon that leaves the Active spot loses every condition.
+    pub fn clear_conditions(&mut self, id: PokemonId) {
+        self.pokemon[id.index()].conditions.clear();
+    }
+
+    pub fn remove_condition(&mut self, id: PokemonId, condition: Condition) {
+        self.pokemon[id.index()]
+            .conditions
+            .retain(|c| *c != condition);
     }
 
     pub fn is_over(&self) -> bool {

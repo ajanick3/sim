@@ -17,8 +17,9 @@ one Energy live in `src/cards.rs` as literals. This is deliberate — see
 [ADR 0004](docs/adr/0004-a-deep-engine-and-a-tiny-card-set.md).
 
 What the engine does today: setup with mulligans, the turn loop, the damage
-order, knockouts, Prizes, and the three win conditions. What it does not do
-yet: evolution, Trainers, Abilities, Stadiums, and Special Conditions.
+order, Energy costs by type, the five Special Conditions and the Pokémon
+Checkup, knockouts, Prizes, and the three win conditions. What it does not do
+yet: evolution, Trainers, Abilities, and Stadiums.
 
 ## The code
 
