@@ -80,6 +80,34 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
 
         Action::Retreat { to } => retreat(state, to),
 
+        Action::DiscardEnergy { card } => {
+            let Phase::DiscardingForRetreat {
+                player,
+                to,
+                remaining,
+            } = state.phase
+            else {
+                return Err(IllegalAction);
+            };
+            let active = state.players[player.index()]
+                .active
+                .expect("a retreat starts from an Active");
+            state.pokemon[active.index()]
+                .attached
+                .retain(|c| *c != card);
+            state.players[player.index()].discard.push(card);
+
+            if remaining > 1 {
+                state.phase = Phase::DiscardingForRetreat {
+                    player,
+                    to,
+                    remaining: remaining - 1,
+                };
+            } else {
+                promote_from_retreat(state, player, to);
+            }
+        }
+
         Action::Attack { index } => {
             attack(state, index);
             state.pending_end_turn = true;
@@ -157,31 +185,36 @@ fn advance_setup(state: &mut GameState) {
     }
 }
 
+/// Rule 23: retreating discards Energy equal to the Retreat Cost. Which Energy
+/// is the player's choice, so a cost above zero opens a phase.
 fn retreat(state: &mut GameState, to: PokemonId) {
     let player = state.current;
     let active = state.players[player.index()]
         .active
         .expect("retreating needs an Active");
-    let cost = state.pokemon_def(active).retreat_cost as usize;
+    let cost = state.pokemon_def(active).retreat_cost;
 
-    // Rule 23: discard Energy equal to the Retreat Cost. Which Energy is a
-    // choice; Milestone 1 discards from the front.
-    for _ in 0..cost {
-        let attached = &mut state.pokemon[active.index()].attached;
-        let position = attached
-            .iter()
-            .position(|c| state.db.get(state.cards[c.index()].def).is_energy());
-        if let Some(at) = position {
-            let card = attached.remove(at);
-            state.players[player.index()].discard.push(card);
-        }
+    if cost == 0 {
+        promote_from_retreat(state, player, to);
+        return;
     }
+    state.phase = Phase::DiscardingForRetreat {
+        player,
+        to,
+        remaining: cost,
+    };
+}
 
+fn promote_from_retreat(state: &mut GameState, player: PlayerId, to: PokemonId) {
+    let active = state.players[player.index()]
+        .active
+        .expect("retreating needs an Active");
     let side = &mut state.players[player.index()];
     side.bench.retain(|p| *p != to);
     side.bench.push(active);
     side.active = Some(to);
     side.retreated_this_turn = true;
+    state.phase = Phase::Main;
 
     let name = state.pokemon_def(to).name;
     state.log.push(format!("{player:?} retreats to {name}."));

@@ -13,6 +13,7 @@ starts at ticket 01.
 ## Decisions so far
 
 Ticket 01 resolved 2026-09-05: setup became four phases and every choice in it is the player's; details under [the ticket's Answer](issues/01-setup-as-a-phase.md).
+Ticket 02 resolved 2026-09-05: an attack cost names Energy types, and the player chooses which Energy a retreat discards; details under [the ticket's Answer](issues/02-energy-types-in-a-cost.md).
 
 ## Fog
 
