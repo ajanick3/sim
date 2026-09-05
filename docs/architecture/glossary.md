@@ -17,3 +17,5 @@ One physical card in one game. It is created at setup, it never moves in memory,
 **Card definition**:
 What a card says as printed, shared by every copy of it.
 
+**Seat**:
+One of the two sides of a game. A seat is not a turn order: the opening coin flip decides who goes first, so either seat may start.
