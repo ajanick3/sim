@@ -69,7 +69,7 @@ fn drain_log(state: &GameState, from: usize) -> usize {
 
 fn print_board(state: &GameState) {
     println!();
-    for player in [sim::ids::PlayerId::First, sim::ids::PlayerId::Second] {
+    for player in [sim::ids::PlayerId::One, sim::ids::PlayerId::Two] {
         let side = state.player(player);
         let active = match side.active {
             Some(pokemon) => format!(

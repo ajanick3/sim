@@ -10,6 +10,19 @@ use crate::state::{BENCH_LIMIT, GameState, Phase};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Action {
+    /// Name the player who takes the first turn. The coin flip's winner
+    /// chooses, and may choose the opponent.
+    ChooseWhoGoesFirst { first: PlayerId },
+    /// Take one of the cards the opponent's mulligans owe you.
+    TakeBonusDraw,
+    /// Leave the rest of them.
+    DeclineBonusDraws,
+    /// Place a Basic from hand face down as the Active.
+    PlaceActive { card: CardId },
+    /// Place a Basic from hand face down on the Bench.
+    PlaceOnBench { card: CardId },
+    /// Stop filling the Bench.
+    FinishPlacing,
     /// Put a Basic Pokémon from hand onto the Bench.
     PlayBasic { card: CardId },
     /// Attach an Energy from hand. Once per turn.
@@ -30,6 +43,10 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
     match state.phase {
         Phase::Main => Some(state.current),
         Phase::Promoting(player) => Some(player),
+        Phase::ChoosingWhoGoesFirst { winner } => Some(winner),
+        Phase::TakingBonusDraws { player, .. } => Some(player),
+        Phase::PlacingActive { player } => Some(player),
+        Phase::PlacingBench { player } => Some(player),
         Phase::Over => None,
     }
 }
@@ -40,6 +57,44 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         return actions;
     };
     let side = state.player(player);
+
+    match state.phase {
+        Phase::ChoosingWhoGoesFirst { winner } => {
+            // Rule 5: the winner chooses, and either seat is a legal answer.
+            actions.push(Action::ChooseWhoGoesFirst { first: winner });
+            actions.push(Action::ChooseWhoGoesFirst {
+                first: winner.opponent(),
+            });
+            return actions;
+        }
+        Phase::TakingBonusDraws { .. } => {
+            actions.push(Action::TakeBonusDraw);
+            actions.push(Action::DeclineBonusDraws);
+            return actions;
+        }
+        Phase::PlacingActive { .. } => {
+            // Rule 9: the Active must be a Basic, and a hand with no Basic
+            // cannot reach this phase — the mulligan rule guarantees one.
+            for card in &side.hand {
+                if state.def_of(*card).is_basic_pokemon() {
+                    actions.push(Action::PlaceActive { card: *card });
+                }
+            }
+            return actions;
+        }
+        Phase::PlacingBench { .. } => {
+            if side.bench.len() < BENCH_LIMIT {
+                for card in &side.hand {
+                    if state.def_of(*card).is_basic_pokemon() {
+                        actions.push(Action::PlaceOnBench { card: *card });
+                    }
+                }
+            }
+            actions.push(Action::FinishPlacing);
+            return actions;
+        }
+        _ => {}
+    }
 
     if let Phase::Promoting(_) = state.phase {
         for pokemon in &side.bench {
@@ -113,5 +168,15 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::Promote { pokemon } => {
             format!("Promote {}", state.pokemon_def(pokemon).name)
         }
+        Action::ChooseWhoGoesFirst { first } => format!("{first:?} takes the first turn"),
+        Action::TakeBonusDraw => "Take a bonus card".to_string(),
+        Action::DeclineBonusDraws => "Take no more bonus cards".to_string(),
+        Action::PlaceActive { card } => {
+            format!("Place {} as your Active", state.def_of(card).name())
+        }
+        Action::PlaceOnBench { card } => {
+            format!("Place {} on your Bench", state.def_of(card).name())
+        }
+        Action::FinishPlacing => "Finish placing".to_string(),
     }
 }
