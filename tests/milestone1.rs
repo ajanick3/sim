@@ -113,18 +113,30 @@ fn a_knockout_takes_a_prize() {
     let cost = state
         .pokemon_def(attacker)
         .attacks
-        .iter()
-        .map(|a| a.cost)
-        .max()
-        .unwrap();
-    while state.energy_attached(attacker) < cost {
-        let energy = *state
-            .player(PlayerId::One)
+        .last()
+        .expect("every Pokémon here has an attack")
+        .cost
+        .clone();
+    for required in &cost {
+        // A Colorless entry takes any Energy; every other entry takes its type.
+        let matches = |state: &GameState, card: &sim::ids::CardId| match state.def_of(*card) {
+            sim::card::CardDef::Energy(e) => {
+                *required == sim::card::Type::Colorless || e.kind == *required
+            }
+            sim::card::CardDef::Pokemon(_) => false,
+        };
+        let side = state.player(PlayerId::One);
+        let energy = side
             .hand
             .iter()
-            .find(|c| state.def_of(**c).is_energy())
-            .expect("the deck is mostly Energy");
+            .find(|c| matches(&state, c))
+            .or_else(|| side.library.iter().find(|c| matches(&state, c)))
+            .copied()
+            .expect("the deck holds Energy of both types");
         state.remove_from_hand(PlayerId::One, energy);
+        state.players[PlayerId::One.index()]
+            .library
+            .retain(|c| *c != energy);
         state.pokemon[attacker.index()].attached.push(energy);
     }
 
