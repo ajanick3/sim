@@ -1,7 +1,7 @@
 # Special conditions and checkup
 
 Type: task
-Status: ready-for-agent
+Status: claimed
 
 Add the five Special Conditions and the Pokémon Checkup between turns.
 
