@@ -85,6 +85,14 @@ pub enum Phase {
     PlacingActive { player: PlayerId },
     /// This player fills the Bench, and stops when they choose to.
     PlacingBench { player: PlayerId },
+    /// This player is retreating and chooses which Energy pays the cost.
+    DiscardingForRetreat {
+        player: PlayerId,
+        /// Where the Active goes once the cost is paid.
+        to: PokemonId,
+        /// How many Energy the player still owes.
+        remaining: u8,
+    },
     /// The current player is taking their turn.
     Main,
     /// This player lost their Active and must promote one from the Bench.

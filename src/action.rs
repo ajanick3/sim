@@ -29,6 +29,8 @@ pub enum Action {
     AttachEnergy { card: CardId, target: PokemonId },
     /// Retreat the Active, promoting a Benched Pokémon. Once per turn.
     Retreat { to: PokemonId },
+    /// Discard one attached Energy toward a Retreat Cost.
+    DiscardEnergy { card: CardId },
     /// Attack with the Active. The turn ends after it.
     Attack { index: usize },
     /// End the turn without attacking.
@@ -47,6 +49,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::TakingBonusDraws { player, .. } => Some(player),
         Phase::PlacingActive { player } => Some(player),
         Phase::PlacingBench { player } => Some(player),
+        Phase::DiscardingForRetreat { player, .. } => Some(player),
         Phase::Over => None,
     }
 }
@@ -91,6 +94,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::FinishPlacing);
+            return actions;
+        }
+        Phase::DiscardingForRetreat { .. } => {
+            let active = side.active.expect("a retreat starts from an Active");
+            for card in &state.pokemon(active).attached {
+                if state.def_of(*card).is_energy() {
+                    actions.push(Action::DiscardEnergy { card: *card });
+                }
+            }
             return actions;
         }
         _ => {}
@@ -178,5 +190,8 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Place {} on your Bench", state.def_of(card).name())
         }
         Action::FinishPlacing => "Finish placing".to_string(),
+        Action::DiscardEnergy { card } => {
+            format!("Discard {} to retreat", state.def_of(card).name())
+        }
     }
 }

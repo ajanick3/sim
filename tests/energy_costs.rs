@@ -1,7 +1,7 @@
 //! Ticket 02: an attack cost names Energy types.
 
 use sim::action::{Action, legal_actions};
-use sim::card::Type;
+use sim::card::{Attack, CardDb, CardDef, Energy, Pokemon, Type};
 use sim::cards::milestone1;
 use sim::engine::apply;
 use sim::ids::CardDefId;
@@ -67,7 +67,13 @@ fn an_attack_that_costs_fire_refuses_lightning() {
     );
 
     assert_eq!(
-        milestone1().db.get(set.cinderpup).as_pokemon().unwrap().attacks[0].cost,
+        milestone1()
+            .db
+            .get(set.cinderpup)
+            .as_pokemon()
+            .unwrap()
+            .attacks[0]
+            .cost,
         vec![Type::Fire, Type::Fire],
         "a cost names types, not a count"
     );
@@ -105,4 +111,97 @@ fn a_colorless_entry_does_not_eat_the_energy_a_named_entry_needs() {
             .any(|a| matches!(a, Action::Attack { .. })),
         "Spark Tackle still needs its Lightning"
     );
+}
+
+#[test]
+fn retreat_asks_which_energy_to_discard() {
+    let set = milestone1();
+    // Cinderpup's Retreat Cost is 2.
+    let mut state = game(9, [deck(set.cinderpup), deck(set.cinderpup)]);
+    force_attach(&mut state, set.lightning_energy, 1);
+    force_attach(&mut state, set.fire_energy, 2);
+
+    let player = state.current;
+    let bench = state.player(player).bench[0];
+    apply(&mut state, Action::Retreat { to: bench }).unwrap();
+
+    assert!(
+        matches!(state.phase, Phase::DiscardingForRetreat { .. }),
+        "the player chooses which Energy pays the Retreat Cost"
+    );
+
+    // Discard the two Fire and keep the Lightning.
+    for _ in 0..2 {
+        let choice = legal_actions(&state)
+            .into_iter()
+            .find(|a| match a {
+                Action::DiscardEnergy { card } => state.cards[card.index()].def == set.fire_energy,
+                _ => false,
+            })
+            .expect("the attached Fire is a legal discard");
+        apply(&mut state, choice).unwrap();
+    }
+
+    assert_eq!(state.phase, Phase::Main, "paying the cost ends the choice");
+    assert_eq!(
+        state.player(player).active,
+        Some(bench),
+        "the Benched Pokémon is now Active"
+    );
+
+    let kept = state.player(player).bench.last().copied().unwrap();
+    assert_eq!(
+        state.attached_energy_types(kept),
+        vec![Type::Lightning],
+        "the player kept the Energy they chose to keep"
+    );
+    assert_eq!(state.player(player).discard.len(), 2);
+}
+
+#[test]
+fn a_free_retreat_asks_nothing() {
+    // A Pokémon whose Retreat Cost is zero. The milestone card set has none,
+    // so this test builds one.
+    let mut db = CardDb::new();
+    let drifter = db.add(CardDef::Pokemon(Pokemon {
+        name: "Drifter",
+        hp: 60,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 0,
+        attacks: vec![Attack {
+            name: "Drift",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        name: "Psychic Energy",
+        kind: Type::Psychic,
+    }));
+
+    let mut decklist = vec![drifter; 6];
+    decklist.extend(vec![energy; 54]);
+    let mut state = GameState::new(
+        db,
+        [decklist.clone(), decklist],
+        Box::new(SeededRng::new(9)),
+    );
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+
+    let player = state.current;
+    let bench = state.player(player).bench[0];
+    apply(&mut state, Action::Retreat { to: bench }).unwrap();
+
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "a Retreat Cost of zero costs no Energy and no choice"
+    );
+    assert_eq!(state.player(player).active, Some(bench));
+    assert!(state.player(player).discard.is_empty());
 }
