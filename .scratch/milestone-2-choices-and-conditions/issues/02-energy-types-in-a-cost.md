@@ -1,7 +1,7 @@
 # Energy types in a cost
 
 Type: task
-Status: ready-for-agent
+Status: claimed
 
 Make an attack cost read Energy types instead of counting cards.
 
