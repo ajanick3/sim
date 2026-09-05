@@ -15,6 +15,7 @@ starts at ticket 01.
 Ticket 01 resolved 2026-09-05: setup became four phases and every choice in it is the player's; details under [the ticket's Answer](issues/01-setup-as-a-phase.md).
 Ticket 02 resolved 2026-09-05: an attack cost names Energy types, and the player chooses which Energy a retreat discards; details under [the ticket's Answer](issues/02-energy-types-in-a-cost.md).
 Ticket 03 resolved 2026-09-05: the five Special Conditions and the Pokémon Checkup work, and a player orders their own between-turn effects; details under [the ticket's Answer](issues/03-special-conditions-and-checkup.md).
+Ticket 04 resolved 2026-09-05: Aquabear is a third Basic that the engine expressed without change; details under [the ticket's Answer](issues/04-a-third-basic-unaided.md).
 Ticket 05 resolved 2026-09-05: a player reads the game through an owned masked view, at 23% of a decision; details under [the ticket's Answer](issues/05-masked-observation-views.md).
 
 ## Fog
