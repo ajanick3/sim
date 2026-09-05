@@ -11,6 +11,7 @@ pub struct Milestone1 {
     pub sparkmouse: CardDefId,
     pub cinderpup: CardDefId,
     pub lightning_energy: CardDefId,
+    pub fire_energy: CardDefId,
 }
 
 pub fn milestone1() -> Milestone1 {
@@ -28,12 +29,12 @@ pub fn milestone1() -> Milestone1 {
         attacks: vec![
             Attack {
                 name: "Nibble",
-                cost: 1,
+                cost: vec![Type::Lightning],
                 base_damage: 10,
             },
             Attack {
                 name: "Spark Tackle",
-                cost: 2,
+                cost: vec![Type::Lightning, Type::Colorless],
                 base_damage: 30,
             },
         ],
@@ -50,7 +51,7 @@ pub fn milestone1() -> Milestone1 {
         retreat_cost: 2,
         attacks: vec![Attack {
             name: "Ember",
-            cost: 2,
+            cost: vec![Type::Fire, Type::Fire],
             base_damage: 40,
         }],
     }));
@@ -60,16 +61,22 @@ pub fn milestone1() -> Milestone1 {
         kind: Type::Lightning,
     }));
 
+    let fire_energy = db.add(CardDef::Energy(Energy {
+        name: "Fire Energy",
+        kind: Type::Fire,
+    }));
+
     Milestone1 {
         db,
         sparkmouse,
         cinderpup,
         lightning_energy,
+        fire_energy,
     }
 }
 
-/// A legal 60: 4 of each Pokémon and 52 Energy. Basic Energy has no copy limit
-/// (rule 2), so this passes deck construction.
+/// A legal 60: 4 of each Pokémon, then Energy of both types. Basic Energy has
+/// no copy limit (rule 2), so this passes deck construction.
 pub fn starter_decklist(set: &Milestone1) -> Vec<CardDefId> {
     let mut decklist = Vec::new();
     for _ in 0..4 {
@@ -80,6 +87,7 @@ pub fn starter_decklist(set: &Milestone1) -> Vec<CardDefId> {
     }
     while decklist.len() < 60 {
         decklist.push(set.lightning_energy);
+        decklist.push(set.fire_energy);
     }
     decklist
 }

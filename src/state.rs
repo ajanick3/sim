@@ -1,6 +1,6 @@
 //! The whole game, as one value.
 
-use crate::card::{CardDb, CardDef, Pokemon};
+use crate::card::{CardDb, CardDef, Pokemon, Type};
 use crate::ids::{CardDefId, CardId, PlayerId, PokemonId};
 use crate::rng::{Rng, shuffle};
 
@@ -290,13 +290,40 @@ impl GameState {
             .saturating_sub(self.pokemon(id).damage)
     }
 
-    /// How many Energy cards are attached. Milestone 1 pays a cost by count.
+    /// How many Energy cards are attached. Retreat pays by count, because a
+    /// Retreat Cost is always Colorless.
     pub fn energy_attached(&self, id: PokemonId) -> u8 {
+        self.attached_energy_types(id).len() as u8
+    }
+
+    /// The type each attached Energy provides, in the order attached.
+    pub fn attached_energy_types(&self, id: PokemonId) -> Vec<Type> {
         self.pokemon(id)
             .attached
             .iter()
-            .filter(|c| self.def_of(**c).is_energy())
-            .count() as u8
+            .filter_map(|c| match self.def_of(*c) {
+                CardDef::Energy(energy) => Some(energy.kind),
+                CardDef::Pokemon(_) => None,
+            })
+            .collect()
+    }
+
+    /// Whether the Energy attached to this Pokémon pays a cost.
+    ///
+    /// Every named type is matched first, because a Colorless entry takes any
+    /// Energy and would otherwise eat the one Energy a named entry needed.
+    pub fn pays_cost(&self, id: PokemonId, cost: &[Type]) -> bool {
+        let mut available = self.attached_energy_types(id);
+        for required in cost.iter().filter(|t| **t != Type::Colorless) {
+            match available.iter().position(|kind| kind == required) {
+                Some(at) => {
+                    available.remove(at);
+                }
+                None => return false,
+            }
+        }
+        let colorless = cost.iter().filter(|t| **t == Type::Colorless).count();
+        available.len() >= colorless
     }
 
     /// Clear the once-per-turn flags for whoever is about to play.

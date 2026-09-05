@@ -131,7 +131,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         // Rule 17: the player going first skips their attack step.
         if !state.is_first_turn_of_game() {
             for (index, attack) in state.pokemon_def(active).attacks.iter().enumerate() {
-                if state.energy_attached(active) >= attack.cost {
+                if state.pays_cost(active, &attack.cost) {
                     actions.push(Action::Attack { index });
                 }
             }

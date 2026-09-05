@@ -22,9 +22,9 @@ pub enum Type {
 #[derive(Debug, Clone)]
 pub struct Attack {
     pub name: &'static str,
-    /// How many Energy the attack costs. Milestone 1 counts Energy rather than
-    /// matching types, so a cost of 2 means any 2 Energy.
-    pub cost: u8,
+    /// What the attack costs, one entry per Energy. A `Colorless` entry takes
+    /// any Energy; every other entry takes its own type.
+    pub cost: Vec<Type>,
     /// Damage before Weakness, Resistance, and any other effect.
     pub base_damage: u32,
 }
