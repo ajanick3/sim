@@ -4,6 +4,15 @@ use crate::card::{CardDb, CardDef, Condition, Pokemon, Type};
 use crate::ids::{CardDefId, CardId, PlayerId, PokemonId};
 use crate::rng::{Rng, shuffle};
 
+/// Whether a condition rotates the card, which is what makes Asleep,
+/// Confused, and Paralyzed exclude each other.
+fn rotates(condition: Condition) -> bool {
+    matches!(
+        condition,
+        Condition::Asleep | Condition::Confused | Condition::Paralyzed
+    )
+}
+
 /// The bench holds 5.
 pub const BENCH_LIMIT: usize = 5;
 /// Each player sets 6 Prize cards aside.
@@ -358,14 +367,29 @@ impl GameState {
     }
 
     /// Put a Special Condition on a Pokémon.
+    ///
+    /// Rule 55: Asleep, Confused, and Paralyzed all rotate the card, so the
+    /// newest replaces whichever of them was there. Rule 56: Burned and
+    /// Poisoned are independent of that and of each other. Rule 57: a second
+    /// Burn or Poison replaces the first rather than stacking.
     pub fn inflict(&mut self, id: PokemonId, condition: Condition) {
-        if !self.has_condition(id, condition) {
-            self.pokemon[id.index()].conditions.push(condition);
+        if rotates(condition) {
+            self.pokemon[id.index()].conditions.retain(|c| !rotates(*c));
+        } else {
+            self.remove_condition(id, condition);
         }
+        self.pokemon[id.index()].conditions.push(condition);
+    }
+
+    /// Rule 27: a Pokémon that leaves the Active spot loses every condition.
+    pub fn clear_conditions(&mut self, id: PokemonId) {
+        self.pokemon[id.index()].conditions.clear();
     }
 
     pub fn remove_condition(&mut self, id: PokemonId, condition: Condition) {
-        self.pokemon[id.index()].conditions.retain(|c| *c != condition);
+        self.pokemon[id.index()]
+            .conditions
+            .retain(|c| *c != condition);
     }
 
     pub fn is_over(&self) -> bool {

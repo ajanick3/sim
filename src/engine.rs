@@ -215,6 +215,8 @@ fn promote_from_retreat(state: &mut GameState, player: PlayerId, to: PokemonId) 
     let active = state.players[player.index()]
         .active
         .expect("retreating needs an Active");
+    // Rule 27: moving to the Bench removes all Special Conditions.
+    state.clear_conditions(active);
     let side = &mut state.players[player.index()];
     side.bench.retain(|p| *p != to);
     side.bench.push(active);
@@ -235,6 +237,17 @@ fn attack(state: &mut GameState, index: usize) {
     let Some(defender) = state.players[player.opponent().index()].active else {
         return;
     };
+
+    // Rule 30: Confusion flips before the attack happens. Rule 52: on tails
+    // the attack does not happen and 3 damage counters go on your own Pokémon.
+    if state.has_condition(attacker, Condition::Confused) && !state.rng.flip() {
+        state.pokemon[attacker.index()].damage += 30;
+        let name = state.pokemon_def(attacker).name;
+        state
+            .log
+            .push(format!("{name} is Confused and hurts itself."));
+        return;
+    }
 
     let attack = state.pokemon_def(attacker).attacks[index].clone();
     let damage = damage_dealt(state, attacker, defender, attack.base_damage);
@@ -363,9 +376,7 @@ fn clear_paralysis(state: &mut GameState) {
     if state.has_condition(active, Condition::Paralyzed) {
         state.remove_condition(active, Condition::Paralyzed);
         let name = state.pokemon_def(active).name;
-        state
-            .log
-            .push(format!("{name} is no longer Paralyzed."));
+        state.log.push(format!("{name} is no longer Paralyzed."));
     }
 }
 

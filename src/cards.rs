@@ -55,7 +55,7 @@ pub fn milestone1() -> Milestone1 {
             name: "Ember",
             cost: vec![Type::Fire, Type::Fire],
             base_damage: 40,
-                inflicts: None,
+            inflicts: None,
         }],
     }));
 
