@@ -206,7 +206,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::TakeCard { card } => {
-            let (chooser, played, step, from, to, filter, remaining, moved, then) =
+            let (chooser, played, step, from, to, filter, excludes, remaining, moved, then) =
                 match state.phase {
                     Phase::Deciding {
                         chooser,
@@ -215,11 +215,22 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         from,
                         to,
                         filter,
+                        excludes_type_of_previous,
                         remaining,
                         moved,
                         then,
+                        ..
                     } => (
-                        chooser, played, step, from, to, filter, remaining, moved, then,
+                        chooser,
+                        played,
+                        step,
+                        from,
+                        to,
+                        filter,
+                        excludes_type_of_previous,
+                        remaining,
+                        moved,
+                        then,
                     ),
                     _ => return Err(IllegalAction),
                 };
@@ -238,6 +249,9 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     state.players[chooser.index()].bench.push(pokemon);
                     state.log.push(format!("{chooser:?} benches {name}."));
                 }
+                // `legal_actions` never offers `TakeCard` for a slot bound
+                // to attach: that needs a target, which is `TakeCardOnto`.
+                Destination::Attach => unreachable!("Attach is taken with a target"),
             }
             // A slot whose limit runs out does not move the search on by
             // itself. ADR 0012 keeps the choice to stop with the player, and
@@ -250,8 +264,60 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 from,
                 to,
                 filter,
+                excludes_type_of_previous: excludes,
                 remaining: remaining - 1,
                 moved: moved + 1,
+                previous: Some(card),
+                then,
+            };
+        }
+
+        Action::TakeCardOnto { card, target } => {
+            let (chooser, played, step, from, filter, excludes, remaining, moved, then) =
+                match state.phase {
+                    Phase::Deciding {
+                        chooser,
+                        card: played,
+                        step,
+                        from,
+                        filter,
+                        excludes_type_of_previous,
+                        remaining,
+                        moved,
+                        then,
+                        to: Destination::Attach,
+                        ..
+                    } => (
+                        chooser,
+                        played,
+                        step,
+                        from,
+                        filter,
+                        excludes_type_of_previous,
+                        remaining,
+                        moved,
+                        then,
+                    ),
+                    _ => return Err(IllegalAction),
+                };
+            state.zone_mut(chooser, from).retain(|c| *c != card);
+            state.pokemon[target.index()].attached.push(card);
+            let energy = state.def_of(card).name();
+            let name = state.pokemon_def(target).name;
+            state
+                .log
+                .push(format!("{chooser:?} attaches {energy} to {name}."));
+            state.phase = Phase::Deciding {
+                chooser,
+                card: played,
+                step,
+                from,
+                to: Destination::Attach,
+                filter,
+                excludes_type_of_previous: excludes,
+                remaining: remaining - 1,
+                moved: moved + 1,
+                previous: Some(card),
                 then,
             };
         }
@@ -260,19 +326,28 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             // Declining a slot moves the search on rather than ending it: a
             // card that asks for one of each does not demand that the deck
             // holds every one.
-            let (chooser, played, step, from, moved, then) = match state.phase {
+            let (chooser, played, step, from, moved, previous, then) = match state.phase {
                 Phase::Deciding {
                     chooser,
                     card: played,
                     step,
                     from,
                     moved,
+                    previous,
                     then,
                     ..
-                } => (chooser, played, step, from, moved, then),
+                } => (chooser, played, step, from, moved, previous, then),
                 _ => return Err(IllegalAction),
             };
-            enter_slot(state, chooser, played, step + 1, from, then, moved);
+            enter_slot(
+                state,
+                chooser,
+                played,
+                step + 1,
+                from,
+                then,
+                Progress { moved, previous },
+            );
         }
 
         Action::PayWithCard { card } => {
@@ -399,6 +474,14 @@ pub fn undo(
 /// the next slot back from the card. A search ends where its last slot ends:
 /// the deck is shuffled if the search read it or put a card back into it,
 /// `then` runs, and the turn goes on.
+/// What a search has accumulated so far, across every slot it has run.
+struct Progress {
+    moved: u32,
+    /// The last card any slot took, or `None` before the first. Only a slot
+    /// marked `excludes_type_of_previous` reads it.
+    previous: Option<CardId>,
+}
+
 fn enter_slot(
     state: &mut GameState,
     chooser: PlayerId,
@@ -406,8 +489,9 @@ fn enter_slot(
     step: u32,
     from: Zone,
     then: Option<crate::card::Then>,
-    moved: u32,
+    progress: Progress,
 ) {
+    let Progress { moved, previous } = progress;
     let slot = state
         .def_of(card)
         .as_trainer()
@@ -449,8 +533,12 @@ fn enter_slot(
         from,
         to: slot.to,
         filter: slot.filter,
+        excludes_type_of_previous: slot.excludes_type_of_previous,
         remaining: slot.limit,
         moved,
+        // A new slot keeps what the search has taken so far: the constraint
+        // reads across slots, not within one.
+        previous,
         then,
     };
 }
@@ -464,7 +552,18 @@ fn enter_slot(
 fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect: TrainerEffect) {
     match effect {
         TrainerEffect::Decide { from, then, .. } => {
-            enter_slot(state, player, card, 0, from, then, 0);
+            enter_slot(
+                state,
+                player,
+                card,
+                0,
+                from,
+                then,
+                Progress {
+                    moved: 0,
+                    previous: None,
+                },
+            );
         }
 
         TrainerEffect::MoveAttachedEnergy => {

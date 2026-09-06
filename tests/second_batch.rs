@@ -20,6 +20,7 @@ struct Set {
     small: CardDefId,
     stage1: CardDefId,
     energy: CardDefId,
+    fire_energy: CardDefId,
     cyrano: CardDefId,
 }
 
@@ -65,6 +66,11 @@ fn build() -> Set {
         name: "Colorless Energy",
         kind: Type::Colorless,
     }));
+    let fire_energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-fire-energy",
+        name: "Fire Energy",
+        kind: Type::Fire,
+    }));
     let cyrano = db.add(CardDef::Trainer(Trainer {
         print_id: "test-cyrano",
         name: "Cyrano",
@@ -76,6 +82,7 @@ fn build() -> Set {
                 filter: CardFilter::PokemonEx,
                 to: Destination::Zone(Zone::Hand),
                 limit: 3,
+                excludes_type_of_previous: false,
             }],
             then: None,
         },
@@ -87,16 +94,20 @@ fn build() -> Set {
         small,
         stage1,
         energy,
+        fire_energy,
         cyrano,
     }
 }
 
-/// A deck holding a few of each card, then Energy to sixty.
+/// A deck holding a few of each card, then Energy to sixty. A handful of
+/// Fire Energy sits among the Colorless, so a card that wants two different
+/// types has two to choose between.
 fn deck(set: &Set, extra: CardDefId) -> Vec<CardDefId> {
     let mut decklist = vec![set.mon; 6];
     decklist.extend([set.mon_ex; 4]);
     decklist.extend([set.small; 4]);
     decklist.extend([set.stage1; 4]);
+    decklist.extend([set.fire_energy; 4]);
     decklist.push(extra);
     while decklist.len() < 60 {
         decklist.push(set.energy);
@@ -227,6 +238,7 @@ fn the_small_basic_filter_reads_both_the_stage_and_the_hp() {
                 filter: CardFilter::BasicPokemonWithHpAtMost(70),
                 to: Destination::Zone(Zone::Hand),
                 limit: 2,
+                excludes_type_of_previous: false,
             }],
             then: None,
         },
@@ -270,6 +282,7 @@ fn with_poffin(set: Set) -> (Set, CardDefId) {
                 filter: CardFilter::BasicPokemonWithHpAtMost(70),
                 to: Destination::Bench,
                 limit: 2,
+                excludes_type_of_previous: false,
             }],
             then: None,
         },
@@ -403,6 +416,7 @@ fn a_search_that_ends_in_the_library_still_shuffles() {
                 filter: CardFilter::AnyPokemon,
                 to: Destination::Zone(Zone::Library),
                 limit: 5,
+                excludes_type_of_previous: false,
             }],
             then: None,
         },
@@ -451,6 +465,7 @@ fn with_requirements(set: Set) -> (Set, CardDefId, CardDefId) {
                 filter: CardFilter::AnyPokemon,
                 to: Destination::Zone(Zone::Hand),
                 limit: 1,
+                excludes_type_of_previous: false,
             }],
             then: None,
         },
@@ -828,6 +843,7 @@ fn the_stage_filters_offer_what_they_name() {
                     filter,
                     to: Destination::Zone(Zone::Hand),
                     limit: 1,
+                    excludes_type_of_previous: false,
                 }],
                 then: None,
             },
@@ -898,6 +914,7 @@ fn slot(filter: CardFilter) -> Slot {
         filter,
         to: Destination::Zone(Zone::Hand),
         limit: 1,
+        excludes_type_of_previous: false,
     }
 }
 
@@ -1131,6 +1148,148 @@ fn hilda_and_dawn_are_admitted_from_the_artifact() {
     );
 }
 
+// --- Ticket 05, part three: Crispin ---
+
+fn with_crispin(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let crispin = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-crispin",
+        name: "Crispin",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![
+                Slot {
+                    filter: CardFilter::BasicEnergy,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                },
+                Slot {
+                    filter: CardFilter::BasicEnergy,
+                    to: Destination::Attach,
+                    limit: 1,
+                    excludes_type_of_previous: true,
+                },
+            ],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, crispin)
+}
+
+#[test]
+fn the_second_slot_excludes_the_type_the_first_slot_took() {
+    let (set, crispin) = with_crispin(build());
+    let mut state = game(&set, crispin, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, crispin);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let first = offered(&state)[0];
+    let first_kind = match state.def_of(first) {
+        sim::card::CardDef::Energy(e) => e.kind,
+        _ => panic!("the first slot only offers Energy"),
+    };
+    apply(&mut state, Action::TakeCard { card: first }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    // The second slot attaches, so its offers come as TakeCardOnto.
+    let second_choices: Vec<CardId> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::TakeCardOnto { card, .. } => Some(card),
+            _ => None,
+        })
+        .collect();
+    assert!(
+        !second_choices.is_empty(),
+        "a different type is in the deck"
+    );
+    for card in second_choices {
+        let kind = match state.def_of(card) {
+            sim::card::CardDef::Energy(e) => e.kind,
+            _ => panic!("the second slot only offers Energy"),
+        };
+        assert_ne!(kind, first_kind, "the second Energy must differ in type");
+    }
+}
+
+#[test]
+fn crispin_attaches_the_second_card_to_the_chosen_pokemon() {
+    let (set, crispin) = with_crispin(build());
+    let mut state = game(&set, crispin, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, crispin);
+    let active = state.player(player).active.expect("setup placed an Active");
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let first = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: first }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    let (second, target) = legal_actions(&state)
+        .into_iter()
+        .find_map(|a| match a {
+            Action::TakeCardOnto { card, target } => Some((card, target)),
+            _ => None,
+        })
+        .expect("the second slot offers somewhere to attach");
+    assert_eq!(target, active, "the only Pokémon in play is the Active");
+
+    apply(
+        &mut state,
+        Action::TakeCardOnto {
+            card: second,
+            target,
+        },
+    )
+    .unwrap();
+    // ADR 0012 keeps the choice to stop with the player, slot by slot.
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "two slots, two cards, done");
+    assert!(state.player(player).hand.contains(&first));
+    assert!(state.pokemon(active).attached.contains(&second));
+    assert!(!state.player(player).hand.contains(&second));
+    assert!(!state.player(player).library.contains(&second));
+}
+
+#[test]
+fn crispin_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let crispin = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Crispin")
+        .expect("Crispin plays");
+    assert_eq!(
+        crispin.effect,
+        TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![
+                Slot {
+                    filter: CardFilter::BasicEnergy,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                },
+                Slot {
+                    filter: CardFilter::BasicEnergy,
+                    to: Destination::Attach,
+                    limit: 1,
+                    excludes_type_of_previous: true,
+                },
+            ],
+            then: None,
+        }
+    );
+}
+
 // --- The card data ---
 
 #[test]
@@ -1152,6 +1311,7 @@ fn buddy_buddy_poffin_is_admitted_from_the_artifact() {
                 filter: CardFilter::BasicPokemonWithHpAtMost(70),
                 to: Destination::Bench,
                 limit: 2,
+                excludes_type_of_previous: false,
             }],
             then: None,
         }
@@ -1177,6 +1337,7 @@ fn cyrano_is_admitted_from_the_artifact() {
                 filter: CardFilter::PokemonEx,
                 to: Destination::Zone(Zone::Hand),
                 limit: 3,
+                excludes_type_of_previous: false,
             }],
             then: None,
         }

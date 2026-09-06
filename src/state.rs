@@ -158,10 +158,14 @@ pub enum Phase {
         /// limit, held inline because every choice reads them.
         to: crate::card::Destination,
         filter: crate::card::CardFilter,
+        excludes_type_of_previous: bool,
         remaining: u32,
         /// How many have been taken so far, across every slot. `then` reads
         /// it when the search ends; nothing else needs it.
         moved: u32,
+        /// The last card a slot took, across the whole search — not reset
+        /// between slots. `excludes_type_of_previous` is the only reader.
+        previous: Option<CardId>,
         /// What to do, beyond the moves themselves, once the search ends.
         then: Option<crate::card::Then>,
     },
@@ -476,6 +480,31 @@ impl GameState {
                 .as_pokemon()
                 .is_some_and(|p| p.stage == crate::card::Stage::Basic && p.hp <= hp),
         }
+    }
+
+    /// Whether a card fills a search's slot: the slot's filter, and, when it
+    /// excludes the previous slot's type, that this card's Energy type
+    /// differs from the last one taken.
+    pub fn matches_slot(
+        &self,
+        card: CardId,
+        slot: &crate::card::Slot,
+        previous: Option<CardId>,
+    ) -> bool {
+        if !self.matches_filter(card, slot.filter) {
+            return false;
+        }
+        if !slot.excludes_type_of_previous {
+            return true;
+        }
+        let Some(previous) = previous else {
+            return true;
+        };
+        let kind_of = |card: CardId| match self.def_of(card) {
+            crate::card::CardDef::Energy(e) => Some(e.kind),
+            _ => None,
+        };
+        kind_of(card) != kind_of(previous)
     }
 
     /// The type each attached Energy provides, in the order attached.
