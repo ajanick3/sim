@@ -1,0 +1,30 @@
+Pokémon: 24
+2 Abra TWM 080
+2 Abra MEG 054
+4 Kadabra MEG 055
+3 Alakazam MEG 056
+4 Duskull SFA 018
+2 Dusclops SFA 019
+2 Dusknoir SFA 020
+2 Budew PRE 004
+1 Shaymin DRI 010
+1 Patrat CRI 070
+1 Fezandipiti ex SFA 038
+
+Trainer: 31
+4 Gwynn PBL 078
+4 Hilda WHT 084
+2 Dawn PFL 087
+1 Boss's Orders MEG 114
+4 Poké Pad ASC 198
+3 Buddy-Buddy Poffin TEF 144
+4 Rare Candy MEG 125
+3 Strange Timepiece MEG 128
+2 Night Stretcher SFA 061
+1 Sacred Ash DRI 168
+2 Special Red Card CRI 082
+1 Prime Catcher PRE 119
+
+Energy: 5
+4 Telepathic Psychic Energy POR 088
+1 Psychic Energy CRE 232

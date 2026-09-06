@@ -149,21 +149,27 @@ fn the_uncheckable_rule_is_named() {
 }
 
 #[test]
-fn the_committed_deck_is_legal_and_every_line_matches() {
-    let text = std::fs::read_to_string("decks/BrentTonisson.txt").expect("the deck is committed");
+fn every_committed_deck_is_legal_and_every_line_matches() {
     let import = load(&artifact()).unwrap();
-    let list = parse(&text).expect("a real decklist parses");
-    let report = check(&list, &import);
+    let mut checked = 0;
 
-    assert_eq!(report.total, 60);
-    assert!(
-        report.problems.is_empty(),
-        "a real deck checks clean: {:?}",
-        report.problems
-    );
-    assert_eq!(
-        report.matched.len(),
-        21,
-        "every Pokémon and Trainer line matched a card; the Energy is basic"
-    );
+    for entry in std::fs::read_dir("decks").expect("the decks directory is committed") {
+        let path = entry.unwrap().path();
+        if path.extension().and_then(|e| e.to_str()) != Some("txt") {
+            continue;
+        }
+        let text = std::fs::read_to_string(&path).unwrap();
+        let list = parse(&text).unwrap_or_else(|errors| panic!("{path:?}: {errors:?}"));
+        let report = check(&list, &import);
+
+        assert_eq!(report.total, 60, "{path:?} holds 60 cards");
+        assert!(
+            report.problems.is_empty(),
+            "{path:?} checks clean: {:?}",
+            report.problems
+        );
+        checked += 1;
+    }
+
+    assert!(checked >= 2, "the decks are being read: {checked} found");
 }
