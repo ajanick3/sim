@@ -51,12 +51,28 @@ impl Line {
 #[derive(Debug, Clone, Default)]
 pub struct Decklist {
     pub lines: Vec<Line>,
+    /// Lines the parser could not read at all, kept verbatim. One bad line
+    /// does not spoil a list: the rest still reads, and the report names
+    /// what it could not.
+    pub unreadable: Vec<String>,
 }
 
 impl Decklist {
     /// How many cards the list holds.
+    ///
+    /// A line the parser could not read still counts toward the deck if its
+    /// leading number reads, which it usually does: the count is the one
+    /// part of a line that never varies by dialect. Rule 1 stays checkable
+    /// even where a card does not resolve.
     pub fn total(&self) -> u32 {
-        self.lines.iter().map(|line| line.count).sum()
+        let read: u32 = self.lines.iter().map(|line| line.count).sum();
+        let unread: u32 = self
+            .unreadable
+            .iter()
+            .filter_map(|line| line.split_whitespace().next())
+            .filter_map(|count| count.parse::<u32>().ok())
+            .sum();
+        read + unread
     }
 }
 
@@ -102,10 +118,14 @@ impl Report {
     }
 }
 
-/// Read a decklist. A line the parser cannot read at all is an error naming it.
-pub fn parse(text: &str) -> Result<Decklist, Vec<String>> {
+/// Read a decklist.
+///
+/// Nothing here fails: a line the parser cannot read is kept verbatim in
+/// [`Decklist::unreadable`], and [`check`] names it. A promo printed with no
+/// number is the case that taught this — one such line used to cost the
+/// whole list.
+pub fn parse(text: &str) -> Decklist {
     let mut list = Decklist::default();
-    let mut errors = Vec::new();
 
     for raw in text.lines() {
         let line = raw.trim();
@@ -114,15 +134,11 @@ pub fn parse(text: &str) -> Result<Decklist, Vec<String>> {
         }
         match read_line(line) {
             Some(entry) => list.lines.push(entry),
-            None => errors.push(format!("cannot read: {line}")),
+            None => list.unreadable.push(line.to_string()),
         }
     }
 
-    if errors.is_empty() {
-        Ok(list)
-    } else {
-        Err(errors)
-    }
+    list
 }
 
 /// A section header or the total, neither of which is a card.
@@ -167,6 +183,10 @@ pub fn check(list: &Decklist, import: &Import) -> Report {
         ..Report::default()
     };
 
+    for line in &list.unreadable {
+        report.uncheckable.push(format!("could not read: {line}"));
+    }
+
     if report.total != 60 {
         report
             .problems
@@ -183,6 +203,21 @@ pub fn check(list: &Decklist, import: &Import) -> Report {
 
         if line.is_basic_energy() {
             // Basic Energy is not in the artifact and the engine supplies it.
+            continue;
+        }
+
+        // A set this artifact does not hold cannot be resolved, and that is
+        // not a fault in the deck. It is the same kind of fact as the ACE
+        // SPEC rule: something the data cannot answer, said out loud.
+        if !import
+            .sets
+            .iter()
+            .any(|set| set.abbreviation.eq_ignore_ascii_case(&line.set_code))
+        {
+            report.uncheckable.push(format!(
+                "{} {}: this artifact holds no set {}, so the card is unresolved.",
+                line.count, line.name, line.set_code
+            ));
             continue;
         }
 

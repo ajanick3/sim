@@ -21,15 +21,7 @@ fn main() {
         std::process::exit(1);
     });
 
-    let list = match parse(&text) {
-        Ok(list) => list,
-        Err(errors) => {
-            for error in errors {
-                eprintln!("{error}");
-            }
-            std::process::exit(1);
-        }
-    };
+    let list = parse(&text);
 
     let report = check(&list, &import);
     println!("{} cards, {} lines", report.total, list.lines.len());
