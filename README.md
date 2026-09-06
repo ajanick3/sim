@@ -36,8 +36,9 @@ yet: evolution, Trainers, Abilities, and Stadiums.
 | `src/ids.rs`    | The typed indices into the arenas                         |
 | `src/rng.rs`    | A seeded generator, and a scripted one for tests          |
 | `src/view.rs`   | What one player is allowed to see                         |
+| `src/import.rs` | Reading the card artifact, and refusing what it cannot run |
 | `src/main.rs`   | The text interface                                        |
-| `src/bin/`      | `selfplay`, a headless loop for measuring                 |
+| `src/bin/`      | `selfplay` and `coverage`, for measuring                  |
 
 ## Card data
 
@@ -49,8 +50,15 @@ credentials:
 python3 tools/import_cards.py        # about 95 seconds, 3051 cards
 ```
 
-The engine does not read the file yet. Its cards are still the literals in
-`src/cards.rs`.
+The engine reads the artifact, and admits only the cards it can run all of:
+
+```sh
+cargo run --bin coverage             # 274 of 3051 Standard cards (9.0%)
+cargo run --bin coverage -- refused  # every refused card, and why
+```
+
+A card it cannot run is refused by name and reason, never half-loaded. Its own
+games still use the literals in `src/cards.rs`.
 
 ## The documents
 
