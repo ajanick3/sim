@@ -18,6 +18,16 @@ pub enum Type {
     Colorless,
 }
 
+/// What kind of Trainer a card is. Each has its own limit in rule 13: a
+/// Supporter and a Stadium once a turn, an Item and a Tool without limit.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TrainerKind {
+    Supporter,
+    Item,
+    Tool,
+    Stadium,
+}
+
 /// A Special Condition. Only the Active can carry one (rule 49).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Condition {

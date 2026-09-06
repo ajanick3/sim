@@ -10,13 +10,20 @@
 
 use serde_json::Value;
 
-use crate::card::{Attack, CardDb, CardDef, Energy, Pokemon, Type};
+use crate::card::{Attack, CardDb, CardDef, Energy, Pokemon, TrainerKind, Type};
 use crate::ids::CardDefId;
 
 /// Why the engine cannot run a card.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Refusal {
-    /// A Trainer, an Energy, or an evolving Pokémon. The engine plays Basics.
+    /// A Trainer. The engine plays no card that carries rules text.
+    IsATrainer(TrainerKind),
+    /// A special Energy, which carries rules text. Basic Energy is not in the
+    /// artifact at all.
+    IsASpecialEnergy,
+    /// A Stage 1 or Stage 2 Pokémon. The engine has no evolution.
+    IsAnEvolution,
+    /// A Pokémon card the engine cannot place, and nothing above fits.
     NotABasicPokemon,
     /// An ability is text the engine cannot execute.
     HasAnAbility,
@@ -105,6 +112,12 @@ impl Import {
     /// How many cards each reason refused.
     pub fn refusals_by_reason(&self) -> Vec<(Refusal, usize)> {
         let reasons = [
+            Refusal::IsATrainer(TrainerKind::Supporter),
+            Refusal::IsATrainer(TrainerKind::Item),
+            Refusal::IsATrainer(TrainerKind::Tool),
+            Refusal::IsATrainer(TrainerKind::Stadium),
+            Refusal::IsASpecialEnergy,
+            Refusal::IsAnEvolution,
             Refusal::NotABasicPokemon,
             Refusal::HasAnAbility,
             Refusal::AttackHasText,
@@ -189,8 +202,16 @@ fn read_sets(root: &Value) -> Vec<SetRef> {
 }
 
 fn read_card(card: &Value) -> Result<CardDef, Refusal> {
-    if card["category"].as_str() != Some("Pokemon") || card["stage"].as_str() != Some("Basic") {
-        return Err(Refusal::NotABasicPokemon);
+    match card["category"].as_str() {
+        Some("Trainer") => return Err(Refusal::IsATrainer(trainer_kind(card))),
+        Some("Energy") => return Err(Refusal::IsASpecialEnergy),
+        Some("Pokemon") => {}
+        _ => return Err(Refusal::NotABasicPokemon),
+    }
+    match card["stage"].as_str() {
+        Some("Basic") => {}
+        Some(_) => return Err(Refusal::IsAnEvolution),
+        None => return Err(Refusal::NotABasicPokemon),
     }
     if card["abilities"].as_array().is_some_and(|a| !a.is_empty()) {
         return Err(Refusal::HasAnAbility);
@@ -222,6 +243,18 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
         prizes: prizes_for(card["name"].as_str().unwrap_or("")),
         attacks,
     }))
+}
+
+/// A Trainer's kind. TCGdex writes `Tool` for a Pokémon Tool.
+fn trainer_kind(card: &Value) -> TrainerKind {
+    match card["trainerType"].as_str() {
+        Some("Supporter") => TrainerKind::Supporter,
+        Some("Stadium") => TrainerKind::Stadium,
+        Some("Tool") => TrainerKind::Tool,
+        // TCGdex leaves the kind off a handful of Trainers. An Item is the
+        // kind with no limit of its own, so it is the safe reading.
+        _ => TrainerKind::Item,
+    }
 }
 
 /// What a knockout of this card is worth, read from its name.
