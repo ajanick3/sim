@@ -1,7 +1,7 @@
 # The first trainer effects
 
 Type: task
-Status: ready-for-agent
+Status: claimed
 Blocked by: 02
 
 Build the primitives ticket 02 named, and the Trainers that need only them.
