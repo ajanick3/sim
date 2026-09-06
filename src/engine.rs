@@ -246,20 +246,22 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::FinishDeciding => {
-            let (chooser, to, moved, then) = match state.phase {
+            let (chooser, from, to, moved, then) = match state.phase {
                 Phase::Deciding {
                     chooser,
+                    from,
                     to,
                     moved,
                     then,
                     ..
-                } => (chooser, to, moved, then),
+                } => (chooser, from, to, moved, then),
                 _ => return Err(IllegalAction),
             };
-            // A card moved into the Library is shuffled in once the choice
-            // ends, not after each one — the same rule a deck search always
-            // follows.
-            if to == Destination::Zone(Zone::Library) {
+            // The deck is shuffled once the choice ends, not after each
+            // card. Either end of the move calls for it: a card put back
+            // into the deck is shuffled in, and a deck that was searched is
+            // shuffled because the player has seen the order of it.
+            if from == Zone::Library || to == Destination::Zone(Zone::Library) {
                 let library = &mut state.players[chooser.index()].library;
                 shuffle(state.rng.as_mut(), library);
             }

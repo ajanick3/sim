@@ -11,8 +11,8 @@
 use serde_json::Value;
 
 use crate::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Then, Trainer,
-    TrainerEffect, TrainerKind, Type, Zone,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Stage, Then,
+    Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use crate::ids::CardDefId;
 
@@ -238,6 +238,12 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
         Some("Pokemon") => {}
         _ => return Err(Refusal::NotABasicPokemon),
     }
+    let stage = match card["stage"].as_str() {
+        Some("Basic") => Stage::Basic,
+        Some("Stage1") => Stage::Stage1,
+        Some("Stage2") => Stage::Stage2,
+        _ => return Err(Refusal::NotABasicPokemon),
+    };
     let evolve_from = match card["stage"].as_str() {
         Some("Basic") => None,
         // Rule 19 matches an evolution to the Pokémon it names, by name. A
@@ -281,6 +287,7 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
         resistance: read_modifier(&card["resistances"], &["-30"])?,
         retreat_cost: card["retreat"].as_u64().unwrap_or(0) as u8,
         prizes: prizes_for(card["name"].as_str().unwrap_or("")),
+        stage,
         evolve_from,
         attacks,
     }))

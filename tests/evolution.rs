@@ -1,7 +1,7 @@
 //! Ticket 01: evolution, rules 19 to 22.
 
 use sim::action::{Action, legal_actions};
-use sim::card::{Attack, CardDb, CardDef, Energy, Pokemon, Type};
+use sim::card::{Attack, CardDb, CardDef, Energy, Pokemon, Stage, Type};
 use sim::engine::apply;
 use sim::ids::{CardDefId, PlayerId};
 use sim::rng::SeededRng;
@@ -25,6 +25,7 @@ fn build() -> Set {
         resistance: None,
         retreat_cost: 1,
         prizes: 1,
+        stage: Stage::Basic,
         evolve_from: None,
         attacks: vec![Attack {
             name: "Vine",
@@ -42,6 +43,7 @@ fn build() -> Set {
         resistance: None,
         retreat_cost: 1,
         prizes: 1,
+        stage: Stage::Stage1,
         evolve_from: Some("Seedling"),
         attacks: vec![Attack {
             name: "Petal Slash",

@@ -1,7 +1,7 @@
 //! Ticket 02: an attack cost names Energy types.
 
 use sim::action::{Action, legal_actions};
-use sim::card::{Attack, CardDb, CardDef, Energy, Pokemon, Type};
+use sim::card::{Attack, CardDb, CardDef, Energy, Pokemon, Stage, Type};
 use sim::cards::milestone1;
 use sim::engine::apply;
 use sim::ids::CardDefId;
@@ -172,6 +172,7 @@ fn a_free_retreat_asks_nothing() {
         resistance: None,
         retreat_cost: 0,
         evolve_from: None,
+        stage: Stage::Basic,
         prizes: 1,
         attacks: vec![Attack {
             name: "Drift",
