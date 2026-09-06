@@ -18,6 +18,7 @@ Ticket 03 resolved 2026-09-05: the five Special Conditions and the Pokémon Chec
 Ticket 04 resolved 2026-09-05: Aquabear is a third Basic that the engine expressed without change; details under [the ticket's Answer](issues/04-a-third-basic-unaided.md).
 Ticket 05 resolved 2026-09-05: a player reads the game through an owned masked view, at 23% of a decision; details under [the ticket's Answer](issues/05-masked-observation-views.md).
 Ticket 06 resolved 2026-09-06: the Standard cards are imported from TCGdex into a versioned JSON artifact; details under [the ticket's Answer](issues/06-the-card-data-bridge.md).
+Ticket 07 resolved 2026-09-06: the engine reads the artifact, refuses what it cannot run, and plays 274 of 3051 Standard cards; details under [the ticket's Answer](issues/07-read-the-card-artifact.md).
 
 ## Fog
 
@@ -27,6 +28,6 @@ Ticket 06 resolved 2026-09-06: the Standard cards are imported from TCGdex into 
   Trainer or an Ability that heals one has nowhere to hook in yet.
 - A mulligan reveals the hand, so that hand is public. No view records what was
   revealed.
-- The engine cannot express most of the imported cards. Ticket 07 opens the
-  question of how it refuses one it cannot run.
+- The coverage number stands at 9%. Evolution and an effect system are the two
+  features that would move it, and neither has a ticket.
 - The card data bridge has no format. Ticket 06 opens the question.
