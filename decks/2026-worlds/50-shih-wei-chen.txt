@@ -1,0 +1,25 @@
+Pokémon: 20
+3 Pecharunt ex SFA 039
+1 Fezandipiti ex ASC 288
+4 Carvanha PFL 060
+4 Mega Sharpedo ex PFL 061
+2 Toxtricity MEP 017
+2 Toxel MEP 078
+2 Tatsugiri SVP 118
+2 Munkidori TWM 095
+
+Trainer: 31
+4 Lillie's Determination ASC 192
+1 Unfair Stamp TWM 165
+3 Judge POR 076
+4 Buddy-Buddy Poffin ASC 184
+4 Poke Pad ASC 198
+1 Team Rocket's Watchtower ASC 210
+3 Binding Mochi PRE 095
+1 Night Stretcher ASC 196
+4 Ultra Ball ASC 213
+2 Team Rocket's Petrel ASC 207
+4 Boss's Orders ASC 183
+
+Energy: 9
+9 Darkness Energy CRZ 158

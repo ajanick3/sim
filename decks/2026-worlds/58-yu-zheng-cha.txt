@@ -1,0 +1,38 @@
+Pokémon: 19
+1 Mega Lopunny ex PFL 115
+2 Dudunsparce TEF 129
+1 Dunsparce TEF 128
+1 Buneary MEG 107
+2 Moltres PFL 014
+1 Mega Lopunny ex PFL 128
+1 Dunsparce JTG 120
+1 Dudunsparce PRE 080
+2 Buneary MEG 107
+1 Fan Rotom ASC 250
+1 Psyduck ASC 039
+1 Shaymin DRI 010
+1 Mega Lopunny ex PFL 084
+1 Dunsparce TEF 128
+1 Dunsparce JTG 120
+1 Dudunsparce ex JTG 178
+
+Trainer: 34
+4 Lillie's Determination ASC 192
+2 Hilda WHT 084
+4 Buddy-Buddy Poffin ASC 184
+3 Battle Cage PFL 085
+4 Poke Pad ASC 198
+2 Pokegear 3.0 BLK 084
+2 Air Balloon ASC 181
+3 Boss's Orders ASC 183
+1 Night Stretcher ASC 196
+1 Wally's Compassion MEG 132
+1 Special Red Card CRI 082
+2 Wally's Compassion MEG 132
+4 Ultra Ball ASC 213
+1 Jamming Tower ASC 261
+
+Energy: 7
+1 Enriching Energy SSP 191
+2 Fire Energy CRZ 153
+4 Mist Energy TEF 161

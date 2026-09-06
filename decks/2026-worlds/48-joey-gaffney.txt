@@ -1,0 +1,33 @@
+Pokémon: 24
+2 Dragapult ex TWM 130
+4 Drakloak PRE 072
+4 Dreepy TWM 128
+2 Blaziken ex JTG 024
+1 Combusken DRI 041
+2 Torchic DRI 040
+1 Budew PRE 004
+1 Munkidori TWM 095
+1 Patrat CRI 070
+1 Chien-Pao SSP 056
+1 Shaymin DRI 010
+2 Meowth ex POR 062
+1 Fezandipiti ex SFA 038
+1 Lillie's Clefairy ex JTG 056
+
+Trainer: 28
+4 Lillie's Determination ASC 192
+3 Boss's Orders ASC 183
+2 Crispin PRE 105
+1 Dawn PFL 087
+4 Ultra Ball ASC 213
+4 Buddy-Buddy Poffin ASC 184
+3 Poke Pad ASC 198
+2 Rare Candy MEG 125
+2 Night Stretcher ASC 196
+1 Unfair Stamp TWM 165
+2 Area Zero Underdepths PRE 094
+
+Energy: 8
+3 Psychic Energy CRE 232
+3 Fire Energy CRZ 153
+2 Darkness Energy CRZ 158

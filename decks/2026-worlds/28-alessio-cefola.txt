@@ -1,0 +1,30 @@
+Pokémon: 19
+1 Moltres PFL 014
+1 Shaymin DRI 185
+1 Budew ASC 221
+4 Drakloak ASC 248
+3 Dragapult ex TWM 200
+1 Latias ex SSP 239
+1 Meowth ex POR 121
+1 Fezandipiti ex SFA 092
+2 Munkidori SFA 072
+4 Dreepy ASC 247
+
+Trainer: 32
+4 Lillie's Determination ASC 192
+3 Boss's Orders ASC 183
+3 Crispin PRE 105
+4 Buddy-Buddy Poffin ASC 184
+4 Poke Pad ASC 198
+4 Ultra Ball ASC 213
+3 Night Stretcher ASC 196
+1 Unfair Stamp TWM 165
+1 Jamming Tower ASC 261
+1 Area Zero Underdepths PRE 094
+1 Special Red Card CRI 082
+3 Crushing Hammer PBL 105
+
+Energy: 9
+4 Fire Energy CRZ 153
+3 Psychic Energy CRE 232
+2 Darkness Energy CRZ 158

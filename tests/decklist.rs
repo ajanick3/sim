@@ -148,16 +148,50 @@ fn the_uncheckable_rule_is_named() {
     );
 }
 
+/// Three of the 2026 Worlds decks are known exceptions, not parser bugs:
+///
+/// - `35-minho-song.txt` and `44-kazuki-yuasa.txt` name cards by a
+///   Japanese-region set code (`SV6a`, `M1S`, `MC`, ...) rather than the
+///   English one this artifact holds. Matching a card across regional
+///   databases is an unsolved problem, recorded in
+///   `docs/architecture/sources.md`.
+/// - `55-joji-koyama.txt` carries a promo card printed with no number at
+///   all (`1 Flutter Mane SV P`), which the format has nowhere to put.
+///
+/// Each is the source data disagreeing with what this parser can read, not a
+/// defect in the parser. They are named here so a fix to either problem is a
+/// one-line removal, not a rediscovery.
+const KNOWN_EXCEPTIONS: &[&str] = &[
+    "35-minho-song.txt",
+    "44-kazuki-yuasa.txt",
+    "55-joji-koyama.txt",
+];
+
+/// Every `.txt` file anywhere under `decks/`, deepest first is not required.
+fn every_deck_file(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
+    for entry in std::fs::read_dir(dir).unwrap() {
+        let path = entry.unwrap().path();
+        if path.is_dir() {
+            every_deck_file(&path, out);
+        } else if path.extension().and_then(|e| e.to_str()) == Some("txt") {
+            out.push(path);
+        }
+    }
+}
+
 #[test]
 fn every_committed_deck_is_legal_and_every_line_matches() {
     let import = load(&artifact()).unwrap();
-    let mut checked = 0;
+    let mut paths = Vec::new();
+    every_deck_file(std::path::Path::new("decks"), &mut paths);
 
-    for entry in std::fs::read_dir("decks").expect("the decks directory is committed") {
-        let path = entry.unwrap().path();
-        if path.extension().and_then(|e| e.to_str()) != Some("txt") {
+    let mut checked = 0;
+    for path in paths {
+        let name = path.file_name().unwrap().to_str().unwrap();
+        if KNOWN_EXCEPTIONS.contains(&name) {
             continue;
         }
+
         let text = std::fs::read_to_string(&path).unwrap();
         let list = parse(&text).unwrap_or_else(|errors| panic!("{path:?}: {errors:?}"));
         let report = check(&list, &import);
@@ -171,7 +205,32 @@ fn every_committed_deck_is_legal_and_every_line_matches() {
         checked += 1;
     }
 
-    assert!(checked >= 2, "the decks are being read: {checked} found");
+    assert!(checked >= 60, "the decks are being read: {checked} found");
+}
+
+#[test]
+fn the_known_exceptions_still_fail_for_the_reason_recorded() {
+    let import = load(&artifact()).unwrap();
+
+    for name in KNOWN_EXCEPTIONS {
+        let path = std::path::Path::new("decks/2026-worlds").join(name);
+        let text = std::fs::read_to_string(&path).unwrap();
+        match parse(&text) {
+            Ok(list) => {
+                let report = check(&list, &import);
+                assert!(
+                    !report.problems.is_empty(),
+                    "{name} was expected to disagree with the artifact, and now agrees: \
+                     remove it from KNOWN_EXCEPTIONS"
+                );
+            }
+            Err(_) => {
+                // A line the parser cannot read at all, e.g. joji-koyama's
+                // promo card with no number. Failing to parse is the
+                // expected exception for this file.
+            }
+        }
+    }
 }
 
 #[test]

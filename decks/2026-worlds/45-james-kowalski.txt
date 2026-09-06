@@ -1,0 +1,32 @@
+Pokémon: 21
+4 Mega Kangaskhan ex MEG 104
+4 Lillie's Clefairy ex JTG 056
+3 Latias ex SSP 076
+1 Chien-Pao SSP 056
+2 Wellspring Mask Ogerpon ex TWM 064
+1 Koraidon ex ASC 121
+2 Fezandipiti ex SFA 038
+1 Stunfisk ASC 062
+3 Meowth ex POR 062
+
+Trainer: 28
+4 Crispin PRE 105
+2 Ciphermaniac's Codebreaking PRE 104
+1 Cyrano SSP 170
+4 Ultra Ball ASC 213
+4 Dusk Ball SSP 175
+3 Wondrous Patch PFL 094
+1 Prime Catcher PRE 119
+2 Boss's Orders ASC 183
+1 AZ's Tranquility CRI 076
+2 Pokegear 3.0 BLK 084
+1 Lillie's Pearl JTG 151
+3 Area Zero Underdepths PRE 094
+
+Energy: 11
+4 Psychic Energy CRE 232
+2 Water Energy CRE 231
+1 Telepathic Psychic Energy POR 088
+1 Mist Energy TEF 161
+2 Lightning Energy CRZ 155
+1 Fighting Energy CRE 233
