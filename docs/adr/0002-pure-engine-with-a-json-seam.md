@@ -1,6 +1,6 @@
 # The engine holds no I/O; card data crosses a JSON seam
 
-**Status:** Accepted — 2026-09-03
+**Status:** Superseded by [0007](0007-card-data-comes-from-tcgdex-into-this-repository.md) — 2026-09-06
 
 The card data lives in Turso, in the `pkmn` repo, so the obvious course was to let the engine query it. That was rejected. An engine that reaches a database mid-game cannot be replayed from a seed, cannot run thousands of games, and drags `tokio` and async lifetimes into the first Rust written for this project. Instead there are three layers: `pkmn` owns Turso and the crawl and gains one export script; a JSON artifact is the seam; `sim` reads that JSON at startup and then runs entirely in memory. The export script belongs to `pkmn` because it queries a schema that repo owns and holds the credentials.
 
