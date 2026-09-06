@@ -1,0 +1,32 @@
+Pokémon: 21
+1 Budew ASC 016
+2 Munkidori TWM 095
+4 Drakloak TWM 129
+4 Dreepy TWM 128
+2 Torchic DRI 040
+1 Combusken DRI 041
+1 Fezandipiti ex ASC 142
+2 Blaziken ex JTG 024
+1 Lillie's Clefairy ex JTG 056
+1 Meowth ex POR 062
+2 Dragapult ex TWM 130
+
+Trainer: 31
+1 Risky Ruins MEG 127
+1 Unfair Stamp TWM 165
+1 Dawn PFL 087
+4 Poke Pad ASC 198
+1 Jamming Tower ASC 261
+3 Rare Candy MEG 125
+1 Special Red Card CRI 082
+2 Night Stretcher ASC 196
+2 Crispin PRE 105
+4 Buddy-Buddy Poffin ASC 184
+4 Lillie's Determination ASC 192
+4 Ultra Ball ASC 213
+3 Boss's Orders ASC 183
+
+Energy: 8
+3 Psychic Energy CRE 232
+2 Darkness Energy CRZ 158
+3 Fire Energy CRZ 153

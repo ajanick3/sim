@@ -1,0 +1,30 @@
+Pokémon: 25
+2 Bronzong SV5K 029
+2 Bronzor SV5K 028
+2 Mega Kangaskhan ex M1S 051
+4 Dusknoir SV6a 070
+2 Dusclops SV6a 069
+4 Duskull SV6a 068
+1 Mega Lopunny ex M2 072
+2 Buneary M2 071
+1 Bloodmoon Ursaluna ex SV5a 084
+2 Latias ex MC 312
+1 Meowth ex M3 100
+1 Budew M2a 196
+1 Flutter Mane SV P
+
+Trainer: 29
+4 Poke Pad ASC 198
+4 Ultra Ball ASC 213
+4 Rare Candy MEG 125
+4 Switch MEG 130
+4 Hilda WHT 084
+4 Lillie's Determination ASC 192
+2 Boss's Orders ASC 183
+2 Jamming Tower ASC 261
+1 Special Red Card CRI 082
+
+Energy: 6
+1 Enriching Energy SSP 191
+4 Telepathic Psychic Energy POR 088
+1 Psychic Energy CRE 232

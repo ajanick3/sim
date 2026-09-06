@@ -1,0 +1,35 @@
+Pokémon: 20
+1 Mega Kangaskhan ex MEG 104
+1 Mega Kangaskhan ex MEG 164
+1 Iron Leaves ex TEF 025
+1 Fezandipiti ex SFA 038
+3 Teal Mask Ogerpon ex TWM 025
+1 Teal Mask Ogerpon ex SVP 166
+1 Lillie's Clefairy ex JTG 056
+1 Lillie's Clefairy ex JTG 173
+2 Latias ex SSP 076
+1 Koraidon ex ASC 121
+1 Wellspring Mask Ogerpon ex TWM 064
+2 Meowth ex POR 062
+1 Chien-Pao SSP 056
+1 Munkidori TWM 095
+1 Pecharunt SVP 129
+1 Paldean Tauros SSP 018
+
+Trainer: 25
+4 Lillie's Determination ASC 192
+3 Boss's Orders ASC 183
+1 N's Plan BLK 083
+1 Cyrano SSP 170
+4 Ultra Ball ASC 213
+2 Bug Catching Set PRE 102
+1 Tera Orb SSP 189
+4 Energy Switch MEG 115
+1 Night Stretcher ASC 196
+1 Unfair Stamp TWM 165
+3 Area Zero Underdepths PRE 094
+
+Energy: 15
+10 Grass Energy CRZ 152
+1 Psychic Energy CRE 232
+4 Prism Energy ASC 216

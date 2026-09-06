@@ -1,0 +1,36 @@
+Pokémon: 23
+1 Fezandipiti ex SFA 092
+1 Passimian SSP 111
+1 Wellspring Mask Ogerpon ex TWM 213
+1 Raging Bolt ex PRE 166
+4 Mega Kangaskhan ex MEG 182
+2 Latias ex SSP 239
+2 Noctowl SVP 141
+2 Hoothoot SCR 114
+2 Fan Rotom ASC 250
+3 Teal Mask Ogerpon ex PRE 145
+1 Meowth ex POR 121
+1 Chien-Pao SVP 152
+2 Lillie's Clefairy ex JTG 173
+
+Trainer: 25
+3 Area Zero Underdepths PRE 094
+4 Ultra Ball ASC 213
+2 Poke Pad ASC 198
+2 Night Stretcher ASC 196
+2 Energy Switch MEG 115
+1 Energy Search POR 072
+4 Crispin PRE 105
+2 Brock's Scouting JTG 146
+1 Glass Trumpet ASC 189
+1 Prime Catcher PRE 119
+1 Boss's Orders ASC 183
+1 Judge POR 076
+1 Lillie's Pearl JTG 151
+
+Energy: 12
+5 Grass Energy CRZ 152
+2 Psychic Energy CRE 232
+1 Water Energy CRE 231
+2 Fighting Energy CRE 233
+2 Lightning Energy CRZ 155
