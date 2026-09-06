@@ -7,7 +7,7 @@
 
 use crate::card::{Condition, TrainerEffect, TrainerKind};
 use crate::ids::{CardId, PlayerId, PokemonId};
-use crate::state::{BENCH_LIMIT, GameState, Phase};
+use crate::state::{BENCH_LIMIT, GameState, Limit, Phase};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Action {
@@ -177,7 +177,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         if def.is_basic_pokemon() && side.bench.len() < BENCH_LIMIT {
             actions.push(Action::PlayBasic { card: *card });
         }
-        if def.is_energy() && !side.energy_attached_this_turn {
+        if def.is_energy() && !state.is_spent(Limit::EnergyAttached(player)) {
             for target in side.in_play() {
                 actions.push(Action::AttachEnergy {
                     card: *card,
@@ -194,7 +194,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             for target in side.in_play() {
                 let eligible = state.pokemon_def(target).name == from
                     && state.pokemon(target).played_on_turn < state.turn_number
-                    && !state.pokemon(target).evolved_this_turn;
+                    && !state.is_spent(Limit::Evolved(target));
                 if eligible {
                     actions.push(Action::Evolve {
                         card: *card,
@@ -210,9 +210,10 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             let timing = match trainer.kind {
                 TrainerKind::Item | TrainerKind::Tool => true,
                 TrainerKind::Supporter => {
-                    !side.supporter_played_this_turn && !state.is_first_turn_of_game()
+                    !state.is_spent(Limit::SupporterPlayed(player))
+                        && !state.is_first_turn_of_game()
                 }
-                TrainerKind::Stadium => !side.stadium_played_this_turn,
+                TrainerKind::Stadium => !state.is_spent(Limit::StadiumPlayed(player)),
             };
             // A card that switches the opponent's Active needs somewhere to
             // switch to; every other effect built so far can always be
@@ -241,7 +242,10 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
     // with somewhere to retreat to.
     if let Some(active) = side.active {
         let cost = state.pokemon_def(active).retreat_cost;
-        if !side.retreated_this_turn && !held(active) && state.energy_attached(active) >= cost {
+        if !state.is_spent(Limit::Retreated(player))
+            && !held(active)
+            && state.energy_attached(active) >= cost
+        {
             for pokemon in &side.bench {
                 actions.push(Action::Retreat { to: *pokemon });
             }

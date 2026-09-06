@@ -22,8 +22,8 @@ fn deal(seed: u64) -> GameState {
 /// spelled out here rather than assumed.
 fn fingerprint(state: &GameState) -> String {
     let mut out = format!(
-        "turn={} current={:?} phase={:?} outcome={:?} stadium={:?}\n",
-        state.turn_number, state.current, state.phase, state.outcome, state.stadium
+        "turn={} current={:?} phase={:?} outcome={:?} stadium={:?} spent={:?}\n",
+        state.turn_number, state.current, state.phase, state.outcome, state.stadium, state.spent
     );
     for player in [PlayerId::One, PlayerId::Two] {
         let side = state.player(player);
