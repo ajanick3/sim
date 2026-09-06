@@ -46,6 +46,6 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // card on purpose, and the ticket that moves it says so here. Ticket 03
     // of the record effort took it to 368; the second batch of Trainers
     // takes it up from there — 2 prints of Cyrano, 5 of Buddy-Buddy Poffin,
-    // then 3 of Ultra Ball and 2 of Special Red Card.
-    assert_eq!(admitted, 380, "coverage moves only on purpose");
+    // then 3 of Ultra Ball, 2 of Special Red Card, and 2 of Energy Switch.
+    assert_eq!(admitted, 382, "coverage moves only on purpose");
 }

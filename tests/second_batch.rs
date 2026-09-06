@@ -7,7 +7,7 @@ use sim::card::{
     TrainerEffect, TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
-use sim::ids::{CardDefId, CardId, PlayerId};
+use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
 use sim::rng::SeededRng;
 use sim::state::{GameState, Phase};
 
@@ -593,6 +593,166 @@ fn a_card_with_no_requirement_still_plays() {
     assert!(
         matches!(state.phase, Phase::Deciding { .. }),
         "no cost stands between the card and its effect"
+    );
+}
+
+// --- Ticket 04: move an Energy between Pokémon ---
+
+fn with_energy_switch(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let switch = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-energy-switch",
+        name: "Energy Switch",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::MoveAttachedEnergy,
+    }));
+    (Set { db, ..set }, switch)
+}
+
+/// Bench a Pokémon and give the Active an Energy, so there is something to
+/// move and somewhere to move it.
+fn board_with_an_energy(state: &mut GameState, player: PlayerId) -> (CardId, PokemonId, PokemonId) {
+    let basic = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_basic_pokemon())
+        .expect("the deck holds Basics");
+    state.players[player.index()]
+        .library
+        .retain(|c| *c != basic);
+    let benched = state.put_into_play(player, basic);
+    state.players[player.index()].bench.push(benched);
+
+    let active = state.player(player).active.expect("setup placed an Active");
+    let energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .expect("the deck is mostly Energy");
+    state.players[player.index()]
+        .library
+        .retain(|c| *c != energy);
+    state.pokemon[active.index()].attached.push(energy);
+    (energy, active, benched)
+}
+
+#[test]
+fn an_attached_energy_moves_to_another_pokemon() {
+    let (set, switch) = with_energy_switch(build());
+    let mut state = game(&set, switch, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, switch);
+    let (energy, active, benched) = board_with_an_energy(&mut state, player);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert!(
+        matches!(state.phase, Phase::MovingEnergy { .. }),
+        "the card asks where: {:?}",
+        state.phase
+    );
+
+    let moves: Vec<Action> = legal_actions(&state)
+        .into_iter()
+        .filter(|a| matches!(a, Action::MoveEnergy { .. }))
+        .collect();
+    assert!(
+        moves.contains(&Action::MoveEnergy {
+            card: energy,
+            target: benched
+        }),
+        "the Active's Energy may go to the Bench"
+    );
+    assert!(
+        !moves.contains(&Action::MoveEnergy {
+            card: energy,
+            target: active
+        }),
+        "a Pokémon is not another Pokémon"
+    );
+
+    apply(
+        &mut state,
+        Action::MoveEnergy {
+            card: energy,
+            target: benched,
+        },
+    )
+    .unwrap();
+
+    assert!(!state.pokemon(active).attached.contains(&energy));
+    assert!(state.pokemon(benched).attached.contains(&energy));
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn only_an_energy_moves_and_only_between_your_own_pokemon() {
+    let (set, switch) = with_energy_switch(build());
+    let mut state = game(&set, switch, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, switch);
+    let (energy, _, _) = board_with_an_energy(&mut state, player);
+
+    // Give the opponent a Pokémon with an Energy of its own.
+    let opponent = player.opponent();
+    let theirs = state
+        .player(opponent)
+        .active
+        .expect("both players placed an Active");
+    let their_energy = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[opponent.index()]
+        .library
+        .retain(|c| *c != their_energy);
+    state.pokemon[theirs.index()].attached.push(their_energy);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    for action in legal_actions(&state) {
+        let Action::MoveEnergy { card, target } = action else {
+            continue;
+        };
+        assert_eq!(card, energy, "only the player's own Energy moves");
+        assert_eq!(
+            state.pokemon(target).owner,
+            player,
+            "and only onto the player's own Pokémon"
+        );
+    }
+    assert!(state.pokemon(theirs).attached.contains(&their_energy));
+}
+
+#[test]
+fn energy_switch_needs_an_energy_and_somewhere_to_put_it() {
+    let (set, switch) = with_energy_switch(build());
+    let mut state = game(&set, switch, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, switch);
+
+    state.players[player.index()].bench.clear();
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "nothing is attached, so nothing can move"
+    );
+
+    let (_, _, benched) = board_with_an_energy(&mut state, player);
+    assert!(
+        legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "an Energy and a second Pokémon are enough"
+    );
+
+    // Take the second Pokémon away and there is nowhere left to move to.
+    state.players[player.index()]
+        .bench
+        .retain(|p| *p != benched);
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "one Pokémon cannot pass an Energy to itself"
     );
 }
 
