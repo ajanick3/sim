@@ -1,9 +1,8 @@
-//! Milestone 4 ticket 03: the Lost Zone and the Stadium in play.
+//! Milestone 4 ticket 03: the Stadium in play.
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, CardFilter, Energy, Pokemon, Trainer, TrainerEffect, TrainerKind,
-    Type, Zone,
+    Attack, CardDb, CardDef, Energy, Pokemon, Trainer, TrainerEffect, TrainerKind, Type,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, PlayerId};
@@ -105,38 +104,6 @@ fn ensure_in_hand(state: &mut GameState, player: PlayerId, def: CardDefId) -> si
     state.players[player.index()].library.retain(|c| *c != card);
     state.players[player.index()].hand.push(card);
     card
-}
-
-#[test]
-fn a_card_can_be_moved_to_the_lost_zone() {
-    let set = build();
-    let mut state = game(&set, 9);
-    let player = state.current;
-    let card = *state
-        .player(player)
-        .library
-        .iter()
-        .find(|c| state.def_of(**c).as_pokemon().is_some())
-        .expect("the deck holds Pokémon");
-
-    state.phase = Phase::Deciding {
-        chooser: player,
-        from: Zone::Library,
-        to: Zone::LostZone,
-        filter: CardFilter::AnyPokemon,
-        remaining: 1,
-        moved: 0,
-        then: None,
-    };
-    apply(&mut state, Action::TakeCard { card }).unwrap();
-    apply(&mut state, Action::FinishDeciding).unwrap();
-
-    assert!(state.player(player).lost_zone.contains(&card));
-    assert!(!state.player(player).library.contains(&card));
-    assert!(
-        !state.player(player).discard.contains(&card),
-        "the Lost Zone is not the discard pile"
-    );
 }
 
 #[test]

@@ -68,8 +68,6 @@ pub struct PlayerState {
     pub library: Vec<CardId>,
     pub hand: Vec<CardId>,
     pub discard: Vec<CardId>,
-    /// Cards out of the game for good.
-    pub lost_zone: Vec<CardId>,
     pub prizes: Vec<CardId>,
     pub active: Option<PokemonId>,
     pub bench: Vec<PokemonId>,
@@ -87,7 +85,6 @@ impl PlayerState {
             library: Vec::new(),
             hand: Vec::new(),
             discard: Vec::new(),
-            lost_zone: Vec::new(),
             prizes: Vec::new(),
             active: None,
             bench: Vec::new(),
@@ -394,7 +391,6 @@ impl GameState {
             crate::card::Zone::Hand => &side.hand,
             crate::card::Zone::Discard => &side.discard,
             crate::card::Zone::Library => &side.library,
-            crate::card::Zone::LostZone => &side.lost_zone,
         }
     }
 
@@ -404,7 +400,6 @@ impl GameState {
             crate::card::Zone::Hand => &mut side.hand,
             crate::card::Zone::Discard => &mut side.discard,
             crate::card::Zone::Library => &mut side.library,
-            crate::card::Zone::LostZone => &mut side.lost_zone,
         }
     }
 
