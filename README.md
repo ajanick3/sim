@@ -72,6 +72,8 @@ change to the parser or the card data fails loudly rather than quietly.
 ## The documents
 
 - [The domain glossary](docs/architecture/glossary.md) — the vocabulary.
+- [The effect vocabulary](docs/architecture/effects.md) — what a Trainer has
+  to be able to say, counted from the decks in `decks/`.
 - [The base rules](docs/architecture/rules.md) — the numbered rules the code
   cites, and the cards that break a naive engine.
 - [Card data sources](docs/architecture/sources.md) — where card data comes
