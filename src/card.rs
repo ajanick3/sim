@@ -85,6 +85,9 @@ pub enum CardFilter {
     /// printed on the card that reads them: `Buddy-Buddy Poffin` wants a
     /// Basic with 70 HP or less.
     BasicPokemonWithHpAtMost(u32),
+    /// Any Trainer card, of any kind. `Team Rocket's Petrel` searches for
+    /// one without naming a kind at all.
+    AnyTrainer,
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A

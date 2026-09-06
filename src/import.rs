@@ -531,6 +531,19 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             },
         ),
         "Rare Candy" => (free, TrainerEffect::EvolveSkippingOneStage),
+        "Team Rocket's Petrel" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::AnyTrainer,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                }],
+                then: None,
+            },
+        ),
         _ => return None,
     })
 }

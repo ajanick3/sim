@@ -134,6 +134,9 @@ fn deck(set: &Set, extra: CardDefId) -> Vec<CardDefId> {
     decklist.extend([set.stage1; 4]);
     decklist.extend([set.stage2; 2]);
     decklist.extend([set.fire_energy; 4]);
+    // A second Trainer, distinct from whatever `extra` is, so a search for
+    // "any Trainer" has something left to find once `extra` is played.
+    decklist.extend([set.cyrano; 2]);
     decklist.push(extra);
     while decklist.len() < 60 {
         decklist.push(set.energy);
@@ -1456,6 +1459,96 @@ fn the_real_ampharos_chain_resolves_to_mareep() {
         Some("Mareep"),
         "the chain is walked through Flaaffy's own evolveFrom, read from \
          the raw name table rather than from an admitted CardDef"
+    );
+}
+
+// --- Milestone 6, ticket 01: a search for any Trainer card ---
+
+fn with_petrel(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let petrel = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-petrel",
+        name: "Team Rocket's Petrel",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::AnyTrainer,
+                to: Destination::Zone(Zone::Hand),
+                limit: 1,
+                excludes_type_of_previous: false,
+            }],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, petrel)
+}
+
+#[test]
+fn the_any_trainer_filter_offers_only_trainers() {
+    let (set, petrel) = with_petrel(build());
+    let mut state = game(&set, petrel, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, petrel);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let choices = offered(&state);
+    assert!(!choices.is_empty(), "the deck holds a second Petrel");
+    for card in &choices {
+        assert!(
+            state.def_of(*card).as_trainer().is_some(),
+            "{:?} is not a Trainer and must not be offered",
+            state.def_of(*card)
+        );
+    }
+}
+
+#[test]
+fn the_any_trainer_filter_never_offers_a_pokemon_or_an_energy() {
+    let (set, petrel) = with_petrel(build());
+    let mut state = game(&set, petrel, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, petrel);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let offered_mons_and_energy = state
+        .player(player)
+        .library
+        .iter()
+        .filter(|c| {
+            let def = state.def_of(**c);
+            def.as_pokemon().is_some() || def.is_energy()
+        })
+        .any(|c| {
+            legal_actions(&state).contains(&Action::TakeCard { card: *c })
+        });
+    assert!(!offered_mons_and_energy);
+}
+
+#[test]
+fn team_rockets_petrel_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let petrel = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Team Rocket's Petrel")
+        .expect("Team Rocket's Petrel plays");
+    assert_eq!(
+        petrel.effect,
+        TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::AnyTrainer,
+                to: Destination::Zone(Zone::Hand),
+                limit: 1,
+                excludes_type_of_previous: false,
+            }],
+            then: None,
+        }
     );
 }
 
