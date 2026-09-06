@@ -131,9 +131,23 @@ pub enum Phase {
     },
     /// The current player is taking their turn.
     Main,
-    /// This player lost their Active and must promote one from the Bench.
-    /// It interrupts whoever's turn it is.
-    Promoting(PlayerId),
+    /// A Pokémon owned by `of` must be chosen from `of`'s Bench to become
+    /// their new Active, and `chooser` picks it. It interrupts whoever's turn
+    /// it is. After a knockout, `of == chooser`: you promote your own. A card
+    /// that switches an opponent's Active makes them differ.
+    Promoting { of: PlayerId, chooser: PlayerId },
+    /// A Trainer effect is moving up to `remaining` cards matching `filter`
+    /// from one zone to another, `chooser`'s choice each time. Most of the
+    /// primitives in `docs/architecture/effects.md` share this one phase — a
+    /// deck search, a discard-pile recovery, a hand thinned for a bigger
+    /// draw are all an instance of it with different zones.
+    Deciding {
+        chooser: PlayerId,
+        from: crate::card::Zone,
+        to: crate::card::Zone,
+        filter: crate::card::CardFilter,
+        remaining: u32,
+    },
     /// The game is decided.
     Over,
 }
@@ -346,6 +360,49 @@ impl GameState {
     /// Retreat Cost is always Colorless.
     pub fn energy_attached(&self, id: PokemonId) -> u8 {
         self.attached_energy_types(id).len() as u8
+    }
+
+    /// The cards in one of a player's zones. A Trainer effect moves between
+    /// these; a Pokémon's attachments are not one of them.
+    pub fn zone(&self, player: PlayerId, zone: crate::card::Zone) -> &Vec<CardId> {
+        let side = self.player(player);
+        match zone {
+            crate::card::Zone::Hand => &side.hand,
+            crate::card::Zone::Discard => &side.discard,
+            crate::card::Zone::Library => &side.library,
+        }
+    }
+
+    fn zone_mut(&mut self, player: PlayerId, zone: crate::card::Zone) -> &mut Vec<CardId> {
+        let side = &mut self.players[player.index()];
+        match zone {
+            crate::card::Zone::Hand => &mut side.hand,
+            crate::card::Zone::Discard => &mut side.discard,
+            crate::card::Zone::Library => &mut side.library,
+        }
+    }
+
+    /// Move one card from one zone to another, for the same player. Neither
+    /// zone is a Pokémon's attachments; that is a different move entirely.
+    pub fn move_card(
+        &mut self,
+        player: PlayerId,
+        card: CardId,
+        from: crate::card::Zone,
+        to: crate::card::Zone,
+    ) {
+        let source = self.zone_mut(player, from);
+        if let Some(at) = source.iter().position(|c| *c == card) {
+            source.remove(at);
+        }
+        self.zone_mut(player, to).push(card);
+    }
+
+    /// Whether a card meets a Trainer effect's filter.
+    pub fn matches_filter(&self, card: CardId, filter: crate::card::CardFilter) -> bool {
+        match filter {
+            crate::card::CardFilter::AnyPokemon => self.def_of(card).as_pokemon().is_some(),
+        }
     }
 
     /// The type each attached Energy provides, in the order attached.

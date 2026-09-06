@@ -28,6 +28,25 @@ pub enum TrainerKind {
     Stadium,
 }
 
+/// A zone a Trainer effect moves cards between. Only the zones a committed
+/// card actually reads or writes; a Pokémon's attached cards are a separate
+/// mechanism; the Bench and Active hold Pokémon in play, not loose cards.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Zone {
+    Hand,
+    Discard,
+    /// The draw pile. Moving a card into it shuffles when the choice ends.
+    Library,
+}
+
+/// What a card must be for a Trainer effect to offer it. A value, per
+/// [ADR 0009](../docs/adr/0009-an-effect-is-a-value-the-engine-executes.md) —
+/// never a closure the engine could not inspect or compare.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CardFilter {
+    AnyPokemon,
+}
+
 /// A Special Condition. Only the Active can carry one (rule 49).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Condition {

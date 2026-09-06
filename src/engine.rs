@@ -3,6 +3,7 @@
 use crate::action::{Action, legal_actions};
 use crate::card::Condition;
 use crate::ids::{PlayerId, PokemonId};
+use crate::rng::shuffle;
 use crate::state::{GameState, Outcome, Phase, WinReason};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -138,16 +139,61 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::Promote { pokemon } => {
-            let player = match state.phase {
-                Phase::Promoting(player) => player,
+            let (of, chooser) = match state.phase {
+                Phase::Promoting { of, chooser } => (of, chooser),
                 _ => return Err(IllegalAction),
             };
-            let side = &mut state.players[player.index()];
+            let side = &mut state.players[of.index()];
             side.bench.retain(|p| *p != pokemon);
             side.active = Some(pokemon);
             state.phase = Phase::Main;
             let name = state.pokemon_def(pokemon).name;
-            state.log.push(format!("{player:?} promotes {name}."));
+            if of == chooser {
+                state.log.push(format!("{of:?} promotes {name}."));
+            } else {
+                state
+                    .log
+                    .push(format!("{chooser:?} sends up {name} for {of:?}."));
+            }
+            settle(state);
+        }
+
+        Action::TakeCard { card } => {
+            let (chooser, from, to, filter, remaining) = match state.phase {
+                Phase::Deciding {
+                    chooser,
+                    from,
+                    to,
+                    filter,
+                    remaining,
+                } => (chooser, from, to, filter, remaining),
+                _ => return Err(IllegalAction),
+            };
+            state.move_card(chooser, card, from, to);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{chooser:?} takes {name}."));
+            state.phase = Phase::Deciding {
+                chooser,
+                from,
+                to,
+                filter,
+                remaining: remaining - 1,
+            };
+        }
+
+        Action::FinishDeciding => {
+            let (chooser, to) = match state.phase {
+                Phase::Deciding { chooser, to, .. } => (chooser, to),
+                _ => return Err(IllegalAction),
+            };
+            // A card moved into the Library is shuffled in once the choice
+            // ends, not after each one — the same rule a deck search always
+            // follows.
+            if to == crate::card::Zone::Library {
+                let library = &mut state.players[chooser.index()].library;
+                shuffle(state.rng.as_mut(), library);
+            }
+            state.phase = Phase::Main;
             settle(state);
         }
     }
@@ -330,7 +376,10 @@ fn settle(state: &mut GameState) {
                     state.phase = Phase::Over;
                     return;
                 }
-                state.phase = Phase::Promoting(player);
+                state.phase = Phase::Promoting {
+                    of: player,
+                    chooser: player,
+                };
                 return;
             }
         }
