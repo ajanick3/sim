@@ -45,6 +45,58 @@ pub enum Zone {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CardFilter {
     AnyPokemon,
+    /// A Pokémon worth exactly 1 Prize. Every Pokémon worth more carries a
+    /// Rule Box (ADR 0010), which is the fact a printed card actually reads.
+    PokemonWithoutRuleBox,
+    /// A Pokémon, or a basic Energy card. No special Energy is ever admitted
+    /// (`Refusal::IsASpecialEnergy`), so an admitted Energy is always basic.
+    PokemonOrBasicEnergy,
+}
+
+/// What happens once a `Deciding` phase ends, beyond the cards it moved. A
+/// value, so a card that needs one names it rather than the engine guessing
+/// from which zones were involved.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Then {
+    /// Draw this many cards for each one the phase moved.
+    DrawPerCardMoved(u32),
+}
+
+/// A Trainer's effect: a value the engine executes, never text read at run
+/// time (ADR 0009). `Phase::Deciding` and the generalized `Phase::Promoting`
+/// cover most of these (ADR 0012); the rest resolve with no phase at all,
+/// the moment the card is played.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TrainerEffect {
+    /// Move up to `limit` cards matching `filter` from one zone to another,
+    /// the player's choice each time.
+    Decide {
+        from: Zone,
+        to: Zone,
+        filter: CardFilter,
+        limit: u32,
+        then: Option<Then>,
+    },
+    /// Switch the opponent's Active with one of their Benched Pokémon,
+    /// chosen by the player who played the card.
+    SwitchOpponentActive,
+    /// Shuffle the player's hand into their Library, then draw. A second
+    /// count applies when they hold exactly 6 Prizes.
+    ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
+    /// Both players shuffle their hand into their Library, then draw.
+    BothShuffleHandThenDraw { count: u32 },
+    /// Flip a coin; on heads, discard one Energy attached to a Pokémon the
+    /// opponent controls, the player's choice of which.
+    CoinFlipDiscardOpponentEnergy,
+}
+
+/// A Trainer as printed.
+#[derive(Debug, Clone)]
+pub struct Trainer {
+    pub print_id: &'static str,
+    pub name: &'static str,
+    pub kind: TrainerKind,
+    pub effect: TrainerEffect,
 }
 
 /// A Special Condition. Only the Active can carry one (rule 49).
@@ -108,6 +160,7 @@ pub struct Energy {
 pub enum CardDef {
     Pokemon(Pokemon),
     Energy(Energy),
+    Trainer(Trainer),
 }
 
 impl CardDef {
@@ -115,6 +168,7 @@ impl CardDef {
         match self {
             CardDef::Pokemon(p) => p.name,
             CardDef::Energy(e) => e.name,
+            CardDef::Trainer(t) => t.name,
         }
     }
 
@@ -124,13 +178,21 @@ impl CardDef {
         match self {
             CardDef::Pokemon(p) => p.print_id,
             CardDef::Energy(e) => e.print_id,
+            CardDef::Trainer(t) => t.print_id,
         }
     }
 
     pub fn as_pokemon(&self) -> Option<&Pokemon> {
         match self {
             CardDef::Pokemon(p) => Some(p),
-            CardDef::Energy(_) => None,
+            CardDef::Energy(_) | CardDef::Trainer(_) => None,
+        }
+    }
+
+    pub fn as_trainer(&self) -> Option<&Trainer> {
+        match self {
+            CardDef::Trainer(t) => Some(t),
+            CardDef::Pokemon(_) | CardDef::Energy(_) => None,
         }
     }
 

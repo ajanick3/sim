@@ -147,7 +147,17 @@ pub enum Phase {
         to: crate::card::Zone,
         filter: crate::card::CardFilter,
         remaining: u32,
+        /// How many have been taken so far. `then` reads it when the choice
+        /// ends; nothing else needs it.
+        moved: u32,
+        /// What to do, beyond the move itself, once the choice ends.
+        then: Option<crate::card::Then>,
     },
+    /// `chooser` picks one Energy attached to a Pokémon `of` controls, in
+    /// play, to discard. Crushing Hammer's heads case is the only card that
+    /// needs this; a Pokémon's attachments are not a `Zone`, so `Deciding`
+    /// cannot express it.
+    DiscardingOpponentEnergy { chooser: PlayerId, of: PlayerId },
     /// The game is decided.
     Over,
 }
@@ -400,8 +410,17 @@ impl GameState {
 
     /// Whether a card meets a Trainer effect's filter.
     pub fn matches_filter(&self, card: CardId, filter: crate::card::CardFilter) -> bool {
+        use crate::card::CardFilter;
         match filter {
-            crate::card::CardFilter::AnyPokemon => self.def_of(card).as_pokemon().is_some(),
+            CardFilter::AnyPokemon => self.def_of(card).as_pokemon().is_some(),
+            CardFilter::PokemonWithoutRuleBox => self
+                .def_of(card)
+                .as_pokemon()
+                .is_some_and(|p| p.prizes == 1),
+            CardFilter::PokemonOrBasicEnergy => {
+                let def = self.def_of(card);
+                def.as_pokemon().is_some() || def.is_energy()
+            }
         }
     }
 
@@ -412,7 +431,7 @@ impl GameState {
             .iter()
             .filter_map(|c| match self.def_of(*c) {
                 CardDef::Energy(energy) => Some(energy.kind),
-                CardDef::Pokemon(_) => None,
+                CardDef::Pokemon(_) | CardDef::Trainer(_) => None,
             })
             .collect()
     }

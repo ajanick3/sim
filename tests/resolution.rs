@@ -43,6 +43,8 @@ fn deciding_offers_only_cards_the_filter_admits() {
         to: Zone::Hand,
         filter: CardFilter::AnyPokemon,
         remaining: 1,
+        moved: 0,
+        then: None,
     };
 
     let actions = legal_actions(&state);
@@ -75,6 +77,8 @@ fn taking_a_card_moves_it_and_counts_down_remaining() {
         to: Zone::Hand,
         filter: CardFilter::AnyPokemon,
         remaining: 2,
+        moved: 0,
+        then: None,
     };
     apply(&mut state, Action::TakeCard { card }).unwrap();
 
@@ -89,6 +93,8 @@ fn taking_a_card_moves_it_and_counts_down_remaining() {
             to: Zone::Hand,
             filter: CardFilter::AnyPokemon,
             remaining: 1,
+            moved: 1,
+            then: None,
         },
         "one taken, one still owed"
     );
@@ -104,6 +110,8 @@ fn remaining_at_zero_offers_only_finishing() {
         to: Zone::Hand,
         filter: CardFilter::AnyPokemon,
         remaining: 0,
+        moved: 0,
+        then: None,
     };
     let actions = legal_actions(&state);
     assert_eq!(actions, vec![Action::FinishDeciding]);
@@ -135,6 +143,8 @@ fn finishing_into_the_library_shuffles_it() {
         to: Zone::Library,
         filter: CardFilter::AnyPokemon,
         remaining: 0,
+        moved: 0,
+        then: None,
     };
     apply(&mut state, Action::FinishDeciding).unwrap();
 
@@ -156,6 +166,8 @@ fn only_the_chooser_may_act_in_a_deciding_phase() {
         to: Zone::Hand,
         filter: CardFilter::AnyPokemon,
         remaining: 1,
+        moved: 0,
+        then: None,
     };
     assert_eq!(
         sim::action::player_to_act(&state),

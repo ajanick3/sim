@@ -31,17 +31,18 @@ Ticket 06 resolved 2026-09-06: every kind of card is named, and a refusal says w
 Ticket 04 resolved 2026-09-06: a knockout takes what the card is worth, read from the card's name because the data's suffix field cannot be trusted; details under [the ticket's Answer](issues/04-prize-values.md).
 Ticket 02 resolved 2026-09-06: nine primitives cover the Trainers the committed decks play, and an effect is a value the engine executes; details under [the ticket's Answer](issues/02-the-effect-vocabulary.md).
 
-## Progress on ticket 03
+## Decisions so far (continued)
 
-The resolution machinery is built ahead of any card: `Phase::Deciding`
-covers six of the eight primitives (a move between zones, filtered), and
-`Phase::Promoting` was generalized with a `chooser` distinct from `of` to
-cover the other Trainer that needs a phase at all (switching an opponent's
-Active). Recorded as [ADR 0012](../../docs/adr/0012-trainer-resolution-shares-two-phases.md).
-Still to build: `CardDef::Trainer`, the eight cards themselves, and the
-`CardFilter` variants beyond `AnyPokemon` they need.
+Ticket 03 resolved 2026-09-06: `CardDef::Trainer` and eight real Trainers
+wired to the artifact by name; coverage moved to 368/3051 (12.1%), and both
+committed decks moved further, since Trainers are their largest blocker;
+details under [the ticket's Answer](issues/03-the-first-trainer-effects.md).
 
 ## Fog
 
 - Nothing records that a Pokémon was knocked out during the opponent's last
   turn, which `Unfair Stamp` needs.
+- `known_trainer_effect` matches by printed name, checked safe today because
+  each of the eight has one distinct effect text across every printing. A
+  card with the same name and a genuinely different effect would need
+  matching by print id instead; nothing here does that yet.

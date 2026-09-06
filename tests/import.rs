@@ -149,3 +149,34 @@ fn the_engine_plays_a_game_with_imported_cards() {
     }
     assert!(state.outcome.is_some(), "a real card played a real game");
 }
+
+#[test]
+fn the_eight_committed_trainers_are_admitted_from_the_real_data() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = load(&json).unwrap();
+
+    let admitted_trainer = |name: &str| {
+        import
+            .admitted
+            .iter()
+            .map(|id| import.db.get(*id))
+            .find(|def| def.name() == name)
+            .and_then(|def| def.as_trainer())
+    };
+
+    for name in [
+        "Boss's Orders",
+        "Judge",
+        "Lillie's Determination",
+        "Night Stretcher",
+        "Poké Pad",
+        "Crushing Hammer",
+        "Gwynn",
+        "Sacred Ash",
+    ] {
+        assert!(
+            admitted_trainer(name).is_some(),
+            "{name} should be admitted with its hand-authored effect"
+        );
+    }
+}
