@@ -56,7 +56,7 @@ The engine reads the artifact, and admits only the cards it can run all of:
 ```sh
 cargo run --bin coverage             # 274 of 3051 Standard cards (9.0%)
 cargo run --bin coverage -- refused  # every refused card, and why
-cargo run --bin deckcheck -- decks/BrentTonisson.txt  # check a decklist
+cargo run --bin deckcheck -- decks/brent-tonisson.txt  # check a decklist
 ```
 
 A card it cannot run is refused by name and reason, never half-loaded. Its own
@@ -64,9 +64,10 @@ games still use the literals in `src/cards.rs`.
 
 ## Decks
 
-`decks/` holds decklists in the format the official client exports. A test
-checks that the committed deck parses, matches, and is legal, so a change to
-the parser or the card data fails loudly rather than quietly.
+`decks/` holds decklists in the format the official client exports, one file
+per deck, named for its player in lower-case words joined by dashes. A test
+reads every one of them and checks that it parses, matches, and is legal, so a
+change to the parser or the card data fails loudly rather than quietly.
 
 ## The documents
 
