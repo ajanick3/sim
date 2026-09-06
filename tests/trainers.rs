@@ -30,6 +30,7 @@ fn build() -> Set {
         prizes: 1,
         stage: Stage::Basic,
         evolve_from: None,
+        evolves_from_basic: None,
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],
@@ -223,6 +224,7 @@ fn build2() -> Set2 {
         prizes: 1,
         stage: Stage::Basic,
         evolve_from: None,
+        evolves_from_basic: None,
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],
@@ -241,6 +243,7 @@ fn build2() -> Set2 {
         prizes: 2,
         stage: Stage::Basic,
         evolve_from: None,
+        evolves_from_basic: None,
         attacks: vec![Attack {
             name: "Big Tackle",
             cost: vec![Type::Colorless, Type::Colorless],

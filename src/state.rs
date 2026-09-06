@@ -184,6 +184,14 @@ pub enum Phase {
     /// a half-made move that no rule can read; the pair is small enough to
     /// enumerate, so the action carries both.
     MovingEnergy { player: PlayerId },
+    /// `player` played `Rare Candy` and chooses both the Stage 2 from hand
+    /// and the Basic in play it evolves, skipping the Stage 1 between them.
+    /// A card and a target are chosen together, the same reason
+    /// `MovingEnergy` carries both at once: a card with nowhere to go, or a
+    /// Pokémon nothing can evolve onto, is not a half-made choice worth its
+    /// own step. `legal_actions` guaranteed a matching pair exists before
+    /// the card could be played, so no action here declines.
+    EvolvingWithRareCandy { player: PlayerId },
     /// `chooser` picks one Energy attached to a Pokémon `of` controls, in
     /// play, to discard. Crushing Hammer's heads case is the only card that
     /// needs this; a Pokémon's attachments are not a `Zone`, so `Deciding`

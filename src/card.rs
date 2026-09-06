@@ -144,6 +144,12 @@ pub enum TrainerEffect {
     /// zones, so this is neither a move between zones nor an attachment from
     /// one.
     MoveAttachedEnergy,
+    /// Evolve a Basic Pokémon in play straight into a Stage 2 from hand,
+    /// skipping the Stage 1 between them. `Rare Candy` is the only card that
+    /// needs this: rule 19's ordinary evolution matches a card's
+    /// `evolve_from` to the Pokémon it is played on, one stage at a time,
+    /// and this reads `evolves_from_basic` instead.
+    EvolveSkippingOneStage,
     /// Flip a coin; on heads, discard one Energy attached to a Pokémon the
     /// opponent controls, the player's choice of which.
     CoinFlipDiscardOpponentEnergy,
@@ -252,6 +258,13 @@ pub struct Pokemon {
     /// always present on an Evolution — an evolution card that names nothing
     /// is refused at import, since nothing could ever evolve into it.
     pub evolve_from: Option<&'static str>,
+    /// The name of the Basic two links below this one in the evolution
+    /// line, for a Stage 2 — resolved at import by walking the pool, even
+    /// where the Stage 1 between them is refused. `None` on a Basic or a
+    /// Stage 1, and on a Stage 2 whose chain does not resolve. `Rare Candy`
+    /// is the only card that reads this: it evolves a Basic straight into a
+    /// Stage 2, skipping the Stage 1 `evolve_from` alone would name.
+    pub evolves_from_basic: Option<&'static str>,
     pub attacks: Vec<Attack>,
 }
 
