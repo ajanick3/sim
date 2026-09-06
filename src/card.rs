@@ -92,19 +92,29 @@ pub enum Then {
     DrawPerCardMoved(u32),
 }
 
+/// One step of a search: what to look for, where it goes, and how many. A
+/// card that searches for one thing carries one; `Hilda` carries two and
+/// `Dawn` three, one of each kind, in the order they are printed.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Slot {
+    pub filter: CardFilter,
+    pub to: Destination,
+    /// At most this many cards. A slot the player declines takes none.
+    pub limit: u32,
+}
+
 /// A Trainer's effect: a value the engine executes, never text read at run
 /// time (ADR 0009). `Phase::Deciding` and the generalized `Phase::Promoting`
 /// cover most of these (ADR 0012); the rest resolve with no phase at all,
 /// the moment the card is played.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TrainerEffect {
-    /// Move up to `limit` cards matching `filter` from one zone to another,
-    /// the player's choice each time.
+    /// Take cards out of one zone, the player's choice each time, one slot
+    /// after another. Most cards carry a single slot and repeat it up to its
+    /// limit; a card that asks for one of each kind carries a slot for each.
     Decide {
         from: Zone,
-        to: Destination,
-        filter: CardFilter,
-        limit: u32,
+        slots: Vec<Slot>,
         then: Option<Then>,
     },
     /// Switch the opponent's Active with one of their Benched Pokémon,
@@ -160,6 +170,18 @@ pub struct Trainer {
     /// What the card demands before it may be played. Most print none.
     pub requirement: Option<Requirement>,
     pub effect: TrainerEffect,
+}
+
+impl Trainer {
+    /// The slots this card searches with, or none when its effect is not a
+    /// search. A caller walking a search reads them here rather than
+    /// matching the effect again.
+    pub fn slots(&self) -> &[Slot] {
+        match &self.effect {
+            TrainerEffect::Decide { slots, .. } => slots,
+            _ => &[],
+        }
+    }
 }
 
 /// A Special Condition. Only the Active can carry one (rule 49).

@@ -3,8 +3,8 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Stage, Trainer,
-    TrainerEffect, TrainerKind, Type, Zone,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
+    Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
@@ -72,9 +72,11 @@ fn build() -> Set {
         requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Library,
-            to: Destination::Zone(Zone::Hand),
-            filter: CardFilter::PokemonEx,
-            limit: 3,
+            slots: vec![Slot {
+                filter: CardFilter::PokemonEx,
+                to: Destination::Zone(Zone::Hand),
+                limit: 3,
+            }],
             then: None,
         },
     }));
@@ -221,9 +223,11 @@ fn the_small_basic_filter_reads_both_the_stage_and_the_hp() {
         requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Library,
-            to: Destination::Zone(Zone::Hand),
-            filter: CardFilter::BasicPokemonWithHpAtMost(70),
-            limit: 2,
+            slots: vec![Slot {
+                filter: CardFilter::BasicPokemonWithHpAtMost(70),
+                to: Destination::Zone(Zone::Hand),
+                limit: 2,
+            }],
             then: None,
         },
     }));
@@ -262,9 +266,11 @@ fn with_poffin(set: Set) -> (Set, CardDefId) {
         requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Library,
-            to: Destination::Bench,
-            filter: CardFilter::BasicPokemonWithHpAtMost(70),
-            limit: 2,
+            slots: vec![Slot {
+                filter: CardFilter::BasicPokemonWithHpAtMost(70),
+                to: Destination::Bench,
+                limit: 2,
+            }],
             then: None,
         },
     }));
@@ -393,9 +399,11 @@ fn a_search_that_ends_in_the_library_still_shuffles() {
         requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Discard,
-            to: Destination::Zone(Zone::Library),
-            filter: CardFilter::AnyPokemon,
-            limit: 5,
+            slots: vec![Slot {
+                filter: CardFilter::AnyPokemon,
+                to: Destination::Zone(Zone::Library),
+                limit: 5,
+            }],
             then: None,
         },
     }));
@@ -439,9 +447,11 @@ fn with_requirements(set: Set) -> (Set, CardDefId, CardDefId) {
         requirement: Some(Requirement::DiscardOtherCardsFromHand(2)),
         effect: TrainerEffect::Decide {
             from: Zone::Library,
-            to: Destination::Zone(Zone::Hand),
-            filter: CardFilter::AnyPokemon,
-            limit: 1,
+            slots: vec![Slot {
+                filter: CardFilter::AnyPokemon,
+                to: Destination::Zone(Zone::Hand),
+                limit: 1,
+            }],
             then: None,
         },
     }));
@@ -814,9 +824,11 @@ fn the_stage_filters_offer_what_they_name() {
             requirement: None,
             effect: TrainerEffect::Decide {
                 from: Zone::Library,
-                to: Destination::Zone(Zone::Hand),
-                filter,
-                limit: 1,
+                slots: vec![Slot {
+                    filter,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                }],
                 then: None,
             },
         }))
@@ -879,6 +891,246 @@ fn a_deck_search_shuffles_the_deck_when_it_ends() {
     assert_ne!(before, after, "but the order the player saw is gone");
 }
 
+// --- Ticket 05, part two: a search of several slots ---
+
+fn slot(filter: CardFilter) -> Slot {
+    Slot {
+        filter,
+        to: Destination::Zone(Zone::Hand),
+        limit: 1,
+    }
+}
+
+fn with_hilda_and_dawn(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let hilda = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-hilda",
+        name: "Hilda",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![
+                slot(CardFilter::EvolutionPokemon),
+                slot(CardFilter::BasicEnergy),
+            ],
+            then: None,
+        },
+    }));
+    let dawn = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-dawn",
+        name: "Dawn",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![
+                slot(CardFilter::PokemonOfStage(Stage::Basic)),
+                slot(CardFilter::PokemonOfStage(Stage::Stage1)),
+                slot(CardFilter::PokemonOfStage(Stage::Stage2)),
+            ],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, hilda, dawn)
+}
+
+/// Which slot the search is on, or `None` once it has finished.
+fn step_of(state: &GameState) -> Option<u32> {
+    match state.phase {
+        Phase::Deciding { step, .. } => Some(step),
+        _ => None,
+    }
+}
+
+#[test]
+fn hilda_asks_for_one_of_each_in_turn() {
+    let (set, hilda, _) = with_hilda_and_dawn(build());
+    let mut state = game(&set, hilda, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, hilda);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert_eq!(step_of(&state), Some(0));
+    for offered in offered(&state) {
+        assert!(
+            state
+                .def_of(offered)
+                .as_pokemon()
+                .is_some_and(|p| p.stage != Stage::Basic),
+            "the first slot wants an Evolution"
+        );
+    }
+
+    let evolution = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: evolution }).unwrap();
+    assert!(offered(&state).is_empty(), "the slot wanted one card");
+    // ADR 0012 keeps the choice to stop with the player, slot by slot.
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(step_of(&state), Some(1), "the search moves on");
+    let second = offered(&state);
+    assert!(!second.is_empty());
+    for offered in second {
+        assert!(
+            state.def_of(offered).is_energy(),
+            "the second slot wants an Energy"
+        );
+    }
+
+    let energy = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: energy }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+    assert_eq!(state.phase, Phase::Main, "two slots, two cards, done");
+    assert!(state.player(player).hand.contains(&evolution));
+    assert!(state.player(player).hand.contains(&energy));
+}
+
+#[test]
+fn a_slot_declined_still_leaves_the_next_one() {
+    // "Search for an Evolution Pokémon and an Energy card" does not demand
+    // that the deck holds both, or that the player wants both.
+    let (set, hilda, _) = with_hilda_and_dawn(build());
+    let mut state = game(&set, hilda, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, hilda);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(
+        step_of(&state),
+        Some(1),
+        "declining moves on, it does not end"
+    );
+    let energy = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: energy }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&energy));
+}
+
+#[test]
+fn the_last_slot_declined_ends_the_search() {
+    let (set, hilda, _) = with_hilda_and_dawn(build());
+    let mut state = game(&set, hilda, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, hilda);
+    let hand_before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    // Only the Supporter left the hand.
+    assert_eq!(state.player(player).hand.len(), hand_before - 1);
+}
+
+#[test]
+fn dawn_walks_three_slots_in_the_order_printed() {
+    let (set, _, dawn) = with_hilda_and_dawn(build());
+    let mut state = game(&set, dawn, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, dawn);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let wanted = [Stage::Basic, Stage::Stage1, Stage::Stage2];
+    for (step, stage) in wanted.iter().enumerate() {
+        assert_eq!(step_of(&state), Some(step as u32));
+        for offered in offered(&state) {
+            assert_eq!(
+                state.def_of(offered).as_pokemon().map(|p| p.stage),
+                Some(*stage),
+                "slot {step} wants a {stage:?}"
+            );
+        }
+        // This deck holds no Stage 2, so the last slot finds nothing.
+        apply(&mut state, Action::FinishDeciding).unwrap();
+    }
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn the_deck_is_shuffled_once_the_whole_search_ends() {
+    let (set, _, dawn) = with_hilda_and_dawn(build());
+    let mut state = game(&set, dawn, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, dawn);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let mid = state.player(player).library.clone();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+    assert_eq!(
+        state.player(player).library,
+        mid,
+        "a slot ending is not the search ending"
+    );
+
+    apply(&mut state, Action::FinishDeciding).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+    assert_ne!(
+        state.player(player).library,
+        mid,
+        "the shuffle comes once, at the end"
+    );
+}
+
+#[test]
+fn a_one_slot_search_is_the_same_path_as_the_rest() {
+    // Every card built before this ticket is a search of one slot. Nothing
+    // about them changed, and this holds them to it.
+    let set = build();
+    let mut state = game(&set, set.cyrano, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, set.cyrano);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert_eq!(step_of(&state), Some(0));
+    let take = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: take }).unwrap();
+    assert_eq!(step_of(&state), Some(0), "three of one card is one slot");
+    apply(&mut state, Action::FinishDeciding).unwrap();
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn hilda_and_dawn_are_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let trainer = |name: &str| {
+        import
+            .admitted
+            .iter()
+            .map(|id| import.db.get(*id))
+            .filter_map(|def| def.as_trainer())
+            .find(|t| t.name == name)
+            .map(|t| t.effect.clone())
+    };
+    assert_eq!(
+        trainer("Hilda"),
+        Some(TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![
+                slot(CardFilter::EvolutionPokemon),
+                slot(CardFilter::BasicEnergy),
+            ],
+            then: None,
+        })
+    );
+    assert_eq!(
+        trainer("Dawn"),
+        Some(TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![
+                slot(CardFilter::PokemonOfStage(Stage::Basic)),
+                slot(CardFilter::PokemonOfStage(Stage::Stage1)),
+                slot(CardFilter::PokemonOfStage(Stage::Stage2)),
+            ],
+            then: None,
+        })
+    );
+}
+
 // --- The card data ---
 
 #[test]
@@ -896,9 +1148,11 @@ fn buddy_buddy_poffin_is_admitted_from_the_artifact() {
         poffin.effect,
         TrainerEffect::Decide {
             from: Zone::Library,
-            to: Destination::Bench,
-            filter: CardFilter::BasicPokemonWithHpAtMost(70),
-            limit: 2,
+            slots: vec![Slot {
+                filter: CardFilter::BasicPokemonWithHpAtMost(70),
+                to: Destination::Bench,
+                limit: 2,
+            }],
             then: None,
         }
     );
@@ -919,9 +1173,11 @@ fn cyrano_is_admitted_from_the_artifact() {
         cyrano.effect,
         TrainerEffect::Decide {
             from: Zone::Library,
-            to: Destination::Zone(Zone::Hand),
-            filter: CardFilter::PokemonEx,
-            limit: 3,
+            slots: vec![Slot {
+                filter: CardFilter::PokemonEx,
+                to: Destination::Zone(Zone::Hand),
+                limit: 3,
+            }],
             then: None,
         }
     );

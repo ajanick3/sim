@@ -2,7 +2,7 @@
 
 use crate::action::{Action, legal_actions};
 use crate::card::{CardDb, Condition, Destination, Requirement, TrainerEffect, TrainerKind, Zone};
-use crate::ids::{CardDefId, PlayerId, PokemonId};
+use crate::ids::{CardDefId, CardId, PlayerId, PokemonId};
 use crate::rng::{Rng, shuffle};
 use crate::state::{GameState, Limit, Outcome, Phase, WinReason};
 
@@ -122,7 +122,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 // A requirement read from the board costs nothing, and
                 // `legal_actions` has already checked it.
                 None | Some(Requirement::OpponentPrizesAtMost(_)) => {
-                    resolve_trainer(state, player, trainer.effect);
+                    resolve_trainer(state, player, card, trainer.effect);
                 }
             }
         }
@@ -206,18 +206,23 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::TakeCard { card } => {
-            let (chooser, from, to, filter, remaining, moved, then) = match state.phase {
-                Phase::Deciding {
-                    chooser,
-                    from,
-                    to,
-                    filter,
-                    remaining,
-                    moved,
-                    then,
-                } => (chooser, from, to, filter, remaining, moved, then),
-                _ => return Err(IllegalAction),
-            };
+            let (chooser, played, step, from, to, filter, remaining, moved, then) =
+                match state.phase {
+                    Phase::Deciding {
+                        chooser,
+                        card: played,
+                        step,
+                        from,
+                        to,
+                        filter,
+                        remaining,
+                        moved,
+                        then,
+                    } => (
+                        chooser, played, step, from, to, filter, remaining, moved, then,
+                    ),
+                    _ => return Err(IllegalAction),
+                };
             let name = state.def_of(card).name();
             match to {
                 Destination::Zone(zone) => {
@@ -234,8 +239,14 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     state.log.push(format!("{chooser:?} benches {name}."));
                 }
             }
+            // A slot whose limit runs out does not move the search on by
+            // itself. ADR 0012 keeps the choice to stop with the player, and
+            // that holds slot by slot: `FinishDeciding` ends the slot, and
+            // the search goes to the next one there.
             state.phase = Phase::Deciding {
                 chooser,
+                card: played,
+                step,
                 from,
                 to,
                 filter,
@@ -246,32 +257,22 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::FinishDeciding => {
-            let (chooser, from, to, moved, then) = match state.phase {
+            // Declining a slot moves the search on rather than ending it: a
+            // card that asks for one of each does not demand that the deck
+            // holds every one.
+            let (chooser, played, step, from, moved, then) = match state.phase {
                 Phase::Deciding {
                     chooser,
+                    card: played,
+                    step,
                     from,
-                    to,
                     moved,
                     then,
                     ..
-                } => (chooser, from, to, moved, then),
+                } => (chooser, played, step, from, moved, then),
                 _ => return Err(IllegalAction),
             };
-            // The deck is shuffled once the choice ends, not after each
-            // card. Either end of the move calls for it: a card put back
-            // into the deck is shuffled in, and a deck that was searched is
-            // shuffled because the player has seen the order of it.
-            if from == Zone::Library || to == Destination::Zone(Zone::Library) {
-                let library = &mut state.players[chooser.index()].library;
-                shuffle(state.rng.as_mut(), library);
-            }
-            if let Some(crate::card::Then::DrawPerCardMoved(per_card)) = then {
-                for _ in 0..(moved * per_card) {
-                    state.draw(chooser);
-                }
-            }
-            state.phase = Phase::Main;
-            settle(state);
+            enter_slot(state, chooser, played, step + 1, from, then, moved);
         }
 
         Action::PayWithCard { card } => {
@@ -300,11 +301,12 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     .def_of(played)
                     .as_trainer()
                     .expect("a cost is only ever paid for a Trainer")
-                    .effect;
+                    .effect
+                    .clone();
                 // No `settle` here, the same as playing the card itself:
                 // the effect either opened a phase of its own or finished,
                 // and both are settled where the phase ends.
-                resolve_trainer(state, player, effect);
+                resolve_trainer(state, player, played, effect);
             }
         }
 
@@ -391,29 +393,78 @@ pub fn undo(
     replay(db, decklists, rng, &history[..keep])
 }
 
+/// Open the search's `step`th slot, or end the search when it has none.
+///
+/// The phase names the Trainer rather than carrying its slots, so this reads
+/// the next slot back from the card. A search ends where its last slot ends:
+/// the deck is shuffled if the search read it or put a card back into it,
+/// `then` runs, and the turn goes on.
+fn enter_slot(
+    state: &mut GameState,
+    chooser: PlayerId,
+    card: CardId,
+    step: u32,
+    from: Zone,
+    then: Option<crate::card::Then>,
+    moved: u32,
+) {
+    let slot = state
+        .def_of(card)
+        .as_trainer()
+        .expect("a search is only ever a Trainer's effect")
+        .slots()
+        .get(step as usize)
+        .cloned();
+
+    let Some(slot) = slot else {
+        // The deck is shuffled once the whole search ends, not after each
+        // slot. Either end of a move calls for it: a card put back into the
+        // deck is shuffled in, and a deck that was searched is shuffled
+        // because the player has seen the order of it.
+        let puts_back = state
+            .def_of(card)
+            .as_trainer()
+            .expect("a search is only ever a Trainer's effect")
+            .slots()
+            .iter()
+            .any(|s| s.to == Destination::Zone(Zone::Library));
+        if from == Zone::Library || puts_back {
+            let library = &mut state.players[chooser.index()].library;
+            shuffle(state.rng.as_mut(), library);
+        }
+        if let Some(crate::card::Then::DrawPerCardMoved(per_card)) = then {
+            for _ in 0..(moved * per_card) {
+                state.draw(chooser);
+            }
+        }
+        state.phase = Phase::Main;
+        settle(state);
+        return;
+    };
+
+    state.phase = Phase::Deciding {
+        chooser,
+        card,
+        step,
+        from,
+        to: slot.to,
+        filter: slot.filter,
+        remaining: slot.limit,
+        moved,
+        then,
+    };
+}
+
 /// Run a Trainer's effect once it has been played and discarded.
 ///
-/// `player` is who played it. A `Decide` or `SwitchOpponentActive` opens a
-/// phase and waits; everything else has no choice left in it and finishes
-/// here.
-fn resolve_trainer(state: &mut GameState, player: PlayerId, effect: TrainerEffect) {
+/// `player` is who played it, and `card` is the card itself: a search names
+/// it so the next slot can be read back from it. A `Decide` or
+/// `SwitchOpponentActive` opens a phase and waits; everything else has no
+/// choice left in it and finishes here.
+fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect: TrainerEffect) {
     match effect {
-        TrainerEffect::Decide {
-            from,
-            to,
-            filter,
-            limit,
-            then,
-        } => {
-            state.phase = Phase::Deciding {
-                chooser: player,
-                from,
-                to,
-                filter,
-                remaining: limit,
-                moved: 0,
-                then,
-            };
+        TrainerEffect::Decide { from, then, .. } => {
+            enter_slot(state, player, card, 0, from, then, 0);
         }
 
         TrainerEffect::MoveAttachedEnergy => {

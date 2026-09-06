@@ -11,8 +11,8 @@
 use serde_json::Value;
 
 use crate::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Stage, Then,
-    Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
+    Then, Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use crate::ids::CardDefId;
 
@@ -320,9 +320,11 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::Decide {
                 from: Zone::Discard,
-                to: Destination::Zone(Zone::Hand),
-                filter: CardFilter::PokemonOrBasicEnergy,
-                limit: 1,
+                slots: vec![Slot {
+                    filter: CardFilter::PokemonOrBasicEnergy,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                }],
                 then: None,
             },
         ),
@@ -330,9 +332,11 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::Decide {
                 from: Zone::Library,
-                to: Destination::Zone(Zone::Hand),
-                filter: CardFilter::PokemonWithoutRuleBox,
-                limit: 1,
+                slots: vec![Slot {
+                    filter: CardFilter::PokemonWithoutRuleBox,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                }],
                 then: None,
             },
         ),
@@ -341,9 +345,11 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::Decide {
                 from: Zone::Library,
-                to: Destination::Bench,
-                filter: CardFilter::BasicPokemonWithHpAtMost(70),
-                limit: 2,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicPokemonWithHpAtMost(70),
+                    to: Destination::Bench,
+                    limit: 2,
+                }],
                 then: None,
             },
         ),
@@ -351,9 +357,11 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::Decide {
                 from: Zone::Library,
-                to: Destination::Zone(Zone::Hand),
-                filter: CardFilter::PokemonEx,
-                limit: 3,
+                slots: vec![Slot {
+                    filter: CardFilter::PokemonEx,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 3,
+                }],
                 then: None,
             },
         ),
@@ -361,9 +369,11 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::Decide {
                 from: Zone::Hand,
-                to: Destination::Zone(Zone::Discard),
-                filter: CardFilter::PokemonWithoutRuleBox,
-                limit: 2,
+                slots: vec![Slot {
+                    filter: CardFilter::PokemonWithoutRuleBox,
+                    to: Destination::Zone(Zone::Discard),
+                    limit: 2,
+                }],
                 then: Some(Then::DrawPerCardMoved(3)),
             },
         ),
@@ -371,9 +381,11 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::Decide {
                 from: Zone::Discard,
-                to: Destination::Zone(Zone::Library),
-                filter: CardFilter::AnyPokemon,
-                limit: 5,
+                slots: vec![Slot {
+                    filter: CardFilter::AnyPokemon,
+                    to: Destination::Zone(Zone::Library),
+                    limit: 5,
+                }],
                 then: None,
             },
         ),
@@ -381,13 +393,58 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             Some(Requirement::DiscardOtherCardsFromHand(2)),
             TrainerEffect::Decide {
                 from: Zone::Library,
-                to: Destination::Zone(Zone::Hand),
-                filter: CardFilter::AnyPokemon,
-                limit: 1,
+                slots: vec![Slot {
+                    filter: CardFilter::AnyPokemon,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                }],
                 then: None,
             },
         ),
         "Energy Switch" => (free, TrainerEffect::MoveAttachedEnergy),
+        "Hilda" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![
+                    Slot {
+                        filter: CardFilter::EvolutionPokemon,
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                    },
+                    Slot {
+                        filter: CardFilter::BasicEnergy,
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                    },
+                ],
+                then: None,
+            },
+        ),
+        "Dawn" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![
+                    Slot {
+                        filter: CardFilter::PokemonOfStage(Stage::Basic),
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                    },
+                    Slot {
+                        filter: CardFilter::PokemonOfStage(Stage::Stage1),
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                    },
+                    Slot {
+                        filter: CardFilter::PokemonOfStage(Stage::Stage2),
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                    },
+                ],
+                then: None,
+            },
+        ),
         "Special Red Card" => (
             Some(Requirement::OpponentPrizesAtMost(3)),
             TrainerEffect::OpponentHandToBottomThenDraw { count: 3 },
