@@ -1,0 +1,31 @@
+Pokémon: 19
+3 Meowth ex POR 062
+3 Teal Mask Ogerpon ex TWM 025
+2 Latias ex SSP 076
+1 Chien-Pao SSP 056
+1 Raging Bolt ex TEF 123
+1 Fezandipiti ex SFA 038
+4 Mega Kangaskhan ex MEG 104
+2 Lillie's Clefairy ex JTG 056
+1 Wellspring Mask Ogerpon ex TWM 213
+1 Bloodmoon Ursaluna ex TWM 141
+
+Trainer: 26
+2 Boss's Orders ASC 183
+2 Night Stretcher ASC 196
+4 Area Zero Underdepths PRE 094
+4 Energy Switch MEG 115
+4 Crispin PRE 105
+1 Lillie's Determination ASC 192
+1 Ciphermaniac's Codebreaking PRE 104
+2 Cyrano SSP 170
+4 Ultra Ball ASC 213
+1 Glass Trumpet ASC 189
+1 Prime Catcher PRE 119
+
+Energy: 15
+3 Psychic Energy CRE 232
+2 Lightning Energy CRZ 155
+2 Fighting Energy CRE 233
+7 Grass Energy CRZ 152
+1 Water Energy CRE 231

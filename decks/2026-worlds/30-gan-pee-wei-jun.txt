@@ -1,0 +1,33 @@
+Pokémon: 18
+4 Toxel MEP 078
+4 Toxtricity PFL 103
+3 Munkidori TWM 095
+1 Shaymin DRI 010
+1 Chi-Yu PBL 059
+1 Pecharunt SVP 129
+1 Brute Bonnet TWM 118
+1 Pecharunt ex SFA 039
+1 Fezandipiti ex ASC 288
+1 Mega Absol ex MEG 180
+
+Trainer: 32
+1 Judge POR 076
+1 Morty's Conviction TEF 155
+2 Team Rocket's Petrel ASC 207
+4 Lillie's Determination ASC 192
+3 Boss's Orders ASC 183
+1 Secret Box TWM 163
+1 Buddy-Buddy Poffin ASC 184
+1 Ultra Ball ASC 213
+4 Poke Pad ASC 198
+2 Energy Switch MEG 115
+2 Energy Recycler DRI 164
+2 Night Stretcher ASC 196
+2 Pokegear 3.0 BLK 084
+1 Special Red Card CRI 082
+2 Air Balloon ASC 181
+2 Team Rocket's Watchtower ASC 210
+1 Lumiose City POR 077
+
+Energy: 10
+10 Darkness Energy CRZ 158

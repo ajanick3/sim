@@ -1,0 +1,25 @@
+Pokémon: 20
+4 Beldum TEF 113
+4 Metang TEF 114
+1 Mega Skarmory ex POR 106
+4 Drilbur PBL 046
+2 Genesect ex BLK 067
+1 Fezandipiti ex ASC 142
+1 Shaymin DRI 185
+2 Mega Excadrill ex PBL 065
+1 Metagross CRI 061
+
+Trainer: 23
+4 Buddy-Buddy Poffin ASC 184
+4 Lillie's Determination ASC 192
+1 Kieran PRE 113
+1 Boss's Orders ASC 183
+1 Switch MEG 130
+1 Ultra Ball ASC 213
+1 Hero's Cape TEF 152
+2 Pokegear 3.0 BLK 084
+4 Team Rocket's Petrel ASC 207
+4 Jumbo Ice Cream CRI 109
+
+Energy: 17
+17 Metal Energy CRZ 159
