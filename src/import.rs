@@ -38,6 +38,30 @@ pub struct Refused {
     pub because: Refusal,
 }
 
+/// One card in the artifact, whether or not the engine can play it. It is
+/// what a decklist matches against.
+#[derive(Debug, Clone)]
+pub struct CardRef {
+    pub id: String,
+    pub name: String,
+    /// The set's TCGdex id, such as `me01`.
+    pub set: String,
+    /// The number printed on the card, without the leading zeroes a decklist
+    /// leaves off.
+    pub number: String,
+    pub mark: String,
+    /// The playable card, when the engine can run this one.
+    pub playable: Option<CardDefId>,
+}
+
+/// A set, with the abbreviation a decklist prints.
+#[derive(Debug, Clone)]
+pub struct SetRef {
+    pub id: String,
+    pub name: String,
+    pub abbreviation: String,
+}
+
 /// The result of reading the artifact: the cards the engine can play, and an
 /// account of every card it cannot.
 #[derive(Debug)]
@@ -45,6 +69,9 @@ pub struct Import {
     pub db: CardDb,
     pub admitted: Vec<CardDefId>,
     pub refused: Vec<Refused>,
+    /// Every card read, in artifact order.
+    pub cards: Vec<CardRef>,
+    pub sets: Vec<SetRef>,
     basic_energy: Vec<(Type, CardDefId)>,
 }
 
@@ -107,24 +134,58 @@ pub fn load(json: &str) -> Result<Import, String> {
         db: CardDb::new(),
         admitted: Vec::new(),
         refused: Vec::new(),
+        cards: Vec::new(),
+        sets: read_sets(&root),
         basic_energy: Vec::new(),
     };
 
     for card in cards {
-        match read_card(card) {
+        let playable = match read_card(card) {
             Ok(def) => {
                 let id = import.db.add(def);
                 import.admitted.push(id);
+                Some(id)
             }
-            Err(because) => import.refused.push(Refused {
-                id: card["id"].as_str().unwrap_or("?").to_string(),
-                name: card["name"].as_str().unwrap_or("?").to_string(),
-                because,
-            }),
-        }
+            Err(because) => {
+                import.refused.push(Refused {
+                    id: card["id"].as_str().unwrap_or("?").to_string(),
+                    name: card["name"].as_str().unwrap_or("?").to_string(),
+                    because,
+                });
+                None
+            }
+        };
+        import.cards.push(CardRef {
+            id: card["id"].as_str().unwrap_or("?").to_string(),
+            name: card["name"].as_str().unwrap_or("?").to_string(),
+            set: card["set"].as_str().unwrap_or("?").to_string(),
+            // A decklist prints 3 where the artifact holds 001.
+            number: card["localId"]
+                .as_str()
+                .unwrap_or("")
+                .trim_start_matches('0')
+                .to_string(),
+            mark: card["regulationMark"].as_str().unwrap_or("?").to_string(),
+            playable,
+        });
     }
 
     Ok(import)
+}
+
+fn read_sets(root: &Value) -> Vec<SetRef> {
+    root["sets"]
+        .as_array()
+        .map(|sets| {
+            sets.iter()
+                .map(|set| SetRef {
+                    id: set["id"].as_str().unwrap_or("?").to_string(),
+                    name: set["name"].as_str().unwrap_or("?").to_string(),
+                    abbreviation: set["abbreviation"].as_str().unwrap_or("").to_string(),
+                })
+                .collect()
+        })
+        .unwrap_or_default()
 }
 
 fn read_card(card: &Value) -> Result<CardDef, Refusal> {

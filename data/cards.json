@@ -100501,12 +100501,104 @@
   }
  ],
  "count": 3051,
- "imported": "2026-09-05",
+ "imported": "2026-09-06",
  "marks": [
   "H",
   "I",
   "J"
  ],
- "schema": 1,
+ "schema": 2,
+ "sets": [
+  {
+   "abbreviation": "MEG",
+   "id": "me01",
+   "name": "Mega Evolution"
+  },
+  {
+   "abbreviation": "PFL",
+   "id": "me02",
+   "name": "Phantasmal Flames"
+  },
+  {
+   "abbreviation": "ASC",
+   "id": "me02.5",
+   "name": "Ascended Heroes"
+  },
+  {
+   "abbreviation": "POR",
+   "id": "me03",
+   "name": "Perfect Order"
+  },
+  {
+   "abbreviation": "CRI",
+   "id": "me04",
+   "name": "Chaos Rising"
+  },
+  {
+   "abbreviation": "PBL",
+   "id": "me05",
+   "name": "Pitch Black"
+  },
+  {
+   "abbreviation": "MEP",
+   "id": "mep",
+   "name": "MEP Black Star Promos"
+  },
+  {
+   "abbreviation": "TEF",
+   "id": "sv05",
+   "name": "Temporal Forces"
+  },
+  {
+   "abbreviation": "TWM",
+   "id": "sv06",
+   "name": "Twilight Masquerade"
+  },
+  {
+   "abbreviation": "SFA",
+   "id": "sv06.5",
+   "name": "Shrouded Fable"
+  },
+  {
+   "abbreviation": "SCR",
+   "id": "sv07",
+   "name": "Stellar Crown"
+  },
+  {
+   "abbreviation": "SSP",
+   "id": "sv08",
+   "name": "Surging Sparks"
+  },
+  {
+   "abbreviation": "PRE",
+   "id": "sv08.5",
+   "name": "Prismatic Evolutions"
+  },
+  {
+   "abbreviation": "JTG",
+   "id": "sv09",
+   "name": "Journey Together"
+  },
+  {
+   "abbreviation": "DRI",
+   "id": "sv10",
+   "name": "Destined Rivals"
+  },
+  {
+   "abbreviation": "BLK",
+   "id": "sv10.5b",
+   "name": "Black Bolt"
+  },
+  {
+   "abbreviation": "WHT",
+   "id": "sv10.5w",
+   "name": "White Flare"
+  },
+  {
+   "abbreviation": "SVP",
+   "id": "svp",
+   "name": "SVP Black Star Promos"
+  }
+ ],
  "source": "https://api.tcgdex.net/v2/en"
 }
