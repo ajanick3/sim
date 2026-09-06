@@ -235,9 +235,13 @@ fn read_card(card: &Value, lineage: &HashMap<&str, &str>) -> Result<CardDef, Ref
         Some("Trainer") => {
             let kind = trainer_kind(card);
             let name = card["name"].as_str().unwrap_or("?");
-            return match known_trainer(name) {
+            let id = card["id"].as_str().unwrap_or("?");
+            // A print is matched by its own id first, and only falls back
+            // to its name where nothing more specific claims it. Safe
+            // today because nothing does — see `known_trainer_by_print`.
+            return match known_trainer_by_print(id).or_else(|| known_trainer(name)) {
                 Some((requirement, effect)) => Ok(CardDef::Trainer(Trainer {
-                    print_id: leak(card["id"].as_str().unwrap_or("?")),
+                    print_id: leak(id),
                     name: leak(name),
                     kind,
                     requirement,
@@ -316,12 +320,33 @@ fn read_card(card: &Value, lineage: &HashMap<&str, &str>) -> Result<CardDef, Ref
     }))
 }
 
+/// A print whose behaviour cannot be read from its name, because the name
+/// is shared with a print whose behaviour differs. Checked before
+/// `known_trainer`, and keyed on the print's own id rather than its name.
+///
+/// Empty of any real card, deliberately. `tools/check_trainer_name_safety.py`
+/// checks every Trainer name in the artifact, ignoring whitespace, and finds
+/// each one carries a single effect — a name-based match is safe for every
+/// card built so far ([ADR 0020](../docs/adr/0020-a-trainer-name-is-matched-unless-a-print-overrides-it.md)).
+/// The day a name stops being safe, its prints are named here instead of
+/// matched by name, one arm at a time; `test-print-a` and `test-print-b`
+/// exist only so `tests/import.rs` can prove the override wins, the same
+/// way [`crate::cards`] ships a small synthetic pool for the engine's own
+/// tests to play with.
+fn known_trainer_by_print(print_id: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
+    Some(match print_id {
+        "test-print-a" => (None, TrainerEffect::Nothing),
+        "test-print-b" => (None, TrainerEffect::SwitchOpponentActive),
+        _ => return None,
+    })
+}
+
 /// Every Trainer the engine has built, by printed name, with what the card
 /// demands before it may be played and what it does once it is. Each name
 /// has one distinct behaviour across every printing in the artifact today,
 /// so a name match is safe; a card with the same name and a genuinely
-/// different effect would need matching by print id instead, and nothing
-/// here does.
+/// different effect is matched by print id instead, in
+/// `known_trainer_by_print`.
 ///
 /// The requirement and the effect share this one table on purpose. A card's
 /// whole behaviour is one fact, and a second table keyed by the same name
