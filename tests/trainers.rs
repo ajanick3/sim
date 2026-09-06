@@ -207,7 +207,7 @@ struct Set2 {
 }
 
 fn build2() -> Set2 {
-    use sim::card::{CardFilter, Then, Zone};
+    use sim::card::{CardFilter, Destination, Then, Zone};
     let mut db = CardDb::new();
     let mon = db.add(CardDef::Pokemon(Pokemon {
         print_id: "test-mon",
@@ -260,7 +260,7 @@ fn build2() -> Set2 {
         kind: TrainerKind::Item,
         effect: TrainerEffect::Decide {
             from: Zone::Library,
-            to: Zone::Hand,
+            to: Destination::Zone(Zone::Hand),
             filter: CardFilter::PokemonWithoutRuleBox,
             limit: 1,
             then: None,
@@ -272,7 +272,7 @@ fn build2() -> Set2 {
         kind: TrainerKind::Item,
         effect: TrainerEffect::Decide {
             from: Zone::Discard,
-            to: Zone::Hand,
+            to: Destination::Zone(Zone::Hand),
             filter: CardFilter::PokemonOrBasicEnergy,
             limit: 1,
             then: None,
@@ -284,7 +284,7 @@ fn build2() -> Set2 {
         kind: TrainerKind::Item,
         effect: TrainerEffect::Decide {
             from: Zone::Discard,
-            to: Zone::Library,
+            to: Destination::Zone(Zone::Library),
             filter: CardFilter::AnyPokemon,
             limit: 5,
             then: None,
@@ -296,7 +296,7 @@ fn build2() -> Set2 {
         kind: TrainerKind::Supporter,
         effect: TrainerEffect::Decide {
             from: Zone::Hand,
-            to: Zone::Discard,
+            to: Destination::Zone(Zone::Discard),
             filter: CardFilter::PokemonWithoutRuleBox,
             limit: 2,
             then: Some(Then::DrawPerCardMoved(3)),

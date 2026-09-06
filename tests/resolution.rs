@@ -3,7 +3,7 @@
 //! Trainer card, since the machinery is what several cards will share.
 
 use sim::action::{Action, legal_actions};
-use sim::card::{CardFilter, Zone};
+use sim::card::{CardFilter, Destination, Zone};
 use sim::cards::{milestone1, starter_decklist};
 use sim::engine::apply;
 use sim::ids::PlayerId;
@@ -40,7 +40,7 @@ fn deciding_offers_only_cards_the_filter_admits() {
     state.phase = Phase::Deciding {
         chooser: player,
         from: Zone::Library,
-        to: Zone::Hand,
+        to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
         remaining: 1,
         moved: 0,
@@ -74,7 +74,7 @@ fn taking_a_card_moves_it_and_counts_down_remaining() {
     state.phase = Phase::Deciding {
         chooser: player,
         from: Zone::Library,
-        to: Zone::Hand,
+        to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
         remaining: 2,
         moved: 0,
@@ -90,7 +90,7 @@ fn taking_a_card_moves_it_and_counts_down_remaining() {
         Phase::Deciding {
             chooser: player,
             from: Zone::Library,
-            to: Zone::Hand,
+            to: Destination::Zone(Zone::Hand),
             filter: CardFilter::AnyPokemon,
             remaining: 1,
             moved: 1,
@@ -107,7 +107,7 @@ fn remaining_at_zero_offers_only_finishing() {
     state.phase = Phase::Deciding {
         chooser: player,
         from: Zone::Library,
-        to: Zone::Hand,
+        to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
         remaining: 0,
         moved: 0,
@@ -140,7 +140,7 @@ fn finishing_into_the_library_shuffles_it() {
     state.phase = Phase::Deciding {
         chooser: player,
         from: Zone::Discard,
-        to: Zone::Library,
+        to: Destination::Zone(Zone::Library),
         filter: CardFilter::AnyPokemon,
         remaining: 0,
         moved: 0,
@@ -163,7 +163,7 @@ fn only_the_chooser_may_act_in_a_deciding_phase() {
     state.phase = Phase::Deciding {
         chooser: player,
         from: Zone::Library,
-        to: Zone::Hand,
+        to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
         remaining: 1,
         moved: 0,

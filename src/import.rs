@@ -11,8 +11,8 @@
 use serde_json::Value;
 
 use crate::card::{
-    Attack, CardDb, CardDef, CardFilter, Energy, Pokemon, Then, Trainer, TrainerEffect,
-    TrainerKind, Type, Zone,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Then, Trainer,
+    TrainerEffect, TrainerKind, Type, Zone,
 };
 use crate::ids::CardDefId;
 
@@ -299,36 +299,43 @@ fn known_trainer_effect(name: &str) -> Option<TrainerEffect> {
         },
         "Night Stretcher" => TrainerEffect::Decide {
             from: Zone::Discard,
-            to: Zone::Hand,
+            to: Destination::Zone(Zone::Hand),
             filter: CardFilter::PokemonOrBasicEnergy,
             limit: 1,
             then: None,
         },
         "Poké Pad" => TrainerEffect::Decide {
             from: Zone::Library,
-            to: Zone::Hand,
+            to: Destination::Zone(Zone::Hand),
             filter: CardFilter::PokemonWithoutRuleBox,
             limit: 1,
             then: None,
         },
         "Crushing Hammer" => TrainerEffect::CoinFlipDiscardOpponentEnergy,
+        "Buddy-Buddy Poffin" => TrainerEffect::Decide {
+            from: Zone::Library,
+            to: Destination::Bench,
+            filter: CardFilter::BasicPokemonWithHpAtMost(70),
+            limit: 2,
+            then: None,
+        },
         "Cyrano" => TrainerEffect::Decide {
             from: Zone::Library,
-            to: Zone::Hand,
+            to: Destination::Zone(Zone::Hand),
             filter: CardFilter::PokemonEx,
             limit: 3,
             then: None,
         },
         "Gwynn" => TrainerEffect::Decide {
             from: Zone::Hand,
-            to: Zone::Discard,
+            to: Destination::Zone(Zone::Discard),
             filter: CardFilter::PokemonWithoutRuleBox,
             limit: 2,
             then: Some(Then::DrawPerCardMoved(3)),
         },
         "Sacred Ash" => TrainerEffect::Decide {
             from: Zone::Discard,
-            to: Zone::Library,
+            to: Destination::Zone(Zone::Library),
             filter: CardFilter::AnyPokemon,
             limit: 5,
             then: None,

@@ -3,8 +3,8 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, CardFilter, Energy, Pokemon, Trainer, TrainerEffect, TrainerKind,
-    Type, Zone,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Trainer, TrainerEffect,
+    TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId};
@@ -67,7 +67,7 @@ fn build() -> Set {
         kind: TrainerKind::Supporter,
         effect: TrainerEffect::Decide {
             from: Zone::Library,
-            to: Zone::Hand,
+            to: Destination::Zone(Zone::Hand),
             filter: CardFilter::PokemonEx,
             limit: 3,
             then: None,
@@ -215,7 +215,7 @@ fn the_small_basic_filter_reads_both_the_stage_and_the_hp() {
         kind: TrainerKind::Item,
         effect: TrainerEffect::Decide {
             from: Zone::Library,
-            to: Zone::Hand,
+            to: Destination::Zone(Zone::Hand),
             filter: CardFilter::BasicPokemonWithHpAtMost(70),
             limit: 2,
             then: None,
@@ -244,7 +244,201 @@ fn the_small_basic_filter_reads_both_the_stage_and_the_hp() {
     }
 }
 
+// --- Ticket 01: a search that puts a Pokémon into play ---
+
+/// `Buddy-Buddy Poffin` as printed: up to 2 small Basics, deck to Bench.
+fn with_poffin(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let poffin = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-poffin",
+        name: "Buddy-Buddy Poffin",
+        kind: TrainerKind::Item,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            to: Destination::Bench,
+            filter: CardFilter::BasicPokemonWithHpAtMost(70),
+            limit: 2,
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, poffin)
+}
+
+#[test]
+fn a_search_can_put_a_pokemon_into_play() {
+    let (set, poffin) = with_poffin(build());
+    let mut state = game(&set, poffin, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, poffin);
+    let bench_before = state.player(player).bench.len();
+    let hand_before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let take = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: take }).unwrap();
+
+    assert_eq!(
+        state.player(player).bench.len(),
+        bench_before + 1,
+        "the searched card is a Pokémon in play, not a card in a zone"
+    );
+    let benched = *state.player(player).bench.last().unwrap();
+    assert_eq!(
+        state.pokemon(benched).cards,
+        vec![take],
+        "the Pokémon in play is the card that was taken"
+    );
+    assert_eq!(
+        state.pokemon(benched).played_on_turn,
+        state.turn_number,
+        "it came into play this turn, the same as a Basic from hand"
+    );
+    assert!(
+        !state.player(player).hand.contains(&take),
+        "and it never passed through the hand"
+    );
+    // The Item itself left the hand; nothing else joined it.
+    assert_eq!(state.player(player).hand.len(), hand_before - 1);
+    assert!(
+        !state.player(player).library.contains(&take),
+        "the card left the deck"
+    );
+}
+
+#[test]
+fn a_full_bench_offers_nothing_to_take() {
+    let (set, poffin) = with_poffin(build());
+    let mut state = game(&set, poffin, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, poffin);
+
+    // Fill the Bench from the deck, the way an ordinary turn would.
+    while state.player(player).bench.len() < sim::state::BENCH_LIMIT {
+        let basic = *state
+            .player(player)
+            .library
+            .iter()
+            .find(|c| state.def_of(**c).is_basic_pokemon())
+            .expect("the deck holds Basics");
+        state.players[player.index()].library.retain(|c| *c != basic);
+        let pokemon = state.put_into_play(player, basic);
+        state.players[player.index()].bench.push(pokemon);
+    }
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert!(
+        offered(&state).is_empty(),
+        "there is nowhere to put a Pokémon"
+    );
+    assert!(
+        legal_actions(&state).contains(&Action::FinishDeciding),
+        "and the choice can still be ended"
+    );
+    apply(&mut state, Action::FinishDeciding).unwrap();
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn a_bench_that_fills_part_way_through_ends_the_choice() {
+    let (set, poffin) = with_poffin(build());
+    let mut state = game(&set, poffin, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, poffin);
+
+    // One space left, and the card offers two.
+    while state.player(player).bench.len() < sim::state::BENCH_LIMIT - 1 {
+        let basic = *state
+            .player(player)
+            .library
+            .iter()
+            .find(|c| state.def_of(**c).is_basic_pokemon())
+            .expect("the deck holds Basics");
+        state.players[player.index()].library.retain(|c| *c != basic);
+        let pokemon = state.put_into_play(player, basic);
+        state.players[player.index()].bench.push(pokemon);
+    }
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let take = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: take }).unwrap();
+    assert_eq!(state.player(player).bench.len(), sim::state::BENCH_LIMIT);
+    assert!(
+        offered(&state).is_empty(),
+        "the second card has nowhere to go"
+    );
+}
+
+#[test]
+fn a_search_that_ends_in_the_library_still_shuffles() {
+    // The destination is a value now. The rule that a card put back into the
+    // deck shuffles it must still read the value and not a `Zone` field that
+    // no longer exists.
+    let set = build();
+    let mut db = set.db.clone();
+    let ash = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-ash",
+        name: "Sacred Ash",
+        kind: TrainerKind::Item,
+        effect: TrainerEffect::Decide {
+            from: Zone::Discard,
+            to: Destination::Zone(Zone::Library),
+            filter: CardFilter::AnyPokemon,
+            limit: 5,
+            then: None,
+        },
+    }));
+    let set = Set { db, ..set };
+    let mut state = game(&set, ash, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, ash);
+
+    // Put a Pokémon in the discard for it to find.
+    let mon = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).as_pokemon().is_some())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != mon);
+    state.players[player.index()].discard.push(mon);
+    let order_before = state.player(player).library.clone();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::TakeCard { card: mon }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert!(state.player(player).library.contains(&mon));
+    assert_ne!(
+        state.player(player).library,
+        order_before,
+        "the deck is shuffled once the choice ends"
+    );
+}
+
 // --- The card data ---
+
+#[test]
+fn buddy_buddy_poffin_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let poffin = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Buddy-Buddy Poffin")
+        .expect("Buddy-Buddy Poffin plays");
+    assert_eq!(
+        poffin.effect,
+        TrainerEffect::Decide {
+            from: Zone::Library,
+            to: Destination::Bench,
+            filter: CardFilter::BasicPokemonWithHpAtMost(70),
+            limit: 2,
+            then: None,
+        }
+    );
+}
 
 #[test]
 fn cyrano_is_admitted_from_the_artifact() {
@@ -261,7 +455,7 @@ fn cyrano_is_admitted_from_the_artifact() {
         cyrano.effect,
         TrainerEffect::Decide {
             from: Zone::Library,
-            to: Zone::Hand,
+            to: Destination::Zone(Zone::Hand),
             filter: CardFilter::PokemonEx,
             limit: 3,
             then: None,
