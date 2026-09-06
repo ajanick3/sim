@@ -57,6 +57,10 @@ pub struct PlayerState {
     pub bench: Vec<PokemonId>,
     pub energy_attached_this_turn: bool,
     pub retreated_this_turn: bool,
+    /// Rule 13: one Supporter and one Stadium a turn. Nothing plays either
+    /// yet; the turn records them so the card that does has its limit.
+    pub supporter_played_this_turn: bool,
+    pub stadium_played_this_turn: bool,
 }
 
 impl PlayerState {
@@ -70,6 +74,8 @@ impl PlayerState {
             bench: Vec::new(),
             energy_attached_this_turn: false,
             retreated_this_turn: false,
+            supporter_played_this_turn: false,
+            stadium_played_this_turn: false,
         }
     }
 
@@ -360,6 +366,8 @@ impl GameState {
         let slot = self.current.index();
         self.players[slot].energy_attached_this_turn = false;
         self.players[slot].retreated_this_turn = false;
+        self.players[slot].supporter_played_this_turn = false;
+        self.players[slot].stadium_played_this_turn = false;
     }
 
     pub fn has_condition(&self, id: PokemonId, condition: Condition) -> bool {
