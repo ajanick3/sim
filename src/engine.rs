@@ -67,6 +67,18 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.log.push(format!("{player:?} benches {name}."));
         }
 
+        Action::Evolve { card, target } => {
+            let player = state.current;
+            state.remove_from_hand(player, card);
+            state.pokemon[target.index()].cards.push(card);
+            state.pokemon[target.index()].evolved_this_turn = true;
+            // Rule 22: evolving clears every Special Condition. Damage and
+            // attachments are untouched — nothing here moves them.
+            state.clear_conditions(target);
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{player:?} evolves into {name}."));
+        }
+
         Action::AttachEnergy { card, target } => {
             let player = state.current;
             state.remove_from_hand(player, card);
@@ -463,10 +475,11 @@ fn knock_out(state: &mut GameState, pokemon: PokemonId) {
     let name = state.pokemon_def(pokemon).name;
 
     // Rule 38: the Pokémon and everything attached go to its owner's discard.
-    let card = state.pokemon(pokemon).card;
+    // Every stage it evolved through goes with it (rule 22 keeps the stack).
+    let cards = std::mem::take(&mut state.pokemon[pokemon.index()].cards);
     let attached = std::mem::take(&mut state.pokemon[pokemon.index()].attached);
     let side = &mut state.players[owner.index()];
-    side.discard.push(card);
+    side.discard.extend(cards);
     side.discard.extend(attached);
     if side.active == Some(pokemon) {
         side.active = None;

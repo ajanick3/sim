@@ -30,6 +30,7 @@ pub fn milestone1() -> Milestone1 {
         resistance: None,
         retreat_cost: 1,
         prizes: 1,
+        evolve_from: None,
         attacks: vec![
             Attack {
                 name: "Nibble",
@@ -46,8 +47,8 @@ pub fn milestone1() -> Milestone1 {
         ],
     }));
 
-    // Weak to Water, so Sparkmouse doubles into it. Resistant to Water
-    // it is not — the two modifiers must not be testable at once by accident.
+    // Weak to Water, so Aquabear doubles into it. Resistant to Water it is
+    // not — the two modifiers must not be testable at once by accident.
     let cinderpup = db.add(CardDef::Pokemon(Pokemon {
         name: "Cinderpup",
         hp: 70,
@@ -56,6 +57,7 @@ pub fn milestone1() -> Milestone1 {
         resistance: None,
         retreat_cost: 2,
         prizes: 1,
+        evolve_from: None,
         attacks: vec![Attack {
             name: "Ember",
             cost: vec![Type::Fire, Type::Fire],
@@ -64,8 +66,8 @@ pub fn milestone1() -> Milestone1 {
         }],
     }));
 
-    // Weak to Lightning, so Aquabear doubles into it. Resistant to Fire
-    // it is not — the two modifiers must not be testable at once by accident.
+    // Weak to Fire, so Cinderpup doubles into it. Resistant to Fire it is
+    // not — the two modifiers must not be testable at once by accident.
     let aquabear = db.add(CardDef::Pokemon(Pokemon {
         name: "Aquabear",
         hp: 70,
@@ -74,6 +76,7 @@ pub fn milestone1() -> Milestone1 {
         resistance: None,
         retreat_cost: 1,
         prizes: 1,
+        evolve_from: None,
         attacks: vec![Attack {
             name: "Bubblebeam",
             cost: vec![Type::Water, Type::Colorless],

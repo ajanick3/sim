@@ -65,6 +65,8 @@ pub struct Pokemon {
     /// One for an ordinary Pokémon, two for a Pokémon ex, three for a Mega
     /// Evolution ex.
     pub prizes: u32,
+    /// The name of the Pokémon this one evolves from. `None` on a Basic.
+    pub evolve_from: Option<&'static str>,
     pub attacks: Vec<Attack>,
 }
 
@@ -96,8 +98,12 @@ impl CardDef {
         }
     }
 
+    /// A Basic — one that a player places directly, rather than evolving
+    /// onto an existing Pokémon (rule 9). Before evolution existed, every
+    /// admitted Pokémon was a Basic, and this checked only the enum variant;
+    /// that stopped being enough once a Stage 1 or 2 could be admitted too.
     pub fn is_basic_pokemon(&self) -> bool {
-        matches!(self, CardDef::Pokemon(_))
+        matches!(self, CardDef::Pokemon(p) if p.evolve_from.is_none())
     }
 
     pub fn is_energy(&self) -> bool {

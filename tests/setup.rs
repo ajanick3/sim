@@ -79,7 +79,7 @@ fn a_player_places_their_own_active_and_bench() {
 
     let active = state.player(player).active.expect("the Active is placed");
     assert_eq!(
-        state.pokemon(active).card,
+        state.pokemon(active).top_card(),
         chosen,
         "the Pokémon placed is the one the player chose"
     );

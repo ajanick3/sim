@@ -17,6 +17,7 @@ fn game(inflicts: Condition, rng: Box<dyn Rng>) -> GameState {
         weakness: None,
         resistance: None,
         retreat_cost: 1,
+        evolve_from: None,
         prizes: 1,
         attacks: vec![Attack {
             name: "Sting",

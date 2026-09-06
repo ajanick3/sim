@@ -170,6 +170,7 @@ fn a_free_retreat_asks_nothing() {
         weakness: None,
         resistance: None,
         retreat_cost: 0,
+        evolve_from: None,
         prizes: 1,
         attacks: vec![Attack {
             name: "Drift",

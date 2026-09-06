@@ -26,6 +26,8 @@ pub enum Action {
     FinishPlacing,
     /// Put a Basic Pokémon from hand onto the Bench.
     PlayBasic { card: CardId },
+    /// Evolve a Pokémon in play with the card from hand that names it.
+    Evolve { card: CardId, target: PokemonId },
     /// Attach an Energy from hand. Once per turn.
     AttachEnergy { card: CardId, target: PokemonId },
     /// Retreat the Active, promoting a Benched Pokémon. Once per turn.
@@ -146,6 +148,24 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 });
             }
         }
+        // Rules 18-20: not on the first turn of the game, only onto the
+        // Pokémon this card names, only if it has been in play since the
+        // start of the turn, and only once per Pokémon per turn.
+        if let Some(from) = def.as_pokemon().and_then(|p| p.evolve_from)
+            && !state.is_first_turn_of_game()
+        {
+            for target in side.in_play() {
+                let eligible = state.pokemon_def(target).name == from
+                    && state.pokemon(target).played_on_turn < state.turn_number
+                    && !state.pokemon(target).evolved_this_turn;
+                if eligible {
+                    actions.push(Action::Evolve {
+                        card: *card,
+                        target,
+                    });
+                }
+            }
+        }
     }
 
     // Rules 50-51: Asleep and Paralyzed stop both an attack and a retreat.
@@ -185,6 +205,11 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::PlayBasic { card } => {
             format!("Bench {}", state.def_of(card).name())
         }
+        Action::Evolve { card, target } => format!(
+            "Evolve {} into {}",
+            state.pokemon_def(target).name,
+            state.def_of(card).name()
+        ),
         Action::AttachEnergy { card, target } => format!(
             "Attach {} to {}",
             state.def_of(card).name(),
