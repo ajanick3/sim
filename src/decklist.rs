@@ -78,6 +78,10 @@ pub enum Problem {
     NotStandard { name: String, mark: String },
     /// No card in the artifact matches the line.
     NoSuchCard { line: Line },
+    /// The line's set and number name one card, and its printed name another.
+    /// A decklist carries only a name, a set, and a number, so the two must
+    /// agree or one of them is a typo.
+    NameMismatch { printed: String, found: String },
 }
 
 #[derive(Debug, Clone, Default)]
@@ -190,6 +194,12 @@ pub fn check(list: &Decklist, import: &Import) -> Report {
                         mark: card.mark.clone(),
                     });
                 }
+                if !same_name(&line.name, &card.name) {
+                    report.problems.push(Problem::NameMismatch {
+                        printed: line.name.clone(),
+                        found: card.name.clone(),
+                    });
+                }
                 if card.playable.is_some() {
                     report.playable += line.count;
                 }
@@ -205,6 +215,33 @@ pub fn check(list: &Decklist, import: &Import) -> Report {
     }
 
     report
+}
+
+/// Whether two names are the same card.
+///
+/// A list is typed and exported by many tools, so an accent, an apostrophe,
+/// and a hyphen all vary. Compare the letters and digits and nothing else.
+fn same_name(printed: &str, found: &str) -> bool {
+    fn letters(name: &str) -> String {
+        name.to_lowercase()
+            .chars()
+            .filter(|c| c.is_alphanumeric())
+            .map(fold)
+            .collect()
+    }
+    letters(printed) == letters(found)
+}
+
+/// Fold the accented letters a card name uses down to their plain form.
+fn fold(c: char) -> char {
+    match c {
+        'é' | 'è' | 'ê' => 'e',
+        'á' | 'à' | 'â' => 'a',
+        'í' | 'ì' | 'î' => 'i',
+        'ó' | 'ò' | 'ô' => 'o',
+        'ú' | 'ù' | 'û' => 'u',
+        other => other,
+    }
 }
 
 /// Find the card a line names, by its set abbreviation and its number.
