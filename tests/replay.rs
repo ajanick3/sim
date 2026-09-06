@@ -160,3 +160,83 @@ fn a_partial_log_replays_to_the_position_it_reached() {
     assert_eq!(fingerprint(&replayed), fingerprint(&played));
     assert!(player_to_act(&replayed).is_some(), "and it can carry on");
 }
+
+// --- Ticket 02: undo ---
+
+#[test]
+fn undo_gives_back_the_position_before_the_last_action() {
+    let set = milestone1();
+    let decklist = starter_decklist(&set);
+    let mut state = deal(5);
+    for _ in 0..7 {
+        let action = choose(&state);
+        apply(&mut state, action).unwrap();
+    }
+    let before = fingerprint(&state);
+    let history_before = state.history.clone();
+
+    let action = choose(&state);
+    apply(&mut state, action).unwrap();
+    assert_ne!(fingerprint(&state), before, "the action did something");
+
+    let undone = sim::engine::undo(
+        set.db,
+        [decklist.clone(), decklist],
+        Box::new(SeededRng::new(5)),
+        &state.history,
+    )
+    .unwrap();
+
+    assert_eq!(fingerprint(&undone), before, "back where it was");
+    assert_eq!(undone.history, history_before, "and the log is shorter");
+}
+
+#[test]
+fn undo_can_be_taken_more_than_once() {
+    let set = milestone1();
+    let decklist = starter_decklist(&set);
+    let mut state = deal(5);
+    for _ in 0..4 {
+        let action = choose(&state);
+        apply(&mut state, action).unwrap();
+    }
+    let after_four = fingerprint(&state);
+
+    for _ in 0..3 {
+        let action = choose(&state);
+        apply(&mut state, action).unwrap();
+    }
+
+    let mut rewound = state;
+    for _ in 0..3 {
+        rewound = sim::engine::undo(
+            set.db.clone(),
+            [decklist.clone(), decklist.clone()],
+            Box::new(SeededRng::new(5)),
+            &rewound.history,
+        )
+        .unwrap();
+    }
+    assert_eq!(fingerprint(&rewound), after_four);
+}
+
+#[test]
+fn undo_with_nothing_to_take_back_gives_the_deal() {
+    let set = milestone1();
+    let decklist = starter_decklist(&set);
+    let dealt = deal(5);
+
+    let undone = sim::engine::undo(
+        set.db,
+        [decklist.clone(), decklist],
+        Box::new(SeededRng::new(5)),
+        &[],
+    )
+    .unwrap();
+
+    assert_eq!(
+        fingerprint(&undone),
+        fingerprint(&dealt),
+        "the position before any action is the deal itself"
+    );
+}
