@@ -4,7 +4,7 @@
 //! the set stays small and grows a card only when that card teaches the engine
 //! something it cannot yet express. Real cards wait in `data/cards.json`.
 
-use crate::card::{Attack, CardDb, CardDef, Energy, Pokemon, Type};
+use crate::card::{Attack, CardDb, CardDef, Energy, Pokemon, Stage, Type};
 use crate::ids::CardDefId;
 
 pub struct Milestone1 {
@@ -31,6 +31,7 @@ pub fn milestone1() -> Milestone1 {
         resistance: None,
         retreat_cost: 1,
         prizes: 1,
+        stage: Stage::Basic,
         evolve_from: None,
         attacks: vec![
             Attack {
@@ -59,6 +60,7 @@ pub fn milestone1() -> Milestone1 {
         resistance: None,
         retreat_cost: 2,
         prizes: 1,
+        stage: Stage::Basic,
         evolve_from: None,
         attacks: vec![Attack {
             name: "Ember",
@@ -79,6 +81,7 @@ pub fn milestone1() -> Milestone1 {
         resistance: None,
         retreat_cost: 1,
         prizes: 1,
+        stage: Stage::Basic,
         evolve_from: None,
         attacks: vec![Attack {
             name: "Bubblebeam",

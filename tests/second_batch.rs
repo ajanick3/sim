@@ -3,7 +3,7 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Trainer,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Stage, Trainer,
     TrainerEffect, TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
@@ -40,6 +40,10 @@ fn basic(
         resistance: None,
         retreat_cost: 1,
         prizes,
+        stage: match evolve_from {
+            None => Stage::Basic,
+            Some(_) => Stage::Stage1,
+        },
         evolve_from,
         attacks: vec![Attack {
             name: "Tackle",
@@ -754,6 +758,125 @@ fn energy_switch_needs_an_energy_and_somewhere_to_put_it() {
         !legal_actions(&state).contains(&Action::PlayTrainer { card }),
         "one Pokémon cannot pass an Energy to itself"
     );
+}
+
+// --- Ticket 05, part one: the printed stage, and the shuffle a search owes ---
+
+#[test]
+fn a_pokemon_carries_the_stage_it_prints() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let stage_of = |name: &str| {
+        import
+            .admitted
+            .iter()
+            .filter_map(|id| import.db.get(*id).as_pokemon())
+            .find(|p| p.name == name)
+            .map(|p| p.stage)
+    };
+    assert_eq!(stage_of("Chikorita"), Some(Stage::Basic));
+    assert_eq!(stage_of("Bayleef"), Some(Stage::Stage1));
+    assert_eq!(stage_of("Ampharos"), Some(Stage::Stage2));
+}
+
+#[test]
+fn the_stage_and_the_name_it_evolves_from_agree() {
+    // A Basic names nothing to evolve from, and every evolution names one.
+    // The two facts came from different fields of the artifact, so the
+    // engine checks that they tell the same story.
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    for pokemon in import
+        .admitted
+        .iter()
+        .filter_map(|id| import.db.get(*id).as_pokemon())
+    {
+        assert_eq!(
+            pokemon.stage == Stage::Basic,
+            pokemon.evolve_from.is_none(),
+            "{} is a {:?} and evolves from {:?}",
+            pokemon.name,
+            pokemon.stage,
+            pokemon.evolve_from
+        );
+    }
+}
+
+#[test]
+fn the_stage_filters_offer_what_they_name() {
+    let set = build();
+    let mut db = set.db.clone();
+    let hunt = |db: &mut CardDb, id: &'static str, filter| {
+        db.add(CardDef::Trainer(Trainer {
+            print_id: id,
+            name: "Search",
+            kind: TrainerKind::Item,
+            requirement: None,
+            effect: TrainerEffect::Decide {
+                from: Zone::Library,
+                to: Destination::Zone(Zone::Hand),
+                filter,
+                limit: 1,
+                then: None,
+            },
+        }))
+    };
+    let evolutions = hunt(&mut db, "test-evolutions", CardFilter::EvolutionPokemon);
+    let stage_ones = hunt(
+        &mut db,
+        "test-stage-ones",
+        CardFilter::PokemonOfStage(Stage::Stage1),
+    );
+    let energy = hunt(&mut db, "test-energy-search", CardFilter::BasicEnergy);
+    let set = Set { db, ..set };
+
+    for (card_def, check) in [
+        (evolutions, "evolution"),
+        (stage_ones, "stage 1"),
+        (energy, "energy"),
+    ] {
+        let mut state = game(&set, card_def, 3);
+        let player = state.current;
+        let card = ensure_in_hand(&mut state, player, card_def);
+        apply(&mut state, Action::PlayTrainer { card }).unwrap();
+        let choices = offered(&state);
+        assert!(!choices.is_empty(), "the deck holds a {check}");
+        for taken in &choices {
+            let def = state.def_of(*taken);
+            match check {
+                "evolution" => assert!(
+                    def.as_pokemon().is_some_and(|p| p.stage != Stage::Basic),
+                    "{} is not an Evolution",
+                    def.name()
+                ),
+                "stage 1" => assert!(
+                    def.as_pokemon().is_some_and(|p| p.stage == Stage::Stage1),
+                    "{} is not a Stage 1",
+                    def.name()
+                ),
+                _ => assert!(def.is_energy(), "{} is not an Energy", def.name()),
+            }
+        }
+    }
+}
+
+#[test]
+fn a_deck_search_shuffles_the_deck_when_it_ends() {
+    // Every card that searches the deck prints "Then, shuffle your deck."
+    // The player saw the whole deck while choosing, so the order they saw
+    // must not survive the search.
+    let set = build();
+    let mut state = game(&set, set.cyrano, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, set.cyrano);
+    let before = state.player(player).library.clone();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    let after = state.player(player).library.clone();
+    assert_eq!(before.len(), after.len(), "nothing was taken");
+    assert_ne!(before, after, "but the order the player saw is gone");
 }
 
 // --- The card data ---

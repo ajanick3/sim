@@ -2,7 +2,7 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, Energy, Pokemon, Trainer, TrainerEffect, TrainerKind, Type,
+    Attack, CardDb, CardDef, Energy, Pokemon, Stage, Trainer, TrainerEffect, TrainerKind, Type,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, PlayerId};
@@ -28,6 +28,7 @@ fn build() -> Set {
         resistance: None,
         retreat_cost: 1,
         prizes: 1,
+        stage: Stage::Basic,
         evolve_from: None,
         attacks: vec![Attack {
             name: "Tackle",
@@ -220,6 +221,7 @@ fn build2() -> Set2 {
         resistance: None,
         retreat_cost: 1,
         prizes: 1,
+        stage: Stage::Basic,
         evolve_from: None,
         attacks: vec![Attack {
             name: "Tackle",
@@ -237,6 +239,7 @@ fn build2() -> Set2 {
         resistance: None,
         retreat_cost: 2,
         prizes: 2,
+        stage: Stage::Basic,
         evolve_from: None,
         attacks: vec![Attack {
             name: "Big Tackle",

@@ -1,6 +1,6 @@
 //! Ticket 05: a card definition carries its print id.
 
-use sim::card::{CardDb, CardDef, Pokemon, Type};
+use sim::card::{CardDb, CardDef, Pokemon, Stage, Type};
 use sim::import::load;
 
 fn bulbasaur() -> Pokemon {
@@ -13,6 +13,7 @@ fn bulbasaur() -> Pokemon {
         resistance: None,
         retreat_cost: 1,
         prizes: 1,
+        stage: Stage::Basic,
         evolve_from: None,
         attacks: vec![],
     }
