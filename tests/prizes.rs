@@ -1,7 +1,7 @@
 //! Ticket 04: a knockout takes what the card is worth.
 
 use sim::action::{Action, legal_actions};
-use sim::card::{Attack, CardDb, CardDef, Energy, Pokemon, Type};
+use sim::card::{Attack, CardDb, CardDef, Energy, Pokemon, Stage, Type};
 use sim::engine::apply;
 use sim::import::load;
 use sim::rng::SeededRng;
@@ -18,6 +18,7 @@ fn game(prizes: u32) -> (GameState, u32) {
         weakness: None,
         resistance: None,
         retreat_cost: 1,
+        stage: Stage::Basic,
         evolve_from: None,
         prizes,
         attacks: vec![Attack {

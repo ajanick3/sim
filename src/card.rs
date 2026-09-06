@@ -65,6 +65,14 @@ pub enum CardFilter {
     /// A Pokémon, or a basic Energy card. No special Energy is ever admitted
     /// (`Refusal::IsASpecialEnergy`), so an admitted Energy is always basic.
     PokemonOrBasicEnergy,
+    /// A Pokémon that evolves from something: a Stage 1 or a Stage 2.
+    /// `Hilda` prints it as "an Evolution Pokémon".
+    EvolutionPokemon,
+    /// A Pokémon printed at exactly this stage. `Dawn` names all three.
+    PokemonOfStage(Stage),
+    /// A basic Energy card. Every admitted Energy is basic, since a special
+    /// Energy carries rules text and is refused.
+    BasicEnergy,
     /// A Pokémon ex, which is a Pokémon worth more than 1 Prize. The prize
     /// value is read from the name (ADR 0010), so in this pool a card worth
     /// more than 1 is exactly a card printed `ex`.
@@ -177,6 +185,17 @@ pub struct Attack {
     pub inflicts: Option<Condition>,
 }
 
+/// How far along its evolution line a Pokémon card is printed. The artifact
+/// carries this as its own field, so the engine reads it rather than
+/// deducing it: `evolve_from` says *what* a card evolves from, and only a
+/// walk of the whole line would say how deep that is.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Stage {
+    Basic,
+    Stage1,
+    Stage2,
+}
+
 /// A Pokémon as printed.
 #[derive(Debug, Clone)]
 pub struct Pokemon {
@@ -197,7 +216,10 @@ pub struct Pokemon {
     /// One for an ordinary Pokémon, two for a Pokémon ex, three for a Mega
     /// Evolution ex.
     pub prizes: u32,
-    /// The name of the Pokémon this one evolves from. `None` on a Basic.
+    pub stage: Stage,
+    /// The name of the Pokémon this one evolves from. `None` on a Basic, and
+    /// always present on an Evolution — an evolution card that names nothing
+    /// is refused at import, since nothing could ever evolve into it.
     pub evolve_from: Option<&'static str>,
     pub attacks: Vec<Attack>,
 }
@@ -256,7 +278,7 @@ impl CardDef {
     /// admitted Pokémon was a Basic, and this checked only the enum variant;
     /// that stopped being enough once a Stage 1 or 2 could be admitted too.
     pub fn is_basic_pokemon(&self) -> bool {
-        matches!(self, CardDef::Pokemon(p) if p.evolve_from.is_none())
+        matches!(self, CardDef::Pokemon(p) if p.stage == Stage::Basic)
     }
 
     pub fn is_energy(&self) -> bool {

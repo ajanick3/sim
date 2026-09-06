@@ -1,7 +1,7 @@
 //! Ticket 03: the Special Conditions and the Pokémon Checkup.
 
 use sim::action::{Action, legal_actions};
-use sim::card::{Attack, CardDb, CardDef, Condition, Energy, Pokemon, Type};
+use sim::card::{Attack, CardDb, CardDef, Condition, Energy, Pokemon, Stage, Type};
 use sim::engine::apply;
 use sim::rng::{Rng, ScriptedRng, SeededRng};
 use sim::state::{GameState, Phase};
@@ -19,6 +19,7 @@ fn game(inflicts: Condition, rng: Box<dyn Rng>) -> GameState {
         resistance: None,
         retreat_cost: 1,
         evolve_from: None,
+        stage: Stage::Basic,
         prizes: 1,
         attacks: vec![Attack {
             name: "Sting",
