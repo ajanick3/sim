@@ -42,7 +42,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     let import = load(&artifact()).unwrap();
     let (admitted, total) = import.coverage();
     assert_eq!(total, 3051);
-    // Ticket 03 raised this after this test was written, by admitting real
-    // Trainers; the number moved for a reason unrelated to this ticket.
-    assert_eq!(admitted, 368, "keeping the raw record changes no legality");
+    // The coverage canary. This number moves only when a ticket admits a
+    // card on purpose, and the ticket that moves it says so here. Ticket 03
+    // of the record effort took it to 368; the second batch of Trainers
+    // takes it up from there, two prints of Cyrano first.
+    assert_eq!(admitted, 370, "coverage moves only on purpose");
 }
