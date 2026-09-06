@@ -13,10 +13,10 @@ What the engine records today, and what it does not:
 | Fact                       | Recorded            |
 | -------------------------- | ------------------- |
 | The seed                   | Yes, in the state   |
-| The actions applied        | **No**              |
+| The actions applied        | Yes                 |
 | The log of what happened   | Yes, as prose only  |
 | Hand, Discard, Library     | Yes, as `Zone`      |
-| Lost Zone, Stadium in play | **No**              |
+| Lost Zone, Stadium in play | Yes                 |
 | Evolved this turn          | Yes, per Pokémon    |
 | Supporter, Stadium a turn  | Yes, per player     |
 | Ability used this turn     | **No**              |
@@ -27,6 +27,7 @@ replayed, and nothing reads it back.
 
 ## Decisions so far
 
+Ticket 03 resolved 2026-09-06: the Lost Zone is an ordinary zone and the Stadium in play has a slot, with rule 59 alongside; details under [the ticket's Answer](issues/03-the-missing-zones.md).
 Ticket 02 resolved 2026-09-06: undo replays the log without its last entry, because a shuffle has no inverse the engine can compute; details under [the ticket's Answer](issues/02-undo-one-action.md).
 Ticket 01 resolved 2026-09-06: the state records every action applied to it, and a game replays from its cards, its seed, and that log; details under [the ticket's Answer](issues/01-the-action-log.md).
 
