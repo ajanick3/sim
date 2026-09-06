@@ -39,6 +39,19 @@ yet: evolution, Trainers, Abilities, and Stadiums.
 | `src/main.rs`   | The text interface                                        |
 | `src/bin/`      | `selfplay`, a headless loop for measuring                 |
 
+## Card data
+
+`data/cards.json` holds every Standard card — regulation marks H, I, and J.
+`tools/import_cards.py` writes it from the TCGdex API and needs no
+credentials:
+
+```sh
+python3 tools/import_cards.py        # about 95 seconds, 3051 cards
+```
+
+The engine does not read the file yet. Its cards are still the literals in
+`src/cards.rs`.
+
 ## The documents
 
 - [The domain glossary](docs/architecture/glossary.md) — the vocabulary.
@@ -46,6 +59,7 @@ yet: evolution, Trainers, Abilities, and Stadiums.
   cites, and the cards that break a naive engine.
 - [Card data sources](docs/architecture/sources.md) — where card data comes
   from, and what each source gets wrong.
-- [Card data findings](docs/architecture/card-data.md) — the modelling
-  findings already banked, and the known problems in the crawled data.
+- [Card data findings](docs/architecture/card-data.md) — what the imported
+  artifact holds, the modelling findings already banked, and what the data
+  cannot express.
 - [The ADR directory](docs/adr/) — the decisions and their reasoning.

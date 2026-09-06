@@ -1,7 +1,7 @@
 # The card data bridge
 
 Type: research
-Status: needs-triage
+Status: claimed
 
 Decide the JSON format that carries card data from `pkmn` to this engine.
 
