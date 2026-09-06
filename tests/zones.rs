@@ -124,7 +124,7 @@ fn a_stadium_stays_in_play_rather_than_being_discarded() {
         !state.player(player).discard.contains(&card),
         "unlike an Item, it is not discarded on play"
     );
-    assert!(state.player(player).stadium_played_this_turn);
+    assert!(state.is_spent(sim::state::Limit::StadiumPlayed(player)));
 }
 
 #[test]

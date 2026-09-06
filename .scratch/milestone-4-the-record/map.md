@@ -18,16 +18,16 @@ What the engine records today, and what it does not:
 | Hand, Discard, Library     | Yes, as `Zone`      |
 | Stadium in play            | Yes                 |
 | Lost Zone                  | Not in this format  |
-| Evolved this turn          | Yes, per Pokémon    |
-| Supporter, Stadium a turn  | Yes, per player     |
-| Ability used this turn     | **No**              |
-| Once per game              | **No**              |
+| Every once-per-turn limit  | Yes, one `Limit`    |
+| Ability used this turn     | No card can use one |
+| Once per game              | No card can use one |
 
 `GameState.log` holds prose for a reader. It is not the record: it cannot be
 replayed, and nothing reads it back.
 
 ## Decisions so far
 
+Ticket 04 resolved 2026-09-06: five booleans across two structs became one `Limit` type and one list, and the unused scopes were left out because the pool has no card for them; details under [the ticket's Answer](issues/04-one-shape-for-the-limits.md).
 Ticket 03 resolved 2026-09-06: the Stadium in play has a slot, with rule 59 alongside; the Lost Zone was built and withdrawn, because no card in this format uses one; details under [the ticket's Answer](issues/03-the-missing-zones.md).
 Ticket 02 resolved 2026-09-06: undo replays the log without its last entry, because a shuffle has no inverse the engine can compute; details under [the ticket's Answer](issues/02-undo-one-action.md).
 Ticket 01 resolved 2026-09-06: the state records every action applied to it, and a game replays from its cards, its seed, and that log; details under [the ticket's Answer](issues/01-the-action-log.md).

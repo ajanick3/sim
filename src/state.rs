@@ -43,8 +43,6 @@ pub struct PokemonInPlay {
     /// The turn this Pokémon came into play. Evolution reads it; Milestone 1
     /// records it so the rule has somewhere to land.
     pub played_on_turn: u32,
-    /// Rule 20: cannot evolve the same Pokémon twice in one turn.
-    pub evolved_this_turn: bool,
     /// The Special Conditions on this Pokémon. Only the Active carries any.
     pub conditions: Vec<Condition>,
     pub knocked_out: bool,
@@ -60,7 +58,23 @@ impl PokemonInPlay {
     }
 }
 
-/// One player's zones and their once-per-turn flags.
+/// Something a player or a Pokémon may do only once in a turn. Rule 13 sets
+/// most of them; rule 20 sets the last, which belongs to a Pokémon rather
+/// than to a player, and that is why a limit names its own owner.
+///
+/// A once-per-game limit would be the same shape with a list that is never
+/// cleared. Nothing needs one: `Legacy Energy` is the only card in the pool
+/// that reads "once per game", and it is a special Energy the engine refuses.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Limit {
+    EnergyAttached(PlayerId),
+    Retreated(PlayerId),
+    SupporterPlayed(PlayerId),
+    StadiumPlayed(PlayerId),
+    Evolved(PokemonId),
+}
+
+/// One player's zones.
 #[derive(Debug, Clone)]
 pub struct PlayerState {
     /// The draw pile. `Deck` is the tournament decklist, so the pile in play
@@ -71,12 +85,6 @@ pub struct PlayerState {
     pub prizes: Vec<CardId>,
     pub active: Option<PokemonId>,
     pub bench: Vec<PokemonId>,
-    pub energy_attached_this_turn: bool,
-    pub retreated_this_turn: bool,
-    /// Rule 13: one Supporter and one Stadium a turn. Nothing plays either
-    /// yet; the turn records them so the card that does has its limit.
-    pub supporter_played_this_turn: bool,
-    pub stadium_played_this_turn: bool,
 }
 
 impl PlayerState {
@@ -88,10 +96,6 @@ impl PlayerState {
             prizes: Vec::new(),
             active: None,
             bench: Vec::new(),
-            energy_attached_this_turn: false,
-            retreated_this_turn: false,
-            supporter_played_this_turn: false,
-            stadium_played_this_turn: false,
         }
     }
 
@@ -204,6 +208,8 @@ pub struct GameState {
     /// new one discards the old to its own owner's pile — which is why the
     /// player is kept beside the card.
     pub stadium: Option<(PlayerId, CardId)>,
+    /// The once-per-turn limits spent so far. Cleared when a turn begins.
+    pub spent: Vec<Limit>,
     pub rng: Box<dyn Rng>,
     /// What happened, in order, as prose for a reader. It is not the record
     /// a replay reads — that is [`GameState::history`].
@@ -253,6 +259,7 @@ impl GameState {
             bench_placed: [false, false],
             outcome: None,
             stadium: None,
+            spent: Vec::new(),
             rng,
             log: Vec::new(),
             history: Vec::new(),
@@ -326,7 +333,6 @@ impl GameState {
             damage: 0,
             attached: Vec::new(),
             played_on_turn: self.turn_number,
-            evolved_this_turn: false,
             conditions: Vec::new(),
             knocked_out: false,
         });
@@ -467,16 +473,23 @@ impl GameState {
 
     /// Clear the once-per-turn flags for whoever is about to play.
     pub fn begin_turn(&mut self) {
-        let slot = self.current.index();
-        self.players[slot].energy_attached_this_turn = false;
-        self.players[slot].retreated_this_turn = false;
-        self.players[slot].supporter_played_this_turn = false;
-        self.players[slot].stadium_played_this_turn = false;
+        // Every turn limit is cleared, not only the current player's. The
+        // opponent's were unreadable during this turn anyway — every gate
+        // asks about whoever is acting — so clearing all of them is the
+        // same game and one line.
+        self.spent.clear();
+    }
 
-        // Rule 20: the once-per-turn evolution limit is the Pokémon's own,
-        // not the player's, so it is cleared per Pokémon.
-        for pokemon in self.player(self.current).in_play() {
-            self.pokemon[pokemon.index()].evolved_this_turn = false;
+    /// Whether a once-per-turn limit has been spent.
+    pub fn is_spent(&self, limit: Limit) -> bool {
+        self.spent.contains(&limit)
+    }
+
+    /// Spend a once-per-turn limit. Spending one twice is not an error; the
+    /// gates that read it ask only whether it is spent.
+    pub fn spend(&mut self, limit: Limit) {
+        if !self.is_spent(limit) {
+            self.spent.push(limit);
         }
     }
 
