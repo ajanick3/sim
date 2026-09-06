@@ -21,7 +21,8 @@ pub enum Refusal {
     /// A special Energy, which carries rules text. Basic Energy is not in the
     /// artifact at all.
     IsASpecialEnergy,
-    /// A Stage 1 or Stage 2 Pokémon. The engine has no evolution.
+    /// A Stage 1 or Stage 2 Pokémon missing the name of the card it evolves
+    /// from, so nothing could ever evolve into it.
     IsAnEvolution,
     /// A Pokémon card the engine cannot place, and nothing above fits.
     NotABasicPokemon,
@@ -212,11 +213,17 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
         Some("Pokemon") => {}
         _ => return Err(Refusal::NotABasicPokemon),
     }
-    match card["stage"].as_str() {
-        Some("Basic") => {}
-        Some(_) => return Err(Refusal::IsAnEvolution),
+    let evolve_from = match card["stage"].as_str() {
+        Some("Basic") => None,
+        // Rule 19 matches an evolution to the Pokémon it names, by name. A
+        // Stage 1 or 2 card missing that name cannot be evolved into, so it
+        // is refused rather than admitted with no way to play it.
+        Some(_) => match card["evolveFrom"].as_str() {
+            Some(from) => Some(leak(from)),
+            None => return Err(Refusal::IsAnEvolution),
+        },
         None => return Err(Refusal::NotABasicPokemon),
-    }
+    };
     if card["abilities"].as_array().is_some_and(|a| !a.is_empty()) {
         return Err(Refusal::HasAnAbility);
     }
@@ -248,6 +255,7 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
         resistance: read_modifier(&card["resistances"], &["-30"])?,
         retreat_cost: card["retreat"].as_u64().unwrap_or(0) as u8,
         prizes: prizes_for(card["name"].as_str().unwrap_or("")),
+        evolve_from,
         attacks,
     }))
 }

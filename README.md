@@ -15,14 +15,14 @@ cargo run --release --bin selfplay -- 5000 views  # the same, through masked vie
 
 ## Scope
 
-The engine is deep and the card set is tiny. Two synthetic Basic Pokémon and
-one Energy live in `src/cards.rs` as literals. This is deliberate — see
+The engine is deep and the card set is tiny. Three synthetic Basic Pokémon and
+their Energy live in `src/cards.rs` as literals. This is deliberate — see
 [ADR 0004](docs/adr/0004-a-deep-engine-and-a-tiny-card-set.md).
 
 What the engine does today: setup with mulligans, the turn loop, the damage
 order, Energy costs by type, the five Special Conditions and the Pokémon
-Checkup, knockouts, Prizes, and the three win conditions. What it does not do
-yet: evolution, Trainers, Abilities, and Stadiums.
+Checkup, knockouts, Prizes, the three win conditions, and evolution. What it
+does not do yet: Trainers, Abilities, and Stadiums.
 
 ## The code
 
@@ -54,7 +54,7 @@ python3 tools/import_cards.py        # about 95 seconds, 3051 cards
 The engine reads the artifact, and admits only the cards it can run all of:
 
 ```sh
-cargo run --bin coverage             # 274 of 3051 Standard cards (9.0%)
+cargo run --bin coverage             # 346 of 3051 Standard cards (11.3%)
 cargo run --bin coverage -- refused  # every refused card, and why
 cargo run --bin deckcheck -- decks/brent-tonisson.txt  # check a decklist
 ```
