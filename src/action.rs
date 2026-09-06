@@ -5,7 +5,7 @@
 //! `(state, legal_actions) -> Action`. Neither can reach a state the other
 //! cannot, and neither can cheat by acting outside the list.
 
-use crate::card::Condition;
+use crate::card::{Condition, TrainerKind};
 use crate::ids::{CardId, PlayerId, PokemonId};
 use crate::state::{BENCH_LIMIT, GameState, Phase};
 
@@ -45,10 +45,14 @@ pub enum Action {
     EndTurn,
     /// Choose a new Active after a knockout.
     Promote { pokemon: PokemonId },
+    /// Play a Trainer from hand.
+    PlayTrainer { card: CardId },
     /// Take one matching card during a Trainer effect's resolution.
     TakeCard { card: CardId },
     /// Stop taking cards during a Trainer effect's resolution.
     FinishDeciding,
+    /// Discard one Energy attached to a Pokémon the opponent controls.
+    DiscardOpponentEnergy { card: CardId },
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -63,6 +67,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::PlacingBench { player } => Some(player),
         Phase::DiscardingForRetreat { player, .. } => Some(player),
         Phase::Deciding { chooser, .. } => Some(chooser),
+        Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::Checkup { player } => Some(player),
         Phase::Over => None,
     }
@@ -147,6 +152,16 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::FinishDeciding);
             return actions;
         }
+        Phase::DiscardingOpponentEnergy { of, .. } => {
+            for pokemon in state.player(of).in_play() {
+                for card in &state.pokemon(pokemon).attached {
+                    if state.def_of(*card).is_energy() {
+                        actions.push(Action::DiscardOpponentEnergy { card: *card });
+                    }
+                }
+            }
+            return actions;
+        }
         _ => {}
     }
 
@@ -186,6 +201,21 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                         target,
                     });
                 }
+            }
+        }
+        // Rule 13: an Item any number of times; a Supporter or a Stadium
+        // once a turn. None of the built cards is a Stadium, but the gate is
+        // written for the kind, not the card, so one arriving costs nothing.
+        if let Some(trainer) = def.as_trainer() {
+            let allowed = match trainer.kind {
+                TrainerKind::Item | TrainerKind::Tool => true,
+                TrainerKind::Supporter => {
+                    !side.supporter_played_this_turn && !state.is_first_turn_of_game()
+                }
+                TrainerKind::Stadium => !side.stadium_played_this_turn,
+            };
+            if allowed {
+                actions.push(Action::PlayTrainer { card: *card });
             }
         }
     }
@@ -252,8 +282,12 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::Promote { pokemon } => {
             format!("Promote {}", state.pokemon_def(pokemon).name)
         }
+        Action::PlayTrainer { card } => format!("Play {}", state.def_of(card).name()),
         Action::TakeCard { card } => format!("Take {}", state.def_of(card).name()),
         Action::FinishDeciding => "Stop taking cards".to_string(),
+        Action::DiscardOpponentEnergy { card } => {
+            format!("Discard the opponent's {}", state.def_of(card).name())
+        }
         Action::ChooseWhoGoesFirst { first } => format!("{first:?} takes the first turn"),
         Action::TakeBonusDraw => "Take a bonus card".to_string(),
         Action::DeclineBonusDraws => "Take no more bonus cards".to_string(),
