@@ -201,8 +201,13 @@ pub struct GameState {
     pub bench_placed: [bool; 2],
     pub outcome: Option<Outcome>,
     pub rng: Box<dyn Rng>,
-    /// What happened, in order, for the text interface and for tests.
+    /// What happened, in order, as prose for a reader. It is not the record
+    /// a replay reads — that is [`GameState::history`].
     pub log: Vec<String>,
+    /// Every action applied to this game, in order. A refused action is not
+    /// here: it changed nothing, so there is nothing to replay. With the
+    /// seed and the decklists, this is the whole game.
+    pub history: Vec<crate::action::Action>,
 }
 
 impl GameState {
@@ -245,6 +250,7 @@ impl GameState {
             outcome: None,
             rng,
             log: Vec::new(),
+            history: Vec::new(),
         };
 
         let mulligans = [
