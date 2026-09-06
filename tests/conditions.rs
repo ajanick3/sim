@@ -11,6 +11,7 @@ use sim::state::{GameState, Phase};
 fn game(inflicts: Condition, rng: Box<dyn Rng>) -> GameState {
     let mut db = CardDb::new();
     let stinger = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-stinger",
         name: "Stinger",
         hp: 100,
         kind: Type::Grass,
@@ -27,6 +28,7 @@ fn game(inflicts: Condition, rng: Box<dyn Rng>) -> GameState {
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-grass-energy",
         name: "Grass Energy",
         kind: Type::Grass,
     }));

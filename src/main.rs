@@ -73,8 +73,9 @@ fn print_board(state: &GameState) {
         let side = state.player(player);
         let active = match side.active {
             Some(pokemon) => format!(
-                "{} {}/{} HP",
+                "{} ({}) {}/{} HP",
                 state.pokemon_def(pokemon).name,
+                state.pokemon_def(pokemon).print_id,
                 state.remaining_hp(pokemon),
                 state.pokemon_def(pokemon).hp
             ),
@@ -85,8 +86,9 @@ fn print_board(state: &GameState) {
             .iter()
             .map(|p| {
                 format!(
-                    "{} {}/{}",
+                    "{} ({}) {}/{}",
                     state.pokemon_def(*p).name,
+                    state.pokemon_def(*p).print_id,
                     state.remaining_hp(*p),
                     state.pokemon_def(*p).hp
                 )

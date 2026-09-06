@@ -23,6 +23,7 @@ pub fn milestone1() -> Milestone1 {
     // Weak to Fighting, which nothing here is: the field is exercised by the
     // pair below, not by this one.
     let sparkmouse = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "synthetic-sparkmouse",
         name: "Sparkmouse",
         hp: 60,
         kind: Type::Lightning,
@@ -50,6 +51,7 @@ pub fn milestone1() -> Milestone1 {
     // Weak to Water, so Aquabear doubles into it. Resistant to Water it is
     // not — the two modifiers must not be testable at once by accident.
     let cinderpup = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "synthetic-cinderpup",
         name: "Cinderpup",
         hp: 70,
         kind: Type::Fire,
@@ -69,6 +71,7 @@ pub fn milestone1() -> Milestone1 {
     // Weak to Fire, so Cinderpup doubles into it. Resistant to Fire it is
     // not — the two modifiers must not be testable at once by accident.
     let aquabear = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "synthetic-aquabear",
         name: "Aquabear",
         hp: 70,
         kind: Type::Water,
@@ -86,16 +89,19 @@ pub fn milestone1() -> Milestone1 {
     }));
 
     let lightning_energy = db.add(CardDef::Energy(Energy {
+        print_id: "synthetic-lightning-energy",
         name: "Lightning Energy",
         kind: Type::Lightning,
     }));
 
     let fire_energy = db.add(CardDef::Energy(Energy {
+        print_id: "synthetic-fire-energy",
         name: "Fire Energy",
         kind: Type::Fire,
     }));
 
     let water_energy = db.add(CardDef::Energy(Energy {
+        print_id: "synthetic-water-energy",
         name: "Water Energy",
         kind: Type::Water,
     }));

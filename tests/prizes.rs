@@ -11,6 +11,7 @@ use sim::state::{GameState, Phase};
 fn game(prizes: u32) -> (GameState, u32) {
     let mut db = CardDb::new();
     let victim = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-target",
         name: "Target",
         hp: 30,
         kind: Type::Colorless,
@@ -27,6 +28,7 @@ fn game(prizes: u32) -> (GameState, u32) {
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-colorless-energy",
         name: "Colorless Energy",
         kind: Type::Colorless,
     }));
