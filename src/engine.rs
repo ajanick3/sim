@@ -88,15 +88,24 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 .expect("legal_actions offers PlayTrainer only for a Trainer")
                 .clone();
             state.remove_from_hand(player, card);
-            state.players[player.index()].discard.push(card);
             match trainer.kind {
                 TrainerKind::Supporter => {
                     state.players[player.index()].supporter_played_this_turn = true;
+                    state.players[player.index()].discard.push(card);
                 }
+                // Rule 58: a Stadium stays in play, and the one already
+                // there goes to its own owner's discard, not to this
+                // player's.
                 TrainerKind::Stadium => {
                     state.players[player.index()].stadium_played_this_turn = true;
+                    if let Some((owner, old)) = state.stadium {
+                        state.players[owner.index()].discard.push(old);
+                    }
+                    state.stadium = Some((player, card));
                 }
-                TrainerKind::Item | TrainerKind::Tool => {}
+                TrainerKind::Item | TrainerKind::Tool => {
+                    state.players[player.index()].discard.push(card);
+                }
             }
             let name = trainer.name;
             state.log.push(format!("{player:?} plays {name}."));
@@ -355,6 +364,9 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, effect: TrainerEffec
                 }
             }
         }
+
+        // The card's own placement was the whole effect.
+        TrainerEffect::Nothing => {}
 
         TrainerEffect::CoinFlipDiscardOpponentEnergy => {
             if state.rng.flip() {

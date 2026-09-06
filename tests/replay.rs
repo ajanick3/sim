@@ -22,14 +22,20 @@ fn deal(seed: u64) -> GameState {
 /// spelled out here rather than assumed.
 fn fingerprint(state: &GameState) -> String {
     let mut out = format!(
-        "turn={} current={:?} phase={:?} outcome={:?}\n",
-        state.turn_number, state.current, state.phase, state.outcome
+        "turn={} current={:?} phase={:?} outcome={:?} stadium={:?}\n",
+        state.turn_number, state.current, state.phase, state.outcome, state.stadium
     );
     for player in [PlayerId::One, PlayerId::Two] {
         let side = state.player(player);
         out += &format!(
-            "{player:?} library={:?} hand={:?} discard={:?} prizes={:?} active={:?} bench={:?}\n",
-            side.library, side.hand, side.discard, side.prizes, side.active, side.bench
+            "{player:?} library={:?} hand={:?} discard={:?} lost={:?} prizes={:?} active={:?} bench={:?}\n",
+            side.library,
+            side.hand,
+            side.discard,
+            side.lost_zone,
+            side.prizes,
+            side.active,
+            side.bench
         );
     }
     for pokemon in &state.pokemon {

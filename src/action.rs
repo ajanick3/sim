@@ -219,7 +219,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // attempted, even where it turns up nothing to move.
             let has_a_target = !matches!(trainer.effect, TrainerEffect::SwitchOpponentActive)
                 || !state.player(player.opponent()).bench.is_empty();
-            if timing && has_a_target {
+            // Rule 59: not a Stadium whose name is already in play.
+            let name_is_free = trainer.kind != TrainerKind::Stadium
+                || state
+                    .stadium
+                    .is_none_or(|(_, in_play)| state.def_of(in_play).name() != trainer.name);
+            if timing && has_a_target && name_is_free {
                 actions.push(Action::PlayTrainer { card: *card });
             }
         }
