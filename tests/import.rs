@@ -256,3 +256,36 @@ fn a_stage_2_whose_chain_does_not_resolve_carries_no_basic() {
     assert_eq!(orphan.evolve_from, Some("NoSuchPrint"));
     assert_eq!(orphan.evolves_from_basic, None);
 }
+
+// --- Ticket 07: match a card by print when its name is not enough ---
+
+#[test]
+fn a_card_can_be_matched_by_print_id_when_its_name_is_not_enough() {
+    use sim::card::TrainerEffect;
+
+    // Two prints share a name but do not share behaviour — the situation
+    // `known_trainer` alone cannot tell apart, since it reads only the
+    // name. `known_trainer_by_print` is checked first, keyed on the
+    // print's own id, and wins here.
+    let one = r#"{
+      "id":"test-print-a","name":"Ambiguous Trainer","category":"Trainer",
+      "trainerType":"Item","regulationMark":"I",
+      "effect":"One printing of this name."
+    }"#;
+    let two = r#"{
+      "id":"test-print-b","name":"Ambiguous Trainer","category":"Trainer",
+      "trainerType":"Item","regulationMark":"I",
+      "effect":"A different printing of the same name."
+    }"#;
+    let import = load(&artifact(&format!("{one},{two}"))).unwrap();
+
+    let effect_of = |print_id: &str| {
+        let playable = import.cards.iter().find(|c| c.id == print_id)?.playable?;
+        import.db.get(playable).as_trainer().map(|t| t.effect.clone())
+    };
+    assert_eq!(effect_of("test-print-a"), Some(TrainerEffect::Nothing));
+    assert_eq!(
+        effect_of("test-print-b"),
+        Some(TrainerEffect::SwitchOpponentActive)
+    );
+}
