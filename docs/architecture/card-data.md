@@ -63,8 +63,11 @@ Three shapes a reader must handle:
   other. A Mega ex is separated only by the `Mega ` at the start of its name,
   and only for a Pokémon — `Mega Signal` is a Trainer.
 - **TCGdex has no ACE SPEC field.** Deck construction rule 3 — one ACE SPEC per
-  deck — cannot be enforced from this data. It needs a second source or a
-  hand-kept list.
+  deck — cannot be enforced from this data alone. **pokemontcg.io can answer
+  it:** it returns `subtypes` per card, and `Prime Catcher` comes back as
+  `["Item", "ACE SPEC"]` with `regulationMark: "H"`. Checked 2026-09-06. That
+  is a second source to reconcile against, not a field to add to this
+  artifact, and the ids differ between the two databases.
 - The ability-coverage worry was **investigated and dismissed**: ability rate is
   a consistent ~22% across marks H (247/1086), I (254/1101), J (74/370).
   `abilities_json` being null usually means the card genuinely has no ability.

@@ -43,3 +43,8 @@ Nothing resolved yet.
 - `Area Zero Underdepths` is the tenth most-played and out of scope: it
   changes the Bench size while a player has a Tera Pokémon in play, which
   needs continuous rules and a Tera concept.
+- Rule 3, one ACE SPEC per deck, can be checked after all. `decklist.rs`
+  calls it uncheckable and pokemontcg.io answers it — see
+  [card data findings](../../docs/architecture/card-data.md). It is a data
+  question rather than a Trainer one, so it belongs to its own effort and not
+  to this milestone's spec.
