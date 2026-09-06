@@ -1,7 +1,8 @@
-//! The Milestone 1 card set: two synthetic Basics and one Energy.
+//! The synthetic card set: three Basics and the Energy they need.
 //!
-//! These are literals, not data. The engine is what Milestone 1 builds; real
-//! cards arrive with the JSON the `pkmn` repo exports.
+//! These are literals, not data. The engine is what this project builds, so
+//! the set stays small and grows a card only when that card teaches the engine
+//! something it cannot yet express. Real cards wait in `data/cards.json`.
 
 use crate::card::{Attack, CardDb, CardDef, Energy, Pokemon, Type};
 use crate::ids::CardDefId;
