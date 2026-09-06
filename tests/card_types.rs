@@ -66,7 +66,10 @@ fn the_kinds_add_up_to_the_pool() {
     .map(|kind| count(Refusal::IsATrainer(kind)))
     .sum();
 
-    assert_eq!(trainers, 445, "every Trainer is refused as one");
+    // Ticket 03 admitted 22 prints of the eight Trainers it built (each name
+    // in one, sometimes several, printings), so the pool of 445 splits: the
+    // rest are still refused, named by kind.
+    assert_eq!(trainers, 423, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),

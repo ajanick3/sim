@@ -5,7 +5,7 @@
 //! `(state, legal_actions) -> Action`. Neither can reach a state the other
 //! cannot, and neither can cheat by acting outside the list.
 
-use crate::card::{Condition, TrainerKind};
+use crate::card::{Condition, TrainerEffect, TrainerKind};
 use crate::ids::{CardId, PlayerId, PokemonId};
 use crate::state::{BENCH_LIMIT, GameState, Phase};
 
@@ -207,14 +207,19 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         // once a turn. None of the built cards is a Stadium, but the gate is
         // written for the kind, not the card, so one arriving costs nothing.
         if let Some(trainer) = def.as_trainer() {
-            let allowed = match trainer.kind {
+            let timing = match trainer.kind {
                 TrainerKind::Item | TrainerKind::Tool => true,
                 TrainerKind::Supporter => {
                     !side.supporter_played_this_turn && !state.is_first_turn_of_game()
                 }
                 TrainerKind::Stadium => !side.stadium_played_this_turn,
             };
-            if allowed {
+            // A card that switches the opponent's Active needs somewhere to
+            // switch to; every other effect built so far can always be
+            // attempted, even where it turns up nothing to move.
+            let has_a_target = !matches!(trainer.effect, TrainerEffect::SwitchOpponentActive)
+                || !state.player(player.opponent()).bench.is_empty();
+            if timing && has_a_target {
                 actions.push(Action::PlayTrainer { card: *card });
             }
         }

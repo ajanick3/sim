@@ -10,7 +10,10 @@
 
 use serde_json::Value;
 
-use crate::card::{Attack, CardDb, CardDef, Energy, Pokemon, TrainerKind, Type};
+use crate::card::{
+    Attack, CardDb, CardDef, CardFilter, Energy, Pokemon, Then, Trainer, TrainerEffect,
+    TrainerKind, Type, Zone,
+};
 use crate::ids::CardDefId;
 
 /// Why the engine cannot run a card.
@@ -217,7 +220,19 @@ fn read_sets(root: &Value) -> Vec<SetRef> {
 
 fn read_card(card: &Value) -> Result<CardDef, Refusal> {
     match card["category"].as_str() {
-        Some("Trainer") => return Err(Refusal::IsATrainer(trainer_kind(card))),
+        Some("Trainer") => {
+            let kind = trainer_kind(card);
+            let name = card["name"].as_str().unwrap_or("?");
+            return match known_trainer_effect(name) {
+                Some(effect) => Ok(CardDef::Trainer(Trainer {
+                    print_id: leak(card["id"].as_str().unwrap_or("?")),
+                    name: leak(name),
+                    kind,
+                    effect,
+                })),
+                None => Err(Refusal::IsATrainer(kind)),
+            };
+        }
         Some("Energy") => return Err(Refusal::IsASpecialEnergy),
         Some("Pokemon") => {}
         _ => return Err(Refusal::NotABasicPokemon),
@@ -268,6 +283,51 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
         evolve_from,
         attacks,
     }))
+}
+
+/// The eight Trainers ticket 03 built, by printed name. Each has one
+/// distinct effect across every printing in the artifact today, so a name
+/// match is safe; a card with the same name and a genuinely different effect
+/// would need matching by print id instead, and nothing here does.
+fn known_trainer_effect(name: &str) -> Option<TrainerEffect> {
+    Some(match name {
+        "Boss's Orders" => TrainerEffect::SwitchOpponentActive,
+        "Judge" => TrainerEffect::BothShuffleHandThenDraw { count: 4 },
+        "Lillie's Determination" => TrainerEffect::ShuffleHandThenDraw {
+            normal: 6,
+            at_six_prizes: 8,
+        },
+        "Night Stretcher" => TrainerEffect::Decide {
+            from: Zone::Discard,
+            to: Zone::Hand,
+            filter: CardFilter::PokemonOrBasicEnergy,
+            limit: 1,
+            then: None,
+        },
+        "Poké Pad" => TrainerEffect::Decide {
+            from: Zone::Library,
+            to: Zone::Hand,
+            filter: CardFilter::PokemonWithoutRuleBox,
+            limit: 1,
+            then: None,
+        },
+        "Crushing Hammer" => TrainerEffect::CoinFlipDiscardOpponentEnergy,
+        "Gwynn" => TrainerEffect::Decide {
+            from: Zone::Hand,
+            to: Zone::Discard,
+            filter: CardFilter::PokemonWithoutRuleBox,
+            limit: 2,
+            then: Some(Then::DrawPerCardMoved(3)),
+        },
+        "Sacred Ash" => TrainerEffect::Decide {
+            from: Zone::Discard,
+            to: Zone::Library,
+            filter: CardFilter::AnyPokemon,
+            limit: 5,
+            then: None,
+        },
+        _ => return None,
+    })
 }
 
 /// A Trainer's kind. TCGdex writes `Tool` for a Pokémon Tool.
