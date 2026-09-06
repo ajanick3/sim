@@ -488,6 +488,27 @@ impl GameState {
                 .as_pokemon()
                 .is_some_and(|p| p.stage == crate::card::Stage::Basic && p.hp <= hp),
             CardFilter::AnyTrainer => self.def_of(card).as_trainer().is_some(),
+            CardFilter::BasicEnergyOfType(kind) => match self.def_of(card) {
+                CardDef::Energy(energy) => energy.kind == kind,
+                CardDef::Pokemon(_) | CardDef::Trainer(_) => false,
+            },
+        }
+    }
+
+    /// Whether a Pokémon in play meets `Destination::Attach`'s target
+    /// filter.
+    pub fn matches_target(&self, player: PlayerId, pokemon: PokemonId, filter: crate::card::TargetFilter) -> bool {
+        use crate::card::TargetFilter;
+        match filter {
+            TargetFilter::AnyInPlay => true,
+            TargetFilter::BenchedNameStartsWith(prefix) => {
+                self.player(player).bench.contains(&pokemon)
+                    && self.pokemon_def(pokemon).name.starts_with(prefix)
+            }
+            TargetFilter::BenchedOfType(kind) => {
+                self.player(player).bench.contains(&pokemon)
+                    && self.pokemon_def(pokemon).kind == kind
+            }
         }
     }
 

@@ -162,10 +162,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // A card bound for the Bench needs a space on it. Rule 14 caps
             // the Bench at five whatever put the Pokémon there, so a full
             // Bench offers nothing and the choice ends. A card bound to
-            // attach needs a Pokémon in play to attach to.
+            // attach needs some Pokémon in play the target filter admits.
             let room = match to {
                 Destination::Bench => state.player(chooser).bench.len() < BENCH_LIMIT,
-                Destination::Attach => !state.player(chooser).in_play().is_empty(),
+                Destination::Attach(target_filter) => state
+                    .player(chooser)
+                    .in_play()
+                    .into_iter()
+                    .any(|p| state.matches_target(chooser, p, target_filter)),
                 Destination::Zone(_) => true,
             };
             if remaining > 0 && room {
@@ -180,12 +184,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                         continue;
                     }
                     match to {
-                        Destination::Attach => {
+                        Destination::Attach(target_filter) => {
                             for target in state.player(chooser).in_play() {
-                                actions.push(Action::TakeCardOnto {
-                                    card: *card,
-                                    target,
-                                });
+                                if state.matches_target(chooser, target, target_filter) {
+                                    actions.push(Action::TakeCardOnto {
+                                        card: *card,
+                                        target,
+                                    });
+                                }
                             }
                         }
                         Destination::Bench | Destination::Zone(_) => {
