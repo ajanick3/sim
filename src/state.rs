@@ -147,14 +147,22 @@ pub enum Phase {
     /// draw are all an instance of it with different zones.
     Deciding {
         chooser: PlayerId,
+        /// The Trainer being resolved, and the slot of it the search is on.
+        /// The phase names the card rather than carrying a copy of its
+        /// slots, the same way `Paying` does, so the next slot is read back
+        /// from the card when this one ends.
+        card: CardId,
+        step: u32,
         from: crate::card::Zone,
+        /// The slot's own destination, filter, and what is left of its
+        /// limit, held inline because every choice reads them.
         to: crate::card::Destination,
         filter: crate::card::CardFilter,
         remaining: u32,
-        /// How many have been taken so far. `then` reads it when the choice
-        /// ends; nothing else needs it.
+        /// How many have been taken so far, across every slot. `then` reads
+        /// it when the search ends; nothing else needs it.
         moved: u32,
-        /// What to do, beyond the move itself, once the choice ends.
+        /// What to do, beyond the moves themselves, once the search ends.
         then: Option<crate::card::Then>,
     },
     /// `player` is paying what a card demanded before it may be played, and

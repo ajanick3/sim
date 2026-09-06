@@ -1,34 +1,72 @@
 //! The resolution machinery a Trainer effect uses: Phase::Deciding, and the
-//! generalized Phase::Promoting. Exercised directly, ahead of any real
-//! Trainer card, since the machinery is what several cards will share.
+//! generalized Phase::Promoting. The phase is entered directly, since the
+//! machinery is what several cards share and no one card exercises all of
+//! it. A search names the card it came from, so each test deals a Trainer
+//! into the deck to name — the phase reads its next slot back from it.
 
 use sim::action::{Action, legal_actions};
-use sim::card::{CardFilter, Destination, Zone};
+use sim::card::{
+    CardDef, CardFilter, Destination, Slot, Trainer, TrainerEffect, TrainerKind, Zone,
+};
 use sim::cards::{milestone1, starter_decklist};
 use sim::engine::apply;
-use sim::ids::PlayerId;
-use sim::rng::SeededRng;
+use sim::ids::{CardId, PlayerId};
+use sim::rng::{Rng, SeededRng};
 use sim::state::{GameState, Phase};
 
-fn game(seed: u64) -> GameState {
-    let set = milestone1();
-    let decklist = starter_decklist(&set);
-    let mut state = GameState::new(
-        set.db,
-        [decklist.clone(), decklist],
-        Box::new(SeededRng::new(seed)),
-    );
+/// A game whose deck holds one Trainer that searches `from` with `slots`,
+/// and the card itself, dealt somewhere face down.
+fn game_with_a_search(
+    rng: Box<dyn Rng>,
+    from: Zone,
+    slots: Vec<Slot>,
+) -> (GameState, PlayerId, CardId) {
+    let mut set = milestone1();
+    let search = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-search",
+        name: "Search",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from,
+            slots,
+            then: None,
+        },
+    }));
+    let mut decklist = starter_decklist(&set);
+    decklist.pop();
+    decklist.push(search);
+    let mut state = GameState::new(set.db, [decklist.clone(), decklist], rng);
     while state.phase != Phase::Main && !state.is_over() {
         let first = legal_actions(&state)[0];
         apply(&mut state, first).unwrap();
     }
-    state
+    let player = state.current;
+    let side = state.player(player);
+    let card = *side
+        .library
+        .iter()
+        .chain(side.hand.iter())
+        .chain(side.prizes.iter())
+        .find(|c| state.cards[c.index()].def == search)
+        .expect("the deal put the Trainer somewhere");
+    (state, player, card)
+}
+
+/// The one search these tests use unless they say otherwise: the deck to the
+/// hand, any Pokémon, up to `limit`.
+fn deck_search(limit: u32) -> Vec<Slot> {
+    vec![Slot {
+        filter: CardFilter::AnyPokemon,
+        to: Destination::Zone(Zone::Hand),
+        limit,
+    }]
 }
 
 #[test]
 fn deciding_offers_only_cards_the_filter_admits() {
-    let mut state = game(9);
-    let player = state.current;
+    let (mut state, player, search) =
+        game_with_a_search(Box::new(SeededRng::new(9)), Zone::Library, deck_search(1));
     let library_card = *state
         .player(player)
         .library
@@ -39,6 +77,8 @@ fn deciding_offers_only_cards_the_filter_admits() {
     // Enter the phase directly: the machinery, not a card, is under test.
     state.phase = Phase::Deciding {
         chooser: player,
+        card: search,
+        step: 0,
         from: Zone::Library,
         to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
@@ -60,8 +100,8 @@ fn deciding_offers_only_cards_the_filter_admits() {
 
 #[test]
 fn taking_a_card_moves_it_and_counts_down_remaining() {
-    let mut state = game(9);
-    let player = state.current;
+    let (mut state, player, search) =
+        game_with_a_search(Box::new(SeededRng::new(9)), Zone::Library, deck_search(2));
     let card = *state
         .player(player)
         .library
@@ -73,6 +113,8 @@ fn taking_a_card_moves_it_and_counts_down_remaining() {
 
     state.phase = Phase::Deciding {
         chooser: player,
+        card: search,
+        step: 0,
         from: Zone::Library,
         to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
@@ -89,6 +131,8 @@ fn taking_a_card_moves_it_and_counts_down_remaining() {
         state.phase,
         Phase::Deciding {
             chooser: player,
+            card: search,
+            step: 0,
             from: Zone::Library,
             to: Destination::Zone(Zone::Hand),
             filter: CardFilter::AnyPokemon,
@@ -102,10 +146,12 @@ fn taking_a_card_moves_it_and_counts_down_remaining() {
 
 #[test]
 fn remaining_at_zero_offers_only_finishing() {
-    let mut state = game(9);
-    let player = state.current;
+    let (mut state, player, search) =
+        game_with_a_search(Box::new(SeededRng::new(9)), Zone::Library, deck_search(1));
     state.phase = Phase::Deciding {
         chooser: player,
+        card: search,
+        step: 0,
         from: Zone::Library,
         to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
@@ -123,22 +169,19 @@ fn finishing_into_the_library_shuffles_it() {
     // outcome collapses to the same value, so the order changes in a way
     // that is not simply "unchanged".
     use sim::rng::ScriptedRng;
-    let set = milestone1();
-    let decklist = starter_decklist(&set);
-    let mut state = GameState::new(
-        set.db,
-        [decklist.clone(), decklist],
-        Box::new(ScriptedRng::new(vec![0])),
-    );
-    while state.phase != Phase::Main && !state.is_over() {
-        let first = legal_actions(&state)[0];
-        apply(&mut state, first).unwrap();
-    }
+    let put_back = vec![Slot {
+        filter: CardFilter::AnyPokemon,
+        to: Destination::Zone(Zone::Library),
+        limit: 1,
+    }];
+    let (mut state, player, search) =
+        game_with_a_search(Box::new(ScriptedRng::new(vec![0])), Zone::Discard, put_back);
 
-    let player = state.current;
     let before = state.player(player).library.clone();
     state.phase = Phase::Deciding {
         chooser: player,
+        card: search,
+        step: 0,
         from: Zone::Discard,
         to: Destination::Zone(Zone::Library),
         filter: CardFilter::AnyPokemon,
@@ -158,10 +201,12 @@ fn finishing_into_the_library_shuffles_it() {
 
 #[test]
 fn only_the_chooser_may_act_in_a_deciding_phase() {
-    let mut state = game(9);
-    let player = state.current;
+    let (mut state, player, search) =
+        game_with_a_search(Box::new(SeededRng::new(9)), Zone::Library, deck_search(1));
     state.phase = Phase::Deciding {
         chooser: player,
+        card: search,
+        step: 0,
         from: Zone::Library,
         to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
@@ -178,7 +223,8 @@ fn only_the_chooser_may_act_in_a_deciding_phase() {
 
 #[test]
 fn promoting_lets_a_different_chooser_pick_the_others_bench() {
-    let mut state = game(9);
+    let (mut state, _, _) =
+        game_with_a_search(Box::new(SeededRng::new(9)), Zone::Library, deck_search(1));
     let one = PlayerId::One;
     let two = PlayerId::Two;
     let bench_pick = state.player(one).bench.first().copied();

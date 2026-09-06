@@ -210,7 +210,7 @@ struct Set2 {
 }
 
 fn build2() -> Set2 {
-    use sim::card::{CardFilter, Destination, Then, Zone};
+    use sim::card::{CardFilter, Destination, Slot, Then, Zone};
     let mut db = CardDb::new();
     let mon = db.add(CardDef::Pokemon(Pokemon {
         print_id: "test-mon",
@@ -267,9 +267,11 @@ fn build2() -> Set2 {
         requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Library,
-            to: Destination::Zone(Zone::Hand),
-            filter: CardFilter::PokemonWithoutRuleBox,
-            limit: 1,
+            slots: vec![Slot {
+                filter: CardFilter::PokemonWithoutRuleBox,
+                to: Destination::Zone(Zone::Hand),
+                limit: 1,
+            }],
             then: None,
         },
     }));
@@ -280,9 +282,11 @@ fn build2() -> Set2 {
         requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Discard,
-            to: Destination::Zone(Zone::Hand),
-            filter: CardFilter::PokemonOrBasicEnergy,
-            limit: 1,
+            slots: vec![Slot {
+                filter: CardFilter::PokemonOrBasicEnergy,
+                to: Destination::Zone(Zone::Hand),
+                limit: 1,
+            }],
             then: None,
         },
     }));
@@ -293,9 +297,11 @@ fn build2() -> Set2 {
         requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Discard,
-            to: Destination::Zone(Zone::Library),
-            filter: CardFilter::AnyPokemon,
-            limit: 5,
+            slots: vec![Slot {
+                filter: CardFilter::AnyPokemon,
+                to: Destination::Zone(Zone::Library),
+                limit: 5,
+            }],
             then: None,
         },
     }));
@@ -306,9 +312,11 @@ fn build2() -> Set2 {
         requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Hand,
-            to: Destination::Zone(Zone::Discard),
-            filter: CardFilter::PokemonWithoutRuleBox,
-            limit: 2,
+            slots: vec![Slot {
+                filter: CardFilter::PokemonWithoutRuleBox,
+                to: Destination::Zone(Zone::Discard),
+                limit: 2,
+            }],
             then: Some(Then::DrawPerCardMoved(3)),
         },
     }));
