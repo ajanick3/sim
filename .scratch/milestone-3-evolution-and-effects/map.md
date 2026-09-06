@@ -24,11 +24,11 @@ ability sits in the evolution row. Ticket 01 will not unlock every card in it.
 
 ## Decisions so far
 
-Nothing resolved yet.
+Ticket 02 resolved 2026-09-06: nine primitives cover the Trainers the committed decks play, and an effect is a value the engine executes; details under [the ticket's Answer](issues/02-the-effect-vocabulary.md).
 
 ## Fog
 
-- How an effect is written. Ticket 02 answers it by counting, and ticket 03
-  builds the first ones.
+- Nothing records that a Pokémon was knocked out during the opponent's last
+  turn, which `Unfair Stamp` needs.
 - Whether a Trainer needs its own place in the state, beyond being played and
   discarded.
