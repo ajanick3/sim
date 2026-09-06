@@ -13,9 +13,9 @@ The rules that bind every session in this repository.
 
 ## What this repository is
 
-A Pokémon TCG rules engine in Rust. The engine is pure and the card set is
-synthetic and small. The `pkmn` repository is a sibling; it owns the card
-database and the crawl.
+A Pokémon TCG rules engine in Rust. The engine is pure and the card set it
+plays with is synthetic and small. The repository also holds the Standard card
+data, imported from TCGdex, and the script that imports it.
 
 ## Agent skills
 
