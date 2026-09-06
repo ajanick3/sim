@@ -32,15 +32,21 @@ actually play rather than from the card pool front to back. Nineteen Trainers,
 
 Nine, and one of them carries most of the weight.
 
-**Move cards.** From a zone to a destination, by a filter, in a count, chosen
-by a player and sometimes revealed. The destination is usually another zone.
-The Bench is the exception: it holds Pokémon in play rather than loose cards,
-so a card sent there comes into play instead of moving. It alone covers fourteen of the nineteen: a deck
-search to the hand (Poké Pad, Ultra Ball, Hilda, Dawn), a deck search to the
-Bench (Buddy-Buddy Poffin), the discard pile to the hand (Night Stretcher), the
-discard pile to the deck (Sacred Ash), and the hand to the deck (Judge,
-Lillie's Determination, Unfair Stamp) or to the bottom of it (Special Red
-Card).
+**Move cards.** From a zone to a destination, one slot at a time, by a
+filter, in a count, chosen by a player and sometimes revealed. The
+destination is usually another zone. The Bench is one exception — it holds
+Pokémon in play rather than loose cards, so a card sent there comes into
+play instead of moving — and attaching is the other, which needs a target
+Pokémon as well. A card that wants one of several different things, such as
+an Evolution and an Energy (Hilda), carries a slot for each; a card whose
+second choice depends on its first, such as two Energy of different types
+(Crispin), marks the later slot to read what an earlier one took. This one
+primitive covers fourteen of the nineteen: a deck search to the hand (Poké
+Pad, Ultra Ball, Hilda, Dawn), a deck search to the Bench (Buddy-Buddy
+Poffin), a deck search split between the hand and an attachment (Crispin),
+the discard pile to the hand (Night Stretcher), the discard pile to the deck
+(Sacred Ash), and the hand to the deck (Judge, Lillie's Determination,
+Unfair Stamp) or to the bottom of it (Special Red Card).
 
 **Shuffle** a player's deck. Almost every search ends with one.
 

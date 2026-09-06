@@ -1,7 +1,7 @@
 # A search for one of each of several cards
 
 Type: task
-Status: in-progress
+Status: resolved
 
 Three cards search for two or three *different* cards, one of each. 152
 slots between them.
@@ -21,13 +21,13 @@ destination, hold a constraint between two choices, and attach directly from
 a search.
 
 - [x] A search can hold a sequence of slots, each with its own filter
-- [ ] A search can send its cards to more than one destination
-- [ ] A constraint between two choices is expressible, and is a value
-- [x] `Hilda` and `Dawn` play; `Crispin` does not yet
+- [x] A search can send its cards to more than one destination
+- [x] A constraint between two choices is expressible, and is a value
+- [x] `Hilda`, `Dawn`, and `Crispin` all play
 
 ## Where this stands
 
-Two parts are done and merged. `Crispin` is what remains.
+All three parts are done and merged.
 
 **Part one** put the printed stage on `Pokemon` — the artifact carries it as
 its own field, 1437 Basic, 842 Stage 1, 306 Stage 2 — and added the filters
@@ -47,10 +47,19 @@ the search on by itself, because the choice to stop is the player's.
 `FinishDeciding` ends a slot and the search goes to the next one there. A
 first attempt advanced automatically, and `tests/trainers.rs` caught it.
 
-**What is left, for `Crispin`** (67 slots): a destination that attaches
-straight from a search, which needs a target Pokémon as well as a
-destination; and a constraint between two choices — "2 Basic Energy of
-*different types*" reads what the first slot took, which no static
-`CardFilter` expresses. The phase would carry the previously taken card, and
-the slot would carry the constraint as a value. Both are new shapes, and
-either may earn its own ticket once someone is inside it.
+**Part three** built `Crispin`. `Destination` grew `Attach`, and
+`Action::TakeCardOnto { card, target }` chooses the card and the Pokémon it
+attaches to together — the same shape `MoveEnergy` already used, rather than
+a second phase asking where once the card is already picked. `Slot` grew
+`excludes_type_of_previous: bool`, and `Phase::Deciding` grew
+`previous: Option<CardId>` that survives every slot transition: only the
+flag is a static fact of the card, the value it compares against is state.
+[ADR 0018](../../../docs/adr/0018-a-slot-can-read-what-a-search-already-took.md)
+records both decisions.
+
+Coverage went 388 → 392 (4 prints), and the field went 1281 → 1348 playable
+slots of 3660 — 36.8%.
+
+The ticket's four things `Phase::Deciding` had never done are now all built:
+a sequence of slots, more than one destination, a constraint between two
+choices, and attaching directly from a search.

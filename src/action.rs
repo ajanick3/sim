@@ -49,6 +49,10 @@ pub enum Action {
     PlayTrainer { card: CardId },
     /// Take one matching card during a Trainer effect's resolution.
     TakeCard { card: CardId },
+    /// Take one matching card during a Trainer effect's resolution, and
+    /// attach it straight to a Pokémon in play. The slot's destination is
+    /// `Destination::Attach`; only that case needs a target.
+    TakeCardOnto { card: CardId, target: PokemonId },
     /// Stop taking cards during a Trainer effect's resolution.
     FinishDeciding,
     /// Discard one Energy attached to a Pokémon the opponent controls.
@@ -146,20 +150,43 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             from,
             to,
             filter,
+            excludes_type_of_previous,
             remaining,
+            previous,
             ..
         } => {
             // A card bound for the Bench needs a space on it. Rule 14 caps
             // the Bench at five whatever put the Pokémon there, so a full
-            // Bench offers nothing and the choice ends.
+            // Bench offers nothing and the choice ends. A card bound to
+            // attach needs a Pokémon in play to attach to.
             let room = match to {
                 Destination::Bench => state.player(chooser).bench.len() < BENCH_LIMIT,
+                Destination::Attach => !state.player(chooser).in_play().is_empty(),
                 Destination::Zone(_) => true,
             };
             if remaining > 0 && room {
+                let slot = crate::card::Slot {
+                    filter,
+                    to,
+                    limit: remaining,
+                    excludes_type_of_previous,
+                };
                 for card in state.zone(chooser, from) {
-                    if state.matches_filter(*card, filter) {
-                        actions.push(Action::TakeCard { card: *card });
+                    if !state.matches_slot(*card, &slot, previous) {
+                        continue;
+                    }
+                    match to {
+                        Destination::Attach => {
+                            for target in state.player(chooser).in_play() {
+                                actions.push(Action::TakeCardOnto {
+                                    card: *card,
+                                    target,
+                                });
+                            }
+                        }
+                        Destination::Bench | Destination::Zone(_) => {
+                            actions.push(Action::TakeCard { card: *card });
+                        }
                     }
                 }
             }
@@ -366,6 +393,11 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::PlayTrainer { card } => format!("Play {}", state.def_of(card).name()),
         Action::TakeCard { card } => format!("Take {}", state.def_of(card).name()),
+        Action::TakeCardOnto { card, target } => format!(
+            "Take {} and attach it to {}",
+            state.def_of(card).name(),
+            state.pokemon_def(target).name
+        ),
         Action::FinishDeciding => "Stop taking cards".to_string(),
         Action::PayWithCard { card } => {
             format!("Discard {} to pay for the card", state.def_of(card).name())

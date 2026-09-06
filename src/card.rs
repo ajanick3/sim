@@ -51,6 +51,10 @@ pub enum Destination {
     /// Onto the Bench of the player who is choosing, as a Pokémon in play.
     /// A full Bench takes no more, and the choice ends there.
     Bench,
+    /// Attached straight to a Pokémon the chooser controls, picked at the
+    /// same time as the card. `Crispin` is why this exists: the second
+    /// Energy it finds goes onto a Pokémon rather than into a zone at all.
+    Attach,
 }
 
 /// What a card must be for a Trainer effect to offer it. A value, per
@@ -101,6 +105,11 @@ pub struct Slot {
     pub to: Destination,
     /// At most this many cards. A slot the player declines takes none.
     pub limit: u32,
+    /// This slot also refuses a card whose Energy type matches the one the
+    /// previous slot took. `Crispin` prints "of different types" for its two
+    /// Basic Energy, and no static `CardFilter` can read a fact that depends
+    /// on what a different slot's choice was.
+    pub excludes_type_of_previous: bool,
 }
 
 /// A Trainer's effect: a value the engine executes, never text read at run
