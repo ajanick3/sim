@@ -3,6 +3,8 @@
 
 Standard is regulation marks H, I, and J. The crawl asks TCGdex for the cards
 of each mark, then reads each card and keeps the fields a rules engine needs.
+A card with any other mark, or with none, is discarded: the mark is what makes
+a card legal.
 Prices, images, variants, and rarity are dropped: they change often and the
 engine never reads them.
 
@@ -21,7 +23,7 @@ from concurrent.futures import ThreadPoolExecutor
 
 API = "https://api.tcgdex.net/v2/en"
 MARKS = ["H", "I", "J"]
-WORKERS = 8
+WORKERS = 6
 
 # What a rules engine reads. Everything else TCGdex returns is dropped.
 KEEP = [
@@ -32,8 +34,12 @@ KEEP = [
 ]
 
 
-def fetch(url, attempts=4):
-    """Read one URL as JSON, backing off when the API pushes back."""
+def fetch(url, attempts=6):
+    """Read one URL as JSON, backing off when the API pushes back.
+
+    The API returns a 503 now and then. Over thousands of requests one is
+    likely, so a failure waits and asks again rather than ending the crawl.
+    """
     for attempt in range(attempts):
         try:
             with urllib.request.urlopen(url, timeout=30) as response:
@@ -41,8 +47,28 @@ def fetch(url, attempts=4):
         except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as error:
             if attempt == attempts - 1:
                 raise RuntimeError(f"{url}: {error}") from error
-            time.sleep(2**attempt)
+            time.sleep(min(2**attempt, 30))
     return None
+
+
+def fetch_all(ids):
+    """Read every card, and sweep up whatever failed on the first pass."""
+    def try_one(card_id):
+        try:
+            return fetch(f"{API}/cards/{card_id}")
+        except RuntimeError as error:
+            print(f"  retrying later: {error}", file=sys.stderr)
+            return card_id
+
+    with ThreadPoolExecutor(max_workers=WORKERS) as pool:
+        results = list(pool.map(try_one, ids))
+
+    cards = [r for r in results if isinstance(r, dict)]
+    failed = [r for r in results if isinstance(r, str)]
+    for card_id in failed:
+        print(f"  second attempt: {card_id}", file=sys.stderr)
+        cards.append(fetch(f"{API}/cards/{card_id}"))
+    return cards
 
 
 def card_ids():
@@ -75,14 +101,18 @@ def main():
     print(f"{len(ids)} cards to read", file=sys.stderr)
 
     started = time.time()
-    with ThreadPoolExecutor(max_workers=WORKERS) as pool:
-        cards = list(pool.map(lambda i: fetch(f"{API}/cards/{i}"), ids))
+    cards = fetch_all(list(ids))
     print(f"read in {time.time() - started:.0f}s", file=sys.stderr)
 
-    trimmed = sorted((trim(card) for card in cards), key=lambda c: c["id"])
-    missing = [c["id"] for c in trimmed if "regulationMark" not in c]
-    if missing:
-        print(f"warning: {len(missing)} cards carry no mark", file=sys.stderr)
+    read = sorted((trim(card) for card in cards), key=lambda c: c["id"])
+
+    # Discard anything the marks do not cover. The API filter should leave
+    # none, and one card has already turned up with a lower-case mark, so the
+    # check earns its place.
+    trimmed = [c for c in read if c.get("regulationMark") in MARKS]
+    discarded = len(read) - len(trimmed)
+    if discarded:
+        print(f"discarded {discarded} cards outside marks {MARKS}", file=sys.stderr)
 
     artifact = {
         "schema": 1,
