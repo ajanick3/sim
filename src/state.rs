@@ -157,6 +157,16 @@ pub enum Phase {
         /// What to do, beyond the move itself, once the choice ends.
         then: Option<crate::card::Then>,
     },
+    /// `player` is paying what a card demanded before it may be played, and
+    /// chooses which cards from hand pay it. `card` is the Trainer already
+    /// played and discarded: its effect runs once the cost is paid, and the
+    /// phase names the card rather than a copy of the effect.
+    Paying {
+        player: PlayerId,
+        card: CardId,
+        /// How many cards the player still owes.
+        remaining: u32,
+    },
     /// `chooser` picks one Energy attached to a Pokémon `of` controls, in
     /// play, to discard. Crushing Hammer's heads case is the only card that
     /// needs this; a Pokémon's attachments are not a `Zone`, so `Deciding`

@@ -45,12 +45,14 @@ fn build() -> Set {
         print_id: "test-judge",
         name: "Judge",
         kind: TrainerKind::Supporter,
+        requirement: None,
         effect: TrainerEffect::BothShuffleHandThenDraw { count: 4 },
     }));
     let lillie = db.add(CardDef::Trainer(Trainer {
         print_id: "test-lillie",
         name: "Lillie's Determination",
         kind: TrainerKind::Supporter,
+        requirement: None,
         effect: TrainerEffect::ShuffleHandThenDraw {
             normal: 6,
             at_six_prizes: 8,
@@ -252,12 +254,14 @@ fn build2() -> Set2 {
         print_id: "test-boss",
         name: "Boss's Orders",
         kind: TrainerKind::Supporter,
+        requirement: None,
         effect: TrainerEffect::SwitchOpponentActive,
     }));
     let poke_pad = db.add(CardDef::Trainer(Trainer {
         print_id: "test-poke-pad",
         name: "Poke Pad",
         kind: TrainerKind::Item,
+        requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Library,
             to: Destination::Zone(Zone::Hand),
@@ -270,6 +274,7 @@ fn build2() -> Set2 {
         print_id: "test-night-stretcher",
         name: "Night Stretcher",
         kind: TrainerKind::Item,
+        requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Discard,
             to: Destination::Zone(Zone::Hand),
@@ -282,6 +287,7 @@ fn build2() -> Set2 {
         print_id: "test-sacred-ash",
         name: "Sacred Ash",
         kind: TrainerKind::Item,
+        requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Discard,
             to: Destination::Zone(Zone::Library),
@@ -294,6 +300,7 @@ fn build2() -> Set2 {
         print_id: "test-gwynn",
         name: "Gwynn",
         kind: TrainerKind::Supporter,
+        requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Hand,
             to: Destination::Zone(Zone::Discard),
@@ -306,6 +313,7 @@ fn build2() -> Set2 {
         print_id: "test-crushing-hammer",
         name: "Crushing Hammer",
         kind: TrainerKind::Item,
+        requirement: None,
         effect: TrainerEffect::CoinFlipDiscardOpponentEnergy,
     }));
     Set2 {
