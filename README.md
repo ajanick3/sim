@@ -70,11 +70,11 @@ reads every one of them and checks that it parses, matches, and is legal, so a
 change to the parser or the card data fails loudly rather than quietly.
 
 `decks/2026-worlds/` holds the field of the 2026 World Championships, one file
-per player, named `<placement>-<player-slug>.txt`. `tools/fetch_worlds_decks.py`
-fetches them from the operator's own tournament site. Three are known
-exceptions to the sweep test — two name cards by a Japanese-region set code
-this artifact does not hold, and one carries a promo card printed with no
-number — recorded by name in `tests/decklist.rs`.
+per player, named `<placement>-<player-slug>.txt`.
+`tools/fetch_worlds_decks.py` fetches them from the operator's own tournament
+site. Sixty-one of the sixty-four are kept: three named their cards by
+Japanese-region set codes this artifact does not hold, and were dropped rather
+than guessed at, so the placement numbers have three gaps.
 
 ## The documents
 
