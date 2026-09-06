@@ -1,7 +1,7 @@
 //! Applying an action to the state.
 
 use crate::action::{Action, legal_actions};
-use crate::card::Condition;
+use crate::card::{Condition, TrainerEffect, TrainerKind, Zone};
 use crate::ids::{PlayerId, PokemonId};
 use crate::rng::shuffle;
 use crate::state::{GameState, Outcome, Phase, WinReason};
@@ -78,6 +78,29 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.clear_conditions(target);
             let name = state.pokemon_def(target).name;
             state.log.push(format!("{player:?} evolves into {name}."));
+        }
+
+        Action::PlayTrainer { card } => {
+            let player = state.current;
+            let trainer = state
+                .def_of(card)
+                .as_trainer()
+                .expect("legal_actions offers PlayTrainer only for a Trainer")
+                .clone();
+            state.remove_from_hand(player, card);
+            state.players[player.index()].discard.push(card);
+            match trainer.kind {
+                TrainerKind::Supporter => {
+                    state.players[player.index()].supporter_played_this_turn = true;
+                }
+                TrainerKind::Stadium => {
+                    state.players[player.index()].stadium_played_this_turn = true;
+                }
+                TrainerKind::Item | TrainerKind::Tool => {}
+            }
+            let name = trainer.name;
+            state.log.push(format!("{player:?} plays {name}."));
+            resolve_trainer(state, player, trainer.effect);
         }
 
         Action::AttachEnergy { card, target } => {
@@ -159,14 +182,16 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::TakeCard { card } => {
-            let (chooser, from, to, filter, remaining) = match state.phase {
+            let (chooser, from, to, filter, remaining, moved, then) = match state.phase {
                 Phase::Deciding {
                     chooser,
                     from,
                     to,
                     filter,
                     remaining,
-                } => (chooser, from, to, filter, remaining),
+                    moved,
+                    then,
+                } => (chooser, from, to, filter, remaining, moved, then),
                 _ => return Err(IllegalAction),
             };
             state.move_card(chooser, card, from, to);
@@ -178,27 +203,133 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 to,
                 filter,
                 remaining: remaining - 1,
+                moved: moved + 1,
+                then,
             };
         }
 
         Action::FinishDeciding => {
-            let (chooser, to) = match state.phase {
-                Phase::Deciding { chooser, to, .. } => (chooser, to),
+            let (chooser, to, moved, then) = match state.phase {
+                Phase::Deciding {
+                    chooser,
+                    to,
+                    moved,
+                    then,
+                    ..
+                } => (chooser, to, moved, then),
                 _ => return Err(IllegalAction),
             };
             // A card moved into the Library is shuffled in once the choice
             // ends, not after each one — the same rule a deck search always
             // follows.
-            if to == crate::card::Zone::Library {
+            if to == Zone::Library {
                 let library = &mut state.players[chooser.index()].library;
                 shuffle(state.rng.as_mut(), library);
             }
+            if let Some(crate::card::Then::DrawPerCardMoved(per_card)) = then {
+                for _ in 0..(moved * per_card) {
+                    state.draw(chooser);
+                }
+            }
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DiscardOpponentEnergy { card } => {
+            let of = match state.phase {
+                Phase::DiscardingOpponentEnergy { of, .. } => of,
+                _ => return Err(IllegalAction),
+            };
+            for pokemon in state.player(of).in_play() {
+                state.pokemon[pokemon.index()]
+                    .attached
+                    .retain(|c| *c != card);
+            }
+            state.players[of.index()].discard.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} is discarded."));
             state.phase = Phase::Main;
             settle(state);
         }
     }
 
     Ok(())
+}
+
+/// Run a Trainer's effect once it has been played and discarded.
+///
+/// `player` is who played it. A `Decide` or `SwitchOpponentActive` opens a
+/// phase and waits; everything else has no choice left in it and finishes
+/// here.
+fn resolve_trainer(state: &mut GameState, player: PlayerId, effect: TrainerEffect) {
+    match effect {
+        TrainerEffect::Decide {
+            from,
+            to,
+            filter,
+            limit,
+            then,
+        } => {
+            state.phase = Phase::Deciding {
+                chooser: player,
+                from,
+                to,
+                filter,
+                remaining: limit,
+                moved: 0,
+                then,
+            };
+        }
+
+        TrainerEffect::SwitchOpponentActive => {
+            state.phase = Phase::Promoting {
+                of: player.opponent(),
+                chooser: player,
+            };
+        }
+
+        TrainerEffect::ShuffleHandThenDraw {
+            normal,
+            at_six_prizes,
+        } => {
+            let count = if state.player(player).prizes.len() == 6 {
+                at_six_prizes
+            } else {
+                normal
+            };
+            shuffle_hand_into_library(state, player);
+            for _ in 0..count {
+                state.draw(player);
+            }
+        }
+
+        TrainerEffect::BothShuffleHandThenDraw { count } => {
+            for player in [PlayerId::One, PlayerId::Two] {
+                shuffle_hand_into_library(state, player);
+                for _ in 0..count {
+                    state.draw(player);
+                }
+            }
+        }
+
+        TrainerEffect::CoinFlipDiscardOpponentEnergy => {
+            if state.rng.flip() {
+                state.phase = Phase::DiscardingOpponentEnergy {
+                    chooser: player,
+                    of: player.opponent(),
+                };
+            }
+        }
+    }
+}
+
+/// Shuffle a player's hand into their Library. Several Supporters start this
+/// way before drawing a fresh hand.
+fn shuffle_hand_into_library(state: &mut GameState, player: PlayerId) {
+    let hand = std::mem::take(&mut state.players[player.index()].hand);
+    state.players[player.index()].library.extend(hand);
+    let library = &mut state.players[player.index()].library;
+    shuffle(state.rng.as_mut(), library);
 }
 
 fn setup_player(state: &GameState) -> Result<PlayerId, IllegalAction> {

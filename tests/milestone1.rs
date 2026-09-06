@@ -123,7 +123,7 @@ fn a_knockout_takes_a_prize() {
             sim::card::CardDef::Energy(e) => {
                 *required == sim::card::Type::Colorless || e.kind == *required
             }
-            sim::card::CardDef::Pokemon(_) => false,
+            sim::card::CardDef::Pokemon(_) | sim::card::CardDef::Trainer(_) => false,
         };
         let side = state.player(PlayerId::One);
         let energy = side

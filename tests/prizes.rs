@@ -89,11 +89,13 @@ fn the_import_reads_the_prize_value_from_the_name() {
     let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
     let import = load(&json).unwrap();
 
+    // Ticket 03 admitted eight real Trainers too, so not every admitted card
+    // is a Pokémon any more.
     let worth = |name: &str| {
         import
             .admitted
             .iter()
-            .map(|id| import.db.get(*id).as_pokemon().unwrap())
+            .filter_map(|id| import.db.get(*id).as_pokemon())
             .find(|p| p.name == name)
             .map(|p| p.prizes)
     };
@@ -103,7 +105,7 @@ fn the_import_reads_the_prize_value_from_the_name() {
         import
             .admitted
             .iter()
-            .map(|id| import.db.get(*id).as_pokemon().unwrap())
+            .filter_map(|id| import.db.get(*id).as_pokemon())
             .any(|p| !p.name.ends_with(" ex") && p.prizes == 1),
         "an ordinary card is worth 1"
     );
