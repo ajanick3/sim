@@ -18,8 +18,9 @@ Resolved 2026-09-06 on branch `feat/import-card-data`, commit `f04f2ce`.
 
 The operator chose TCGdex over the `pkmn` Turso database, which removes the
 credentials that put the export script in that repository. The decision is
-[ADR 0007](../../../docs/adr/0007-card-data-comes-from-tcgdex-into-this-repository.md);
-ADR 0002 still holds for the engine's purity and the JSON seam.
+[ADR 0007](../../../docs/adr/0007-card-data-comes-from-tcgdex-into-this-repository.md),
+which supersedes ADR 0002 and carries the whole seam decision, the engine's
+purity included.
 
 `tools/import_cards.py` writes `data/cards.json`: 3051 cards of marks H, I, and
 J, in about 95 seconds, using the standard library only. The artifact carries a
