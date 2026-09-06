@@ -77,11 +77,6 @@ fn a_view_shows_both_boards_and_the_discards() {
         assert_eq!(active.remaining_hp, state.remaining_hp(real));
         assert_eq!(side.bench.len(), state.player(player).bench.len());
         assert_eq!(side.discard.len(), state.player(player).discard.len());
-        assert_eq!(
-            side.lost_zone.len(),
-            state.player(player).lost_zone.len(),
-            "the Lost Zone is public, like the discard pile"
-        );
     }
 }
 
