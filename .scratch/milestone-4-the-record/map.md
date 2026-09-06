@@ -27,7 +27,7 @@ replayed, and nothing reads it back.
 
 ## Decisions so far
 
-Nothing resolved yet.
+Ticket 01 resolved 2026-09-06: the state records every action applied to it, and a game replays from its cards, its seed, and that log; details under [the ticket's Answer](issues/01-the-action-log.md).
 
 ## Fog
 

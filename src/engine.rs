@@ -1,9 +1,9 @@
 //! Applying an action to the state.
 
 use crate::action::{Action, legal_actions};
-use crate::card::{Condition, TrainerEffect, TrainerKind, Zone};
-use crate::ids::{PlayerId, PokemonId};
-use crate::rng::shuffle;
+use crate::card::{CardDb, Condition, TrainerEffect, TrainerKind, Zone};
+use crate::ids::{CardDefId, PlayerId, PokemonId};
+use crate::rng::{Rng, shuffle};
 use crate::state::{GameState, Outcome, Phase, WinReason};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -253,7 +253,33 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
     }
 
+    // Recorded here, at the end: an arm that refused part-way through
+    // returned before this, and a refusal has nothing to replay.
+    state.history.push(action);
     Ok(())
+}
+
+/// Play a recorded game again.
+///
+/// The engine is a pure function of its cards, its seed, and its actions, so
+/// the same three give the same game. The caller supplies the first two: a
+/// state does not keep its seed, only the generator it has already advanced.
+///
+/// An action that does not fit the game being rebuilt is refused, the same
+/// way [`apply`] refuses it, and the replay stops there. A log this engine
+/// wrote always fits; one from a different deal, or from an older set of
+/// rules, is exactly what this catches.
+pub fn replay(
+    db: CardDb,
+    decklists: [Vec<CardDefId>; 2],
+    rng: Box<dyn Rng>,
+    history: &[Action],
+) -> Result<GameState, IllegalAction> {
+    let mut state = GameState::new(db, decklists, rng);
+    for action in history {
+        apply(&mut state, *action)?;
+    }
+    Ok(state)
 }
 
 /// Run a Trainer's effect once it has been played and discarded.
