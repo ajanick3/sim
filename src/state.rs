@@ -167,6 +167,11 @@ pub enum Phase {
         /// How many cards the player still owes.
         remaining: u32,
     },
+    /// `player` moves one Energy between two Pokémon they control, and
+    /// chooses both ends at once. A separate phase for each end would record
+    /// a half-made move that no rule can read; the pair is small enough to
+    /// enumerate, so the action carries both.
+    MovingEnergy { player: PlayerId },
     /// `chooser` picks one Energy attached to a Pokémon `of` controls, in
     /// play, to discard. Crushing Hammer's heads case is the only card that
     /// needs this; a Pokémon's attachments are not a `Zone`, so `Deciding`

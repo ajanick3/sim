@@ -55,6 +55,8 @@ pub enum Action {
     DiscardOpponentEnergy { card: CardId },
     /// Discard one card from hand toward what a card demanded to be played.
     PayWithCard { card: CardId },
+    /// Move one attached Energy onto another Pokémon you control.
+    MoveEnergy { card: CardId, target: PokemonId },
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -70,6 +72,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DiscardingForRetreat { player, .. } => Some(player),
         Phase::Deciding { chooser, .. } => Some(chooser),
         Phase::Paying { player, .. } => Some(player),
+        Phase::MovingEnergy { player } => Some(player),
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::Checkup { player } => Some(player),
         Phase::Over => None,
@@ -172,6 +175,25 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
+        Phase::MovingEnergy { player: whose } => {
+            let in_play = state.player(whose).in_play();
+            for from in &in_play {
+                for card in &state.pokemon(*from).attached {
+                    if !state.def_of(*card).is_energy() {
+                        continue;
+                    }
+                    for target in &in_play {
+                        if target != from {
+                            actions.push(Action::MoveEnergy {
+                                card: *card,
+                                target: *target,
+                            });
+                        }
+                    }
+                }
+            }
+            return actions;
+        }
         Phase::DiscardingOpponentEnergy { of, .. } => {
             for pokemon in state.player(of).in_play() {
                 for card in &state.pokemon(pokemon).attached {
@@ -238,8 +260,24 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // A card that switches the opponent's Active needs somewhere to
             // switch to; every other effect built so far can always be
             // attempted, even where it turns up nothing to move.
-            let has_a_target = !matches!(trainer.effect, TrainerEffect::SwitchOpponentActive)
-                || !state.player(player.opponent()).bench.is_empty();
+            let has_a_target = match trainer.effect {
+                TrainerEffect::SwitchOpponentActive => {
+                    !state.player(player.opponent()).bench.is_empty()
+                }
+                // An Energy to move, and a second Pokémon to move it to.
+                TrainerEffect::MoveAttachedEnergy => {
+                    let in_play = side.in_play();
+                    in_play.len() > 1
+                        && in_play.iter().any(|p| {
+                            state
+                                .pokemon(*p)
+                                .attached
+                                .iter()
+                                .any(|c| state.def_of(*c).is_energy())
+                        })
+                }
+                _ => true,
+            };
             // A requirement gates the card before anything else does.
             let requirement_met = match trainer.requirement {
                 None => true,
@@ -332,6 +370,11 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::PayWithCard { card } => {
             format!("Discard {} to pay for the card", state.def_of(card).name())
         }
+        Action::MoveEnergy { card, target } => format!(
+            "Move {} to {}",
+            state.def_of(card).name(),
+            state.pokemon_def(target).name
+        ),
         Action::DiscardOpponentEnergy { card } => {
             format!("Discard the opponent's {}", state.def_of(card).name())
         }
