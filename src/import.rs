@@ -14,7 +14,7 @@ use serde_json::Value;
 
 use crate::card::{
     Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
-    Then, Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    TargetFilter, Then, Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use crate::ids::CardDefId;
 
@@ -522,7 +522,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                     },
                     Slot {
                         filter: CardFilter::BasicEnergy,
-                        to: Destination::Attach,
+                        to: Destination::Attach(TargetFilter::AnyInPlay),
                         limit: 1,
                         excludes_type_of_previous: true,
                     },
@@ -538,6 +538,32 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 slots: vec![Slot {
                     filter: CardFilter::AnyTrainer,
                     to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                }],
+                then: None,
+            },
+        ),
+        "N's PP Up" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Discard,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicEnergy,
+                    to: Destination::Attach(TargetFilter::BenchedNameStartsWith("N's")),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                }],
+                then: None,
+            },
+        ),
+        "Wondrous Patch" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Discard,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicEnergyOfType(Type::Psychic),
+                    to: Destination::Attach(TargetFilter::BenchedOfType(Type::Psychic)),
                     limit: 1,
                     excludes_type_of_previous: false,
                 }],

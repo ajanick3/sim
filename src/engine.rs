@@ -251,7 +251,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 }
                 // `legal_actions` never offers `TakeCard` for a slot bound
                 // to attach: that needs a target, which is `TakeCardOnto`.
-                Destination::Attach => unreachable!("Attach is taken with a target"),
+                Destination::Attach(_) => unreachable!("Attach is taken with a target"),
             }
             // A slot whose limit runs out does not move the search on by
             // itself. ADR 0012 keeps the choice to stop with the player, and
@@ -273,25 +273,26 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::TakeCardOnto { card, target } => {
-            let (chooser, played, step, from, filter, excludes, remaining, moved, then) =
+            let (chooser, played, step, from, to, filter, excludes, remaining, moved, then) =
                 match state.phase {
                     Phase::Deciding {
                         chooser,
                         card: played,
                         step,
                         from,
+                        to: to @ Destination::Attach(_),
                         filter,
                         excludes_type_of_previous,
                         remaining,
                         moved,
                         then,
-                        to: Destination::Attach,
                         ..
                     } => (
                         chooser,
                         played,
                         step,
                         from,
+                        to,
                         filter,
                         excludes_type_of_previous,
                         remaining,
@@ -312,7 +313,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 card: played,
                 step,
                 from,
-                to: Destination::Attach,
+                to,
                 filter,
                 excludes_type_of_previous: excludes,
                 remaining: remaining - 1,
