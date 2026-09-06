@@ -282,6 +282,24 @@ pub fn replay(
     Ok(state)
 }
 
+/// Take back the last action, by rebuilding the game without it.
+///
+/// A shuffle cannot be reversed — the generator moved on and the order it
+/// produced is not written down anywhere — so an undo cannot walk the state
+/// backwards. It replays instead, which is correct for every action and
+/// costs one replay. `history` is the log to undo the last entry of; with an
+/// empty log there is nothing to take back, and the deal itself is the
+/// position before any action.
+pub fn undo(
+    db: CardDb,
+    decklists: [Vec<CardDefId>; 2],
+    rng: Box<dyn Rng>,
+    history: &[Action],
+) -> Result<GameState, IllegalAction> {
+    let keep = history.len().saturating_sub(1);
+    replay(db, decklists, rng, &history[..keep])
+}
+
 /// Run a Trainer's effect once it has been played and discarded.
 ///
 /// `player` is who played it. A `Decide` or `SwitchOpponentActive` opens a

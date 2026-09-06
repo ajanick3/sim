@@ -27,16 +27,11 @@ replayed, and nothing reads it back.
 
 ## Decisions so far
 
+Ticket 02 resolved 2026-09-06: undo replays the log without its last entry, because a shuffle has no inverse the engine can compute; details under [the ticket's Answer](issues/02-undo-one-action.md).
 Ticket 01 resolved 2026-09-06: the state records every action applied to it, and a game replays from its cards, its seed, and that log; details under [the ticket's Answer](issues/01-the-action-log.md).
 
 ## Fog
 
-- Whether the log stores every action or only the ones that changed the
-  state. A refused action changes nothing and is not worth keeping; the
-  engine already refuses those before they apply.
-- Whether undo re-runs the log from the start or reverses one action. The
-  first is simple and correct and costs a replay; the second is quick and
-  needs every action to know its own inverse, which a shuffle does not.
 - Carried from milestone 3: nothing records that a Pokémon was knocked out
   during the opponent's last turn, which `Unfair Stamp` needs. It is the same
   class of problem as the rest of this milestone.
