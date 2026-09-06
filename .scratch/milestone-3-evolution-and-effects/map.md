@@ -24,6 +24,7 @@ ability sits in the evolution row. Ticket 01 will not unlock every card in it.
 
 ## Decisions so far
 
+Ticket 07 resolved 2026-09-06: the importer matches the published card shape, and a decklist line is checked against the card its number names; details under [the ticket's Answer](issues/07-match-the-published-card-shape.md).
 Ticket 06 resolved 2026-09-06: every kind of card is named, and a refusal says which kind it refused; details under [the ticket's Answer](issues/06-the-missing-card-types.md).
 Ticket 04 resolved 2026-09-06: a knockout takes what the card is worth, read from the card's name because the data's suffix field cannot be trusted; details under [the ticket's Answer](issues/04-prize-values.md).
 Ticket 02 resolved 2026-09-06: nine primitives cover the Trainers the committed decks play, and an effect is a value the engine executes; details under [the ticket's Answer](issues/02-the-effect-vocabulary.md).

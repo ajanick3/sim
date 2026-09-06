@@ -173,3 +173,36 @@ fn every_committed_deck_is_legal_and_every_line_matches() {
 
     assert!(checked >= 2, "the decks are being read: {checked} found");
 }
+
+#[test]
+fn a_line_whose_name_disagrees_with_the_card_is_reported() {
+    let import = load(&artifact()).unwrap();
+    // MEG 3 is Mega Venusaur ex. The number decides the card; the name is
+    // checked against it, so a typo in either is caught.
+    let list = parse("4 Mega Charizard ex MEG 3\n").unwrap();
+    let report = check(&list, &import);
+    assert!(
+        report
+            .problems
+            .iter()
+            .any(|p| matches!(p, Problem::NameMismatch { .. })),
+        "the printed name must agree with the card the number names: {:?}",
+        report.problems
+    );
+}
+
+#[test]
+fn the_name_check_allows_the_punctuation_a_list_drops() {
+    let import = load(&artifact()).unwrap();
+    // Lists are exported with varying accents and apostrophes.
+    let list = parse("4 Poke Pad ASC 198\n").unwrap();
+    let report = check(&list, &import);
+    assert!(
+        !report
+            .problems
+            .iter()
+            .any(|p| matches!(p, Problem::NameMismatch { .. })),
+        "an accent is not a disagreement: {:?}",
+        report.problems
+    );
+}

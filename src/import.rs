@@ -25,6 +25,10 @@ pub enum Refusal {
     IsAnEvolution,
     /// A Pokémon card the engine cannot place, and nothing above fits.
     NotABasicPokemon,
+    /// The card carries a held item, which has rules text of its own. No card
+    /// in Standard does today; the guard keeps a future one from being
+    /// admitted with its item ignored.
+    HasAHeldItem,
     /// An ability is text the engine cannot execute.
     HasAnAbility,
     /// The attack carries an effect line, which is English, not a rule.
@@ -215,6 +219,9 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
     }
     if card["abilities"].as_array().is_some_and(|a| !a.is_empty()) {
         return Err(Refusal::HasAnAbility);
+    }
+    if card["item"].is_object() {
+        return Err(Refusal::HasAHeldItem);
     }
 
     let attacks_json = card["attacks"].as_array().ok_or(Refusal::HasNoAttack)?;
