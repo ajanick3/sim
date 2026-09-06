@@ -219,8 +219,23 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
         weakness: read_modifier(&card["weaknesses"], &["×2", "x2"])?,
         resistance: read_modifier(&card["resistances"], &["-30"])?,
         retreat_cost: card["retreat"].as_u64().unwrap_or(0) as u8,
+        prizes: prizes_for(card["name"].as_str().unwrap_or("")),
         attacks,
     }))
+}
+
+/// What a knockout of this card is worth, read from its name.
+///
+/// TCGdex's `suffix` field cannot be trusted for this: it is absent on 21 ex
+/// cards, `Mega Charizard X ex` among them, and it uses both `ex` and `EX`.
+/// The name is exact — every card carrying a suffix also ends in ` ex`, and 21
+/// more do — so the name is what this reads. A Trainer named `Mega Signal` is
+/// why the caller must already know this is a Pokémon.
+fn prizes_for(name: &str) -> u32 {
+    if !name.to_lowercase().ends_with(" ex") {
+        return 1;
+    }
+    if name.starts_with("Mega ") { 3 } else { 2 }
 }
 
 fn read_attack(attack: &Value) -> Result<Attack, Refusal> {

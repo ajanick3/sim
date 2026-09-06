@@ -51,6 +51,10 @@ pub struct Pokemon {
     pub weakness: Option<Type>,
     pub resistance: Option<Type>,
     pub retreat_cost: u8,
+    /// What a knockout of this Pokémon is worth, before any card adjusts it.
+    /// One for an ordinary Pokémon, two for a Pokémon ex, three for a Mega
+    /// Evolution ex.
+    pub prizes: u32,
     pub attacks: Vec<Attack>,
 }
 

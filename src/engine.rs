@@ -445,11 +445,12 @@ fn knock_out_the_dead(state: &mut GameState) {
             if state.remaining_hp(pokemon) > 0 {
                 continue;
             }
-            knock_out(state, pokemon);
             // Rule 39: the opponent of the knocked-out player takes a Prize.
-            // The count starts at 1 and a card effect adjusts it; Milestone 1
-            // has no such card.
-            take_prizes(state, player.opponent(), 1);
+            // The count starts at what the card is worth, and a card effect
+            // adjusts it. Nothing adjusts it yet.
+            let count = state.pokemon_def(pokemon).prizes as usize;
+            knock_out(state, pokemon);
+            take_prizes(state, player.opponent(), count);
             if state.is_over() {
                 return;
             }

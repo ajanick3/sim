@@ -29,6 +29,7 @@ pub fn milestone1() -> Milestone1 {
         weakness: Some(Type::Fighting),
         resistance: None,
         retreat_cost: 1,
+        prizes: 1,
         attacks: vec![
             Attack {
                 name: "Nibble",
@@ -54,6 +55,7 @@ pub fn milestone1() -> Milestone1 {
         weakness: Some(Type::Water),
         resistance: None,
         retreat_cost: 2,
+        prizes: 1,
         attacks: vec![Attack {
             name: "Ember",
             cost: vec![Type::Fire, Type::Fire],
@@ -71,6 +73,7 @@ pub fn milestone1() -> Milestone1 {
         weakness: Some(Type::Fire),
         resistance: None,
         retreat_cost: 1,
+        prizes: 1,
         attacks: vec![Attack {
             name: "Bubblebeam",
             cost: vec![Type::Water, Type::Colorless],
