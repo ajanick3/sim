@@ -107,6 +107,11 @@ pub enum TrainerEffect {
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
     /// Both players shuffle their hand into their Library, then draw.
     BothShuffleHandThenDraw { count: u32 },
+    /// The opponent shuffles their hand and puts it under their Library, then
+    /// draws — but only if they held anything. The cards go to the bottom
+    /// rather than being shuffled in, so what they gave up is the last thing
+    /// they draw again.
+    OpponentHandToBottomThenDraw { count: u32 },
     /// Flip a coin; on heads, discard one Energy attached to a Pokémon the
     /// opponent controls, the player's choice of which.
     CoinFlipDiscardOpponentEnergy,
@@ -117,12 +122,30 @@ pub enum TrainerEffect {
     Nothing,
 }
 
+/// What a card demands before it may be played at all.
+///
+/// A requirement is not an effect. An effect runs once the card is played; a
+/// requirement decides whether it may be played, which is `legal_actions`.
+/// One of the two also costs the player something, and a cost is paid before
+/// the effect runs.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Requirement {
+    /// Discard this many cards from hand, other than this one, to play it.
+    /// `Ultra Ball` prints the only one in the pool.
+    DiscardOtherCardsFromHand(u32),
+    /// The opponent holds at most this many Prize cards. Read from the
+    /// board, and costs nothing.
+    OpponentPrizesAtMost(usize),
+}
+
 /// A Trainer as printed.
 #[derive(Debug, Clone)]
 pub struct Trainer {
     pub print_id: &'static str,
     pub name: &'static str,
     pub kind: TrainerKind,
+    /// What the card demands before it may be played. Most print none.
+    pub requirement: Option<Requirement>,
     pub effect: TrainerEffect,
 }
 

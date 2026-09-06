@@ -11,7 +11,7 @@
 use serde_json::Value;
 
 use crate::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Then, Trainer,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Then, Trainer,
     TrainerEffect, TrainerKind, Type, Zone,
 };
 use crate::ids::CardDefId;
@@ -223,11 +223,12 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
         Some("Trainer") => {
             let kind = trainer_kind(card);
             let name = card["name"].as_str().unwrap_or("?");
-            return match known_trainer_effect(name) {
-                Some(effect) => Ok(CardDef::Trainer(Trainer {
+            return match known_trainer(name) {
+                Some((requirement, effect)) => Ok(CardDef::Trainer(Trainer {
                     print_id: leak(card["id"].as_str().unwrap_or("?")),
                     name: leak(name),
                     kind,
+                    requirement,
                     effect,
                 })),
                 None => Err(Refusal::IsATrainer(kind)),
@@ -285,61 +286,104 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
     }))
 }
 
-/// The eight Trainers ticket 03 built, by printed name. Each has one
-/// distinct effect across every printing in the artifact today, so a name
-/// match is safe; a card with the same name and a genuinely different effect
-/// would need matching by print id instead, and nothing here does.
-fn known_trainer_effect(name: &str) -> Option<TrainerEffect> {
+/// Every Trainer the engine has built, by printed name, with what the card
+/// demands before it may be played and what it does once it is. Each name
+/// has one distinct behaviour across every printing in the artifact today,
+/// so a name match is safe; a card with the same name and a genuinely
+/// different effect would need matching by print id instead, and nothing
+/// here does.
+///
+/// The requirement and the effect share this one table on purpose. A card's
+/// whole behaviour is one fact, and a second table keyed by the same name
+/// would let a card gain an effect here and lose its requirement there.
+fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
+    // Most cards demand nothing to be played.
+    let free = None;
     Some(match name {
-        "Boss's Orders" => TrainerEffect::SwitchOpponentActive,
-        "Judge" => TrainerEffect::BothShuffleHandThenDraw { count: 4 },
-        "Lillie's Determination" => TrainerEffect::ShuffleHandThenDraw {
-            normal: 6,
-            at_six_prizes: 8,
-        },
-        "Night Stretcher" => TrainerEffect::Decide {
-            from: Zone::Discard,
-            to: Destination::Zone(Zone::Hand),
-            filter: CardFilter::PokemonOrBasicEnergy,
-            limit: 1,
-            then: None,
-        },
-        "Poké Pad" => TrainerEffect::Decide {
-            from: Zone::Library,
-            to: Destination::Zone(Zone::Hand),
-            filter: CardFilter::PokemonWithoutRuleBox,
-            limit: 1,
-            then: None,
-        },
-        "Crushing Hammer" => TrainerEffect::CoinFlipDiscardOpponentEnergy,
-        "Buddy-Buddy Poffin" => TrainerEffect::Decide {
-            from: Zone::Library,
-            to: Destination::Bench,
-            filter: CardFilter::BasicPokemonWithHpAtMost(70),
-            limit: 2,
-            then: None,
-        },
-        "Cyrano" => TrainerEffect::Decide {
-            from: Zone::Library,
-            to: Destination::Zone(Zone::Hand),
-            filter: CardFilter::PokemonEx,
-            limit: 3,
-            then: None,
-        },
-        "Gwynn" => TrainerEffect::Decide {
-            from: Zone::Hand,
-            to: Destination::Zone(Zone::Discard),
-            filter: CardFilter::PokemonWithoutRuleBox,
-            limit: 2,
-            then: Some(Then::DrawPerCardMoved(3)),
-        },
-        "Sacred Ash" => TrainerEffect::Decide {
-            from: Zone::Discard,
-            to: Destination::Zone(Zone::Library),
-            filter: CardFilter::AnyPokemon,
-            limit: 5,
-            then: None,
-        },
+        "Boss's Orders" => (free, TrainerEffect::SwitchOpponentActive),
+        "Judge" => (free, TrainerEffect::BothShuffleHandThenDraw { count: 4 }),
+        "Lillie's Determination" => (
+            free,
+            TrainerEffect::ShuffleHandThenDraw {
+                normal: 6,
+                at_six_prizes: 8,
+            },
+        ),
+        "Night Stretcher" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Discard,
+                to: Destination::Zone(Zone::Hand),
+                filter: CardFilter::PokemonOrBasicEnergy,
+                limit: 1,
+                then: None,
+            },
+        ),
+        "Poké Pad" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                to: Destination::Zone(Zone::Hand),
+                filter: CardFilter::PokemonWithoutRuleBox,
+                limit: 1,
+                then: None,
+            },
+        ),
+        "Crushing Hammer" => (free, TrainerEffect::CoinFlipDiscardOpponentEnergy),
+        "Buddy-Buddy Poffin" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                to: Destination::Bench,
+                filter: CardFilter::BasicPokemonWithHpAtMost(70),
+                limit: 2,
+                then: None,
+            },
+        ),
+        "Cyrano" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                to: Destination::Zone(Zone::Hand),
+                filter: CardFilter::PokemonEx,
+                limit: 3,
+                then: None,
+            },
+        ),
+        "Gwynn" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Hand,
+                to: Destination::Zone(Zone::Discard),
+                filter: CardFilter::PokemonWithoutRuleBox,
+                limit: 2,
+                then: Some(Then::DrawPerCardMoved(3)),
+            },
+        ),
+        "Sacred Ash" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Discard,
+                to: Destination::Zone(Zone::Library),
+                filter: CardFilter::AnyPokemon,
+                limit: 5,
+                then: None,
+            },
+        ),
+        "Ultra Ball" => (
+            Some(Requirement::DiscardOtherCardsFromHand(2)),
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                to: Destination::Zone(Zone::Hand),
+                filter: CardFilter::AnyPokemon,
+                limit: 1,
+                then: None,
+            },
+        ),
+        "Special Red Card" => (
+            Some(Requirement::OpponentPrizesAtMost(3)),
+            TrainerEffect::OpponentHandToBottomThenDraw { count: 3 },
+        ),
         _ => return None,
     })
 }

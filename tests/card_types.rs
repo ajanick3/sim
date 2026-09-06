@@ -23,10 +23,12 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
         Some(Refusal::IsATrainer(TrainerKind::Supporter)),
         "a Supporter is refused as a Supporter"
     );
+    // Prime Catcher, an ACE SPEC. It switches a Benched Pokémon in and
+    // then switches the player's own Active too, which nothing built runs.
     assert_eq!(
-        reason_for("me01-131"),
+        reason_for("sv05-157"),
         Some(Refusal::IsATrainer(TrainerKind::Item)),
-        "Ultra Ball is an Item"
+        "Prime Catcher is an Item"
     );
     assert_eq!(
         reason_for("sv10-180"),
@@ -69,8 +71,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Ticket 03 of the record effort admitted 22 prints of the eight
     // Trainers it built (each name in one, sometimes several, printings), so
     // the pool of 445 split: the rest were still refused, named by kind. The
-    // second batch of Trainers takes 7 more: Cyrano and Buddy-Buddy Poffin.
-    assert_eq!(trainers, 416, "the Trainers still refused, by kind");
+    // second batch of Trainers takes 12 more: Cyrano, Buddy-Buddy Poffin,
+    // Ultra Ball, and Special Red Card.
+    assert_eq!(trainers, 411, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),

@@ -1,7 +1,7 @@
 //! Applying an action to the state.
 
 use crate::action::{Action, legal_actions};
-use crate::card::{CardDb, Condition, Destination, TrainerEffect, TrainerKind, Zone};
+use crate::card::{CardDb, Condition, Destination, Requirement, TrainerEffect, TrainerKind, Zone};
 use crate::ids::{CardDefId, PlayerId, PokemonId};
 use crate::rng::{Rng, shuffle};
 use crate::state::{GameState, Limit, Outcome, Phase, WinReason};
@@ -109,7 +109,22 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             }
             let name = trainer.name;
             state.log.push(format!("{player:?} plays {name}."));
-            resolve_trainer(state, player, trainer.effect);
+            // A cost is paid before the effect runs. The phase names the
+            // card, so the effect is read back from it when the cost is met.
+            match trainer.requirement {
+                Some(Requirement::DiscardOtherCardsFromHand(count)) => {
+                    state.phase = Phase::Paying {
+                        player,
+                        card,
+                        remaining: count,
+                    };
+                }
+                // A requirement read from the board costs nothing, and
+                // `legal_actions` has already checked it.
+                None | Some(Requirement::OpponentPrizesAtMost(_)) => {
+                    resolve_trainer(state, player, trainer.effect);
+                }
+            }
         }
 
         Action::AttachEnergy { card, target } => {
@@ -257,6 +272,40 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::PayWithCard { card } => {
+            let (player, played, remaining) = match state.phase {
+                Phase::Paying {
+                    player,
+                    card: played,
+                    remaining,
+                } => (player, played, remaining),
+                _ => return Err(IllegalAction),
+            };
+            state.remove_from_hand(player, card);
+            state.players[player.index()].discard.push(card);
+            let name = state.def_of(card).name();
+            state
+                .log
+                .push(format!("{player:?} discards {name} to pay."));
+            if remaining > 1 {
+                state.phase = Phase::Paying {
+                    player,
+                    card: played,
+                    remaining: remaining - 1,
+                };
+            } else {
+                let effect = state
+                    .def_of(played)
+                    .as_trainer()
+                    .expect("a cost is only ever paid for a Trainer")
+                    .effect;
+                // No `settle` here, the same as playing the card itself:
+                // the effect either opened a phase of its own or finished,
+                // and both are settled where the phase ends.
+                resolve_trainer(state, player, effect);
+            }
+        }
+
         Action::DiscardOpponentEnergy { card } => {
             let of = match state.phase {
                 Phase::DiscardingOpponentEnergy { of, .. } => of,
@@ -366,6 +415,26 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, effect: TrainerEffec
             shuffle_hand_into_library(state, player);
             for _ in 0..count {
                 state.draw(player);
+            }
+        }
+
+        TrainerEffect::OpponentHandToBottomThenDraw { count } => {
+            let opponent = player.opponent();
+            let mut hand = std::mem::take(&mut state.players[opponent.index()].hand);
+            if hand.is_empty() {
+                return;
+            }
+            // The hand is shuffled before it goes under the deck, so neither
+            // player knows the order it lands in.
+            shuffle(state.rng.as_mut(), &mut hand);
+            let library = &mut state.players[opponent.index()].library;
+            // A draw takes from the end, so the bottom of the deck is the
+            // front of this list.
+            for card in hand.into_iter().rev() {
+                library.insert(0, card);
+            }
+            for _ in 0..count {
+                state.draw(opponent);
             }
         }
 
