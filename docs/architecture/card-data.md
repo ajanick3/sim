@@ -40,9 +40,12 @@ Three shapes a reader must handle:
   flag, wherever one appears, is stale or empty; the `pkmn` database carries
   one of each kind.
 - Nothing in the data carries a **prize value**.
-- **TCGdex cannot mark a Mega ex.** All 133 Mega cards carry the same `ex` or
-  `EX` suffix an ordinary ex does, across Basic, Stage1, and Stage2. Only the
-  `Mega ` at the start of the name separates a 3-prize card from a 2-prize one.
+- **The `suffix` field is unreliable, and the name is not.** The suffix is
+  absent on 21 ex cards, `Mega Charizard X ex` among them, and it is written
+  both `ex` and `EX`. Every Pokémon carrying a suffix also ends in ` ex`, and
+  21 more do: 559 by name against 538 by suffix, with no card contradicting the
+  other. A Mega ex is separated only by the `Mega ` at the start of its name,
+  and only for a Pokémon — `Mega Signal` is a Trainer.
 - **TCGdex has no ACE SPEC field.** Deck construction rule 3 — one ACE SPEC per
   deck — cannot be enforced from this data. It needs a second source or a
   hand-kept list.
