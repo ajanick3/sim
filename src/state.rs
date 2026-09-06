@@ -487,6 +487,7 @@ impl GameState {
                 .def_of(card)
                 .as_pokemon()
                 .is_some_and(|p| p.stage == crate::card::Stage::Basic && p.hp <= hp),
+            CardFilter::AnyTrainer => self.def_of(card).as_trainer().is_some(),
         }
     }
 
