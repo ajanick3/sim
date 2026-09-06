@@ -61,6 +61,9 @@ pub enum Action {
     PayWithCard { card: CardId },
     /// Move one attached Energy onto another Pokémon you control.
     MoveEnergy { card: CardId, target: PokemonId },
+    /// Evolve a Basic in play straight into the named Stage 2 from hand,
+    /// skipping the Stage 1 between them.
+    EvolveSkippingOneStage { card: CardId, target: PokemonId },
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -77,6 +80,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::Deciding { chooser, .. } => Some(chooser),
         Phase::Paying { player, .. } => Some(player),
         Phase::MovingEnergy { player } => Some(player),
+        Phase::EvolvingWithRareCandy { player } => Some(player),
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::Checkup { player } => Some(player),
         Phase::Over => None,
@@ -231,6 +235,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
+        Phase::EvolvingWithRareCandy { player: whose } => {
+            for (card, target) in rare_candy_pairs(state, whose) {
+                actions.push(Action::EvolveSkippingOneStage { card, target });
+            }
+            return actions;
+        }
         _ => {}
     }
 
@@ -303,6 +313,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                                 .any(|c| state.def_of(*c).is_energy())
                         })
                 }
+                // A Stage 2 in hand, and a Basic under it in play. Rare
+                // Candy is only playable at all where the pair already
+                // exists — nothing in its phase ever declines.
+                TrainerEffect::EvolveSkippingOneStage => {
+                    !rare_candy_pairs(state, player).is_empty()
+                }
                 _ => true,
             };
             // A requirement gates the card before anything else does.
@@ -360,6 +376,34 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
     actions
 }
 
+/// Every Stage 2 in hand and Basic in play that `Rare Candy` may pair: the
+/// same rules 18-20 an ordinary evolution reads — not the first turn of the
+/// game, the target in play since before this turn, not yet evolved this
+/// turn — matched by `evolves_from_basic` two links down rather than by
+/// `evolve_from` one link up.
+fn rare_candy_pairs(state: &GameState, player: PlayerId) -> Vec<(CardId, PokemonId)> {
+    if state.is_first_turn_of_game() {
+        return Vec::new();
+    }
+    let side = state.player(player);
+    let mut pairs = Vec::new();
+    for card in &side.hand {
+        let Some(from) = state.def_of(*card).as_pokemon().and_then(|p| p.evolves_from_basic)
+        else {
+            continue;
+        };
+        for target in side.in_play() {
+            let eligible = state.pokemon_def(target).name == from
+                && state.pokemon(target).played_on_turn < state.turn_number
+                && !state.is_spent(Limit::Evolved(target));
+            if eligible {
+                pairs.push((*card, target));
+            }
+        }
+    }
+    pairs
+}
+
 /// Render an action the way the text interface shows it.
 pub fn describe(state: &GameState, action: Action) -> String {
     match action {
@@ -406,6 +450,11 @@ pub fn describe(state: &GameState, action: Action) -> String {
             "Move {} to {}",
             state.def_of(card).name(),
             state.pokemon_def(target).name
+        ),
+        Action::EvolveSkippingOneStage { card, target } => format!(
+            "Use Rare Candy: evolve {} into {}",
+            state.pokemon_def(target).name,
+            state.def_of(card).name()
         ),
         Action::DiscardOpponentEnergy { card } => {
             format!("Discard the opponent's {}", state.def_of(card).name())
