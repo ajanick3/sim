@@ -45,12 +45,14 @@ fn build() -> Set {
         print_id: "test-stadium",
         name: "Testing Grounds",
         kind: TrainerKind::Stadium,
+        requirement: None,
         effect: TrainerEffect::Nothing,
     }));
     let other_stadium = db.add(CardDef::Trainer(Trainer {
         print_id: "test-stadium-2",
         name: "Other Grounds",
         kind: TrainerKind::Stadium,
+        requirement: None,
         effect: TrainerEffect::Nothing,
     }));
     Set {

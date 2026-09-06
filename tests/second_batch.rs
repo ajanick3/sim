@@ -3,8 +3,8 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Trainer, TrainerEffect,
-    TrainerKind, Type, Zone,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Trainer,
+    TrainerEffect, TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId};
@@ -65,6 +65,7 @@ fn build() -> Set {
         print_id: "test-cyrano",
         name: "Cyrano",
         kind: TrainerKind::Supporter,
+        requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Library,
             to: Destination::Zone(Zone::Hand),
@@ -213,6 +214,7 @@ fn the_small_basic_filter_reads_both_the_stage_and_the_hp() {
         print_id: "test-poffin",
         name: "Poffin",
         kind: TrainerKind::Item,
+        requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Library,
             to: Destination::Zone(Zone::Hand),
@@ -253,6 +255,7 @@ fn with_poffin(set: Set) -> (Set, CardDefId) {
         print_id: "test-poffin",
         name: "Buddy-Buddy Poffin",
         kind: TrainerKind::Item,
+        requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Library,
             to: Destination::Bench,
@@ -320,7 +323,9 @@ fn a_full_bench_offers_nothing_to_take() {
             .iter()
             .find(|c| state.def_of(**c).is_basic_pokemon())
             .expect("the deck holds Basics");
-        state.players[player.index()].library.retain(|c| *c != basic);
+        state.players[player.index()]
+            .library
+            .retain(|c| *c != basic);
         let pokemon = state.put_into_play(player, basic);
         state.players[player.index()].bench.push(pokemon);
     }
@@ -353,7 +358,9 @@ fn a_bench_that_fills_part_way_through_ends_the_choice() {
             .iter()
             .find(|c| state.def_of(**c).is_basic_pokemon())
             .expect("the deck holds Basics");
-        state.players[player.index()].library.retain(|c| *c != basic);
+        state.players[player.index()]
+            .library
+            .retain(|c| *c != basic);
         let pokemon = state.put_into_play(player, basic);
         state.players[player.index()].bench.push(pokemon);
     }
@@ -379,6 +386,7 @@ fn a_search_that_ends_in_the_library_still_shuffles() {
         print_id: "test-ash",
         name: "Sacred Ash",
         kind: TrainerKind::Item,
+        requirement: None,
         effect: TrainerEffect::Decide {
             from: Zone::Discard,
             to: Destination::Zone(Zone::Library),
@@ -412,6 +420,179 @@ fn a_search_that_ends_in_the_library_still_shuffles() {
         state.player(player).library,
         order_before,
         "the deck is shuffled once the choice ends"
+    );
+}
+
+// --- Ticket 03: a requirement paid to play a card ---
+
+/// `Ultra Ball` and `Special Red Card` as printed.
+fn with_requirements(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let ultra_ball = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-ultra-ball",
+        name: "Ultra Ball",
+        kind: TrainerKind::Item,
+        requirement: Some(Requirement::DiscardOtherCardsFromHand(2)),
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            to: Destination::Zone(Zone::Hand),
+            filter: CardFilter::AnyPokemon,
+            limit: 1,
+            then: None,
+        },
+    }));
+    let red_card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-special-red-card",
+        name: "Special Red Card",
+        kind: TrainerKind::Item,
+        requirement: Some(Requirement::OpponentPrizesAtMost(3)),
+        effect: TrainerEffect::OpponentHandToBottomThenDraw { count: 3 },
+    }));
+    (Set { db, ..set }, ultra_ball, red_card)
+}
+
+#[test]
+fn ultra_ball_cannot_be_played_holding_nothing_else() {
+    let (set, ultra_ball, _) = with_requirements(build());
+    let mut state = game(&set, ultra_ball, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, ultra_ball);
+
+    // Hold the card and one other: one short of the cost.
+    let keep: Vec<CardId> = state
+        .player(player)
+        .hand
+        .iter()
+        .filter(|c| **c != card)
+        .take(1)
+        .copied()
+        .collect();
+    state.players[player.index()].hand = keep.clone();
+    state.players[player.index()].hand.push(card);
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "one other card does not pay for two"
+    );
+
+    // A second other card, and it may be played.
+    let extra = state.players[player.index()].library.pop().unwrap();
+    state.players[player.index()].hand.push(extra);
+    assert!(
+        legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "two other cards pay for it"
+    );
+}
+
+#[test]
+fn a_cost_is_paid_as_a_phase_before_the_effect_runs() {
+    let (set, ultra_ball, _) = with_requirements(build());
+    let mut state = game(&set, ultra_ball, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, ultra_ball);
+    let hand_before = state.player(player).hand.len();
+    let discard_before = state.player(player).discard.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert!(
+        matches!(state.phase, Phase::Paying { .. }),
+        "the cost comes first: {:?}",
+        state.phase
+    );
+    // Every card still in hand may pay, and nothing else is offered.
+    let paying = legal_actions(&state);
+    assert!(!paying.is_empty());
+    for action in &paying {
+        assert!(
+            matches!(action, Action::PayWithCard { .. }),
+            "the cost is the only choice: {action:?}"
+        );
+    }
+
+    for _ in 0..2 {
+        let pay = match legal_actions(&state)[0] {
+            Action::PayWithCard { card } => card,
+            other => panic!("expected a payment: {other:?}"),
+        };
+        apply(&mut state, Action::PayWithCard { card: pay }).unwrap();
+    }
+
+    assert!(
+        matches!(state.phase, Phase::Deciding { .. }),
+        "the cost paid, the effect runs: {:?}",
+        state.phase
+    );
+    // The Ultra Ball itself and the two cards that paid for it.
+    assert_eq!(state.player(player).discard.len(), discard_before + 3);
+    assert_eq!(state.player(player).hand.len(), hand_before - 3);
+}
+
+#[test]
+fn special_red_card_waits_for_the_opponents_prizes() {
+    let (set, _, red_card) = with_requirements(build());
+    let mut state = game(&set, red_card, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, red_card);
+
+    assert_eq!(state.player(player.opponent()).prizes.len(), 6);
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "six Prizes is more than three"
+    );
+
+    state.players[player.opponent().index()].prizes.truncate(3);
+    assert!(
+        legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "three Prizes is not more than three"
+    );
+}
+
+#[test]
+fn special_red_card_puts_the_hand_under_the_deck_and_deals_three() {
+    let (set, _, red_card) = with_requirements(build());
+    let mut state = game(&set, red_card, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, red_card);
+    state.players[player.opponent().index()].prizes.truncate(3);
+
+    let opponent = player.opponent();
+    let their_hand = state.player(opponent).hand.clone();
+    let held = their_hand.len();
+    assert!(held > 0, "the opponent holds a hand to lose");
+    let library_before = state.player(opponent).library.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "no choice is left in the card");
+    assert_eq!(
+        state.player(opponent).hand.len(),
+        3,
+        "they draw three for the hand they gave up"
+    );
+    assert_eq!(
+        state.player(opponent).library.len(),
+        library_before + held - 3
+    );
+    // The bottom of the deck is where a draw reaches last.
+    let bottom = &state.player(opponent).library[..held];
+    for card in &their_hand {
+        assert!(
+            bottom.contains(card),
+            "every card of the old hand went under the deck"
+        );
+    }
+}
+
+#[test]
+fn a_card_with_no_requirement_still_plays() {
+    let set = build();
+    let mut state = game(&set, set.cyrano, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, set.cyrano);
+    assert!(legal_actions(&state).contains(&Action::PlayTrainer { card }));
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert!(
+        matches!(state.phase, Phase::Deciding { .. }),
+        "no cost stands between the card and its effect"
     );
 }
 

@@ -5,7 +5,7 @@
 //! `(state, legal_actions) -> Action`. Neither can reach a state the other
 //! cannot, and neither can cheat by acting outside the list.
 
-use crate::card::{Condition, Destination, TrainerEffect, TrainerKind};
+use crate::card::{Condition, Destination, Requirement, TrainerEffect, TrainerKind};
 use crate::ids::{CardId, PlayerId, PokemonId};
 use crate::state::{BENCH_LIMIT, GameState, Limit, Phase};
 
@@ -53,6 +53,8 @@ pub enum Action {
     FinishDeciding,
     /// Discard one Energy attached to a Pokémon the opponent controls.
     DiscardOpponentEnergy { card: CardId },
+    /// Discard one card from hand toward what a card demanded to be played.
+    PayWithCard { card: CardId },
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -67,6 +69,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::PlacingBench { player } => Some(player),
         Phase::DiscardingForRetreat { player, .. } => Some(player),
         Phase::Deciding { chooser, .. } => Some(chooser),
+        Phase::Paying { player, .. } => Some(player),
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::Checkup { player } => Some(player),
         Phase::Over => None,
@@ -160,6 +163,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::FinishDeciding);
             return actions;
         }
+        Phase::Paying { .. } => {
+            // The cost is the only thing the engine will take. Every card
+            // still in hand may pay it; the card that demanded the cost is
+            // already discarded, so no card need be excluded here.
+            for card in &side.hand {
+                actions.push(Action::PayWithCard { card: *card });
+            }
+            return actions;
+        }
         Phase::DiscardingOpponentEnergy { of, .. } => {
             for pokemon in state.player(of).in_play() {
                 for card in &state.pokemon(pokemon).attached {
@@ -228,12 +240,22 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // attempted, even where it turns up nothing to move.
             let has_a_target = !matches!(trainer.effect, TrainerEffect::SwitchOpponentActive)
                 || !state.player(player.opponent()).bench.is_empty();
+            // A requirement gates the card before anything else does.
+            let requirement_met = match trainer.requirement {
+                None => true,
+                Some(Requirement::DiscardOtherCardsFromHand(count)) => {
+                    side.hand.len() as u32 > count
+                }
+                Some(Requirement::OpponentPrizesAtMost(most)) => {
+                    state.player(player.opponent()).prizes.len() <= most
+                }
+            };
             // Rule 59: not a Stadium whose name is already in play.
             let name_is_free = trainer.kind != TrainerKind::Stadium
                 || state
                     .stadium
                     .is_none_or(|(_, in_play)| state.def_of(in_play).name() != trainer.name);
-            if timing && has_a_target && name_is_free {
+            if timing && has_a_target && name_is_free && requirement_met {
                 actions.push(Action::PlayTrainer { card: *card });
             }
         }
@@ -307,6 +329,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::PlayTrainer { card } => format!("Play {}", state.def_of(card).name()),
         Action::TakeCard { card } => format!("Take {}", state.def_of(card).name()),
         Action::FinishDeciding => "Stop taking cards".to_string(),
+        Action::PayWithCard { card } => {
+            format!("Discard {} to pay for the card", state.def_of(card).name())
+        }
         Action::DiscardOpponentEnergy { card } => {
             format!("Discard the opponent's {}", state.def_of(card).name())
         }
