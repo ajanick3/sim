@@ -37,8 +37,9 @@ yet: evolution, Trainers, Abilities, and Stadiums.
 | `src/rng.rs`    | A seeded generator, and a scripted one for tests          |
 | `src/view.rs`   | What one player is allowed to see                         |
 | `src/import.rs` | Reading the card artifact, and refusing what it cannot run |
+| `src/decklist.rs` | Reading a decklist, and checking deck construction       |
 | `src/main.rs`   | The text interface                                        |
-| `src/bin/`      | `selfplay` and `coverage`, for measuring                  |
+| `src/bin/`      | `selfplay`, `coverage`, and `deckcheck`                   |
 
 ## Card data
 
@@ -55,6 +56,7 @@ The engine reads the artifact, and admits only the cards it can run all of:
 ```sh
 cargo run --bin coverage             # 274 of 3051 Standard cards (9.0%)
 cargo run --bin coverage -- refused  # every refused card, and why
+cargo run --bin deckcheck -- deck.txt   # check a decklist, and how much of it plays
 ```
 
 A card it cannot run is refused by name and reason, never half-loaded. Its own
