@@ -19,6 +19,7 @@ struct Set {
     mon_ex: CardDefId,
     small: CardDefId,
     stage1: CardDefId,
+    stage2: CardDefId,
     energy: CardDefId,
     fire_energy: CardDefId,
     cyrano: CardDefId,
@@ -46,6 +47,7 @@ fn basic(
             Some(_) => Stage::Stage1,
         },
         evolve_from,
+        evolves_from_basic: None,
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],
@@ -61,6 +63,28 @@ fn build() -> Set {
     let mon_ex = basic(&mut db, "test-mon-ex", "Testmon ex", 200, 2, None);
     let small = basic(&mut db, "test-small", "Smallmon", 70, 1, None);
     let stage1 = basic(&mut db, "test-stage1", "Bigmon", 120, 1, Some("Smallmon"));
+    let stage2 = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-stage2",
+        name: "Hugemon",
+        hp: 180,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 1,
+        stage: Stage::Stage2,
+        evolve_from: Some("Bigmon"),
+        // The chain this ticket walks: Hugemon evolves from Bigmon, which
+        // evolves from Smallmon, so Rare Candy may put Hugemon straight onto
+        // a Smallmon in play.
+        evolves_from_basic: Some("Smallmon"),
+        attacks: vec![Attack {
+            name: "Slam",
+            cost: vec![Type::Colorless, Type::Colorless],
+            base_damage: 60,
+            inflicts: None,
+        }],
+    }));
     let energy = db.add(CardDef::Energy(Energy {
         print_id: "test-energy",
         name: "Colorless Energy",
@@ -93,6 +117,7 @@ fn build() -> Set {
         mon_ex,
         small,
         stage1,
+        stage2,
         energy,
         fire_energy,
         cyrano,
@@ -107,6 +132,7 @@ fn deck(set: &Set, extra: CardDefId) -> Vec<CardDefId> {
     decklist.extend([set.mon_ex; 4]);
     decklist.extend([set.small; 4]);
     decklist.extend([set.stage1; 4]);
+    decklist.extend([set.stage2; 2]);
     decklist.extend([set.fire_energy; 4]);
     decklist.push(extra);
     while decklist.len() < 60 {
@@ -1287,6 +1313,149 @@ fn crispin_is_admitted_from_the_artifact() {
             ],
             then: None,
         }
+    );
+}
+
+// --- Ticket 06: Rare Candy and the evolution chain ---
+
+fn with_rare_candy(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let rare_candy = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-rare-candy",
+        name: "Rare Candy",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::EvolveSkippingOneStage,
+    }));
+    (Set { db, ..set }, rare_candy)
+}
+
+/// Put a copy of `def` into play for `player`, as though it had been placed
+/// on an earlier turn — the way `Rare Candy` and ordinary evolution both
+/// require.
+fn put_in_play_from_an_earlier_turn(
+    state: &mut GameState,
+    player: PlayerId,
+    def: CardDefId,
+) -> PokemonId {
+    let card = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.cards[c.index()].def == def)
+        .expect("the deck holds this card");
+    state.players[player.index()].library.retain(|c| *c != card);
+    let pokemon = state.put_into_play(player, card);
+    state.players[player.index()].bench.push(pokemon);
+    state.pokemon[pokemon.index()].played_on_turn = 0;
+    pokemon
+}
+
+#[test]
+fn rare_candy_offers_only_a_chain_that_matches() {
+    let (set, rare_candy) = with_rare_candy(build());
+    let mut state = game(&set, rare_candy, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, rare_candy);
+    let small = put_in_play_from_an_earlier_turn(&mut state, player, set.small);
+    let stage2 = ensure_in_hand(&mut state, player, set.stage2);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert!(
+        matches!(state.phase, Phase::EvolvingWithRareCandy { .. }),
+        "the card asks which pair: {:?}",
+        state.phase
+    );
+    let pairs: Vec<Action> = legal_actions(&state)
+        .into_iter()
+        .filter(|a| matches!(a, Action::EvolveSkippingOneStage { .. }))
+        .collect();
+    assert!(
+        pairs.contains(&Action::EvolveSkippingOneStage {
+            card: stage2,
+            target: small,
+        }),
+        "the Stage 2 evolves from the Basic two links down"
+    );
+    // The ordinary Testmon in play does not sit under this Stage 2's chain.
+    let mon = put_in_play_from_an_earlier_turn(&mut state, player, set.mon);
+    let pairs_after: Vec<Action> = legal_actions(&state)
+        .into_iter()
+        .filter(|a| matches!(a, Action::EvolveSkippingOneStage { .. }))
+        .collect();
+    assert!(
+        !pairs_after.contains(&Action::EvolveSkippingOneStage {
+            card: stage2,
+            target: mon
+        }),
+        "a Pokémon outside the chain is never offered"
+    );
+}
+
+#[test]
+fn rare_candy_evolves_the_basic_straight_to_the_stage_2() {
+    let (set, rare_candy) = with_rare_candy(build());
+    let mut state = game(&set, rare_candy, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, rare_candy);
+    let small = put_in_play_from_an_earlier_turn(&mut state, player, set.small);
+    let basic_card = state.pokemon(small).cards[0];
+    let stage2 = ensure_in_hand(&mut state, player, set.stage2);
+    let hand_before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(
+        &mut state,
+        Action::EvolveSkippingOneStage {
+            card: stage2,
+            target: small,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "no choice is left in the card");
+    assert_eq!(
+        state.pokemon(small).cards,
+        vec![basic_card, stage2],
+        "the Stage 1 is skipped: the stack holds the Basic, then the Stage 2"
+    );
+    assert_eq!(state.pokemon_def(small).name, "Hugemon");
+    assert!(state.is_spent(sim::state::Limit::Evolved(small)));
+    // Rare Candy itself, and the Stage 2 it played, both left the hand.
+    assert_eq!(state.player(player).hand.len(), hand_before - 2);
+}
+
+#[test]
+fn rare_candy_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let rare_candy = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Rare Candy")
+        .expect("Rare Candy plays");
+    assert_eq!(rare_candy.effect, TrainerEffect::EvolveSkippingOneStage);
+}
+
+#[test]
+fn the_real_ampharos_chain_resolves_to_mareep() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let ampharos = import
+        .admitted
+        .iter()
+        .filter_map(|id| import.db.get(*id).as_pokemon())
+        .find(|p| p.name == "Ampharos")
+        .expect("Ampharos plays");
+    assert_eq!(ampharos.stage, Stage::Stage2);
+    assert_eq!(ampharos.evolve_from, Some("Flaaffy"));
+    assert_eq!(
+        ampharos.evolves_from_basic,
+        Some("Mareep"),
+        "the chain is walked through Flaaffy's own evolveFrom, read from \
+         the raw name table rather than from an admitted CardDef"
     );
 }
 

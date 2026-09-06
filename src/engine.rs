@@ -403,6 +403,25 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::EvolveSkippingOneStage { card, target } => {
+            let player = match state.phase {
+                Phase::EvolvingWithRareCandy { player } => player,
+                _ => return Err(IllegalAction),
+            };
+            state.remove_from_hand(player, card);
+            state.pokemon[target.index()].cards.push(card);
+            state.spend(Limit::Evolved(target));
+            // Rule 22: evolving clears every Special Condition. Damage and
+            // attachments are untouched — nothing here moves them.
+            state.clear_conditions(target);
+            let name = state.pokemon_def(target).name;
+            state
+                .log
+                .push(format!("{player:?} uses Rare Candy: evolves into {name}."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::DiscardOpponentEnergy { card } => {
             let of = match state.phase {
                 Phase::DiscardingOpponentEnergy { of, .. } => of,
@@ -568,6 +587,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::MoveAttachedEnergy => {
             state.phase = Phase::MovingEnergy { player };
+        }
+
+        TrainerEffect::EvolveSkippingOneStage => {
+            state.phase = Phase::EvolvingWithRareCandy { player };
         }
 
         TrainerEffect::SwitchOpponentActive => {

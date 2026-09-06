@@ -47,6 +47,6 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // of the record effort took it to 368; the second batch of Trainers
     // takes it up from there — 2 prints of Cyrano, 5 of Buddy-Buddy Poffin,
     // then 3 of Ultra Ball, 2 of Special Red Card, 2 of Energy Switch, 3 of
-    // Hilda, 3 of Dawn, and 4 of Crispin.
-    assert_eq!(admitted, 392, "coverage moves only on purpose");
+    // Hilda, 3 of Dawn, 4 of Crispin, and 2 of Rare Candy.
+    assert_eq!(admitted, 394, "coverage moves only on purpose");
 }

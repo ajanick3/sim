@@ -180,3 +180,79 @@ fn the_eight_committed_trainers_are_admitted_from_the_real_data() {
         );
     }
 }
+
+// --- Ticket 06: the evolution chain, walked past a refused print ---
+
+#[test]
+fn a_stage_2_names_its_basic_even_when_the_stage_1_is_refused() {
+    use sim::card::Stage;
+
+    // A Basic, admitted; a Stage 1 refused for an ability; a Stage 2 that
+    // evolves from the Stage 1. The Stage 1 print never enters the CardDb,
+    // but its name still answers what the Stage 2 evolves from.
+    let basic = r#"{
+      "id":"t-1","name":"Seedling","category":"Pokemon","stage":"Basic",
+      "regulationMark":"I","hp":60,"types":["Grass"],"retreat":1,
+      "attacks":[{"cost":["Grass"],"name":"Vine","damage":10}]
+    }"#;
+    let stage1_refused = r#"{
+      "id":"t-2","name":"Bloomling","category":"Pokemon","stage":"Stage1",
+      "evolveFrom":"Seedling","regulationMark":"I","hp":90,"types":["Grass"],
+      "retreat":1,"abilities":[{"name":"Overgrow","effect":"Does something."}],
+      "attacks":[{"cost":["Grass"],"name":"Slash","damage":40}]
+    }"#;
+    let stage2 = r#"{
+      "id":"t-3","name":"Bigflower","category":"Pokemon","stage":"Stage2",
+      "evolveFrom":"Bloomling","regulationMark":"I","hp":150,"types":["Grass"],
+      "retreat":2,
+      "attacks":[{"cost":["Grass","Colorless"],"name":"Bloom","damage":80}]
+    }"#;
+    let import = load(&artifact(&format!("{basic},{stage1_refused},{stage2}"))).unwrap();
+
+    assert_eq!(
+        import.refused.len(),
+        1,
+        "the Stage 1 is refused for its ability: {:?}",
+        import.refused
+    );
+    let stage2 = import
+        .admitted
+        .iter()
+        .filter_map(|id| import.db.get(*id).as_pokemon())
+        .find(|p| p.name == "Bigflower")
+        .expect("the Stage 2 is admitted; nothing about it is unplayable");
+    assert_eq!(stage2.stage, Stage::Stage2);
+    assert_eq!(stage2.evolve_from, Some("Bloomling"));
+    assert_eq!(
+        stage2.evolves_from_basic,
+        Some("Seedling"),
+        "the chain walks through Bloomling's name even though Bloomling \
+         itself was refused and never entered the CardDb"
+    );
+}
+
+#[test]
+fn a_stage_2_whose_chain_does_not_resolve_carries_no_basic() {
+    use sim::card::Stage;
+
+    // A Stage 2 whose parent's name appears nowhere else in the pool: the
+    // artifact is incomplete, or this print names a parent that was never
+    // included. The card is still admitted — ordinary evolution reads
+    // evolve_from, which is present — but Rare Candy has nothing to offer.
+    let stage2 = r#"{
+      "id":"t-4","name":"Orphan","category":"Pokemon","stage":"Stage2",
+      "evolveFrom":"NoSuchPrint","regulationMark":"I","hp":150,
+      "types":["Grass"],"retreat":2,
+      "attacks":[{"cost":["Grass","Colorless"],"name":"Bloom","damage":80}]
+    }"#;
+    let import = load(&artifact(stage2)).unwrap();
+    let orphan = import
+        .admitted
+        .iter()
+        .filter_map(|id| import.db.get(*id).as_pokemon())
+        .find(|p| p.name == "Orphan")
+        .expect("evolve_from is present, so the card is admitted");
+    assert_eq!(orphan.stage, Stage::Stage2);
+    assert_eq!(orphan.evolve_from, Some("NoSuchPrint"));
+    assert_eq!(orphan.evolves_from_basic, None);
+}

@@ -172,6 +172,7 @@ fn a_free_retreat_asks_nothing() {
         resistance: None,
         retreat_cost: 0,
         evolve_from: None,
+        evolves_from_basic: None,
         stage: Stage::Basic,
         prizes: 1,
         attacks: vec![Attack {

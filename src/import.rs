@@ -8,6 +8,8 @@
 //! Reading the file is the caller's job. This module takes the JSON as a
 //! string, so the engine keeps no I/O.
 
+use std::collections::HashMap;
+
 use serde_json::Value;
 
 use crate::card::{
@@ -168,8 +170,18 @@ pub fn load(json: &str) -> Result<Import, String> {
         basic_energy: Vec::new(),
     };
 
+    // A chain from a Stage 2 to the Basic beneath it walks two links of
+    // `evolveFrom`, and the middle print need not be admitted — only in the
+    // pool. This reads every Pokémon record once, admitted or not, so the
+    // walk in `read_card` never depends on what got refused.
+    let lineage: HashMap<&str, &str> = cards
+        .iter()
+        .filter(|c| c["category"].as_str() == Some("Pokemon"))
+        .filter_map(|c| Some((c["name"].as_str()?, c["evolveFrom"].as_str()?)))
+        .collect();
+
     for card in cards {
-        let playable = match read_card(card) {
+        let playable = match read_card(card, &lineage) {
             Ok(def) => {
                 let id = import.db.add(def);
                 import.admitted.push(id);
@@ -218,7 +230,7 @@ fn read_sets(root: &Value) -> Vec<SetRef> {
         .unwrap_or_default()
 }
 
-fn read_card(card: &Value) -> Result<CardDef, Refusal> {
+fn read_card(card: &Value, lineage: &HashMap<&str, &str>) -> Result<CardDef, Refusal> {
     match card["category"].as_str() {
         Some("Trainer") => {
             let kind = trainer_kind(card);
@@ -278,6 +290,16 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
         .and_then(read_type)
         .ok_or(Refusal::UnknownSymbol)?;
 
+    // The Basic two links beneath a Stage 2. `evolve_from` already named the
+    // Stage 1; its own `evolveFrom`, read from the lineage table rather than
+    // from this printing, names the Basic. A Stage 1 in the middle that
+    // this engine refused (an ability, say) still answers, since the table
+    // holds every printed Pokémon, not only the admitted ones.
+    let evolves_from_basic = match stage {
+        Stage::Stage2 => evolve_from.and_then(|parent| lineage.get(parent)).map(|b| leak(b)),
+        Stage::Basic | Stage::Stage1 => None,
+    };
+
     Ok(CardDef::Pokemon(Pokemon {
         print_id: leak(card["id"].as_str().unwrap_or("?")),
         name: leak(card["name"].as_str().unwrap_or("?")),
@@ -289,6 +311,7 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
         prizes: prizes_for(card["name"].as_str().unwrap_or("")),
         stage,
         evolve_from,
+        evolves_from_basic,
         attacks,
     }))
 }
@@ -482,6 +505,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             },
         ),
+        "Rare Candy" => (free, TrainerEffect::EvolveSkippingOneStage),
         _ => return None,
     })
 }
