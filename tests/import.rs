@@ -70,20 +70,14 @@ fn an_ability_is_refused() {
 fn an_evolution_is_refused() {
     let card = PLAYABLE.replace(r#""stage":"Basic""#, r#""stage":"Stage1""#);
     let import = load(&artifact(&card)).unwrap();
-    assert!(matches!(
-        import.refused[0].because,
-        Refusal::NotABasicPokemon
-    ));
+    assert!(matches!(import.refused[0].because, Refusal::IsAnEvolution));
 }
 
 #[test]
 fn a_trainer_is_refused() {
     let card = PLAYABLE.replace(r#""category":"Pokemon""#, r#""category":"Trainer""#);
     let import = load(&artifact(&card)).unwrap();
-    assert!(matches!(
-        import.refused[0].because,
-        Refusal::NotABasicPokemon
-    ));
+    assert!(matches!(import.refused[0].because, Refusal::IsATrainer(_)));
 }
 
 #[test]
