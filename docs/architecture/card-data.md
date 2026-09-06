@@ -25,6 +25,22 @@ findings already banked. Do not re-research these.
 mark H, 1278 with I, and 470 with J. Of those, 2585 are Pokémon, 445 are
 Trainers, and 21 are Energy; 2587 carry an attack and 589 an ability.
 
+The [published card reference](https://tcgdex.dev/reference/card) disagrees
+with the live API in three places, and the live API is what the importer reads:
+
+- **`abilities` and `resistances` are not in the reference's field table**, and
+  589 cards carry an ability and 458 a resistance.
+- **`energyType` is documented as `Basic` or `Special`.** The live values are
+  `Normal` and `Special`.
+- **`localId` is documented as a string or a number.** Every one of the 3051 is
+  a string, and the importer would read a number as empty, so a set that
+  changes this would break the decklist lookup loudly.
+
+The reference names two fields the importer had been dropping, `item` — a held
+item with rules text of its own — and `level`. No card in Standard carries
+either. The importer keeps them now, and the engine refuses a card with a held
+item rather than admitting it with the item ignored.
+
 Three shapes a reader must handle:
 
 - **Damage is not always a number.** Of the attacks that deal damage, 2455

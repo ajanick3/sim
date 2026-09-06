@@ -31,6 +31,9 @@ KEEP = [
     "stage", "suffix", "evolveFrom", "hp", "types", "retreat",
     "weaknesses", "resistances", "attacks", "abilities",
     "trainerType", "energyType", "effect", "description",
+    # Documented but rare. `item` is a held item with its own rules text, so a
+    # card carrying one is a card the engine must not half-load.
+    "item", "level",
 ]
 
 
