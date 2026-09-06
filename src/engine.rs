@@ -1,7 +1,7 @@
 //! Applying an action to the state.
 
 use crate::action::{Action, legal_actions};
-use crate::card::{CardDb, Condition, TrainerEffect, TrainerKind, Zone};
+use crate::card::{CardDb, Condition, Destination, TrainerEffect, TrainerKind, Zone};
 use crate::ids::{CardDefId, PlayerId, PokemonId};
 use crate::rng::{Rng, shuffle};
 use crate::state::{GameState, Limit, Outcome, Phase, WinReason};
@@ -203,9 +203,22 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 } => (chooser, from, to, filter, remaining, moved, then),
                 _ => return Err(IllegalAction),
             };
-            state.move_card(chooser, card, from, to);
             let name = state.def_of(card).name();
-            state.log.push(format!("{chooser:?} takes {name}."));
+            match to {
+                Destination::Zone(zone) => {
+                    state.move_card(chooser, card, from, zone);
+                    state.log.push(format!("{chooser:?} takes {name}."));
+                }
+                Destination::Bench => {
+                    // The Bench holds Pokémon, not cards, so the card leaves
+                    // its zone and comes into play the same way a Basic
+                    // played from hand does.
+                    state.zone_mut(chooser, from).retain(|c| *c != card);
+                    let pokemon = state.put_into_play(chooser, card);
+                    state.players[chooser.index()].bench.push(pokemon);
+                    state.log.push(format!("{chooser:?} benches {name}."));
+                }
+            }
             state.phase = Phase::Deciding {
                 chooser,
                 from,
@@ -231,7 +244,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             // A card moved into the Library is shuffled in once the choice
             // ends, not after each one — the same rule a deck search always
             // follows.
-            if to == Zone::Library {
+            if to == Destination::Zone(Zone::Library) {
                 let library = &mut state.players[chooser.index()].library;
                 shuffle(state.rng.as_mut(), library);
             }

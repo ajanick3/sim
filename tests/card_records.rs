@@ -45,6 +45,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // The coverage canary. This number moves only when a ticket admits a
     // card on purpose, and the ticket that moves it says so here. Ticket 03
     // of the record effort took it to 368; the second batch of Trainers
-    // takes it up from there, two prints of Cyrano first.
-    assert_eq!(admitted, 370, "coverage moves only on purpose");
+    // takes it up from there — 2 prints of Cyrano, then 5 of Buddy-Buddy
+    // Poffin.
+    assert_eq!(admitted, 375, "coverage moves only on purpose");
 }

@@ -5,7 +5,7 @@
 //! `(state, legal_actions) -> Action`. Neither can reach a state the other
 //! cannot, and neither can cheat by acting outside the list.
 
-use crate::card::{Condition, TrainerEffect, TrainerKind};
+use crate::card::{Condition, Destination, TrainerEffect, TrainerKind};
 use crate::ids::{CardId, PlayerId, PokemonId};
 use crate::state::{BENCH_LIMIT, GameState, Limit, Phase};
 
@@ -138,11 +138,19 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::Deciding {
             chooser,
             from,
+            to,
             filter,
             remaining,
             ..
         } => {
-            if remaining > 0 {
+            // A card bound for the Bench needs a space on it. Rule 14 caps
+            // the Bench at five whatever put the Pokémon there, so a full
+            // Bench offers nothing and the choice ends.
+            let room = match to {
+                Destination::Bench => state.player(chooser).bench.len() < BENCH_LIMIT,
+                Destination::Zone(_) => true,
+            };
+            if remaining > 0 && room {
                 for card in state.zone(chooser, from) {
                     if state.matches_filter(*card, filter) {
                         actions.push(Action::TakeCard { card: *card });
