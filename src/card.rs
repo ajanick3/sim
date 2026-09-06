@@ -37,9 +37,6 @@ pub enum Zone {
     Discard,
     /// The draw pile. Moving a card into it shuffles when the choice ends.
     Library,
-    /// Out of the game for good. A card here is not the discard pile's: it
-    /// comes back from nowhere, which is the whole point of it.
-    LostZone,
 }
 
 /// What a card must be for a Trainer effect to offer it. A value, per

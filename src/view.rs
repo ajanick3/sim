@@ -40,8 +40,6 @@ pub struct SideView {
     pub library_count: usize,
     pub prize_count: usize,
     pub discard: Vec<CardView>,
-    /// Public, like the discard pile: everyone sees what left the game.
-    pub lost_zone: Vec<CardView>,
     pub active: Option<PokemonView>,
     pub bench: Vec<PokemonView>,
 }
@@ -99,11 +97,6 @@ fn side_view(state: &GameState, player: PlayerId) -> SideView {
         prize_count: side.prizes.len(),
         discard: side
             .discard
-            .iter()
-            .map(|card| card_view(state, *card))
-            .collect(),
-        lost_zone: side
-            .lost_zone
             .iter()
             .map(|card| card_view(state, *card))
             .collect(),
