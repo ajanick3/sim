@@ -51,10 +51,16 @@ pub struct Attack {
     pub inflicts: Option<Condition>,
 }
 
-/// A Pokémon as printed. The card set carries only Basics, so there is no
-/// evolution field yet.
+/// A Pokémon as printed.
 #[derive(Debug, Clone)]
 pub struct Pokemon {
+    /// The id of the printed card this definition came from, such as
+    /// `me01-055`. A literal in [`crate::cards`] carries a synthetic one.
+    ///
+    /// 412 Pokémon names are printed with differing behaviour across
+    /// Standard — more than one card can share a name — so the name alone
+    /// cannot say which printed card a definition is. The id can.
+    pub print_id: &'static str,
     pub name: &'static str,
     pub hp: u32,
     pub kind: Type,
@@ -73,6 +79,8 @@ pub struct Pokemon {
 /// A basic Energy card as printed.
 #[derive(Debug, Clone)]
 pub struct Energy {
+    /// See [`Pokemon::print_id`].
+    pub print_id: &'static str,
     pub name: &'static str,
     pub kind: Type,
 }
@@ -88,6 +96,15 @@ impl CardDef {
         match self {
             CardDef::Pokemon(p) => p.name,
             CardDef::Energy(e) => e.name,
+        }
+    }
+
+    /// The id of the printed card this definition came from. See
+    /// [`Pokemon::print_id`].
+    pub fn print_id(&self) -> &'static str {
+        match self {
+            CardDef::Pokemon(p) => p.print_id,
+            CardDef::Energy(e) => e.print_id,
         }
     }
 

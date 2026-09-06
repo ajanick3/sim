@@ -164,6 +164,7 @@ fn a_free_retreat_asks_nothing() {
     // so this test builds one.
     let mut db = CardDb::new();
     let drifter = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-drifter",
         name: "Drifter",
         hp: 60,
         kind: Type::Psychic,
@@ -180,6 +181,7 @@ fn a_free_retreat_asks_nothing() {
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-psychic-energy",
         name: "Psychic Energy",
         kind: Type::Psychic,
     }));

@@ -17,6 +17,7 @@ struct Set {
 fn build() -> Set {
     let mut db = CardDb::new();
     let basic = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-seedling",
         name: "Seedling",
         hp: 60,
         kind: Type::Grass,
@@ -33,6 +34,7 @@ fn build() -> Set {
         }],
     }));
     let stage1 = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-bloomling",
         name: "Bloomling",
         hp: 90,
         kind: Type::Grass,
@@ -49,6 +51,7 @@ fn build() -> Set {
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-grass-energy",
         name: "Grass Energy",
         kind: Type::Grass,
     }));
