@@ -23,7 +23,7 @@ fn artifact() -> String {
 
 #[test]
 fn a_line_of_the_export_becomes_a_card() {
-    let list = parse(LIST).expect("the export parses");
+    let list = parse(LIST);
     assert_eq!(list.lines.len(), 4, "headers and totals are not cards");
 
     let first = &list.lines[0];
@@ -37,7 +37,7 @@ fn a_line_of_the_export_becomes_a_card() {
 #[test]
 fn a_card_resolves_to_the_artifact_by_set_and_number() {
     let import = load(&artifact()).unwrap();
-    let list = parse(LIST).unwrap();
+    let list = parse(LIST);
     let report = check(&list, &import);
 
     let venusaur = report
@@ -52,7 +52,7 @@ fn a_card_resolves_to_the_artifact_by_set_and_number() {
 #[test]
 fn basic_energy_resolves_even_though_the_artifact_holds_none() {
     let import = load(&artifact()).unwrap();
-    let list = parse("48 Basic Grass Energy SVE 1\n").unwrap();
+    let list = parse("48 Basic Grass Energy SVE 1\n");
     let report = check(&list, &import);
     assert!(
         report.problems.is_empty()
@@ -68,7 +68,8 @@ fn basic_energy_resolves_even_though_the_artifact_holds_none() {
 #[test]
 fn a_line_that_matches_nothing_is_reported() {
     let import = load(&artifact()).unwrap();
-    let list = parse("4 Not A Real Card ZZZ 999\n").unwrap();
+    // A set this artifact does hold, at a card that is not in it.
+    let list = parse("4 Not A Real Card MEG 999\n");
     let report = check(&list, &import);
     assert!(
         report
@@ -82,7 +83,7 @@ fn a_line_that_matches_nothing_is_reported() {
 #[test]
 fn a_deck_must_hold_exactly_sixty_cards() {
     let import = load(&artifact()).unwrap();
-    let list = parse("4 Chikorita MEG 8\n").unwrap();
+    let list = parse("4 Chikorita MEG 8\n");
     let report = check(&list, &import);
     assert!(
         report
@@ -97,7 +98,7 @@ fn a_deck_must_hold_exactly_sixty_cards() {
 fn five_copies_of_a_card_is_too_many_but_energy_is_exempt() {
     let import = load(&artifact()).unwrap();
 
-    let list = parse("5 Chikorita MEG 8\n").unwrap();
+    let list = parse("5 Chikorita MEG 8\n");
     let report = check(&list, &import);
     assert!(
         report
@@ -107,7 +108,7 @@ fn five_copies_of_a_card_is_too_many_but_energy_is_exempt() {
         "rule 2: at most 4 by name"
     );
 
-    let list = parse("48 Basic Grass Energy SVE 1\n").unwrap();
+    let list = parse("48 Basic Grass Energy SVE 1\n");
     let report = check(&list, &import);
     assert!(
         !report
@@ -121,7 +122,7 @@ fn five_copies_of_a_card_is_too_many_but_energy_is_exempt() {
 #[test]
 fn the_report_says_how_much_of_the_deck_the_engine_can_play() {
     let import = load(&artifact()).unwrap();
-    let list = parse(LIST).unwrap();
+    let list = parse(LIST);
     let report = check(&list, &import);
 
     // Chikorita is admitted; Mega Venusaur ex has an ability and is refused.
@@ -137,7 +138,7 @@ fn the_report_says_how_much_of_the_deck_the_engine_can_play() {
 #[test]
 fn the_uncheckable_rule_is_named() {
     let import = load(&artifact()).unwrap();
-    let list = parse(LIST).unwrap();
+    let list = parse(LIST);
     let report = check(&list, &import);
     assert!(
         report
@@ -148,26 +149,7 @@ fn the_uncheckable_rule_is_named() {
     );
 }
 
-/// Three of the 2026 Worlds decks are known exceptions, not parser bugs:
-///
-/// - `35-minho-song.txt` and `44-kazuki-yuasa.txt` name cards by a
-///   Japanese-region set code (`SV6a`, `M1S`, `MC`, ...) rather than the
-///   English one this artifact holds. Matching a card across regional
-///   databases is an unsolved problem, recorded in
-///   `docs/architecture/sources.md`.
-/// - `55-joji-koyama.txt` carries a promo card printed with no number at
-///   all (`1 Flutter Mane SV P`), which the format has nowhere to put.
-///
-/// Each is the source data disagreeing with what this parser can read, not a
-/// defect in the parser. They are named here so a fix to either problem is a
-/// one-line removal, not a rediscovery.
-const KNOWN_EXCEPTIONS: &[&str] = &[
-    "35-minho-song.txt",
-    "44-kazuki-yuasa.txt",
-    "55-joji-koyama.txt",
-];
-
-/// Every `.txt` file anywhere under `decks/`, deepest first is not required.
+/// Every `.txt` file anywhere under `decks/`.
 fn every_deck_file(dir: &std::path::Path, out: &mut Vec<std::path::PathBuf>) {
     for entry in std::fs::read_dir(dir).unwrap() {
         let path = entry.unwrap().path();
@@ -187,13 +169,8 @@ fn every_committed_deck_is_legal_and_every_line_matches() {
 
     let mut checked = 0;
     for path in paths {
-        let name = path.file_name().unwrap().to_str().unwrap();
-        if KNOWN_EXCEPTIONS.contains(&name) {
-            continue;
-        }
-
         let text = std::fs::read_to_string(&path).unwrap();
-        let list = parse(&text).unwrap_or_else(|errors| panic!("{path:?}: {errors:?}"));
+        let list = parse(&text);
         let report = check(&list, &import);
 
         assert_eq!(report.total, 60, "{path:?} holds 60 cards");
@@ -205,32 +182,65 @@ fn every_committed_deck_is_legal_and_every_line_matches() {
         checked += 1;
     }
 
-    assert!(checked >= 60, "the decks are being read: {checked} found");
+    assert!(checked >= 61, "every deck is read: {checked} found");
 }
 
 #[test]
-fn the_known_exceptions_still_fail_for_the_reason_recorded() {
-    let import = load(&artifact()).unwrap();
+fn a_line_the_parser_cannot_read_does_not_fail_the_whole_list() {
+    // A promo printed with no number at all. The rest of the list still
+    // reads, and the line it could not read is named.
+    let list = parse("4 Chikorita MEG 8\n1 Flutter Mane SV P\n");
+    assert_eq!(list.lines.len(), 1, "the readable line still read");
+    assert_eq!(list.unreadable.len(), 1);
+    assert!(list.unreadable[0].contains("Flutter Mane"));
 
-    for name in KNOWN_EXCEPTIONS {
-        let path = std::path::Path::new("decks/2026-worlds").join(name);
-        let text = std::fs::read_to_string(&path).unwrap();
-        match parse(&text) {
-            Ok(list) => {
-                let report = check(&list, &import);
-                assert!(
-                    !report.problems.is_empty(),
-                    "{name} was expected to disagree with the artifact, and now agrees: \
-                     remove it from KNOWN_EXCEPTIONS"
-                );
-            }
-            Err(_) => {
-                // A line the parser cannot read at all, e.g. joji-koyama's
-                // promo card with no number. Failing to parse is the
-                // expected exception for this file.
-            }
-        }
-    }
+    let import = load(&artifact()).unwrap();
+    let report = check(&list, &import);
+    assert!(
+        report
+            .uncheckable
+            .iter()
+            .any(|n| n.contains("Flutter Mane")),
+        "and the report says what it could not read: {:?}",
+        report.uncheckable
+    );
+}
+
+#[test]
+fn an_unknown_set_code_is_uncheckable_rather_than_a_problem() {
+    let import = load(&artifact()).unwrap();
+    // A Japanese-region set code. This artifact holds the English pool, so
+    // the line cannot be resolved — which is not a fault in the deck.
+    let list = parse("3 Slowking SV7 039\n");
+    let report = check(&list, &import);
+
+    assert!(
+        !report
+            .problems
+            .iter()
+            .any(|p| matches!(p, Problem::NoSuchCard { .. })),
+        "an unknown set code is not the same as no such card: {:?}",
+        report.problems
+    );
+    assert!(
+        report.uncheckable.iter().any(|n| n.contains("SV7")),
+        "the report names the set it does not hold: {:?}",
+        report.uncheckable
+    );
+}
+
+#[test]
+fn a_wrong_number_in_a_set_we_do_hold_is_still_a_problem() {
+    let import = load(&artifact()).unwrap();
+    let list = parse("1 Chikorita MEG 9999\n");
+    let report = check(&list, &import);
+    assert!(
+        report
+            .problems
+            .iter()
+            .any(|p| matches!(p, Problem::NoSuchCard { .. })),
+        "a set we hold, at a number that is not in it, is a real fault"
+    );
 }
 
 #[test]
@@ -238,7 +248,7 @@ fn a_line_whose_name_disagrees_with_the_card_is_reported() {
     let import = load(&artifact()).unwrap();
     // MEG 3 is Mega Venusaur ex. The number decides the card; the name is
     // checked against it, so a typo in either is caught.
-    let list = parse("4 Mega Charizard ex MEG 3\n").unwrap();
+    let list = parse("4 Mega Charizard ex MEG 3\n");
     let report = check(&list, &import);
     assert!(
         report
@@ -254,7 +264,7 @@ fn a_line_whose_name_disagrees_with_the_card_is_reported() {
 fn the_name_check_allows_the_punctuation_a_list_drops() {
     let import = load(&artifact()).unwrap();
     // Lists are exported with varying accents and apostrophes.
-    let list = parse("4 Poke Pad ASC 198\n").unwrap();
+    let list = parse("4 Poke Pad ASC 198\n");
     let report = check(&list, &import);
     assert!(
         !report

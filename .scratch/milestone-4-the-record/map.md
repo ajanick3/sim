@@ -27,6 +27,7 @@ replayed, and nothing reads it back.
 
 ## Decisions so far
 
+Ticket 05 resolved 2026-09-06: a list reads as far as it can and names what it could not, an unknown set code is uncheckable rather than a fault, and the three decks written in another dialect were deleted; details under [the ticket's Answer](issues/05-the-decklist-dialects.md).
 Ticket 04 resolved 2026-09-06: five booleans across two structs became one `Limit` type and one list, and the unused scopes were left out because the pool has no card for them; details under [the ticket's Answer](issues/04-one-shape-for-the-limits.md).
 Ticket 03 resolved 2026-09-06: the Stadium in play has a slot, with rule 59 alongside; the Lost Zone was built and withdrawn, because no card in this format uses one; details under [the ticket's Answer](issues/03-the-missing-zones.md).
 Ticket 02 resolved 2026-09-06: undo replays the log without its last entry, because a shuffle has no inverse the engine can compute; details under [the ticket's Answer](issues/02-undo-one-action.md).
