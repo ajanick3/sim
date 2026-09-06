@@ -24,6 +24,7 @@ ability sits in the evolution row. Ticket 01 will not unlock every card in it.
 
 ## Decisions so far
 
+Ticket 05 resolved 2026-09-06: a card definition carries the print id it came from, and the text interface names it; details under [the ticket's Answer](issues/05-card-identity.md).
 Ticket 01 resolved 2026-09-06: a Pokémon evolves under rules 19-22, and `is_basic_pokemon` was fixed at its one definition so an evolution can no longer be placed directly; details under [the ticket's Answer](issues/01-evolution.md).
 Ticket 07 resolved 2026-09-06: the importer matches the published card shape, and a decklist line is checked against the card its number names; details under [the ticket's Answer](issues/07-match-the-published-card-shape.md).
 Ticket 06 resolved 2026-09-06: every kind of card is named, and a refusal says which kind it refused; details under [the ticket's Answer](issues/06-the-missing-card-types.md).

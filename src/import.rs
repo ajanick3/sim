@@ -99,6 +99,7 @@ impl Import {
             return id.1;
         }
         let id = self.db.add(CardDef::Energy(Energy {
+            print_id: basic_energy_print_id(kind),
             name: basic_energy_name(kind),
             kind,
         }));
@@ -248,6 +249,7 @@ fn read_card(card: &Value) -> Result<CardDef, Refusal> {
         .ok_or(Refusal::UnknownSymbol)?;
 
     Ok(CardDef::Pokemon(Pokemon {
+        print_id: leak(card["id"].as_str().unwrap_or("?")),
         name: leak(card["name"].as_str().unwrap_or("?")),
         hp: card["hp"].as_u64().ok_or(Refusal::UnknownSymbol)? as u32,
         kind,
@@ -345,6 +347,22 @@ fn basic_energy_name(kind: Type) -> &'static str {
         Type::Metal => "Metal Energy",
         Type::Dragon => "Dragon Energy",
         Type::Colorless => "Colorless Energy",
+    }
+}
+
+/// A stable id for the supplied basic Energy, since it has no printed one.
+fn basic_energy_print_id(kind: Type) -> &'static str {
+    match kind {
+        Type::Grass => "basic-grass-energy",
+        Type::Fire => "basic-fire-energy",
+        Type::Water => "basic-water-energy",
+        Type::Lightning => "basic-lightning-energy",
+        Type::Psychic => "basic-psychic-energy",
+        Type::Fighting => "basic-fighting-energy",
+        Type::Darkness => "basic-darkness-energy",
+        Type::Metal => "basic-metal-energy",
+        Type::Dragon => "basic-dragon-energy",
+        Type::Colorless => "basic-colorless-energy",
     }
 }
 

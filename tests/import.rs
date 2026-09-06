@@ -117,7 +117,14 @@ fn the_engine_plays_a_game_with_imported_cards() {
 
     // Basic Energy is not printed in these sets, so the engine supplies it.
     let energy = import.basic_energy(Type::Colorless);
-    let pokemon = import.admitted[0];
+    // A deck needs a Basic to reach a legal opening board (rule 9); the
+    // artifact now admits Stage 1 and 2 cards too, so the first admitted
+    // card is not always one.
+    let pokemon = *import
+        .admitted
+        .iter()
+        .find(|id| import.db.get(**id).is_basic_pokemon())
+        .expect("the artifact admits at least one Basic");
     let mut decklist = vec![pokemon; 12];
     while decklist.len() < 60 {
         decklist.push(energy);
