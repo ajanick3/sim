@@ -306,6 +306,24 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             }
         }
 
+        Action::MoveEnergy { card, target } => {
+            let player = match state.phase {
+                Phase::MovingEnergy { player } => player,
+                _ => return Err(IllegalAction),
+            };
+            for pokemon in state.player(player).in_play() {
+                state.pokemon[pokemon.index()]
+                    .attached
+                    .retain(|c| *c != card);
+            }
+            state.pokemon[target.index()].attached.push(card);
+            let energy = state.def_of(card).name();
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{energy} moves to {name}."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::DiscardOpponentEnergy { card } => {
             let of = match state.phase {
                 Phase::DiscardingOpponentEnergy { of, .. } => of,
@@ -394,6 +412,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, effect: TrainerEffec
                 moved: 0,
                 then,
             };
+        }
+
+        TrainerEffect::MoveAttachedEnergy => {
+            state.phase = Phase::MovingEnergy { player };
         }
 
         TrainerEffect::SwitchOpponentActive => {

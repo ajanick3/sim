@@ -112,6 +112,11 @@ pub enum TrainerEffect {
     /// rather than being shuffled in, so what they gave up is the last thing
     /// they draw again.
     OpponentHandToBottomThenDraw { count: u32 },
+    /// Move one Energy attached to a Pokémon the player controls onto
+    /// another Pokémon they control. Both ends are attachments rather than
+    /// zones, so this is neither a move between zones nor an attachment from
+    /// one.
+    MoveAttachedEnergy,
     /// Flip a coin; on heads, discard one Energy attached to a Pokémon the
     /// opponent controls, the player's choice of which.
     CoinFlipDiscardOpponentEnergy,

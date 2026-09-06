@@ -380,6 +380,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             },
         ),
+        "Energy Switch" => (free, TrainerEffect::MoveAttachedEnergy),
         "Special Red Card" => (
             Some(Requirement::OpponentPrizesAtMost(3)),
             TrainerEffect::OpponentHandToBottomThenDraw { count: 3 },
