@@ -45,6 +45,10 @@ pub enum Action {
     EndTurn,
     /// Choose a new Active after a knockout.
     Promote { pokemon: PokemonId },
+    /// Take one matching card during a Trainer effect's resolution.
+    TakeCard { card: CardId },
+    /// Stop taking cards during a Trainer effect's resolution.
+    FinishDeciding,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -52,12 +56,13 @@ pub enum Action {
 pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
     match state.phase {
         Phase::Main => Some(state.current),
-        Phase::Promoting(player) => Some(player),
+        Phase::Promoting { chooser, .. } => Some(chooser),
         Phase::ChoosingWhoGoesFirst { winner } => Some(winner),
         Phase::TakingBonusDraws { player, .. } => Some(player),
         Phase::PlacingActive { player } => Some(player),
         Phase::PlacingBench { player } => Some(player),
         Phase::DiscardingForRetreat { player, .. } => Some(player),
+        Phase::Deciding { chooser, .. } => Some(chooser),
         Phase::Checkup { player } => Some(player),
         Phase::Over => None,
     }
@@ -125,11 +130,28 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
+        Phase::Deciding {
+            chooser,
+            from,
+            filter,
+            remaining,
+            ..
+        } => {
+            if remaining > 0 {
+                for card in state.zone(chooser, from) {
+                    if state.matches_filter(*card, filter) {
+                        actions.push(Action::TakeCard { card: *card });
+                    }
+                }
+            }
+            actions.push(Action::FinishDeciding);
+            return actions;
+        }
         _ => {}
     }
 
-    if let Phase::Promoting(_) = state.phase {
-        for pokemon in &side.bench {
+    if let Phase::Promoting { of, .. } = state.phase {
+        for pokemon in &state.player(of).bench {
             actions.push(Action::Promote { pokemon: *pokemon });
         }
         return actions;
@@ -230,6 +252,8 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::Promote { pokemon } => {
             format!("Promote {}", state.pokemon_def(pokemon).name)
         }
+        Action::TakeCard { card } => format!("Take {}", state.def_of(card).name()),
+        Action::FinishDeciding => "Stop taking cards".to_string(),
         Action::ChooseWhoGoesFirst { first } => format!("{first:?} takes the first turn"),
         Action::TakeBonusDraw => "Take a bonus card".to_string(),
         Action::DeclineBonusDraws => "Take no more bonus cards".to_string(),
