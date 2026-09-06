@@ -12,10 +12,10 @@ much memory once, at load, which is the number the ticket has to weigh.
 
 ## Decisions so far
 
-Nothing resolved yet.
+Ticket 01 resolved 2026-09-06: the raw record is `serde_json::Value`, not a typed struct, and the memory cost is measured at +32,408 KiB resident for all 3051 cards; details under [the ticket's Answer](issues/01-keep-the-record-of-every-card.md).
 
 ## Fog
 
-- Whether a card browser or a deck builder is actually wanted. If neither is,
-  this effort is memory spent on nothing, and the ticket should say so and
-  close.
+- No caller of `raw` exists yet. A deck builder or a card browser is what
+  would spend it; neither is built. The effort's only ticket is resolved, so
+  it waits on the operator to close, same as a finished milestone.
