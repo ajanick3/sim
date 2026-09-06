@@ -82,6 +82,20 @@ def card_ids():
     return ids
 
 
+def sets_of(cards):
+    """The set each card came from, with the abbreviation a decklist prints."""
+    ids = sorted({c["set"] for c in cards if c.get("set")})
+    table = []
+    for set_id in ids:
+        detail = fetch(f"{API}/sets/{set_id}")
+        table.append({
+            "id": set_id,
+            "name": detail.get("name"),
+            "abbreviation": detail.get("abbreviation", {}).get("official"),
+        })
+    return table
+
+
 def trim(card):
     """Keep the fields the engine reads, and the set the card came from."""
     kept = {key: card[key] for key in KEEP if key in card}
@@ -114,12 +128,16 @@ def main():
     if discarded:
         print(f"discarded {discarded} cards outside marks {MARKS}", file=sys.stderr)
 
+    print("Reading the sets", file=sys.stderr)
+    sets = sets_of(trimmed)
+
     artifact = {
-        "schema": 1,
+        "schema": 2,
         "source": "https://api.tcgdex.net/v2/en",
         "imported": time.strftime("%Y-%m-%d"),
         "marks": MARKS,
         "count": len(trimmed),
+        "sets": sets,
         "cards": trimmed,
     }
     with open(output, "w", encoding="utf-8") as handle:

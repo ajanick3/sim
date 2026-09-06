@@ -5,6 +5,7 @@
 
 pub mod action;
 pub mod card;
+pub mod decklist;
 pub mod engine;
 pub mod ids;
 pub mod import;
