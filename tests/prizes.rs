@@ -17,6 +17,7 @@ fn game(prizes: u32) -> (GameState, u32) {
         weakness: None,
         resistance: None,
         retreat_cost: 1,
+        evolve_from: None,
         prizes,
         attacks: vec![Attack {
             name: "Nudge",

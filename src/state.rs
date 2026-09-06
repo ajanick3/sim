@@ -31,7 +31,11 @@ pub struct Card {
 /// One Pokémon in play, with what has happened to it.
 #[derive(Debug, Clone)]
 pub struct PokemonInPlay {
-    pub card: CardId,
+    /// Every card this Pokémon has been, oldest first: the Basic it was
+    /// placed as, then each evolution played on top of it. A knockout
+    /// discards the whole stack together (rule 38); the current name, HP, and
+    /// attacks read from the last one.
+    pub cards: Vec<CardId>,
     pub owner: PlayerId,
     /// Damage in points, not counters. A counter is 10 points.
     pub damage: u32,
@@ -39,9 +43,21 @@ pub struct PokemonInPlay {
     /// The turn this Pokémon came into play. Evolution reads it; Milestone 1
     /// records it so the rule has somewhere to land.
     pub played_on_turn: u32,
+    /// Rule 20: cannot evolve the same Pokémon twice in one turn.
+    pub evolved_this_turn: bool,
     /// The Special Conditions on this Pokémon. Only the Active carries any.
     pub conditions: Vec<Condition>,
     pub knocked_out: bool,
+}
+
+impl PokemonInPlay {
+    /// The card that says what this Pokémon currently is.
+    pub fn top_card(&self) -> CardId {
+        *self
+            .cards
+            .last()
+            .expect("a Pokémon in play is at least one card")
+    }
 }
 
 /// One player's zones and their once-per-turn flags.
@@ -270,11 +286,12 @@ impl GameState {
     pub fn put_into_play(&mut self, player: PlayerId, card: CardId) -> PokemonId {
         let id = PokemonId(self.pokemon.len() as u32);
         self.pokemon.push(PokemonInPlay {
-            card,
+            cards: vec![card],
             owner: player,
             damage: 0,
             attached: Vec::new(),
             played_on_turn: self.turn_number,
+            evolved_this_turn: false,
             conditions: Vec::new(),
             knocked_out: false,
         });
@@ -306,7 +323,7 @@ impl GameState {
     }
 
     pub fn pokemon_def(&self, pokemon: PokemonId) -> &Pokemon {
-        self.def_of(self.pokemon[pokemon.index()].card)
+        self.def_of(self.pokemon[pokemon.index()].top_card())
             .as_pokemon()
             .expect("a Pokémon in play is a Pokémon card")
     }
@@ -368,6 +385,12 @@ impl GameState {
         self.players[slot].retreated_this_turn = false;
         self.players[slot].supporter_played_this_turn = false;
         self.players[slot].stadium_played_this_turn = false;
+
+        // Rule 20: the once-per-turn evolution limit is the Pokémon's own,
+        // not the player's, so it is cleared per Pokémon.
+        for pokemon in self.player(self.current).in_play() {
+            self.pokemon[pokemon.index()].evolved_this_turn = false;
+        }
     }
 
     pub fn has_condition(&self, id: PokemonId, condition: Condition) -> bool {

@@ -40,8 +40,8 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
     );
     assert_eq!(
         reason_for("me01-055"),
-        Some(Refusal::IsAnEvolution),
-        "Kadabra is a Stage 1"
+        Some(Refusal::HasAnAbility),
+        "Kadabra is a Stage 1 with an ability; evolution alone does not admit it"
     );
 }
 
@@ -68,7 +68,11 @@ fn the_kinds_add_up_to_the_pool() {
 
     assert_eq!(trainers, 445, "every Trainer is refused as one");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
-    assert_eq!(count(Refusal::IsAnEvolution), 1148, "every Stage 1 and 2");
+    assert_eq!(
+        count(Refusal::IsAnEvolution),
+        0,
+        "every Stage 1 and 2 card in Standard names what it evolves from"
+    );
     assert_eq!(
         import.admitted.len() + import.refused.len(),
         3051,
