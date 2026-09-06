@@ -7,6 +7,7 @@ pub mod action;
 pub mod card;
 pub mod engine;
 pub mod ids;
+pub mod import;
 pub mod rng;
 pub mod state;
 pub mod view;
