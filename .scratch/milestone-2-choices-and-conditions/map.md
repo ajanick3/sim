@@ -17,6 +17,7 @@ Ticket 02 resolved 2026-09-05: an attack cost names Energy types, and the player
 Ticket 03 resolved 2026-09-05: the five Special Conditions and the Pokémon Checkup work, and a player orders their own between-turn effects; details under [the ticket's Answer](issues/03-special-conditions-and-checkup.md).
 Ticket 04 resolved 2026-09-05: Aquabear is a third Basic that the engine expressed without change; details under [the ticket's Answer](issues/04-a-third-basic-unaided.md).
 Ticket 05 resolved 2026-09-05: a player reads the game through an owned masked view, at 23% of a decision; details under [the ticket's Answer](issues/05-masked-observation-views.md).
+Ticket 06 resolved 2026-09-06: the Standard cards are imported from TCGdex into a versioned JSON artifact; details under [the ticket's Answer](issues/06-the-card-data-bridge.md).
 
 ## Fog
 
@@ -26,4 +27,6 @@ Ticket 05 resolved 2026-09-05: a player reads the game through an owned masked v
   Trainer or an Ability that heals one has nowhere to hook in yet.
 - A mulligan reveals the hand, so that hand is public. No view records what was
   revealed.
+- The engine cannot express most of the imported cards. Ticket 07 opens the
+  question of how it refuses one it cannot run.
 - The card data bridge has no format. Ticket 06 opens the question.
