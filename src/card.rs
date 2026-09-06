@@ -51,10 +51,26 @@ pub enum Destination {
     /// Onto the Bench of the player who is choosing, as a Pokémon in play.
     /// A full Bench takes no more, and the choice ends there.
     Bench,
-    /// Attached straight to a Pokémon the chooser controls, picked at the
-    /// same time as the card. `Crispin` is why this exists: the second
-    /// Energy it finds goes onto a Pokémon rather than into a zone at all.
-    Attach,
+    /// Attached straight to a Pokémon the chooser controls, filtered by
+    /// `TargetFilter`, picked at the same time as the card. `Crispin` is why
+    /// this exists at all: the second Energy it finds goes onto a Pokémon
+    /// rather than into a zone. `TargetFilter::AnyInPlay` is what it needed.
+    Attach(TargetFilter),
+}
+
+/// What Pokémon `Destination::Attach` may target, beyond "the chooser
+/// controls it." A value, the same discipline every filter in this module
+/// holds to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TargetFilter {
+    /// Any Pokémon the chooser controls, in play. What `Crispin` needed.
+    AnyInPlay,
+    /// A Benched Pokémon whose printed name starts with this prefix.
+    /// `N's PP Up` targets only a Benched Pokémon named "N's ...".
+    BenchedNameStartsWith(&'static str),
+    /// A Benched Pokémon printed as this type. `Wondrous Patch` targets
+    /// only a Benched Psychic Pokémon.
+    BenchedOfType(Type),
 }
 
 /// What a card must be for a Trainer effect to offer it. A value, per
@@ -88,6 +104,9 @@ pub enum CardFilter {
     /// Any Trainer card, of any kind. `Team Rocket's Petrel` searches for
     /// one without naming a kind at all.
     AnyTrainer,
+    /// A basic Energy card of this type. `BasicEnergy` matches every one;
+    /// `Wondrous Patch` wants only a Psychic one.
+    BasicEnergyOfType(Type),
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A

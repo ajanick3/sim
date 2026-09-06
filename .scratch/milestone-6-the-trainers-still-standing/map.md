@@ -29,7 +29,13 @@ on one another and may run in any order once the first four land.
 
 ## Decisions so far
 
-Nothing resolved yet.
+- **`TargetFilter` is a value of its own, checked by
+  `GameState::matches_target`, not a second case folded into `CardFilter`.**
+  A `CardFilter` reads a card sitting in a zone; a `TargetFilter` reads a
+  Pokémon already in play. `Wondrous Patch` needed both — a Psychic Energy
+  onto a Psychic Pokémon — as two filters checked against two different
+  values, not one combined expression. See
+  [ADR 0021](../../docs/adr/0021-an-attach-can-filter-its-target.md).
 
 ## Fog
 
@@ -49,10 +55,3 @@ Nothing resolved yet.
   to change shape at all, or only needs a new way to enter the one that
   exists: `of == chooser`, opened by the player's own choice rather than by
   a knockout. If the shape already fits, say so and change nothing.
-- Whether "attach to a filtered target" is a new field beside
-  `Destination::Attach`, or a filter that belongs to `Slot` itself, read
-  against the *target* rather than the *card*. `N's PP Up` filters by a
-  name prefix ("N's"); `Wondrous Patch` filters by Psychic type on both the
-  target and the Energy attached. Two different things being filtered by
-  two different rules — check whether one shape covers both before
-  building two.

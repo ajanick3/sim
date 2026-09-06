@@ -4,7 +4,7 @@
 use sim::action::{Action, legal_actions};
 use sim::card::{
     Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
-    Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    TargetFilter, Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
@@ -1197,7 +1197,7 @@ fn with_crispin(set: Set) -> (Set, CardDefId) {
                 },
                 Slot {
                     filter: CardFilter::BasicEnergy,
-                    to: Destination::Attach,
+                    to: Destination::Attach(TargetFilter::AnyInPlay),
                     limit: 1,
                     excludes_type_of_previous: true,
                 },
@@ -1309,7 +1309,7 @@ fn crispin_is_admitted_from_the_artifact() {
                 },
                 Slot {
                     filter: CardFilter::BasicEnergy,
-                    to: Destination::Attach,
+                    to: Destination::Attach(TargetFilter::AnyInPlay),
                     limit: 1,
                     excludes_type_of_previous: true,
                 },
@@ -1336,6 +1336,16 @@ fn with_rare_candy(set: Set) -> (Set, CardDefId) {
 /// Put a copy of `def` into play for `player`, as though it had been placed
 /// on an earlier turn — the way `Rare Candy` and ordinary evolution both
 /// require.
+/// A physical card of `def`, for a definition that was never part of the
+/// sixty-card decklist — a target or an Energy the fixture needs but the
+/// deal never dealt. Placed nowhere; the caller pushes it to whatever zone
+/// or play the test needs.
+fn deal_new_card(state: &mut GameState, player: PlayerId, def: CardDefId) -> CardId {
+    let card = CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def, owner: player });
+    card
+}
+
 fn put_in_play_from_an_earlier_turn(
     state: &mut GameState,
     player: PlayerId,
@@ -1544,6 +1554,226 @@ fn team_rockets_petrel_is_admitted_from_the_artifact() {
             slots: vec![Slot {
                 filter: CardFilter::AnyTrainer,
                 to: Destination::Zone(Zone::Hand),
+                limit: 1,
+                excludes_type_of_previous: false,
+            }],
+            then: None,
+        }
+    );
+}
+
+// --- Milestone 6, ticket 02: an attach with a filtered target ---
+
+fn with_pp_up(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let ns_mon = basic(&mut db, "test-ns-mon", "N's Testmon", 90, 1, None);
+    let pp_up = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-pp-up",
+        name: "N's PP Up",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Discard,
+            slots: vec![Slot {
+                filter: CardFilter::BasicEnergy,
+                to: Destination::Attach(TargetFilter::BenchedNameStartsWith("N's")),
+                limit: 1,
+                excludes_type_of_previous: false,
+            }],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, pp_up, ns_mon)
+}
+
+#[test]
+fn pp_up_offers_only_a_benched_pokemon_whose_name_starts_with_ns() {
+    let (set, pp_up, ns_mon) = with_pp_up(build());
+    let mut state = game(&set, pp_up, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, pp_up);
+
+    // Bench the N's Pokémon, and an ordinary one to prove it is excluded.
+    // The N's Pokémon was never part of the decklist, so it is dealt
+    // straight into play rather than pulled from the library.
+    let ns_card = deal_new_card(&mut state, player, ns_mon);
+    let benched_ns = state.put_into_play(player, ns_card);
+    state.players[player.index()].bench.push(benched_ns);
+    state.pokemon[benched_ns.index()].played_on_turn = 0;
+    let benched_ordinary = put_in_play_from_an_earlier_turn(&mut state, player, set.small);
+
+    // A Basic Energy sitting in the discard pile, for the search to find.
+    let energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()].discard.push(energy);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let targets: Vec<PokemonId> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::TakeCardOnto { target, .. } => Some(target),
+            _ => None,
+        })
+        .collect();
+    assert!(targets.contains(&benched_ns), "the N's Pokémon is offered");
+    assert!(
+        !targets.contains(&benched_ordinary),
+        "an ordinary Pokémon is not"
+    );
+    // Whichever Pokémon setup placed as Active does not start with "N's",
+    // so it must never appear even though it is in play.
+    let active = state.player(player).active.unwrap();
+    assert!(!targets.contains(&active), "the Active is not Benched");
+}
+
+fn with_wondrous_patch(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let psychic_mon = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-psychic-mon",
+        name: "Psymon",
+        hp: 90,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        attacks: vec![Attack {
+            name: "Zap",
+            cost: vec![Type::Psychic],
+            base_damage: 10,
+            inflicts: None,
+        }],
+    }));
+    let psychic_energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-psychic-energy",
+        name: "Psychic Energy",
+        kind: Type::Psychic,
+    }));
+    let patch = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-wondrous-patch",
+        name: "Wondrous Patch",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Discard,
+            slots: vec![Slot {
+                filter: CardFilter::BasicEnergyOfType(Type::Psychic),
+                to: Destination::Attach(TargetFilter::BenchedOfType(Type::Psychic)),
+                limit: 1,
+                excludes_type_of_previous: false,
+            }],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, patch, psychic_mon, psychic_energy)
+}
+
+#[test]
+fn wondrous_patch_offers_only_a_psychic_energy_onto_a_psychic_pokemon() {
+    let (set, patch, psychic_mon, psychic_energy) = with_wondrous_patch(build());
+    let mut state = game(&set, patch, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, patch);
+
+    // Neither the Psychic Pokémon nor the Psychic Energy was part of the
+    // decklist, so both are dealt straight to where the test needs them.
+    let psychic_card = deal_new_card(&mut state, player, psychic_mon);
+    let psychic_bench = state.put_into_play(player, psychic_card);
+    state.players[player.index()].bench.push(psychic_bench);
+    state.pokemon[psychic_bench.index()].played_on_turn = 0;
+    let ordinary_bench = put_in_play_from_an_earlier_turn(&mut state, player, set.small);
+
+    // Both a Psychic and a Colorless Energy sit in the discard, so the
+    // wrong-typed one can be proven excluded, not merely unmentioned.
+    let colorless_energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != colorless_energy);
+    state.players[player.index()].discard.push(colorless_energy);
+    let psychic_energy_card = deal_new_card(&mut state, player, psychic_energy);
+    state.players[player.index()].discard.push(psychic_energy_card);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let offers: Vec<Action> = legal_actions(&state)
+        .into_iter()
+        .filter(|a| matches!(a, Action::TakeCardOnto { .. }))
+        .collect();
+    assert!(
+        offers.contains(&Action::TakeCardOnto {
+            card: psychic_energy_card,
+            target: psychic_bench,
+        }),
+        "a Psychic Energy onto a Psychic Pokémon is offered"
+    );
+    assert!(
+        !offers.iter().any(|a| matches!(a,
+            Action::TakeCardOnto { card, .. } if *card == colorless_energy
+        )),
+        "a Colorless Energy is never offered, even to a Psychic Pokémon"
+    );
+    assert!(
+        !offers.iter().any(|a| matches!(a,
+            Action::TakeCardOnto { target, .. } if *target == ordinary_bench
+        )),
+        "an ordinary Pokémon is never offered, even the right Energy type"
+    );
+}
+
+#[test]
+fn pp_up_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let pp_up = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "N's PP Up")
+        .expect("N's PP Up plays");
+    assert_eq!(
+        pp_up.effect,
+        TrainerEffect::Decide {
+            from: Zone::Discard,
+            slots: vec![Slot {
+                filter: CardFilter::BasicEnergy,
+                to: Destination::Attach(TargetFilter::BenchedNameStartsWith("N's")),
+                limit: 1,
+                excludes_type_of_previous: false,
+            }],
+            then: None,
+        }
+    );
+}
+
+#[test]
+fn wondrous_patch_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let patch = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Wondrous Patch")
+        .expect("Wondrous Patch plays");
+    assert_eq!(
+        patch.effect,
+        TrainerEffect::Decide {
+            from: Zone::Discard,
+            slots: vec![Slot {
+                filter: CardFilter::BasicEnergyOfType(Type::Psychic),
+                to: Destination::Attach(TargetFilter::BenchedOfType(Type::Psychic)),
                 limit: 1,
                 excludes_type_of_previous: false,
             }],
