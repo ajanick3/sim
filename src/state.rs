@@ -148,7 +148,7 @@ pub enum Phase {
     Deciding {
         chooser: PlayerId,
         from: crate::card::Zone,
-        to: crate::card::Zone,
+        to: crate::card::Destination,
         filter: crate::card::CardFilter,
         remaining: u32,
         /// How many have been taken so far. `then` reads it when the choice
@@ -400,7 +400,7 @@ impl GameState {
         }
     }
 
-    fn zone_mut(&mut self, player: PlayerId, zone: crate::card::Zone) -> &mut Vec<CardId> {
+    pub fn zone_mut(&mut self, player: PlayerId, zone: crate::card::Zone) -> &mut Vec<CardId> {
         let side = &mut self.players[player.index()];
         match zone {
             crate::card::Zone::Hand => &mut side.hand,

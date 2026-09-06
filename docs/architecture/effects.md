@@ -32,8 +32,10 @@ actually play rather than from the card pool front to back. Nineteen Trainers,
 
 Nine, and one of them carries most of the weight.
 
-**Move cards.** From a zone to a zone, by a filter, in a count, chosen by a
-player and sometimes revealed. It alone covers fourteen of the nineteen: a deck
+**Move cards.** From a zone to a destination, by a filter, in a count, chosen
+by a player and sometimes revealed. The destination is usually another zone.
+The Bench is the exception: it holds Pokémon in play rather than loose cards,
+so a card sent there comes into play instead of moving. It alone covers fourteen of the nineteen: a deck
 search to the hand (Poké Pad, Ultra Ball, Hilda, Dawn), a deck search to the
 Bench (Buddy-Buddy Poffin), the discard pile to the hand (Night Stretcher), the
 discard pile to the deck (Sacred Ash), and the hand to the deck (Judge,

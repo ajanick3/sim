@@ -69,8 +69,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Ticket 03 of the record effort admitted 22 prints of the eight
     // Trainers it built (each name in one, sometimes several, printings), so
     // the pool of 445 split: the rest were still refused, named by kind. The
-    // second batch of Trainers takes 2 more with Cyrano.
-    assert_eq!(trainers, 421, "the Trainers still refused, by kind");
+    // second batch of Trainers takes 7 more: Cyrano and Buddy-Buddy Poffin.
+    assert_eq!(trainers, 416, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),

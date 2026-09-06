@@ -39,6 +39,20 @@ pub enum Zone {
     Library,
 }
 
+/// Where a Trainer effect sends a card it moved.
+///
+/// Every destination but one is a `Zone`, which holds loose cards. The Bench
+/// is not: it holds Pokémon in play, so a card sent there stops being a card
+/// and becomes a `PokemonInPlay`. `Buddy-Buddy Poffin` is why this is a value
+/// rather than a `Zone` field.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Destination {
+    Zone(Zone),
+    /// Onto the Bench of the player who is choosing, as a Pokémon in play.
+    /// A full Bench takes no more, and the choice ends there.
+    Bench,
+}
+
 /// What a card must be for a Trainer effect to offer it. A value, per
 /// [ADR 0009](../docs/adr/0009-an-effect-is-a-value-the-engine-executes.md) —
 /// never a closure the engine could not inspect or compare.
@@ -80,7 +94,7 @@ pub enum TrainerEffect {
     /// the player's choice each time.
     Decide {
         from: Zone,
-        to: Zone,
+        to: Destination,
         filter: CardFilter,
         limit: u32,
         then: Option<Then>,
