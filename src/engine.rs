@@ -4,7 +4,7 @@ use crate::action::{Action, legal_actions};
 use crate::card::{CardDb, Condition, TrainerEffect, TrainerKind, Zone};
 use crate::ids::{CardDefId, PlayerId, PokemonId};
 use crate::rng::{Rng, shuffle};
-use crate::state::{GameState, Outcome, Phase, WinReason};
+use crate::state::{GameState, Limit, Outcome, Phase, WinReason};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IllegalAction;
@@ -72,7 +72,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             let player = state.current;
             state.remove_from_hand(player, card);
             state.pokemon[target.index()].cards.push(card);
-            state.pokemon[target.index()].evolved_this_turn = true;
+            state.spend(Limit::Evolved(target));
             // Rule 22: evolving clears every Special Condition. Damage and
             // attachments are untouched — nothing here moves them.
             state.clear_conditions(target);
@@ -90,14 +90,14 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.remove_from_hand(player, card);
             match trainer.kind {
                 TrainerKind::Supporter => {
-                    state.players[player.index()].supporter_played_this_turn = true;
+                    state.spend(Limit::SupporterPlayed(player));
                     state.players[player.index()].discard.push(card);
                 }
                 // Rule 58: a Stadium stays in play, and the one already
                 // there goes to its own owner's discard, not to this
                 // player's.
                 TrainerKind::Stadium => {
-                    state.players[player.index()].stadium_played_this_turn = true;
+                    state.spend(Limit::StadiumPlayed(player));
                     if let Some((owner, old)) = state.stadium {
                         state.players[owner.index()].discard.push(old);
                     }
@@ -116,7 +116,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             let player = state.current;
             state.remove_from_hand(player, card);
             state.pokemon[target.index()].attached.push(card);
-            state.players[player.index()].energy_attached_this_turn = true;
+            state.spend(Limit::EnergyAttached(player));
             let energy = state.def_of(card).name();
             let name = state.pokemon_def(target).name;
             state
@@ -466,7 +466,7 @@ fn promote_from_retreat(state: &mut GameState, player: PlayerId, to: PokemonId) 
     side.bench.retain(|p| *p != to);
     side.bench.push(active);
     side.active = Some(to);
-    side.retreated_this_turn = true;
+    state.spend(Limit::Retreated(player));
     state.phase = Phase::Main;
 
     let name = state.pokemon_def(to).name;

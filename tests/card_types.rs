@@ -96,13 +96,13 @@ fn a_supporter_and_a_stadium_are_once_per_turn() {
         [decklist.clone(), decklist],
         Box::new(SeededRng::new(9)),
     );
-    let side = state.player(sim::ids::PlayerId::One);
+    let one = sim::ids::PlayerId::One;
     assert!(
-        !side.supporter_played_this_turn,
+        !state.is_spent(sim::state::Limit::SupporterPlayed(one)),
         "rule 13: one Supporter a turn"
     );
     assert!(
-        !side.stadium_played_this_turn,
+        !state.is_spent(sim::state::Limit::StadiumPlayed(one)),
         "rule 13: one Stadium a turn"
     );
 }

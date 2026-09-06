@@ -135,7 +135,7 @@ fn a_supporter_is_played_once_per_turn_then_discarded() {
         "a Supporter discards once played"
     );
     assert!(
-        state.player(player).supporter_played_this_turn,
+        state.is_spent(sim::state::Limit::SupporterPlayed(player)),
         "rule 13: one Supporter a turn"
     );
     assert!(
