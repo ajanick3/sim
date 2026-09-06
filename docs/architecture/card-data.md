@@ -16,8 +16,7 @@ findings already banked. Do not re-research these.
   `Pokémon Tool` (~52), `Ancient` (~43), `Future` (~40), `ACE SPEC` (~33),
   `Special` (~22).
 - **Card identity:** key implementations by **name + behaviour version** with a
-  print-id → implementation lookup, not by print id. The `pkmn` repo hits the
-  same problem with its canonical-card lookup.
+  print-id → implementation lookup, not by print id.
 
 ## The imported artifact
 
@@ -37,9 +36,10 @@ Three shapes a reader must handle:
 
 ## Known problems in the crawled data
 
-- `sets.legal_standard` is `1` for **zero rows**; `cards.legal_standard` is
-  populated but stale. **Do not trust either** — use regulation mark.
-- `cards` has **no prize-value column** and no way to identify Mega ex.
+- Legality reads the **regulation mark** and nothing else. A `legal_standard`
+  flag, wherever one appears, is stale or empty; the `pkmn` database carries
+  one of each kind.
+- Nothing in the data carries a **prize value**.
 - **TCGdex cannot mark a Mega ex.** All 133 Mega cards carry the same `ex` or
   `EX` suffix an ordinary ex does, across Basic, Stage1, and Stage2. Only the
   `Mega ` at the start of the name separates a 3-prize card from a 2-prize one.

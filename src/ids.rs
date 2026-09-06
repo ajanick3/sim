@@ -38,8 +38,8 @@ impl PlayerId {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct CardId(pub u32);
 
-/// One printed card, shared by every copy of it. Milestone 1 writes these as
-/// literals; a later milestone reads them from the JSON the `pkmn` repo exports.
+/// One printed card, shared by every copy of it. These are literals today;
+/// reading them from `data/cards.json` is still to come.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct CardDefId(pub u32);
 

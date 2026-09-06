@@ -34,4 +34,7 @@ and the scripted one already make a coin flip an assertion.
 
 ## Out of scope
 
-Evolution, Trainers, Abilities, and Stadiums. Real card data.
+Evolution, Trainers, Abilities, and Stadiums.
+
+Real card data was out of scope when this spec was written. The operator
+brought it in on 2026-09-05: ticket 06 imports it and ticket 07 reads it.

@@ -19,3 +19,16 @@ What a card says as printed, shared by every copy of it.
 
 **Seat**:
 One of the two sides of a game. A seat is not a turn order: the opening coin flip decides who goes first, so either seat may start.
+
+**Special Condition**:
+Asleep, Paralyzed, Confused, Burned, or Poisoned. Only the Active carries one. The first three rotate the card and replace each other; the last two are independent.
+
+**Pokémon Checkup**:
+The step between two turns. It resolves the Special Conditions, then knocks out anything left at 0 HP, and only then does the next turn start.
+
+**Prize**:
+One of the six cards a player sets aside at setup and takes for a knockout. Taking the last one wins the game.
+
+**Masked view**:
+The game as one player may see it. It hides the opponent's hand, both libraries, and both Prize piles, and keeps a count for each.
+

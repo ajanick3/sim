@@ -2,8 +2,8 @@
 
 use crate::ids::CardDefId;
 
-/// The nine types plus Colorless. Weakness and Resistance read this; an
-/// attack cost in Milestone 1 does not (see [`Attack::cost`]).
+/// The nine types plus Colorless. Weakness, Resistance, and an attack cost
+/// all read this.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
     Grass,
@@ -41,7 +41,7 @@ pub struct Attack {
     pub inflicts: Option<Condition>,
 }
 
-/// A Pokémon as printed. Milestone 1 carries only Basics, so there is no
+/// A Pokémon as printed. The card set carries only Basics, so there is no
 /// evolution field yet.
 #[derive(Debug, Clone)]
 pub struct Pokemon {
@@ -91,8 +91,8 @@ impl CardDef {
     }
 }
 
-/// Every printed card the game knows about. Milestone 1 builds this from
-/// literals in [`crate::cards`].
+/// Every printed card the game knows about, built from the literals in
+/// [`crate::cards`].
 #[derive(Debug, Clone, Default)]
 pub struct CardDb {
     defs: Vec<CardDef>,
