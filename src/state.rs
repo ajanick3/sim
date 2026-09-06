@@ -438,6 +438,11 @@ impl GameState {
                 let def = self.def_of(card);
                 def.as_pokemon().is_some() || def.is_energy()
             }
+            CardFilter::PokemonEx => self.def_of(card).as_pokemon().is_some_and(|p| p.prizes > 1),
+            CardFilter::BasicPokemonWithHpAtMost(hp) => self
+                .def_of(card)
+                .as_pokemon()
+                .is_some_and(|p| p.evolve_from.is_none() && p.hp <= hp),
         }
     }
 

@@ -312,6 +312,13 @@ fn known_trainer_effect(name: &str) -> Option<TrainerEffect> {
             then: None,
         },
         "Crushing Hammer" => TrainerEffect::CoinFlipDiscardOpponentEnergy,
+        "Cyrano" => TrainerEffect::Decide {
+            from: Zone::Library,
+            to: Zone::Hand,
+            filter: CardFilter::PokemonEx,
+            limit: 3,
+            then: None,
+        },
         "Gwynn" => TrainerEffect::Decide {
             from: Zone::Hand,
             to: Zone::Discard,

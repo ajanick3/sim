@@ -51,6 +51,14 @@ pub enum CardFilter {
     /// A Pokémon, or a basic Energy card. No special Energy is ever admitted
     /// (`Refusal::IsASpecialEnergy`), so an admitted Energy is always basic.
     PokemonOrBasicEnergy,
+    /// A Pokémon ex, which is a Pokémon worth more than 1 Prize. The prize
+    /// value is read from the name (ADR 0010), so in this pool a card worth
+    /// more than 1 is exactly a card printed `ex`.
+    PokemonEx,
+    /// A Basic Pokémon whose printed HP is at most this much. Both halves are
+    /// printed on the card that reads them: `Buddy-Buddy Poffin` wants a
+    /// Basic with 70 HP or less.
+    BasicPokemonWithHpAtMost(u32),
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
