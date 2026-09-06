@@ -60,6 +60,7 @@ fn deck_search(limit: u32) -> Vec<Slot> {
         filter: CardFilter::AnyPokemon,
         to: Destination::Zone(Zone::Hand),
         limit,
+        excludes_type_of_previous: false,
     }]
 }
 
@@ -82,7 +83,9 @@ fn deciding_offers_only_cards_the_filter_admits() {
         from: Zone::Library,
         to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
+        excludes_type_of_previous: false,
         remaining: 1,
+        previous: None,
         moved: 0,
         then: None,
     };
@@ -118,7 +121,9 @@ fn taking_a_card_moves_it_and_counts_down_remaining() {
         from: Zone::Library,
         to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
+        excludes_type_of_previous: false,
         remaining: 2,
+        previous: None,
         moved: 0,
         then: None,
     };
@@ -136,7 +141,9 @@ fn taking_a_card_moves_it_and_counts_down_remaining() {
             from: Zone::Library,
             to: Destination::Zone(Zone::Hand),
             filter: CardFilter::AnyPokemon,
+            excludes_type_of_previous: false,
             remaining: 1,
+            previous: Some(card),
             moved: 1,
             then: None,
         },
@@ -155,7 +162,9 @@ fn remaining_at_zero_offers_only_finishing() {
         from: Zone::Library,
         to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
+        excludes_type_of_previous: false,
         remaining: 0,
+        previous: None,
         moved: 0,
         then: None,
     };
@@ -173,6 +182,7 @@ fn finishing_into_the_library_shuffles_it() {
         filter: CardFilter::AnyPokemon,
         to: Destination::Zone(Zone::Library),
         limit: 1,
+        excludes_type_of_previous: false,
     }];
     let (mut state, player, search) =
         game_with_a_search(Box::new(ScriptedRng::new(vec![0])), Zone::Discard, put_back);
@@ -185,7 +195,9 @@ fn finishing_into_the_library_shuffles_it() {
         from: Zone::Discard,
         to: Destination::Zone(Zone::Library),
         filter: CardFilter::AnyPokemon,
+        excludes_type_of_previous: false,
         remaining: 0,
+        previous: None,
         moved: 0,
         then: None,
     };
@@ -210,7 +222,9 @@ fn only_the_chooser_may_act_in_a_deciding_phase() {
         from: Zone::Library,
         to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
+        excludes_type_of_previous: false,
         remaining: 1,
+        previous: None,
         moved: 0,
         then: None,
     };
