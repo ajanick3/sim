@@ -64,6 +64,13 @@ pub struct CardRef {
     pub mark: String,
     /// The playable card, when the engine can run this one.
     pub playable: Option<CardDefId>,
+    /// The card exactly as the artifact printed it, refused or not. A card
+    /// the engine cannot run still has HP, attacks, and rules text a deck
+    /// builder or a card browser needs; this is where they live. A card
+    /// plays only when the engine can run all of it, regardless of what this
+    /// field holds — ADR 0008 decided that, and this field does not revisit
+    /// it.
+    pub raw: Value,
 }
 
 /// A set, with the abbreviation a decklist prints.
@@ -186,6 +193,7 @@ pub fn load(json: &str) -> Result<Import, String> {
                 .to_string(),
             mark: card["regulationMark"].as_str().unwrap_or("?").to_string(),
             playable,
+            raw: card.clone(),
         });
     }
 
