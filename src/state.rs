@@ -68,6 +68,8 @@ pub struct PlayerState {
     pub library: Vec<CardId>,
     pub hand: Vec<CardId>,
     pub discard: Vec<CardId>,
+    /// Cards out of the game for good.
+    pub lost_zone: Vec<CardId>,
     pub prizes: Vec<CardId>,
     pub active: Option<PokemonId>,
     pub bench: Vec<PokemonId>,
@@ -85,6 +87,7 @@ impl PlayerState {
             library: Vec::new(),
             hand: Vec::new(),
             discard: Vec::new(),
+            lost_zone: Vec::new(),
             prizes: Vec::new(),
             active: None,
             bench: Vec::new(),
@@ -200,6 +203,10 @@ pub struct GameState {
     pub bonus_draws: [usize; 2],
     pub bench_placed: [bool; 2],
     pub outcome: Option<Outcome>,
+    /// The Stadium in play and who played it. Rule 58: one at a time, and a
+    /// new one discards the old to its own owner's pile — which is why the
+    /// player is kept beside the card.
+    pub stadium: Option<(PlayerId, CardId)>,
     pub rng: Box<dyn Rng>,
     /// What happened, in order, as prose for a reader. It is not the record
     /// a replay reads — that is [`GameState::history`].
@@ -248,6 +255,7 @@ impl GameState {
             bonus_draws: [0, 0],
             bench_placed: [false, false],
             outcome: None,
+            stadium: None,
             rng,
             log: Vec::new(),
             history: Vec::new(),
@@ -386,6 +394,7 @@ impl GameState {
             crate::card::Zone::Hand => &side.hand,
             crate::card::Zone::Discard => &side.discard,
             crate::card::Zone::Library => &side.library,
+            crate::card::Zone::LostZone => &side.lost_zone,
         }
     }
 
@@ -395,6 +404,7 @@ impl GameState {
             crate::card::Zone::Hand => &mut side.hand,
             crate::card::Zone::Discard => &mut side.discard,
             crate::card::Zone::Library => &mut side.library,
+            crate::card::Zone::LostZone => &mut side.lost_zone,
         }
     }
 
