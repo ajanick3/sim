@@ -27,7 +27,15 @@ What each of the nine needs that the first eight did not:
 
 ## Decisions so far
 
-Nothing resolved yet.
+- **A filter is a flat, named variant of `CardFilter`, not a combinator.**
+  `PokemonEx` and `BasicPokemonWithHpAtMost(u32)` each name a condition a
+  card actually prints. A general "and" of conditions would be more
+  expressive than any card in this pool needs.
+- **A search for one of each of several things is one primitive, not a
+  filter.** `Hilda`, `Dawn`, and `Crispin` each search for two or three
+  *different* cards, one of each. `Decide` carries one filter and one limit,
+  so no filter can express them. Ticket 05 covers all three; ticket 02 gave
+  up its `Hilda` line to it.
 
 ## Fog
 
