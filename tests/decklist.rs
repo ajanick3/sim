@@ -147,3 +147,23 @@ fn the_uncheckable_rule_is_named() {
         "rule 3 cannot be checked from this data, and the report says so"
     );
 }
+
+#[test]
+fn the_committed_deck_is_legal_and_every_line_matches() {
+    let text = std::fs::read_to_string("decks/BrentTonisson.txt").expect("the deck is committed");
+    let import = load(&artifact()).unwrap();
+    let list = parse(&text).expect("a real decklist parses");
+    let report = check(&list, &import);
+
+    assert_eq!(report.total, 60);
+    assert!(
+        report.problems.is_empty(),
+        "a real deck checks clean: {:?}",
+        report.problems
+    );
+    assert_eq!(
+        report.matched.len(),
+        21,
+        "every Pokémon and Trainer line matched a card; the Energy is basic"
+    );
+}
