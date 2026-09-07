@@ -769,6 +769,9 @@ pub enum Count {
     /// Energy attached to the attacker and the defender combined.
     /// `Teal Mask Ogerpon ex`'s `Myriad Leaf Shower`.
     EnergyOnBothActivesCount,
+    /// Prize cards the opponent has already taken (6 minus how many
+    /// remain). `Pecharunt ex`'s `Irritated Outburst`.
+    OpponentPrizesTakenCount,
 }
 
 /// How far along its evolution line a Pokémon card is printed. The artifact
@@ -937,6 +940,13 @@ pub enum AbilityEffect {
     /// printed at this HP or less, and put them into hand. Opens
     /// `Phase::SearchingForFanCall`. `Fan Rotom`'s `Fan Call`.
     OnceDuringFirstTurnMaySearchPokemonOfTypeWithHpAtMost(Type, u32, u32),
+    /// Once during the player's own turn, the player may switch a
+    /// Benched Pokémon of this type — except one printed with this
+    /// name — with the Active, choosing which. If they do, the newly
+    /// Active Pokémon is Poisoned. Opens
+    /// `Phase::DecidingToUseSubjugatingChains`. No qualifying Bench
+    /// Pokémon opens no phase. `Pecharunt ex`'s `Subjugating Chains`.
+    OncePerTurnMaySwitchBenchedOfTypeExcludingNamedThenPoison(Type, &'static str),
 }
 
 /// A basic Energy card as printed.

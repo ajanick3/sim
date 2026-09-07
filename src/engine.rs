@@ -1170,6 +1170,19 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     // Not spent here: opening the choice is not using it.
                     state.phase = Phase::SearchingForFanCall { player, pokemon, kind, hp, remaining: limit };
                 }
+                crate::card::AbilityEffect::OncePerTurnMaySwitchBenchedOfTypeExcludingNamedThenPoison(
+                    kind,
+                    excluding,
+                ) => {
+                    // Not spent here: opening the choice is not using it —
+                    // only actually switching is.
+                    state.phase = Phase::DecidingToUseSubjugatingChains {
+                        player,
+                        name: ability.name,
+                        kind,
+                        excluding,
+                    };
+                }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
                 | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_)
                 | crate::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium
@@ -1505,6 +1518,24 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             };
             let library = &mut state.players[player.index()].library;
             shuffle(state.rng.as_mut(), library);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::SwitchForSubjugatingChains { target } => {
+            let (player, name) = match state.phase {
+                Phase::DecidingToUseSubjugatingChains { player, name, .. } => (player, name),
+                _ => return Err(IllegalAction),
+            };
+            state.spend(Limit::AbilityUsed(player, name));
+            let side = &mut state.players[player.index()];
+            let old_active = side.active.expect("this Ability needs an Active to swap with");
+            side.active = Some(target);
+            side.bench.retain(|p| *p != target);
+            side.bench.push(old_active);
+            state.inflict(target, Condition::Poisoned);
+            let target_name = state.pokemon_def(target).name;
+            state.log.push(format!("{target_name} switches in and is Poisoned (Subjugating Chains)."));
             state.phase = Phase::Main;
             settle(state);
         }
@@ -2602,6 +2633,9 @@ fn count_for_attack(
         }
         crate::card::Count::EnergyOnBothActivesCount => {
             state.energy_attached(attacker) as u32 + state.energy_attached(defender) as u32
+        }
+        crate::card::Count::OpponentPrizesTakenCount => {
+            6 - state.player(opponent).prizes.len() as u32
         }
     }
 }

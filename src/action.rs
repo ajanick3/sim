@@ -230,6 +230,9 @@ pub enum Action {
     TakeCardForFanCall { card: CardId },
     /// Stop that search before its limit is spent.
     FinishFanCall,
+    /// Switch this Benched Pokémon in for the Active, as part of
+    /// `Phase::DecidingToUseSubjugatingChains` — it is then Poisoned.
+    SwitchForSubjugatingChains { target: PokemonId },
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -277,6 +280,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::MovingAnyEnergyForRapidVernier { player, .. } => Some(player),
         Phase::SearchingForSinisterSurgeTarget { player, .. } => Some(player),
         Phase::SearchingForFanCall { player, .. } => Some(player),
+        Phase::DecidingToUseSubjugatingChains { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -696,6 +700,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::FinishFanCall);
+            return actions;
+        }
+        Phase::DecidingToUseSubjugatingChains { player: whose, kind, excluding, .. } => {
+            for target in &state.player(whose).bench {
+                let def = state.pokemon_def(*target);
+                if def.kind == kind && def.name != excluding {
+                    actions.push(Action::SwitchForSubjugatingChains { target: *target });
+                }
+            }
             return actions;
         }
         Phase::MovingOpponentsEnergy { of, .. } => {
@@ -1133,6 +1146,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                         state.matches_filter(*c, crate::card::CardFilter::PokemonOfTypeWithHpAtMost(kind, hp))
                     })
             }
+            crate::card::AbilityEffect::OncePerTurnMaySwitchBenchedOfTypeExcludingNamedThenPoison(
+                kind,
+                excluding,
+            ) => side.bench.iter().any(|p| {
+                let def = state.pokemon_def(*p);
+                def.kind == kind && def.name != excluding
+            }),
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_last_ditch_catch`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => false,
@@ -1400,5 +1420,8 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::TakeCardForFanCall { card } => format!("Take {} (Fan Call)", state.def_of(card).name()),
         Action::FinishFanCall => "Stop searching".to_string(),
+        Action::SwitchForSubjugatingChains { target } => {
+            format!("Switch in {} (Subjugating Chains)", state.pokemon_def(target).name)
+        }
     }
 }

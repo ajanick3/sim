@@ -219,5 +219,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // player's own first turn, CardFilter::PokemonOfTypeWithHpAtMost)
     // and its own attack, Assault Landing (fizzles outright with no
     // Stadium in play) complete all 4 prints.
-    assert_eq!(admitted, 631, "coverage moves only on purpose");
+    // Pecharunt ex's Subjugating Chains (a standing switch of a
+    // Benched Pokemon of a type, excluding a name, then Poisoning the
+    // new Active) and its own attack, Irritated Outburst (damage per
+    // Prize the opponent has taken) complete all 5 prints.
+    assert_eq!(admitted, 636, "coverage moves only on purpose");
 }
