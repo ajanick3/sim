@@ -52,7 +52,7 @@ fn basic(
             name: "Tackle",
             cost: vec![Type::Colorless],
             base_damage: 10,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }))
 }
@@ -78,7 +78,7 @@ fn build() -> Set {
             name: "Slam",
             cost: vec![Type::Colorless, Type::Colorless],
             base_damage: 60,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {
@@ -549,7 +549,7 @@ fn lillies_pearl_game(with_pearl: bool) -> (GameState, u32) {
             name: "Nudge",
             cost: vec![Type::Colorless],
             base_damage: 30,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {

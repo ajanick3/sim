@@ -13,9 +13,9 @@ use std::collections::HashMap;
 use serde_json::Value;
 
 use crate::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, PromoteFollowUp,
-    Requirement, Slot, Stage, TargetFilter, Then, Trainer, TrainerEffect, TrainerKind,
-    TurnBonusTarget, Type, Zone,
+    Attack, AttackEffect, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon,
+    PromoteFollowUp, Requirement, Slot, Stage, TargetFilter, Then, Trainer, TrainerEffect,
+    TrainerKind, TurnBonusTarget, Type, Zone,
 };
 use crate::ids::CardDefId;
 
@@ -283,9 +283,10 @@ fn read_card(card: &Value, lineage: &HashMap<&str, &str>) -> Result<CardDef, Ref
     if attacks_json.is_empty() {
         return Err(Refusal::HasNoAttack);
     }
+    let name = card["name"].as_str().unwrap_or("?");
     let mut attacks = Vec::new();
     for attack in attacks_json {
-        attacks.push(read_attack(attack)?);
+        attacks.push(read_attack(name, attack)?);
     }
 
     let kind = card["types"]
@@ -896,10 +897,16 @@ fn prizes_for(name: &str) -> u32 {
     if name.starts_with("Mega ") { 3 } else { 2 }
 }
 
-fn read_attack(attack: &Value) -> Result<Attack, Refusal> {
-    if attack["effect"].as_str().is_some_and(|e| !e.is_empty()) {
-        return Err(Refusal::AttackHasText);
-    }
+fn read_attack(pokemon_name: &str, attack: &Value) -> Result<Attack, Refusal> {
+    let attack_name = attack["name"].as_str().unwrap_or("?");
+    let effect = if attack["effect"].as_str().is_some_and(|e| !e.is_empty()) {
+        match known_attack(pokemon_name, attack_name) {
+            Some(effect) => Some(effect),
+            None => return Err(Refusal::AttackHasText),
+        }
+    } else {
+        None
+    };
     let base_damage = match &attack["damage"] {
         Value::Number(damage) => damage.as_u64().ok_or(Refusal::DamageIsNotANumber)? as u32,
         Value::Null => 0,
@@ -916,10 +923,26 @@ fn read_attack(attack: &Value) -> Result<Attack, Refusal> {
     }
 
     Ok(Attack {
-        name: leak(attack["name"].as_str().unwrap_or("?")),
+        name: leak(attack_name),
         cost,
         base_damage,
         inflicts: None,
+        effect,
+    })
+}
+
+/// An attack's own effect, matched by the Pokémon's printed name and the
+/// attack's own name — the same shape `known_trainer` matches a Trainer
+/// by, mirrored here rather than shared, since a Trainer and an attack
+/// dispatch through different machinery (`resolve_trainer` vs `attack`).
+/// Empty until this milestone's first ticket admits a real card.
+fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
+    Some(match (pokemon_name, attack_name) {
+        ("Carvanha", "Reckless Charge") => AttackEffect::Recoil(10),
+        ("Rellor", "Slight Intrusion") => AttackEffect::Recoil(10),
+        ("Tapu Bulu", "Wood Hammer") => AttackEffect::Recoil(30),
+        ("Paldean Tauros", "Double-Edge") => AttackEffect::Recoil(20),
+        _ => return None,
     })
 }
 

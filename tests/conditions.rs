@@ -27,6 +27,7 @@ fn game(inflicts: Condition, rng: Box<dyn Rng>) -> GameState {
             cost: vec![Type::Colorless],
             base_damage: 0,
             inflicts: Some(inflicts),
+            effect: None,
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {

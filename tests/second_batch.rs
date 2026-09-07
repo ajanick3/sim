@@ -52,7 +52,7 @@ fn basic(
             name: "Tackle",
             cost: vec![Type::Colorless],
             base_damage: 10,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }))
 }
@@ -82,7 +82,7 @@ fn build() -> Set {
             name: "Slam",
             cost: vec![Type::Colorless, Type::Colorless],
             base_damage: 60,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {
@@ -1663,7 +1663,7 @@ fn with_wondrous_patch(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
             name: "Zap",
             cost: vec![Type::Psychic],
             base_damage: 10,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }));
     let psychic_energy = db.add(CardDef::Energy(Energy {
@@ -1980,7 +1980,7 @@ fn db_add_grass_mon(state: &mut GameState) -> CardDefId {
             name: "Vine",
             cost: vec![Type::Grass],
             base_damage: 10,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }))
 }

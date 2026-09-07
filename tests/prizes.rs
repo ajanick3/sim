@@ -26,7 +26,7 @@ fn game(prizes: u32) -> (GameState, u32) {
             name: "Nudge",
             cost: vec![Type::Colorless],
             base_damage: 30,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {

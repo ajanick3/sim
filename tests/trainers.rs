@@ -35,7 +35,7 @@ fn build() -> Set {
             name: "Tackle",
             cost: vec![Type::Colorless],
             base_damage: 10,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {
@@ -229,7 +229,7 @@ fn build2() -> Set2 {
             name: "Tackle",
             cost: vec![Type::Colorless],
             base_damage: 10,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }));
     let mon_ex = db.add(CardDef::Pokemon(Pokemon {
@@ -248,7 +248,7 @@ fn build2() -> Set2 {
             name: "Big Tackle",
             cost: vec![Type::Colorless, Type::Colorless],
             base_damage: 50,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {

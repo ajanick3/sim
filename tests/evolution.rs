@@ -32,7 +32,7 @@ fn build() -> Set {
             name: "Vine",
             cost: vec![Type::Colorless],
             base_damage: 10,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }));
     let stage1 = db.add(CardDef::Pokemon(Pokemon {
@@ -51,7 +51,7 @@ fn build() -> Set {
             name: "Petal Slash",
             cost: vec![Type::Grass, Type::Colorless],
             base_damage: 40,
-            inflicts: None,
+            inflicts: None, effect: None,
         }],
     }));
     let energy = db.add(CardDef::Energy(Energy {

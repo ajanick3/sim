@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Team Rocket's Factory | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (16/95 built)
+### Pokémon (18/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -261,14 +261,14 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Psyduck | ❌ |
 | Rabsca | ❌ |
 | Raging Bolt ex | ❌ |
-| Rellor | ❌ |
+| Rellor | ✅ |
 | Seaking | ❌ |
 | Shaymin | ❌ |
 | Slowking | ❌ |
 | Slowpoke | ✅ |
 | Smoochum | ❌ |
 | Stunfisk | ❌ |
-| Tapu Bulu | ❌ |
+| Tapu Bulu | ✅ |
 | Tatsugiri | ❌ |
 | Teal Mask Ogerpon ex | ❌ |
 | Thwackey | ❌ |
@@ -292,6 +292,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
   artifact holds, the modelling findings already banked, and what the data
   cannot express.
 - [The ADR directory](docs/adr/) — the decisions and their reasoning.
+
 
 
 

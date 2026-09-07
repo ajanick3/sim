@@ -527,6 +527,23 @@ pub struct Attack {
     pub base_damage: u32,
     /// The Special Condition the attack puts on the defending Pokémon.
     pub inflicts: Option<Condition>,
+    /// What the attack's own printed text does, beyond damage and
+    /// `inflicts` — read in `attack()`, the same place `resolve_trainer`
+    /// reads a `TrainerEffect`, but a separate enum: a Trainer and an
+    /// attack dispatch through different machinery.
+    pub effect: Option<AttackEffect>,
+}
+
+/// An attack's own printed effect, beyond damage and a plain Special
+/// Condition. Milestone 11's own vocabulary, the counterpart to
+/// `TrainerEffect` — grows one variant per shape the sample decks
+/// actually need, the same discipline `TrainerEffect` was built under.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AttackEffect {
+    /// This many damage counters land on the attacker itself, alongside
+    /// whatever the attack did to the defender. `Carvanha`'s "This
+    /// Pokémon also does 10 damage to itself."
+    Recoil(u32),
 }
 
 /// How far along its evolution line a Pokémon card is printed. The artifact
