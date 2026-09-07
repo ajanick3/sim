@@ -192,8 +192,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::Promote { pokemon } => {
-            let (of, chooser) = match state.phase {
-                Phase::Promoting { of, chooser } => (of, chooser),
+            let (of, chooser, then) = match state.phase {
+                Phase::Promoting { of, chooser, then } => (of, chooser, then),
                 _ => return Err(IllegalAction),
             };
             let side = &mut state.players[of.index()];
@@ -202,7 +202,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             // this phase opened, so there is nothing here to lose. A live
             // switch — `Switch`, `Boss's Orders` — has not: its Active is
             // displaced, not gone, and belongs back on the Bench.
-            if let Some(displaced) = side.active.replace(pokemon) {
+            let displaced = side.active.replace(pokemon);
+            if let Some(displaced) = displaced {
                 side.bench.push(displaced);
             }
             state.phase = Phase::Main;
@@ -213,6 +214,26 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 state
                     .log
                     .push(format!("{chooser:?} sends up {name} for {of:?}."));
+            }
+            // A live switch's own follow-up reads what was just displaced —
+            // never present for a knockout or `Boss's Orders`.
+            match then {
+                Some(crate::card::PromoteFollowUp::HealDisplacedIfEx(amount)) => {
+                    if let Some(displaced) = displaced
+                        && state.pokemon_def(displaced).prizes > 1
+                    {
+                        state.pokemon[displaced.index()].damage =
+                            state.pokemon(displaced).damage.saturating_sub(amount);
+                    }
+                }
+                Some(crate::card::PromoteFollowUp::DrawUpTo(target)) => {
+                    while state.player(chooser).hand.len() < target as usize {
+                        if !state.draw(chooser) {
+                            break;
+                        }
+                    }
+                }
+                None => {}
             }
             settle(state);
         }
@@ -694,6 +715,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             state.phase = Phase::Promoting {
                 of: player.opponent(),
                 chooser: player,
+                then: None,
             };
         }
 
@@ -701,6 +723,15 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             state.phase = Phase::Promoting {
                 of: player,
                 chooser: player,
+                then: None,
+            };
+        }
+
+        TrainerEffect::SwitchOwnActiveWithFollowUp(follow_up) => {
+            state.phase = Phase::Promoting {
+                of: player,
+                chooser: player,
+                then: Some(follow_up),
             };
         }
 
@@ -969,6 +1000,7 @@ fn settle(state: &mut GameState) {
                 state.phase = Phase::Promoting {
                     of: player,
                     chooser: player,
+                    then: None,
                 };
                 return;
             }

@@ -2354,6 +2354,7 @@ fn switch_opens_promoting_for_the_players_own_bench() {
         Phase::Promoting {
             of: player,
             chooser: player,
+            then: None,
         }
     );
 }

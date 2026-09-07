@@ -166,6 +166,18 @@ pub struct Slot {
     pub peek: Option<u32>,
 }
 
+/// What runs once `Action::Promote` completes a live switch, reading what
+/// the switch actually did — never a knockout or `Boss's Orders`, which
+/// carry none.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PromoteFollowUp {
+    /// If the Pokémon just displaced to the Bench is worth more than 1
+    /// Prize, heal this many points of damage from it. `AZ's Tranquility`.
+    HealDisplacedIfEx(u32),
+    /// Draw until the player holds this many cards in hand. `Surfer`.
+    DrawUpTo(u32),
+}
+
 /// A Trainer's effect: a value the engine executes, never text read at run
 /// time (ADR 0009). `Phase::Deciding` and the generalized `Phase::Promoting`
 /// cover most of these (ADR 0012); the rest resolve with no phase at all,
@@ -187,6 +199,10 @@ pub enum TrainerEffect {
     /// Pokémon, by their own choice — not after a knockout, and not the
     /// opponent's. `Switch` is the plain form of this.
     SwitchOwnActive,
+    /// The same switch, with a follow-up that reads what the switch
+    /// actually did once `Action::Promote` completes it. `AZ's
+    /// Tranquility` and `Surfer` are why this exists.
+    SwitchOwnActiveWithFollowUp(PromoteFollowUp),
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
