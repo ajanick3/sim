@@ -1162,6 +1162,14 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         damage,
                     };
                 }
+                crate::card::AbilityEffect::OnceDuringFirstTurnMaySearchPokemonOfTypeWithHpAtMost(
+                    kind,
+                    hp,
+                    limit,
+                ) => {
+                    // Not spent here: opening the choice is not using it.
+                    state.phase = Phase::SearchingForFanCall { player, pokemon, kind, hp, remaining: limit };
+                }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
                 | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_)
                 | crate::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium
@@ -1455,6 +1463,46 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.pokemon[target.index()].damage += damage;
             let name = state.pokemon_def(target).name;
             state.log.push(format!("{name} takes an Energy and {damage} (Sinister Surge)."));
+            let library = &mut state.players[player.index()].library;
+            shuffle(state.rng.as_mut(), library);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::TakeCardForFanCall { card } => {
+            let (player, pokemon, kind, hp, remaining) = match state.phase {
+                Phase::SearchingForFanCall { player, pokemon, kind, hp, remaining } => {
+                    (player, pokemon, kind, hp, remaining)
+                }
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} joins the hand (Fan Call)."));
+            if remaining <= 1 {
+                let library = &mut state.players[player.index()].library;
+                shuffle(state.rng.as_mut(), library);
+                state.phase = Phase::Main;
+                settle(state);
+            } else {
+                state.phase = Phase::SearchingForFanCall {
+                    player,
+                    pokemon,
+                    kind,
+                    hp,
+                    remaining: remaining - 1,
+                };
+            }
+        }
+
+        Action::FinishFanCall => {
+            let player = match state.phase {
+                Phase::SearchingForFanCall { player, .. } => player,
+                _ => return Err(IllegalAction),
+            };
             let library = &mut state.players[player.index()].library;
             shuffle(state.rng.as_mut(), library);
             state.phase = Phase::Main;
@@ -2134,6 +2182,13 @@ fn attack(state: &mut GameState, index: usize) {
     }
 
     let attack = state.pokemon_def(attacker).attacks[index].clone();
+    if matches!(attack.effect, Some(crate::card::AttackEffect::FizzlesWithNoStadiumInPlay))
+        && state.stadium.is_none()
+    {
+        let name = state.pokemon_def(attacker).name;
+        state.log.push(format!("{name}'s {} does nothing: no Stadium in play.", attack.name));
+        return;
+    }
     let base = match attack.effect {
         Some(crate::card::AttackEffect::DamagePerCount(count, per_unit)) => {
             count_for_attack(state, attacker, defender, count) * per_unit
@@ -2440,6 +2495,10 @@ fn resolve_attack_effect(
             let owner = state.pokemon(attacker).owner;
             state.phase = Phase::ChoosingAnyOpponentPokemonDamageTarget { player: owner, damage };
         }
+        // Already checked, at the top of `attack` — this arm is only
+        // reached when a Stadium is in play, so there is nothing left
+        // to do.
+        crate::card::AttackEffect::FizzlesWithNoStadiumInPlay => {}
         crate::card::AttackEffect::MoveOwnAttachedEnergyToHand => {
             let owner = state.pokemon(attacker).owner;
             let any_energy = state.pokemon(attacker).attached.iter().any(|c| state.def_of(*c).is_energy());

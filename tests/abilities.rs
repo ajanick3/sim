@@ -1019,3 +1019,95 @@ fn toxtricity_is_admitted_from_the_artifact() {
         "at least one Toxtricity print should play"
     );
 }
+
+// --- Beyond the map: a search restricted to the player's own first turn ---
+
+#[test]
+fn searches_on_the_first_turn_for_colorless_low_hp_pokemon() {
+    let ability = Ability {
+        name: "Fan Call",
+        effect: sim::card::AbilityEffect::OnceDuringFirstTurnMaySearchPokemonOfTypeWithHpAtMost(
+            Type::Colorless,
+            100,
+            3,
+        ),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let target_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-low-hp-colorless",
+        name: "Smallmon",
+        hp: 80,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let target = deal_new_card(&mut state, player, target_def);
+    state.players[player.index()].library.push(target);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+
+    assert!(matches!(state.phase, Phase::SearchingForFanCall { .. }));
+    apply(&mut state, Action::TakeCardForFanCall { card: target }).unwrap();
+    apply(&mut state, Action::FinishFanCall).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).hand.len(), before + 1);
+}
+
+#[test]
+fn fan_call_not_offered_after_the_first_turn() {
+    let ability = Ability {
+        name: "Fan Call",
+        effect: sim::card::AbilityEffect::OnceDuringFirstTurnMaySearchPokemonOfTypeWithHpAtMost(
+            Type::Colorless,
+            100,
+            3,
+        ),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(result.is_err(), "past the player's own first turn");
+}
+
+#[test]
+fn fan_rotom_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Fan Rotom" && c.playable.is_some()),
+        "at least one Fan Rotom print should play"
+    );
+}

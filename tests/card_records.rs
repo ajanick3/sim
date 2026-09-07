@@ -215,5 +215,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // type, attach it to a Benched Pokemon of the same type, then
     // damage it) admits all 3 prints (Gentle Slap has no printed
     // text).
-    assert_eq!(admitted, 627, "coverage moves only on purpose");
+    // Fan Rotom's Fan Call (a standing search restricted to the
+    // player's own first turn, CardFilter::PokemonOfTypeWithHpAtMost)
+    // and its own attack, Assault Landing (fizzles outright with no
+    // Stadium in play) complete all 4 prints.
+    assert_eq!(admitted, 631, "coverage moves only on purpose");
 }

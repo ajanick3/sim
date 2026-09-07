@@ -389,6 +389,16 @@ pub enum Phase {
     /// choosing which, then deals `damage` to it. `Toxtricity`'s
     /// `Sinister Surge`.
     SearchingForSinisterSurgeTarget { player: PlayerId, pokemon: PokemonId, kind: crate::card::Type, damage: u32 },
+    /// `player` used an Ability that searches the library for up to
+    /// `remaining` more Pokémon of a type at some HP or less, to
+    /// hand. `Fan Rotom`'s `Fan Call`.
+    SearchingForFanCall {
+        player: PlayerId,
+        pokemon: PokemonId,
+        kind: crate::card::Type,
+        hp: u32,
+        remaining: u32,
+    },
     /// `player` used an attack that searches their own discard pile
     /// for up to `remaining` more copies of a named Pokémon to the
     /// Bench. `Duskull`'s `Come and Get You`.
@@ -869,6 +879,10 @@ impl GameState {
                 .def_of(card)
                 .as_pokemon()
                 .is_some_and(|p| p.stage != crate::card::Stage::Basic && p.kind == kind),
+            CardFilter::PokemonOfTypeWithHpAtMost(kind, hp) => self
+                .def_of(card)
+                .as_pokemon()
+                .is_some_and(|p| p.kind == kind && p.hp <= hp),
         }
     }
 

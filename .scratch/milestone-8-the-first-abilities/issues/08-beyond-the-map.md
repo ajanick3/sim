@@ -61,7 +61,15 @@ same way Milestone 11 continued past its own spec:
   is found is not, the same reasoning ADR 0068 gave for a fixed-count
   cost), then damage it. Completes all 3 prints.
 
-Coverage: 604 -> 627 across these seven PRs.
+- **Fan Rotom**'s `Fan Call`
+  (`OnceDuringFirstTurnMaySearchPokemonOfTypeWithHpAtMost`, gated on
+  `turn_number <= 1` — each player's own first turn, not only the
+  game's very first) and its own attack, `Assault Landing`
+  (`FizzlesWithNoStadiumInPlay`, a full short-circuit at the top of
+  `attack` mirroring `CoinFlipSelfInvulnerableNextTurn`'s own shape).
+  Completes all 4 prints.
+
+Coverage: 604 -> 631 across these eight PRs.
 
 ## What is left
 
