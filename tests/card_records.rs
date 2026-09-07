@@ -206,5 +206,10 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // MoveOwnAttachedEnergyToHand) with Snow Sink (a play-triggered
     // Ability that may discard whichever Stadium is in play).
     // Completes all 3 Chien-Pao prints.
-    assert_eq!(admitted, 618, "coverage moves only on purpose");
+    // Iron Leaves ex's Rapid Vernier (a play-triggered switch, then
+    // moving any amount of Energy from the player's other Pokemon to
+    // the switched-in one) and its own attack, Prism Edge
+    // (AttackerCannotAttackNextTurn, already built) complete all 6
+    // Iron Leaves ex prints.
+    assert_eq!(admitted, 624, "coverage moves only on purpose");
 }

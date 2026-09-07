@@ -69,6 +69,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             apply_risky_ruins(state, pokemon);
             trigger_last_ditch_catch(state, player, pokemon);
             trigger_snow_sink(state, player, pokemon);
+            trigger_rapid_vernier(state, player, pokemon);
         }
 
         Action::Evolve { card, target } => {
@@ -1150,7 +1151,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
                 | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_)
-                | crate::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium => {
+                | crate::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium
+                | crate::card::AbilityEffect::WhenBenchedFromHandMaySwitchThenMoveAnyEnergy => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
                 }
             }
@@ -1366,6 +1368,55 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         Action::DeclineSnowSink => {
             match state.phase {
                 Phase::DecidingToUseSnowSink { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::AcceptRapidVernierSwitch => {
+            let (player, pokemon) = match state.phase {
+                Phase::DecidingToSwitchInForRapidVernier { player, pokemon } => (player, pokemon),
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            let side = &mut state.players[player.index()];
+            let old_active = side.active.expect("this trigger only fires with an Active in place");
+            side.active = Some(pokemon);
+            side.bench.retain(|p| *p != pokemon);
+            side.bench.push(old_active);
+            let name = state.pokemon_def(pokemon).name;
+            state.log.push(format!("{name} switches in (Rapid Vernier)."));
+            state.phase = Phase::MovingAnyEnergyForRapidVernier { player, pokemon };
+        }
+
+        Action::DeclineRapidVernierSwitch => {
+            match state.phase {
+                Phase::DecidingToSwitchInForRapidVernier { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::MoveEnergyForRapidVernier { card } => {
+            let (player, pokemon) = match state.phase {
+                Phase::MovingAnyEnergyForRapidVernier { player, pokemon } => (player, pokemon),
+                _ => return Err(IllegalAction),
+            };
+            for source in state.player(player).in_play() {
+                state.pokemon[source.index()].attached.retain(|c| *c != card);
+            }
+            state.pokemon[pokemon.index()].attached.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} moves (Rapid Vernier)."));
+            state.phase = Phase::MovingAnyEnergyForRapidVernier { player, pokemon };
+        }
+
+        Action::FinishMovingEnergyForRapidVernier => {
+            match state.phase {
+                Phase::MovingAnyEnergyForRapidVernier { .. } => {}
                 _ => return Err(IllegalAction),
             };
             state.phase = Phase::Main;
@@ -2766,6 +2817,25 @@ fn trigger_snow_sink(state: &mut GameState, player: PlayerId, pokemon: PokemonId
     if state.stadium.is_some() {
         state.phase = Phase::DecidingToUseSnowSink { player, pokemon };
     }
+}
+
+/// `Iron Leaves ex`'s `Rapid Vernier`, the same "played from hand onto
+/// the Bench" trigger `trigger_last_ditch_catch` and `trigger_snow_sink`
+/// already read, but offering a switch instead.
+fn trigger_rapid_vernier(state: &mut GameState, player: PlayerId, pokemon: PokemonId) {
+    let Some(ability) = state.pokemon_def(pokemon).ability else {
+        return;
+    };
+    if !matches!(
+        ability.effect,
+        crate::card::AbilityEffect::WhenBenchedFromHandMaySwitchThenMoveAnyEnergy
+    ) {
+        return;
+    }
+    if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
+        return;
+    }
+    state.phase = Phase::DecidingToSwitchInForRapidVernier { player, pokemon };
 }
 
 /// `Kadabra`'s and `Alakazam`'s `Psychic Draw`, and any future Ability

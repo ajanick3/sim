@@ -213,6 +213,15 @@ pub enum Action {
     AcceptSnowSink,
     /// Decline it.
     DeclineSnowSink,
+    /// Accept `Phase::DecidingToSwitchInForRapidVernier`'s switch.
+    AcceptRapidVernierSwitch,
+    /// Decline it.
+    DeclineRapidVernierSwitch,
+    /// Move this Energy to the switched-in Pokémon, as part of
+    /// `Phase::MovingAnyEnergyForRapidVernier`.
+    MoveEnergyForRapidVernier { card: CardId },
+    /// Stop moving Energy.
+    FinishMovingEnergyForRapidVernier,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -256,6 +265,8 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToUseSeethingSpirit { player, .. } => Some(player),
         Phase::ChoosingOwnEnergyToHand { player, .. } => Some(player),
         Phase::DecidingToUseSnowSink { player, .. } => Some(player),
+        Phase::DecidingToSwitchInForRapidVernier { player, .. } => Some(player),
+        Phase::MovingAnyEnergyForRapidVernier { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -639,6 +650,25 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::DecidingToUseSnowSink { .. } => {
             actions.push(Action::AcceptSnowSink);
             actions.push(Action::DeclineSnowSink);
+            return actions;
+        }
+        Phase::DecidingToSwitchInForRapidVernier { .. } => {
+            actions.push(Action::AcceptRapidVernierSwitch);
+            actions.push(Action::DeclineRapidVernierSwitch);
+            return actions;
+        }
+        Phase::MovingAnyEnergyForRapidVernier { player: whose, pokemon } => {
+            for source in state.player(whose).in_play() {
+                if source == pokemon {
+                    continue;
+                }
+                for card in &state.pokemon(source).attached {
+                    if state.def_of(*card).is_energy() {
+                        actions.push(Action::MoveEnergyForRapidVernier { card: *card });
+                    }
+                }
+            }
+            actions.push(Action::FinishMovingEnergyForRapidVernier);
             return actions;
         }
         Phase::MovingOpponentsEnergy { of, .. } => {
@@ -1062,6 +1092,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_snow_sink`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium => false,
+            // Triggered the moment this Pokémon is played from hand
+            // (`trigger_rapid_vernier`), never a standing choice.
+            crate::card::AbilityEffect::WhenBenchedFromHandMaySwitchThenMoveAnyEnergy => false,
         };
         if eligible {
             actions.push(Action::UseAbility { pokemon });
@@ -1306,5 +1339,11 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::AcceptSnowSink => "Discard the Stadium (Snow Sink)".to_string(),
         Action::DeclineSnowSink => "Decline Snow Sink".to_string(),
+        Action::AcceptRapidVernierSwitch => "Switch in (Rapid Vernier)".to_string(),
+        Action::DeclineRapidVernierSwitch => "Decline Rapid Vernier".to_string(),
+        Action::MoveEnergyForRapidVernier { card } => {
+            format!("Move {} (Rapid Vernier)", state.def_of(card).name())
+        }
+        Action::FinishMovingEnergyForRapidVernier => "Stop moving Energy".to_string(),
     }
 }

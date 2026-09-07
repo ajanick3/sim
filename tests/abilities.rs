@@ -856,3 +856,75 @@ fn chien_pao_snow_sink_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv08-056").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Chien-Pao's Snow Sink print should play");
 }
+
+// --- Beyond the map: switch in on entry, then move any amount of Energy ---
+
+#[test]
+fn switches_in_then_moves_energy_from_other_pokemon() {
+    let ability = Ability {
+        name: "Rapid Vernier",
+        effect: sim::card::AbilityEffect::WhenBenchedFromHandMaySwitchThenMoveAnyEnergy,
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let old_active = state.player(player).active.unwrap();
+
+    let energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-energy",
+        name: "Test Energy",
+        kind: Type::Colorless,
+    }));
+    let energy = deal_new_card(&mut state, player, energy_def);
+    state.pokemon[old_active.index()].attached.push(energy);
+
+    let second_copy = deal_new_card(&mut state, player, carrier_def);
+    state.players[player.index()].hand.push(second_copy);
+
+    apply(&mut state, Action::PlayBasic { card: second_copy }).unwrap();
+
+    assert!(matches!(state.phase, Phase::DecidingToSwitchInForRapidVernier { .. }));
+    apply(&mut state, Action::AcceptRapidVernierSwitch).unwrap();
+
+    let new_active = state.player(player).active.unwrap();
+    assert_ne!(new_active, old_active, "switched in");
+    assert!(state.player(player).bench.contains(&old_active));
+
+    assert!(matches!(state.phase, Phase::MovingAnyEnergyForRapidVernier { .. }));
+    apply(&mut state, Action::MoveEnergyForRapidVernier { card: energy }).unwrap();
+    apply(&mut state, Action::FinishMovingEnergyForRapidVernier).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(new_active).attached.contains(&energy));
+    assert!(!state.pokemon(old_active).attached.contains(&energy));
+}
+
+#[test]
+fn declining_the_switch_ends_it_there() {
+    let ability = Ability {
+        name: "Rapid Vernier",
+        effect: sim::card::AbilityEffect::WhenBenchedFromHandMaySwitchThenMoveAnyEnergy,
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let old_active = state.player(player).active.unwrap();
+    let second_copy = deal_new_card(&mut state, player, carrier_def);
+    state.players[player.index()].hand.push(second_copy);
+
+    apply(&mut state, Action::PlayBasic { card: second_copy }).unwrap();
+    apply(&mut state, Action::DeclineRapidVernierSwitch).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).active, Some(old_active), "no switch");
+}
+
+#[test]
+fn iron_leaves_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Iron Leaves ex" && c.playable.is_some()),
+        "at least one Iron Leaves ex print should play"
+    );
+}

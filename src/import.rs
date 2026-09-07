@@ -1006,6 +1006,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
             AbilityEffect::OncePerTurnMayAttachBasicEnergyFromDiscardToChosen
         }
         ("Chien-Pao", "Snow Sink") => AbilityEffect::WhenBenchedFromHandMayDiscardStadium,
+        ("Iron Leaves ex", "Rapid Vernier") => {
+            AbilityEffect::WhenBenchedFromHandMaySwitchThenMoveAnyEnergy
+        }
         _ => return None,
     })
 }
@@ -1103,6 +1106,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Chien-Pao", "Strafe") => AttackEffect::SwitchOwnActive,
         ("Chien-Pao", "Rising Blade") => AttackEffect::BonusDamageIfDefenderIsEx(80),
         ("Chien-Pao", "Icicle Loop") => AttackEffect::MoveOwnAttachedEnergyToHand,
+        ("Iron Leaves ex", "Prism Edge") => AttackEffect::AttackerCannotAttackNextTurn,
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }

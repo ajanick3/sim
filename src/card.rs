@@ -903,6 +903,13 @@ pub enum AbilityEffect {
     /// `Phase::DecidingToUseSnowSink`. No Stadium in play opens no
     /// phase. `Chien-Pao`'s `Snow Sink`.
     WhenBenchedFromHandMayDiscardStadium,
+    /// The moment this Pokémon is played from hand onto the Bench,
+    /// the player may switch it in for the Active. If they do, they
+    /// may then move any amount of Energy from their other Pokémon to
+    /// this one, one card at a time until they stop. Opens
+    /// `Phase::DecidingToSwitchInForRapidVernier`. `Iron Leaves ex`'s
+    /// `Rapid Vernier`.
+    WhenBenchedFromHandMaySwitchThenMoveAnyEnergy,
 }
 
 /// A basic Energy card as printed.
