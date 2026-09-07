@@ -259,3 +259,71 @@ fn a_tool_is_unlimited_per_turn_unlike_energy() {
         "no once-per-turn limit on playing a Tool"
     );
 }
+
+// --- Ticket 02: Air Balloon ---
+
+fn with_air_balloon(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-air-balloon",
+        name: "Air Balloon",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::ReducesRetreatCost(2),
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn air_balloon_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Air Balloon")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Air Balloon should play");
+}
+
+#[test]
+fn air_balloon_reduces_the_retreat_cost_by_two() {
+    let (set, balloon) = with_air_balloon(build());
+    let mut state = game(&set, balloon, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    // The fixture's ordinary Basic prints a Retreat Cost of 1.
+    assert_eq!(state.effective_retreat_cost(active), 1);
+
+    let card = ensure_in_hand(&mut state, player, balloon);
+    apply(&mut state, Action::PlayTool { card, target: active }).unwrap();
+
+    assert_eq!(
+        state.effective_retreat_cost(active),
+        0,
+        "floored at zero, not negative"
+    );
+    assert!(
+        legal_actions(&state).contains(&Action::Retreat { to: state.player(player).bench[0] }),
+        "retreating for free is now legal with no Energy attached"
+    );
+}
+
+#[test]
+fn air_balloon_does_nothing_for_a_pokemon_it_is_not_attached_to() {
+    let (set, balloon) = with_air_balloon(build());
+    let mut state = game(&set, balloon, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let bench_mon = state.player(player).bench[0];
+    let card = ensure_in_hand(&mut state, player, balloon);
+    apply(&mut state, Action::PlayTool { card, target: bench_mon }).unwrap();
+
+    assert_eq!(
+        state.effective_retreat_cost(active),
+        1,
+        "the Active's own cost is untouched"
+    );
+}

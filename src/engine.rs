@@ -1172,6 +1172,13 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             state.phase = Phase::SwappingIdentity { player, target: None };
         }
 
+        TrainerEffect::ReducesRetreatCost(_) => {
+            unreachable!(
+                "a static effect is read wherever it applies, never dispatched \
+                 at play time — a Tool never reaches resolve_trainer at all"
+            )
+        }
+
         TrainerEffect::JaninesSecretArt => {
             state.phase = Phase::ChoosingJaninesTargets {
                 player,
@@ -1294,7 +1301,7 @@ fn retreat(state: &mut GameState, to: PokemonId) {
     let active = state.players[player.index()]
         .active
         .expect("retreating needs an Active");
-    let cost = state.pokemon_def(active).retreat_cost;
+    let cost = state.effective_retreat_cost(active);
 
     if cost == 0 {
         promote_from_retreat(state, player, to);
@@ -1303,7 +1310,7 @@ fn retreat(state: &mut GameState, to: PokemonId) {
     state.phase = Phase::DiscardingForRetreat {
         player,
         to,
-        remaining: cost,
+        remaining: cost as u8,
     };
 }
 

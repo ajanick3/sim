@@ -248,6 +248,10 @@ pub enum TrainerEffect {
     /// same damage, attachments, Special Conditions, and time in play.
     /// `Transformation Tome`.
     SwapBasicWithDiscard,
+    /// A static effect, read wherever Retreat Cost is read rather than
+    /// dispatched at play time — a Tool attaches and then does nothing
+    /// until read. `Air Balloon` is the first static effect built.
+    ReducesRetreatCost(u32),
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
