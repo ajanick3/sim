@@ -484,3 +484,65 @@ fn teal_mask_ogerpon_ex_is_admitted_from_the_artifact() {
         "at least one Teal Mask Ogerpon ex print should play"
     );
 }
+
+// --- Ticket 07: a Pokemon that returns to the deck ---
+
+#[test]
+fn draws_then_shuffles_itself_into_the_deck_from_the_bench() {
+    let ability = Ability {
+        name: "Run Away Draw",
+        effect: sim::card::AbilityEffect::OncePerTurnMayDrawThenShuffleSelfIntoDeck(3),
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let bench_card = deal_new_card(&mut state, player, carrier_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+    let before = state.player(player).hand.len();
+    let library_before = state.player(player).library.len();
+
+    apply(&mut state, Action::UseAbility { pokemon: bench_mon }).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), before + 3);
+    assert!(!state.player(player).bench.contains(&bench_mon), "left the Bench");
+    assert_eq!(
+        state.player(player).library.len(),
+        library_before - 3 + 1,
+        "3 drawn out, itself shuffled back in"
+    );
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn draws_then_shuffles_itself_from_active_promoting_from_bench() {
+    let ability = Ability {
+        name: "Run Away Draw",
+        effect: sim::card::AbilityEffect::OncePerTurnMayDrawThenShuffleSelfIntoDeck(3),
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let bench_card = deal_new_card(&mut state, player, carrier_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+
+    assert!(matches!(state.phase, Phase::Promoting { .. }));
+    apply(&mut state, Action::Promote { pokemon: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).active, Some(bench_mon));
+}
+
+#[test]
+fn dudunsparce_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Dudunsparce" && c.playable.is_some()),
+        "at least one Dudunsparce print should play"
+    );
+}

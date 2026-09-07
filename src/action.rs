@@ -969,6 +969,8 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     state.matches_filter(*c, crate::card::CardFilter::BasicEnergyOfType(kind))
                 })
             }
+            // Works the same from the Active Spot or the Bench.
+            crate::card::AbilityEffect::OncePerTurnMayDrawThenShuffleSelfIntoDeck(_) => true,
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_last_ditch_catch`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => false,
