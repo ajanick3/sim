@@ -155,5 +155,10 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // attack (Rapid-Fire Combo, a coin-flip-until-tails count) needed
     // a new AttackEffect too, since a card admits only once every
     // printed piece of it reads.
-    assert_eq!(admitted, 585, "coverage moves only on purpose");
+    // Meowth ex's Last-Ditch Catch (an Ability tied to a moment — the
+    // instant it is played from hand onto the Bench, not a standing
+    // choice) and its own attack, Tuck Tail (returns the attacker and
+    // its attachments to hand, the same "moves together" rule 22
+    // already keeps for a knockout) complete all 3 Meowth ex prints.
+    assert_eq!(admitted, 588, "coverage moves only on purpose");
 }

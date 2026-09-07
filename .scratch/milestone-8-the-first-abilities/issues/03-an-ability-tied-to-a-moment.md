@@ -1,23 +1,37 @@
-# An Ability tied to a moment, not the whole turn
+# An Ability tied to a moment
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
-`Meowth ex`'s Ability, "Last-Ditch Catch": *"Once during your turn, when
-you play this Pokémon from your hand onto your Bench, you may use this
-Ability. Search your deck for a Supporter card..."* 56 slots.
+`Meowth ex`'s Ability, "Last-Ditch Catch": *"Once during your turn,
+when you play this Pokémon from your hand onto your Bench, you may
+use this Ability. Search your deck for a Supporter card, reveal it,
+and put it into your hand. Then, shuffle your deck. You can't use
+more than 1 Ability that has 'Last-Ditch' in its name each turn."*
+56 slots.
 
-Every Ability this milestone has built so far may be used any time during
-the player's turn. This one may not: the window is the instant the Pokémon
-is placed onto the Bench, and closes the moment something else happens.
-`Action::PlayBasic` today ends with nothing left to decide; this ticket
-gives it somewhere to offer a choice right after, without making every
-ordinary placement stop and ask. Ticket 04 gives `Action::Evolve` the same
-shape of window for a different trigger — build this one narrow enough that
-the next ticket is an addition, not a rewrite.
+- [x] The trigger is tied to the play itself, not offered as a
+      standing `Action::UseAbility`
+- [x] `Limit::AbilityUsed` is shared with the standing-Ability shape —
+      a played trigger and a chosen one differ only in what opens the
+      choice, not in how the once-per-turn bookkeeping works
+- [x] `Meowth ex` plays
 
-- [ ] Placing a Basic that carries a triggered Ability offers it once, right
-      after, and never again once the turn moves on
-- [ ] Declining it is a real choice, not an oversight — the Ability is not
-      forced
-- [ ] `Meowth ex` plays: benching it offers the search for a Supporter
+Recorded in [ADR 0071](../../../docs/adr/0071-an-ability-tied-to-a-moment-hooks-its-trigger-site.md).
+
+## Resolution
+
+`AbilityEffect::WhenBenchedFromHandMaySearchSupporter`, excluded from
+`Action::UseAbility`'s own offering. A new `trigger_last_ditch_catch`
+hooks `Action::PlayBasic` right where `apply_risky_ruins` already
+reads a Stadium's own continuous effect, opening
+`Phase::DecidingToUseLastDitchCatch` only when a Supporter exists to
+find and the limit is unspent. Declining does not spend the limit.
+
+`Meowth ex`'s own attack, `Tuck Tail`, needed
+`AttackEffect::ReturnSelfAndAttachedToHand` too — the first attack
+effect to remove the attacker from play entirely, moving its whole
+card stack and attachments to hand together (the same "together" rule
+22 already keeps for a knockout) and opening `Phase::Promoting`.
+
+Admits all 3 Meowth ex prints. Coverage: `admitted` 585 -> 588.

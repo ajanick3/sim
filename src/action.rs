@@ -174,6 +174,11 @@ pub enum Action {
     /// when its own gates (whose turn, in the Active Spot, not
     /// already spent) all hold.
     UseAbility { pokemon: PokemonId },
+    /// Take this Supporter card from the library into hand, as part
+    /// of `Phase::DecidingToUseLastDitchCatch`.
+    TakeSupporterForLastDitchCatch { card: CardId },
+    /// Decline it — nothing else about this play changes.
+    DeclineLastDitchCatch,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -208,6 +213,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::SearchingLibraryToEvolveSelf { player, .. } => Some(player),
         Phase::TakingPokemonFromDiscard { player } => Some(player),
         Phase::DecidingToShuffleEnergyForBenchDamage { player, .. } => Some(player),
+        Phase::DecidingToUseLastDitchCatch { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -515,6 +521,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::DecidingToShuffleEnergyForBenchDamage { .. } => {
             actions.push(Action::AcceptShuffleEnergyForBenchDamage);
             actions.push(Action::DeclineShuffleEnergyForBenchDamage);
+            return actions;
+        }
+        Phase::DecidingToUseLastDitchCatch { player: whose, .. } => {
+            for card in &state.player(whose).library {
+                if state.matches_filter(*card, crate::card::CardFilter::TrainerOfKind(TrainerKind::Supporter)) {
+                    actions.push(Action::TakeSupporterForLastDitchCatch { card: *card });
+                }
+            }
+            actions.push(Action::DeclineLastDitchCatch);
             return actions;
         }
         Phase::MovingOpponentsEnergy { of, .. } => {
@@ -906,6 +921,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::OncePerTurnWhileActiveMayDrawCards(_) => {
                 side.active == Some(pokemon)
             }
+            // Triggered the moment this Pokémon is played from hand
+            // (`trigger_last_ditch_catch`), never a standing choice.
+            crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => false,
         };
         if eligible {
             actions.push(Action::UseAbility { pokemon });
@@ -1118,5 +1136,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
             format!("Use {}'s {}", state.pokemon_def(pokemon).name, ability.name)
         }
+        Action::TakeSupporterForLastDitchCatch { card } => {
+            format!("Take {} (Last-Ditch Catch)", state.def_of(card).name())
+        }
+        Action::DeclineLastDitchCatch => "Decline Last-Ditch Catch".to_string(),
     }
 }

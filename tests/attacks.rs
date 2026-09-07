@@ -1930,3 +1930,63 @@ fn zeraora_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv07-055").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Zeraora's Combat Thunder print should play");
 }
+
+// --- Beyond the spec: an attack returns the attacker itself to hand ---
+
+#[test]
+fn returns_the_attacker_and_its_attachments_to_hand() {
+    let attack = Attack {
+        name: "Tuck Tail",
+        cost: vec![Type::Colorless],
+        base_damage: 60,
+        inflicts: None,
+        effect: Some(AttackEffect::ReturnSelfAndAttachedToHand),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let attacker_card = state.pokemon(attacker).top_card();
+    let bench_card = deal_new_card(&mut state, player, defender_ex);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::Promoting { .. }));
+    apply(&mut state, Action::Promote { pokemon: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&attacker_card), "the card returns to hand");
+    assert_eq!(state.player(player).active, Some(bench_mon));
+}
+
+#[test]
+fn does_nothing_with_no_bench_to_promote() {
+    let attack = Attack {
+        name: "Tuck Tail",
+        cost: vec![Type::Colorless],
+        base_damage: 60,
+        inflicts: None,
+        effect: Some(AttackEffect::ReturnSelfAndAttachedToHand),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no Bench to promote from");
+    assert_eq!(state.player(player).active, Some(attacker), "stays put with no Bench");
+}
+
+#[test]
+fn meowth_ex_attack_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Meowth ex" && c.playable.is_some()),
+        "at least one Meowth ex print should play"
+    );
+}

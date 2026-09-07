@@ -337,6 +337,10 @@ pub enum Phase {
     /// since here the chooser and the board's owner differ.
     /// `Elgyem`'s `Slight Shift`.
     MovingOpponentsEnergy { chooser: PlayerId, of: PlayerId },
+    /// `player` just played `pokemon` from hand onto the Bench, and
+    /// its own Ability may search the library for a Supporter card.
+    /// `Meowth ex`'s `Last-Ditch Catch`.
+    DecidingToUseLastDitchCatch { player: PlayerId, pokemon: PokemonId },
     /// `player` used an attack that searches their own discard pile
     /// for up to `remaining` more copies of a named Pokémon to the
     /// Bench. `Duskull`'s `Come and Get You`.

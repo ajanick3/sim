@@ -697,6 +697,14 @@ pub enum AttackEffect {
     /// top of the attack's own printed base, for each heads flipped
     /// along the way. `Mega Kangaskhan ex`'s `Rapid-Fire Combo`.
     DamagePerCoinFlipUntilTails(u32),
+    /// Put the attacker itself, and every card attached to it, into
+    /// the owner's hand — the whole stack together, the same "moves
+    /// together" rule 22 already keeps for a knockout, but to hand
+    /// rather than discard. Opens `Phase::Promoting` when the owner
+    /// has a Bench to promote from; does nothing otherwise, since
+    /// there would be no Active left to leave. `Meowth ex`'s
+    /// `Tuck Tail`.
+    ReturnSelfAndAttachedToHand,
     /// Move an Energy from one of the opponent's Pokémon to another —
     /// the attacker's own choice of both ends, but on the opponent's
     /// board, unlike `TrainerEffect::MoveAttachedEnergy`'s own board.
@@ -791,6 +799,14 @@ pub enum AbilityEffect {
     /// target — the simplest shape an Ability comes in.
     /// `Mega Kangaskhan ex`'s `Run Errand`.
     OncePerTurnWhileActiveMayDrawCards(u32),
+    /// Once during the player's own turn, the moment this Pokémon is
+    /// played from hand onto the Bench, the player may search their
+    /// library for a Supporter card and take it to hand — opens
+    /// `Phase::DecidingToUseLastDitchCatch`. Triggered at the moment
+    /// of the play itself, not offered later as a standing choice the
+    /// way `OncePerTurnWhileActiveMayDrawCards` is.
+    /// `Meowth ex`'s `Last-Ditch Catch`.
+    WhenBenchedFromHandMaySearchSupporter,
 }
 
 /// A basic Energy card as printed.

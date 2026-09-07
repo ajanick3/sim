@@ -36,6 +36,15 @@ one new thing to it.
   keyed by the player and the Ability's own printed name, not by
   which Pokémon carries it, matching `Run Errand`'s own restriction
   text. See ADR 0069.
+- Ticket 02: `N's Zoroark ex` is refused outright — its own attack
+  needs the same attack-copying mechanism `Seek Inspiration` was
+  already refused for. The cost-gated-Ability primitive is deferred:
+  no sample-deck card pairs one with a buildable attack. See ADR 0070.
+- Ticket 03: a play-triggered Ability hooks its own trigger site
+  directly (`Action::PlayBasic`, the same place `apply_risky_ruins`
+  already reads from) rather than opening through `Action::UseAbility`.
+  It shares `Limit::AbilityUsed` with the standing shape unchanged.
+  See ADR 0071.
 
 ## Fog
 

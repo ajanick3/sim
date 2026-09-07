@@ -10,7 +10,7 @@ use sim::state::{GameState, Phase};
 
 /// A game where the first player's Active carries the Ability under
 /// test, and the second player's Active is a plain punching bag.
-fn game(ability: Ability, seed: u64) -> GameState {
+fn game(ability: Ability, seed: u64) -> (GameState, sim::ids::CardDefId) {
     let mut db = CardDb::new();
     let carrier = db.add(CardDef::Pokemon(Pokemon {
         print_id: "test-carrier",
@@ -82,7 +82,15 @@ fn game(ability: Ability, seed: u64) -> GameState {
         let first = legal_actions(&state)[0];
         apply(&mut state, first).unwrap();
     }
-    state
+    (state, carrier)
+}
+
+/// A physical card of `def`, for a definition that was never part of
+/// the deck. Placed nowhere; the caller pushes it where the test needs.
+fn deal_new_card(state: &mut GameState, player: sim::ids::PlayerId, def: sim::ids::CardDefId) -> sim::ids::CardId {
+    let card = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def, owner: player });
+    card
 }
 
 // --- Ticket 01: an Ability a player opts into ---
@@ -93,7 +101,7 @@ fn draws_once_while_the_carrier_is_active() {
         name: "Run Errand",
         effect: sim::card::AbilityEffect::OncePerTurnWhileActiveMayDrawCards(2),
     };
-    let mut state = game(ability, 3);
+    let (mut state, _carrier_def) = game(ability, 3);
     let player = state.current;
     let carrier = state.player(player).active.unwrap();
     let before = state.player(player).hand.len();
@@ -110,7 +118,7 @@ fn cannot_use_the_ability_a_second_time_the_same_turn() {
         name: "Run Errand",
         effect: sim::card::AbilityEffect::OncePerTurnWhileActiveMayDrawCards(2),
     };
-    let mut state = game(ability, 3);
+    let (mut state, _carrier_def) = game(ability, 3);
     let player = state.current;
     let carrier = state.player(player).active.unwrap();
 
@@ -126,7 +134,7 @@ fn cannot_use_the_ability_from_the_bench() {
         name: "Run Errand",
         effect: sim::card::AbilityEffect::OncePerTurnWhileActiveMayDrawCards(2),
     };
-    let mut state = game(ability, 3);
+    let (mut state, _carrier_def) = game(ability, 3);
     let player = state.current;
     let active_card = state.pokemon(state.player(player).active.unwrap()).top_card();
     let carrier_def = state.cards[active_card.index()].def;
@@ -147,7 +155,7 @@ fn cannot_use_the_ability_on_the_opponents_turn() {
         name: "Run Errand",
         effect: sim::card::AbilityEffect::OncePerTurnWhileActiveMayDrawCards(2),
     };
-    let mut state = game(ability, 3);
+    let (mut state, _carrier_def) = game(ability, 3);
     let owner = state.current;
     let carrier = state.player(owner).active.unwrap();
 
@@ -171,5 +179,132 @@ fn mega_kangaskhan_ex_is_admitted_from_the_artifact() {
     assert!(
         import.cards.iter().any(|c| c.name == "Mega Kangaskhan ex" && c.playable.is_some()),
         "at least one Mega Kangaskhan ex print should play"
+    );
+}
+
+// --- Ticket 03: an Ability tied to a moment ---
+
+#[test]
+fn benching_from_hand_offers_the_search() {
+    let ability = Ability {
+        name: "Last-Ditch Catch",
+        effect: sim::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter,
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+
+    // A Supporter to find, and a second copy of the carrier in hand.
+    let supporter_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-supporter",
+        name: "Test Supporter",
+        kind: sim::card::TrainerKind::Supporter,
+        requirement: None,
+        effect: sim::card::TrainerEffect::MoveAttachedEnergy,
+    }));
+    let supporter = deal_new_card(&mut state, player, supporter_def);
+    state.players[player.index()].library.push(supporter);
+    let second_copy = deal_new_card(&mut state, player, carrier_def);
+    state.players[player.index()].hand.push(second_copy);
+
+    apply(&mut state, Action::PlayBasic { card: second_copy }).unwrap();
+
+    assert!(matches!(state.phase, Phase::DecidingToUseLastDitchCatch { .. }));
+    apply(
+        &mut state,
+        Action::TakeSupporterForLastDitchCatch { card: supporter },
+    )
+    .unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&supporter));
+}
+
+#[test]
+fn declining_the_search_leaves_the_library_alone() {
+    let ability = Ability {
+        name: "Last-Ditch Catch",
+        effect: sim::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter,
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let supporter_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-supporter",
+        name: "Test Supporter",
+        kind: sim::card::TrainerKind::Supporter,
+        requirement: None,
+        effect: sim::card::TrainerEffect::MoveAttachedEnergy,
+    }));
+    let supporter = deal_new_card(&mut state, player, supporter_def);
+    state.players[player.index()].library.push(supporter);
+    let second_copy = deal_new_card(&mut state, player, carrier_def);
+    state.players[player.index()].hand.push(second_copy);
+
+    apply(&mut state, Action::PlayBasic { card: second_copy }).unwrap();
+    apply(&mut state, Action::DeclineLastDitchCatch).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).library.contains(&supporter));
+}
+
+#[test]
+fn no_supporter_in_library_opens_no_phase() {
+    let ability = Ability {
+        name: "Last-Ditch Catch",
+        effect: sim::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter,
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let second_copy = deal_new_card(&mut state, player, carrier_def);
+    state.players[player.index()].hand.push(second_copy);
+
+    apply(&mut state, Action::PlayBasic { card: second_copy }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "no Supporter in the library");
+}
+
+#[test]
+fn does_not_trigger_a_second_time_the_same_turn() {
+    let ability = Ability {
+        name: "Last-Ditch Catch",
+        effect: sim::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter,
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let supporter_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-supporter",
+        name: "Test Supporter",
+        kind: sim::card::TrainerKind::Supporter,
+        requirement: None,
+        effect: sim::card::TrainerEffect::MoveAttachedEnergy,
+    }));
+    let first_supporter = deal_new_card(&mut state, player, supporter_def);
+    let second_supporter = deal_new_card(&mut state, player, supporter_def);
+    state.players[player.index()].library.push(first_supporter);
+    state.players[player.index()].library.push(second_supporter);
+    let second_copy = deal_new_card(&mut state, player, carrier_def);
+    let third_copy = deal_new_card(&mut state, player, carrier_def);
+    state.players[player.index()].hand.push(second_copy);
+    state.players[player.index()].hand.push(third_copy);
+
+    apply(&mut state, Action::PlayBasic { card: second_copy }).unwrap();
+    apply(
+        &mut state,
+        Action::TakeSupporterForLastDitchCatch { card: first_supporter },
+    )
+    .unwrap();
+
+    apply(&mut state, Action::PlayBasic { card: third_copy }).unwrap();
+    assert_eq!(state.phase, Phase::Main, "already used a Last-Ditch Ability this turn");
+}
+
+#[test]
+fn meowth_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Meowth ex" && c.playable.is_some()),
+        "at least one Meowth ex print should play"
     );
 }
