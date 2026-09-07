@@ -309,3 +309,66 @@ fn energy_retrieval_takes_up_to_two_from_the_discard() {
     assert!(state.player(player).hand.contains(&e1));
     assert!(state.player(player).hand.contains(&e2));
 }
+
+// --- Ticket 02: Energy Recycler ---
+
+fn with_energy_recycler(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-energy-recycler",
+        name: "Energy Recycler",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Discard,
+            slots: vec![Slot {
+                filter: CardFilter::BasicEnergy,
+                to: Destination::Zone(Zone::Library),
+                limit: 5,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn energy_recycler_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Energy Recycler")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Energy Recycler should play");
+}
+
+#[test]
+fn energy_recycler_shuffles_up_to_five_from_discard_into_the_library() {
+    let (set, card) = with_energy_recycler(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    let e1 = deal_to_discard(&mut state, player, set.energy);
+    let e2 = deal_to_discard(&mut state, player, set.energy);
+    let library_before = state.player(player).library.len();
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    apply(&mut state, Action::TakeCard { card: e1 }).unwrap();
+    apply(&mut state, Action::TakeCard { card: e2 }).unwrap();
+    assert!(
+        !state.player(player).discard.contains(&e1) && !state.player(player).discard.contains(&e2),
+        "both energy left the discard"
+    );
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).library.len(), library_before + 2);
+    assert!(state.player(player).library.contains(&e1));
+    assert!(state.player(player).library.contains(&e2));
+}
