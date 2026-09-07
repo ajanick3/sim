@@ -24,7 +24,26 @@ fn every_deck_file(dir: &Path, out: &mut Vec<std::path::PathBuf>) {
     }
 }
 
+/// The GitHub line a built card's own logic sits at, if the card has a
+/// named entry in `src/import.rs` (a Trainer's `known_trainer` arm, or a
+/// Pokémon's `known_attack` arm). A card with no such entry — a plain
+/// Pokémon with no attack effect to encode — links to `read_card`, the
+/// general mechanism that admits it instead.
+fn source_line(import_rs: &[&str], name: &str) -> usize {
+    let trainer_arm = format!("\"{name}\" =>");
+    let attack_arm = format!("(\"{name}\",");
+    for (index, line) in import_rs.iter().enumerate() {
+        if line.contains(&trainer_arm) || line.contains(&attack_arm) {
+            return index + 1;
+        }
+    }
+    234 // fn read_card: the general admission path a plain card takes.
+}
+
 fn main() {
+    let import_rs_text = std::fs::read_to_string("src/import.rs").expect("import.rs is committed");
+    let import_rs: Vec<&str> = import_rs_text.lines().collect();
+
     let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
     let import = load(&json).unwrap_or_else(|error| {
         eprintln!("data/cards.json: {error}");
@@ -90,7 +109,13 @@ fn main() {
         println!("| --- | --- |");
         for name in names {
             let mark = if built.contains(name) { "✅" } else { "❌" };
-            println!("| {name} | {mark} |");
+            let cell = if built.contains(name) {
+                let line = source_line(&import_rs, name);
+                format!("[{name}](src/import.rs#L{line})")
+            } else {
+                name.clone()
+            };
+            println!("| {cell} | {mark} |");
         }
         println!();
     }

@@ -130,6 +130,9 @@ pub enum Action {
     /// Evolve a Basic in play straight into the named Stage 2 from hand,
     /// skipping the Stage 1 between them.
     EvolveSkippingOneStage { card: CardId, target: PokemonId },
+    /// Put one damage counter on this Benched Pokémon, as part of
+    /// `Phase::DistributingDamageCounters`.
+    PlaceDamageCounter { target: PokemonId },
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -156,6 +159,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::SwappingIdentity { player, .. } => Some(player),
         Phase::MovingEnergyForHandheldFan { chooser, .. } => Some(chooser),
         Phase::AttachingFromDiscardForPowerglass { player } => Some(player),
+        Phase::DistributingDamageCounters { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
@@ -406,6 +410,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::DeclinePowerglass);
+            return actions;
+        }
+        Phase::DistributingDamageCounters { player: whose, .. } => {
+            let opponent = whose.opponent();
+            for pokemon in &state.player(opponent).bench {
+                actions.push(Action::PlaceDamageCounter { target: *pokemon });
+            }
             return actions;
         }
         Phase::MovingEnergyForHandheldFan { attacker, .. } => {
@@ -875,6 +886,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::DrawTwoForTeamRocketsFactory => "Draw 2 (Team Rocket's Factory)".to_string(),
         Action::UseLumioseCity => "Search for a Basic Pokémon (Lumiose City)".to_string(),
+        Action::PlaceDamageCounter { target } => {
+            format!("Place a damage counter on {}", state.pokemon_def(target).name)
+        }
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
         }

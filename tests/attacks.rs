@@ -654,3 +654,68 @@ fn ns_zekrom_is_admitted_from_the_artifact() {
         "at least one N's Zekrom print should play"
     );
 }
+
+// --- Ticket 07: damage to a Benched Pokémon ---
+
+#[test]
+fn distributes_damage_counters_across_the_opponents_bench() {
+    let attack = Attack {
+        name: "Phantom Dive",
+        cost: vec![Type::Colorless],
+        base_damage: 50,
+        inflicts: None,
+        effect: Some(AttackEffect::DamageCountersToOpponentBenchAnyWay(6)),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let bench_card_1 = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon_1 = state.put_into_play(opponent, bench_card_1);
+    state.players[opponent.index()].bench.push(bench_mon_1);
+    let bench_card_2 = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon_2 = state.put_into_play(opponent, bench_card_2);
+    state.players[opponent.index()].bench.push(bench_mon_2);
+
+    pay_and_attack(&mut state);
+    assert!(matches!(state.phase, Phase::DistributingDamageCounters { .. }));
+
+    // Split: 4 counters on one, 2 on the other.
+    for _ in 0..4 {
+        apply(&mut state, Action::PlaceDamageCounter { target: bench_mon_1 }).unwrap();
+    }
+    for _ in 0..2 {
+        apply(&mut state, Action::PlaceDamageCounter { target: bench_mon_2 }).unwrap();
+    }
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(bench_mon_1).damage, 40);
+    assert_eq!(state.pokemon(bench_mon_2).damage, 20);
+}
+
+#[test]
+fn distributing_damage_counters_does_nothing_with_an_empty_bench() {
+    let attack = Attack {
+        name: "Phantom Dive",
+        cost: vec![Type::Colorless],
+        base_damage: 50,
+        inflicts: None,
+        effect: Some(AttackEffect::DamageCountersToOpponentBenchAnyWay(6)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no Bench to place counters on");
+}
+
+#[test]
+fn dragapult_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Dragapult ex" && c.playable.is_some()),
+        "at least one Dragapult ex print should play"
+    );
+}

@@ -821,6 +821,25 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             );
         }
 
+        Action::PlaceDamageCounter { target } => {
+            let (player, remaining) = match state.phase {
+                Phase::DistributingDamageCounters { player, remaining } => (player, remaining),
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[target.index()].damage += 10;
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} takes a damage counter."));
+            if remaining <= 1 {
+                state.phase = Phase::Main;
+                settle(state);
+            } else {
+                state.phase = Phase::DistributingDamageCounters {
+                    player,
+                    remaining: remaining - 1,
+                };
+            }
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1570,6 +1589,15 @@ fn resolve_attack_effect(
             state.own_next_turn_restriction = Some((attacker, effect, false));
             let name = state.pokemon_def(attacker).name;
             state.log.push(format!("{name} cannot attack next turn."));
+        }
+        crate::card::AttackEffect::DamageCountersToOpponentBenchAnyWay(count) => {
+            let owner = state.pokemon(attacker).owner;
+            if !state.player(owner.opponent()).bench.is_empty() {
+                state.phase = Phase::DistributingDamageCounters {
+                    player: owner,
+                    remaining: count,
+                };
+            }
         }
     }
 }

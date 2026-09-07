@@ -87,129 +87,129 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 
 | Card | Status |
 | --- | --- |
-| AZ's Tranquility | ✅ |
-| Black Belt's Training | ✅ |
-| Boss's Orders | ✅ |
+| [AZ's Tranquility](src/import.rs#L682) | ✅ |
+| [Black Belt's Training](src/import.rs#L690) | ✅ |
+| [Boss's Orders](src/import.rs#L362) | ✅ |
 | Briar | ❌ |
-| Brock's Scouting | ✅ |
-| Ciphermaniac's Codebreaking | ✅ |
-| Crispin | ✅ |
-| Cyrano | ✅ |
-| Dawn | ✅ |
-| Eri | ✅ |
-| Gladion's Final Battle | ✅ |
-| Gwynn | ✅ |
-| Hilda | ✅ |
-| Janine's Secret Art | ✅ |
-| Judge | ✅ |
-| Kieran | ✅ |
-| Lana's Aid | ✅ |
-| Lillie's Determination | ✅ |
-| Morty's Conviction | ✅ |
-| N's Plan | ✅ |
-| Rosa's Encouragement | ✅ |
-| Rust Syndicate Grunt | ✅ |
-| Surfer | ✅ |
-| Team Rocket's Petrel | ✅ |
-| Wally's Compassion | ✅ |
-| Xerosic's Machinations | ✅ |
+| [Brock's Scouting](src/import.rs#L720) | ✅ |
+| [Ciphermaniac's Codebreaking](src/import.rs#L622) | ✅ |
+| [Crispin](src/import.rs#L528) | ✅ |
+| [Cyrano](src/import.rs#L414) | ✅ |
+| [Dawn](src/import.rs#L494) | ✅ |
+| [Eri](src/import.rs#L713) | ✅ |
+| [Gladion's Final Battle](src/import.rs#L694) | ✅ |
+| [Gwynn](src/import.rs#L428) | ✅ |
+| [Hilda](src/import.rs#L471) | ✅ |
+| [Janine's Secret Art](src/import.rs#L744) | ✅ |
+| [Judge](src/import.rs#L363) | ✅ |
+| [Kieran](src/import.rs#L698) | ✅ |
+| [Lana's Aid](src/import.rs#L648) | ✅ |
+| [Lillie's Determination](src/import.rs#L364) | ✅ |
+| [Morty's Conviction](src/import.rs#L708) | ✅ |
+| [N's Plan](src/import.rs#L666) | ✅ |
+| [Rosa's Encouragement](src/import.rs#L668) | ✅ |
+| [Rust Syndicate Grunt](src/import.rs#L662) | ✅ |
+| [Surfer](src/import.rs#L686) | ✅ |
+| [Team Rocket's Petrel](src/import.rs#L552) | ✅ |
+| [Wally's Compassion](src/import.rs#L743) | ✅ |
+| [Xerosic's Machinations](src/import.rs#L712) | ✅ |
 
 ### Items (24/28 built)
 
 | Card | Status |
 | --- | --- |
-| Buddy-Buddy Poffin | ✅ |
-| Bug Catching Set | ✅ |
-| Crushing Hammer | ✅ |
-| Dusk Ball | ✅ |
-| Energy Recycler | ✅ |
-| Energy Retrieval | ✅ |
-| Energy Search | ✅ |
-| Energy Switch | ✅ |
+| [Buddy-Buddy Poffin](src/import.rs#L400) | ✅ |
+| [Bug Catching Set](src/import.rs#L608) | ✅ |
+| [Crushing Hammer](src/import.rs#L399) | ✅ |
+| [Dusk Ball](src/import.rs#L774) | ✅ |
+| [Energy Recycler](src/import.rs#L856) | ✅ |
+| [Energy Retrieval](src/import.rs#L759) | ✅ |
+| [Energy Search](src/import.rs#L745) | ✅ |
+| [Energy Switch](src/import.rs#L470) | ✅ |
 | Enhanced Hammer | ❌ |
 | Glass Trumpet | ❌ |
-| Hand Trimmer | ✅ |
-| Jumbo Ice Cream | ✅ |
-| N's PP Up | ✅ |
-| Night Stretcher | ✅ |
-| Prime Catcher | ✅ |
-| Rare Candy | ✅ |
-| Sacred Ash | ✅ |
-| Secret Box | ✅ |
-| Special Red Card | ✅ |
-| Strange Timepiece | ✅ |
-| Switch | ✅ |
-| Team Rocket's Transceiver | ✅ |
+| [Hand Trimmer](src/import.rs#L773) | ✅ |
+| [Jumbo Ice Cream](src/import.rs#L644) | ✅ |
+| [N's PP Up](src/import.rs#L566) | ✅ |
+| [Night Stretcher](src/import.rs#L371) | ✅ |
+| [Prime Catcher](src/import.rs#L775) | ✅ |
+| [Rare Candy](src/import.rs#L551) | ✅ |
+| [Sacred Ash](src/import.rs#L442) | ✅ |
+| [Secret Box](src/import.rs#L805) | ✅ |
+| [Special Red Card](src/import.rs#L524) | ✅ |
+| [Strange Timepiece](src/import.rs#L776) | ✅ |
+| [Switch](src/import.rs#L643) | ✅ |
+| [Team Rocket's Transceiver](src/import.rs#L842) | ✅ |
 | Tera Orb | ❌ |
 | Tool Scrapper | ❌ |
-| Transformation Tome | ✅ |
-| Ultra Ball | ✅ |
-| Unfair Stamp | ✅ |
-| Wondrous Patch | ✅ |
+| [Transformation Tome](src/import.rs#L801) | ✅ |
+| [Ultra Ball](src/import.rs#L456) | ✅ |
+| [Unfair Stamp](src/import.rs#L636) | ✅ |
+| [Wondrous Patch](src/import.rs#L580) | ✅ |
 
 ### Tools (9/9 built)
 
 | Card | Status |
 | --- | --- |
-| Air Balloon | ✅ |
-| Binding Mochi | ✅ |
-| Brave Bangle | ✅ |
-| Handheld Fan | ✅ |
-| Hero's Cape | ✅ |
-| Lillie's Pearl | ✅ |
-| Lucky Helmet | ✅ |
-| Powerglass | ✅ |
-| Punk Helmet | ✅ |
+| [Air Balloon](src/import.rs#L777) | ✅ |
+| [Binding Mochi](src/import.rs#L780) | ✅ |
+| [Brave Bangle](src/import.rs#L779) | ✅ |
+| [Handheld Fan](src/import.rs#L784) | ✅ |
+| [Hero's Cape](src/import.rs#L778) | ✅ |
+| [Lillie's Pearl](src/import.rs#L781) | ✅ |
+| [Lucky Helmet](src/import.rs#L783) | ✅ |
+| [Powerglass](src/import.rs#L785) | ✅ |
+| [Punk Helmet](src/import.rs#L782) | ✅ |
 
 ### Stadiums (9/13 built)
 
 | Card | Status |
 | --- | --- |
-| Academy at Night | ✅ |
+| [Academy at Night](src/import.rs#L788) | ✅ |
 | Area Zero Underdepths | ❌ |
 | Battle Cage | ❌ |
-| Festival Grounds | ✅ |
-| Forest of Vitality | ✅ |
-| Gravity Mountain | ✅ |
-| Jamming Tower | ✅ |
-| Lumiose City | ✅ |
-| N's Castle | ✅ |
+| [Festival Grounds](src/import.rs#L797) | ✅ |
+| [Forest of Vitality](src/import.rs#L796) | ✅ |
+| [Gravity Mountain](src/import.rs#L786) | ✅ |
+| [Jamming Tower](src/import.rs#L794) | ✅ |
+| [Lumiose City](src/import.rs#L793) | ✅ |
+| [N's Castle](src/import.rs#L787) | ✅ |
 | Nighttime Mine | ❌ |
-| Risky Ruins | ✅ |
-| Team Rocket's Factory | ✅ |
+| [Risky Ruins](src/import.rs#L795) | ✅ |
+| [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (24/95 built)
+### Pokémon (25/95 built)
 
 | Card | Status |
 | --- | --- |
 | Abra | ❌ |
 | Alakazam | ❌ |
 | Annihilape | ❌ |
-| Applin | ✅ |
-| Bayleef | ✅ |
-| Beldum | ✅ |
+| [Applin](src/import.rs#L982) | ✅ |
+| [Bayleef](src/import.rs#L234) | ✅ |
+| [Beldum](src/import.rs#L234) | ✅ |
 | Blaziken ex | ❌ |
 | Bloodmoon Ursaluna ex | ❌ |
 | Brute Bonnet | ❌ |
 | Budew | ❌ |
-| Buneary | ✅ |
-| Carvanha | ✅ |
+| [Buneary](src/import.rs#L234) | ✅ |
+| [Carvanha](src/import.rs#L951) | ✅ |
 | Celebi | ❌ |
 | Chi-Yu | ❌ |
 | Chien-Pao | ❌ |
-| Chikorita | ✅ |
+| [Chikorita](src/import.rs#L234) | ✅ |
 | Cofagrigus | ❌ |
-| Combusken | ✅ |
+| [Combusken](src/import.rs#L234) | ✅ |
 | Crustle | ❌ |
 | Dedenne | ❌ |
 | Dipplin | ❌ |
-| Dragapult ex | ❌ |
+| [Dragapult ex](src/import.rs#L986) | ✅ |
 | Drakloak | ❌ |
-| Dreepy | ✅ |
-| Drilbur | ✅ |
+| [Dreepy](src/import.rs#L234) | ✅ |
+| [Drilbur](src/import.rs#L234) | ✅ |
 | Dudunsparce | ❌ |
-| Dudunsparce ex | ✅ |
+| [Dudunsparce ex](src/import.rs#L964) | ✅ |
 | Dunsparce | ❌ |
 | Dusclops | ❌ |
 | Dusknoir | ❌ |
@@ -222,8 +222,8 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Flutter Mane | ❌ |
 | Genesect | ❌ |
 | Genesect ex | ❌ |
-| Goldeen | ✅ |
-| Grookey | ✅ |
+| [Goldeen](src/import.rs#L234) | ✅ |
+| [Grookey](src/import.rs#L234) | ✅ |
 | Hoothoot | ❌ |
 | Hydrapple ex | ❌ |
 | Iron Crown ex | ❌ |
@@ -243,40 +243,40 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Meganium | ❌ |
 | Meowth ex | ❌ |
 | Metagross | ❌ |
-| Metang | ✅ |
+| [Metang](src/import.rs#L234) | ✅ |
 | Moltres | ❌ |
 | Munkidori | ❌ |
 | N's Darmanitan | ❌ |
-| N's Darumaka | ✅ |
-| N's Reshiram | ✅ |
-| N's Zekrom | ✅ |
+| [N's Darumaka](src/import.rs#L234) | ✅ |
+| [N's Reshiram](src/import.rs#L958) | ✅ |
+| [N's Zekrom](src/import.rs#L970) | ✅ |
 | N's Zoroark ex | ❌ |
-| N's Zorua | ✅ |
+| [N's Zorua](src/import.rs#L234) | ✅ |
 | Noctowl | ❌ |
-| Paldean Tauros | ✅ |
-| Passimian | ✅ |
+| [Paldean Tauros](src/import.rs#L954) | ✅ |
+| [Passimian](src/import.rs#L967) | ✅ |
 | Patrat | ❌ |
 | Pecharunt | ❌ |
 | Pecharunt ex | ❌ |
 | Psyduck | ❌ |
 | Rabsca | ❌ |
 | Raging Bolt ex | ❌ |
-| Rellor | ✅ |
+| [Rellor](src/import.rs#L952) | ✅ |
 | Seaking | ❌ |
 | Shaymin | ❌ |
 | Slowking | ❌ |
-| Slowpoke | ✅ |
+| [Slowpoke](src/import.rs#L234) | ✅ |
 | Smoochum | ❌ |
 | Stunfisk | ❌ |
-| Tapu Bulu | ✅ |
+| [Tapu Bulu](src/import.rs#L953) | ✅ |
 | Tatsugiri | ❌ |
 | Teal Mask Ogerpon ex | ❌ |
 | Thwackey | ❌ |
-| Torchic | ✅ |
+| [Torchic](src/import.rs#L234) | ✅ |
 | Toxel | ❌ |
 | Toxtricity | ❌ |
 | Wellspring Mask Ogerpon ex | ❌ |
-| Yveltal | ✅ |
+| [Yveltal](src/import.rs#L983) | ✅ |
 | Zeraora | ❌ |
 
 ## The documents
