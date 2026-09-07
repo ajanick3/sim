@@ -551,6 +551,13 @@ pub enum AttackEffect {
     /// any Tool or Stadium bonus still apply to the total, the same as
     /// a plain attack's damage.
     DamagePerCount(Count, u32),
+    /// This attack's damage skips Weakness, Resistance, and any other
+    /// effect on the defender's own side — read in `attack`, which
+    /// calls a variant of the damage order that omits step 33 entirely
+    /// rather than `damage_dealt` reading this itself; `damage_dealt`
+    /// stays the public, unconditioned order every existing caller
+    /// (including several tests) already depends on.
+    IgnoresDefendersEffects,
 }
 
 /// What `AttackEffect::DamagePerCount` counts.

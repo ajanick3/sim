@@ -307,3 +307,131 @@ fn paldean_tauros_is_admitted_from_the_artifact() {
         .expect("the artifact holds this card");
     assert!(card.playable.is_some(), "Paldean Tauros should play");
 }
+
+// --- Ticket 03: damage that ignores the defender's own effects ---
+
+/// A game like `game`, but the defender prints a Weakness to Colorless
+/// (the attacker's own type), so Weakness doubling is observable.
+fn game_with_weak_defender(attacker_attack: Attack, seed: u64) -> GameState {
+    let mut db = CardDb::new();
+    let attacker_mon = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-attacker-w",
+        name: "Attackmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        attacks: vec![attacker_attack],
+    }));
+    let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-defender-w",
+        name: "Defendmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: Some(Type::Colorless),
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-colorless-energy-w",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+    }));
+
+    let mut attacker_deck = vec![attacker_mon; 4];
+    while attacker_deck.len() < 60 {
+        attacker_deck.push(energy);
+    }
+    let mut defender_deck = vec![defender_mon; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(energy);
+    }
+    let mut state = GameState::new(
+        db,
+        [attacker_deck, defender_deck],
+        Box::new(SeededRng::new(seed)),
+    );
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    state
+}
+
+#[test]
+fn ignores_defenders_effects_skips_weakness() {
+    let attack = Attack {
+        name: "Destructive Drill",
+        cost: vec![Type::Colorless],
+        base_damage: 100,
+        inflicts: None,
+        effect: Some(AttackEffect::IgnoresDefendersEffects),
+    };
+    let mut state = game_with_weak_defender(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(
+        state.pokemon(defender).damage, 100,
+        "Weakness would double this to 200, but is one of the ignored effects"
+    );
+}
+
+#[test]
+fn without_the_effect_weakness_still_applies() {
+    let attack = Attack {
+        name: "Plain Hit",
+        cost: vec![Type::Colorless],
+        base_damage: 100,
+        inflicts: None,
+        effect: None,
+    };
+    let mut state = game_with_weak_defender(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 200, "Weakness doubles it");
+}
+
+#[test]
+fn dudunsparce_ex_is_admitted_from_the_artifact() {
+    // Its other attack (Tenacious Tail) was matched in ticket 02; this
+    // ticket's Destructive Drill is the second, completing the print.
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Dudunsparce ex")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Dudunsparce ex should play");
+}
