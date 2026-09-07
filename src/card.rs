@@ -688,6 +688,11 @@ pub enum AttackEffect {
     /// `BonusDamageIfDefenderIsEx`, read against `Stage` instead of
     /// prize value. `Paldean Tauros`'s `Spirited Tackle`.
     BonusDamageIfDefenderIsStage(Stage, u32),
+    /// Flip this many coins; this much damage for each heads. Read
+    /// once, the same pre-`damage_dealt_with` slot `DamagePerCount`
+    /// already occupies, but counted from flips rather than a board
+    /// fact. `Combusken`'s `Double Kick`.
+    DamagePerCoinFlipHeads { flips: u32, per_head: u32 },
 }
 
 /// What `AttackEffect::DamagePerCount` counts.

@@ -139,5 +139,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Paldean Tauros's Spirited Tackle (BonusDamageIfDefenderIsStage,
     // the mirror of BonusDamageIfDefenderIsEx) admits its sv08-018
     // print.
-    assert_eq!(admitted, 576, "coverage moves only on purpose");
+    // Combusken's Double Kick (damage per heads across several coin
+    // flips, the same pre-damage slot DamagePerCount already
+    // occupies) admits its sv10-041 print.
+    assert_eq!(admitted, 577, "coverage moves only on purpose");
 }
