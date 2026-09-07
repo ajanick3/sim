@@ -71,6 +71,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // multipliers take it up 5 more: 3 of N's Reshiram, 1 of Passimian,
     // and 1 of Paldean Tauros (me02-048, both its attacks now read).
     // Ignoring the defender's own effects completes Dudunsparce ex
-    // (2 prints): its other attack already read from ticket 02.
-    assert_eq!(admitted, 526, "coverage moves only on purpose");
+    // (2 prints): its other attack already read from ticket 02. A
+    // direct or coin-flipped Special Condition, and a coin-flipped
+    // damage bonus, admit Applin's sv06-017 print (its only attack).
+    assert_eq!(admitted, 527, "coverage moves only on purpose");
 }
