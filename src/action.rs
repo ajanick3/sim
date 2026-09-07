@@ -70,6 +70,10 @@ pub enum Action {
     /// Pick the first (`true`) or second (`false`) of a card's two named
     /// effects. Only the one picked ever runs.
     ChooseOption { first: bool },
+    /// Discard one card from a hand `Phase::DiscardingFromHand` names.
+    DiscardFromHand { card: CardId },
+    /// Stop discarding from that hand before the limit is spent.
+    FinishDiscardingFromHand,
     /// Evolve a Basic in play straight into the named Stage 2 from hand,
     /// skipping the Stage 1 between them.
     EvolveSkippingOneStage { card: CardId, target: PokemonId },
@@ -92,6 +96,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::MovingEnergyFromBenchToActive { player, .. } => Some(player),
         Phase::HealingChosen { player, .. } => Some(player),
         Phase::ChoosingOneOf { player, .. } => Some(player),
+        Phase::DiscardingFromHand { chooser, .. } => Some(chooser),
         Phase::EvolvingWithRareCandy { player } => Some(player),
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::Checkup { player } => Some(player),
@@ -287,6 +292,17 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::ChoosingOneOf { .. } => {
             actions.push(Action::ChooseOption { first: true });
             actions.push(Action::ChooseOption { first: false });
+            return actions;
+        }
+        Phase::DiscardingFromHand { of, filter, remaining, .. } => {
+            if remaining > 0 {
+                for card in &state.player(of).hand {
+                    if state.matches_filter(*card, filter) {
+                        actions.push(Action::DiscardFromHand { card: *card });
+                    }
+                }
+            }
+            actions.push(Action::FinishDiscardingFromHand);
             return actions;
         }
         Phase::DiscardingOpponentEnergy { of, .. } => {
@@ -555,6 +571,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::ChooseOption { first } => {
             format!("Choose the {} option", if first { "first" } else { "second" })
         }
+        Action::DiscardFromHand { card } => {
+            format!("Discard {} from that hand", state.def_of(card).name())
+        }
+        Action::FinishDiscardingFromHand => "Stop discarding from that hand".to_string(),
         Action::EvolveSkippingOneStage { card, target } => format!(
             "Use Rare Candy: evolve {} into {}",
             state.pokemon_def(target).name,

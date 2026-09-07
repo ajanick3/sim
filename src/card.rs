@@ -280,6 +280,13 @@ pub enum TrainerEffect {
     /// `Morty's Conviction` is the first draw counted from the board
     /// rather than a fixed number.
     DrawPerOpponentBenched,
+    /// The opponent discards, their own choice, until their hand holds
+    /// this many cards. `Xerosic's Machinations`.
+    OpponentDiscardsDownTo(u32),
+    /// The player discards up to `limit` cards matching `filter` from the
+    /// opponent's hand, their own choice of which. `Eri`'s filter is an
+    /// Item card; nothing before it read a zone the opponent controls.
+    DiscardFromOpponentsHand { filter: CardFilter, limit: u32 },
 }
 
 /// What a card demands before it may be played at all.

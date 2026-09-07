@@ -222,6 +222,18 @@ pub enum Phase {
     /// needs this; a Pokémon's attachments are not a `Zone`, so `Deciding`
     /// cannot express it.
     DiscardingOpponentEnergy { chooser: PlayerId, of: PlayerId },
+    /// `chooser` discards up to `remaining` cards matching `filter` from
+    /// `of`'s hand — the same shape as `DiscardingOpponentEnergy`, over a
+    /// hand instead of a Pokémon's attachments. `chooser == of` is
+    /// `Xerosic's Machinations`: the opponent discards their own hand,
+    /// their own choice. `chooser != of` is `Eri`: the player chooses what
+    /// to take from the opponent's.
+    DiscardingFromHand {
+        chooser: PlayerId,
+        of: PlayerId,
+        filter: crate::card::CardFilter,
+        remaining: u32,
+    },
     /// The game is decided.
     Over,
 }
