@@ -327,3 +327,66 @@ fn air_balloon_does_nothing_for_a_pokemon_it_is_not_attached_to() {
         "the Active's own cost is untouched"
     );
 }
+
+// --- Ticket 03: Hero's Cape ---
+
+fn with_heros_cape(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-heros-cape",
+        name: "Hero's Cape",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::IncreasesHp(100),
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn heros_cape_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Hero's Cape")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Hero's Cape should play");
+}
+
+#[test]
+fn heros_cape_adds_a_hundred_effective_hp() {
+    let (set, cape) = with_heros_cape(build());
+    let mut state = game(&set, cape, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    // The fixture's ordinary Basic prints 100 HP.
+    assert_eq!(state.effective_hp(active), 100);
+    assert_eq!(state.remaining_hp(active), 100);
+
+    let card = ensure_in_hand(&mut state, player, cape);
+    apply(&mut state, Action::PlayTool { card, target: active }).unwrap();
+
+    assert_eq!(state.effective_hp(active), 200);
+    assert_eq!(
+        state.remaining_hp(active),
+        200,
+        "no damage taken, so remaining HP grows with the cap"
+    );
+}
+
+#[test]
+fn heros_cape_keeps_a_pokemon_alive_past_its_printed_hp() {
+    let (set, cape) = with_heros_cape(build());
+    let mut state = game(&set, cape, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let card = ensure_in_hand(&mut state, player, cape);
+    apply(&mut state, Action::PlayTool { card, target: active }).unwrap();
+
+    // Damage past the printed 100 HP, but under the effective 200.
+    state.pokemon[active.index()].damage = 150;
+    assert_eq!(state.remaining_hp(active), 50, "still standing");
+}

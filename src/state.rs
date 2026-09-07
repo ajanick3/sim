@@ -516,10 +516,28 @@ impl GameState {
         &self.players[id.index()]
     }
 
+    /// The HP this Pokémon actually has: the printed value, plus whatever
+    /// an attached Tool like `Hero's Cape` adds. `pokemon_def(id).hp`
+    /// stays the printed value — a card in a zone has no Tool attached to
+    /// raise it, so only an in-play read needs this split, the same way
+    /// `effective_retreat_cost` splits from the printed Retreat Cost.
+    pub fn effective_hp(&self, id: PokemonId) -> u32 {
+        let printed = self.pokemon_def(id).hp;
+        let bonus: u32 = self
+            .pokemon(id)
+            .attached
+            .iter()
+            .filter_map(|c| self.def_of(*c).as_trainer())
+            .map(|t| match t.effect {
+                crate::card::TrainerEffect::IncreasesHp(amount) => amount,
+                _ => 0,
+            })
+            .sum();
+        printed + bonus
+    }
+
     pub fn remaining_hp(&self, id: PokemonId) -> u32 {
-        self.pokemon_def(id)
-            .hp
-            .saturating_sub(self.pokemon(id).damage)
+        self.effective_hp(id).saturating_sub(self.pokemon(id).damage)
     }
 
     /// How many Energy cards are attached. Retreat pays by count, because a
