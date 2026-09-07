@@ -1175,7 +1175,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         TrainerEffect::ReducesRetreatCost(_)
         | TrainerEffect::IncreasesHp(_)
         | TrainerEffect::BonusDamageWithoutRuleBoxVsEx(_)
-        | TrainerEffect::BonusDamageIfPoisonedVsActive(_) => {
+        | TrainerEffect::BonusDamageIfPoisonedVsActive(_)
+        | TrainerEffect::FewerPrizeIfLilliesKnockedOutByAttack => {
             unreachable!(
                 "a static effect is read wherever it applies, never dispatched \
                  at play time — a Tool never reaches resolve_trainer at all"
@@ -1359,6 +1360,9 @@ fn attack(state: &mut GameState, index: usize) {
     let damage = damage_dealt(state, attacker, defender, attack.base_damage);
 
     state.pokemon[defender.index()].damage += damage;
+    // `Lillie's Pearl` tells this knockout apart from one a checkup
+    // causes; `settle`'s knockout check consumes this, every call.
+    state.attacking_defender = Some(defender);
     if let Some(condition) = attack.inflicts {
         state.inflict(defender, condition);
         let name = state.pokemon_def(defender).name;
@@ -1591,15 +1595,30 @@ fn resolve_checkup(state: &mut GameState, pokemon: PokemonId, condition: Conditi
 }
 
 fn knock_out_the_dead(state: &mut GameState) {
+    // Scoped to this call only, whether or not it matches anything below —
+    // see the field's own doc comment.
+    let attacking_defender = state.attacking_defender.take();
     for player in [PlayerId::One, PlayerId::Two] {
         for pokemon in state.player(player).in_play() {
             if state.remaining_hp(pokemon) > 0 {
                 continue;
             }
             // Rule 39: the opponent of the knocked-out player takes a Prize.
-            // The count starts at what the card is worth, and a card effect
-            // adjusts it. Nothing adjusts it yet.
-            let count = state.pokemon_def(pokemon).prizes as usize;
+            // The count starts at what the card is worth, and a card
+            // effect adjusts it. `Lillie's Pearl` is the only one that
+            // does, and only when an attack — not a checkup — caused
+            // this exact knockout.
+            let mut count = state.pokemon_def(pokemon).prizes as usize;
+            if attacking_defender == Some(pokemon)
+                && state.pokemon_def(pokemon).name.starts_with("Lillie's")
+                && state.pokemon(pokemon).attached.iter().any(|c| {
+                    state.def_of(*c).as_trainer().is_some_and(|t| {
+                        t.effect == crate::card::TrainerEffect::FewerPrizeIfLilliesKnockedOutByAttack
+                    })
+                })
+            {
+                count = count.saturating_sub(1);
+            }
             knock_out(state, pokemon);
             take_prizes(state, player.opponent(), count);
             if state.is_over() {

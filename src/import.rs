@@ -777,6 +777,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Hero's Cape" => (free, TrainerEffect::IncreasesHp(100)),
         "Brave Bangle" => (free, TrainerEffect::BonusDamageWithoutRuleBoxVsEx(30)),
         "Binding Mochi" => (free, TrainerEffect::BonusDamageIfPoisonedVsActive(40)),
+        "Lillie's Pearl" => (free, TrainerEffect::FewerPrizeIfLilliesKnockedOutByAttack),
         "Transformation Tome" => (
             Some(Requirement::SecondCopyOfThisInHand),
             TrainerEffect::SwapBasicWithDiscard,

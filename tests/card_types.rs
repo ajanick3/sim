@@ -82,8 +82,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Compassion, Janine's Secret Art, Energy Search, Energy Retrieval,
     // Energy Recycler, Team Rocket's Transceiver, Hand Trimmer, Secret
     // Box, Dusk Ball, Prime Catcher, Strange Timepiece, Transformation
-    // Tome, Air Balloon, Hero's Cape, Brave Bangle, and Binding Mochi.
-    assert_eq!(trainers, 300, "the Trainers still refused, by kind");
+    // Tome, Air Balloon, Hero's Cape, Brave Bangle, Binding Mochi, and
+    // Lillie's Pearl.
+    assert_eq!(trainers, 299, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
