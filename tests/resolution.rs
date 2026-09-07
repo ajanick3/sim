@@ -254,6 +254,7 @@ fn promoting_lets_a_different_chooser_pick_the_others_bench() {
     state.phase = Phase::Promoting {
         of: one,
         chooser: two,
+        then: None,
     };
     assert_eq!(sim::action::player_to_act(&state), Some(two));
 

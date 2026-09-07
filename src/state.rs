@@ -138,8 +138,14 @@ pub enum Phase {
     /// A Pokémon owned by `of` must be chosen from `of`'s Bench to become
     /// their new Active, and `chooser` picks it. It interrupts whoever's turn
     /// it is. After a knockout, `of == chooser`: you promote your own. A card
-    /// that switches an opponent's Active makes them differ.
-    Promoting { of: PlayerId, chooser: PlayerId },
+    /// that switches an opponent's Active makes them differ. `then` is
+    /// `Some` only for a live switch with a follow-up — a knockout and
+    /// `Boss's Orders` both carry `None`.
+    Promoting {
+        of: PlayerId,
+        chooser: PlayerId,
+        then: Option<crate::card::PromoteFollowUp>,
+    },
     /// A Trainer effect is moving up to `remaining` cards matching `filter`
     /// from one zone to another, `chooser`'s choice each time. Most of the
     /// primitives in `docs/architecture/effects.md` share this one phase — a

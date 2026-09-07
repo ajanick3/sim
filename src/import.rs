@@ -13,8 +13,8 @@ use std::collections::HashMap;
 use serde_json::Value;
 
 use crate::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
-    TargetFilter, Then, Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, PromoteFollowUp,
+    Requirement, Slot, Stage, TargetFilter, Then, Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use crate::ids::CardDefId;
 
@@ -676,6 +676,14 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 }],
                 then: None,
             },
+        ),
+        "AZ's Tranquility" => (
+            free,
+            TrainerEffect::SwitchOwnActiveWithFollowUp(PromoteFollowUp::HealDisplacedIfEx(80)),
+        ),
+        "Surfer" => (
+            free,
+            TrainerEffect::SwitchOwnActiveWithFollowUp(PromoteFollowUp::DrawUpTo(5)),
         ),
         _ => return None,
     })
