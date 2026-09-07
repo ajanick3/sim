@@ -368,3 +368,104 @@ fn rust_syndicate_grunt_is_admitted_from_the_artifact() {
     );
     assert_eq!(grunt.effect, TrainerEffect::DiscardOpponentEnergy);
 }
+
+// --- Ticket 03: N's Plan ---
+
+fn with_ns_plan(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let ns_plan = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-ns-plan",
+        name: "N's Plan",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::MoveEnergyFromBenchToActive { limit: 2 },
+    }));
+    (Set { db, ..set }, ns_plan)
+}
+
+fn attach_energy_to(state: &mut GameState, player: PlayerId, pokemon: PokemonId) -> CardId {
+    let energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .expect("the deck is mostly Energy");
+    state.players[player.index()].library.retain(|c| *c != energy);
+    state.pokemon[pokemon.index()].attached.push(energy);
+    energy
+}
+
+#[test]
+fn ns_plan_offers_only_bench_to_active_never_the_reverse() {
+    let (set, ns_plan) = with_ns_plan(build());
+    let mut state = game(&set, ns_plan, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, ns_plan);
+
+    let active = state.player(player).active.unwrap();
+    let bench = state.player(player).bench[0];
+    let benched_energy = attach_energy_to(&mut state, player, bench);
+    let active_energy = attach_energy_to(&mut state, player, active);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let offered_cards: Vec<CardId> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::MoveEnergyToActive { card } => Some(card),
+            _ => None,
+        })
+        .collect();
+    assert!(
+        offered_cards.contains(&benched_energy),
+        "a Benched Pokémon's Energy may move to the Active"
+    );
+    assert!(
+        !offered_cards.contains(&active_energy),
+        "the Active's own Energy is not offered; there is nowhere for it to go"
+    );
+}
+
+#[test]
+fn ns_plan_moves_up_to_two_and_may_stop_early() {
+    let (set, ns_plan) = with_ns_plan(build());
+    let mut state = game(&set, ns_plan, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, ns_plan);
+    let active = state.player(player).active.unwrap();
+    let bench = state.player(player).bench[0];
+    let e1 = attach_energy_to(&mut state, player, bench);
+    let e2 = attach_energy_to(&mut state, player, bench);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::MoveEnergyToActive { card: e1 }).unwrap();
+    apply(&mut state, Action::MoveEnergyToActive { card: e2 }).unwrap();
+    assert!(
+        legal_actions(&state)
+            .into_iter()
+            .all(|a| !matches!(a, Action::MoveEnergyToActive { .. })),
+        "two is the limit the card prints"
+    );
+    apply(&mut state, Action::FinishMovingEnergyToActive).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(active).attached.contains(&e1));
+    assert!(state.pokemon(active).attached.contains(&e2));
+    assert!(!state.pokemon(bench).attached.contains(&e1));
+}
+
+#[test]
+fn ns_plan_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let ns_plan = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "N's Plan")
+        .expect("N's Plan plays");
+    assert_eq!(
+        ns_plan.effect,
+        TrainerEffect::MoveEnergyFromBenchToActive { limit: 2 }
+    );
+}

@@ -431,6 +431,38 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::MoveEnergyToActive { card } => {
+            let (player, remaining) = match state.phase {
+                Phase::MovingEnergyFromBenchToActive { player, remaining } => (player, remaining),
+                _ => return Err(IllegalAction),
+            };
+            let active = state
+                .player(player)
+                .active
+                .expect("a move onto the Active needs one in play");
+            for pokemon in state.player(player).bench.clone() {
+                state.pokemon[pokemon.index()].attached.retain(|c| *c != card);
+            }
+            state.pokemon[active.index()].attached.push(card);
+            let energy = state.def_of(card).name();
+            state.log.push(format!("{energy} moves to the Active."));
+            // ADR 0012 keeps the choice to stop with the player, even at
+            // the limit: `FinishMovingEnergyToActive` ends the phase.
+            state.phase = Phase::MovingEnergyFromBenchToActive {
+                player,
+                remaining: remaining - 1,
+            };
+        }
+
+        Action::FinishMovingEnergyToActive => {
+            match state.phase {
+                Phase::MovingEnergyFromBenchToActive { .. } => {}
+                _ => return Err(IllegalAction),
+            }
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::EvolveSkippingOneStage { card, target } => {
             let player = match state.phase {
                 Phase::EvolvingWithRareCandy { player } => player,
@@ -630,6 +662,13 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::MoveAttachedEnergy => {
             state.phase = Phase::MovingEnergy { player };
+        }
+
+        TrainerEffect::MoveEnergyFromBenchToActive { limit } => {
+            state.phase = Phase::MovingEnergyFromBenchToActive {
+                player,
+                remaining: limit,
+            };
         }
 
         TrainerEffect::EvolveSkippingOneStage => {
