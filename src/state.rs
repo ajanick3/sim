@@ -271,6 +271,10 @@ pub struct GameState {
     /// after the knockout and never again. `Unfair Stamp` is the only
     /// reader.
     pub knocked_out_last_turn: [bool; 2],
+    /// A bonus this turn's attacks carry, set by a card such as `Black
+    /// Belt's Training`. Cleared at `begin_turn`, the same as `spent` —
+    /// "this turn" ends there regardless of whose turn is starting.
+    pub turn_bonus: Option<(u32, crate::card::TurnBonusTarget)>,
     pub rng: Box<dyn Rng>,
     /// What happened, in order, as prose for a reader. It is not the record
     /// a replay reads — that is [`GameState::history`].
@@ -322,6 +326,7 @@ impl GameState {
             stadium: None,
             spent: Vec::new(),
             knocked_out_last_turn: [false, false],
+            turn_bonus: None,
             rng,
             log: Vec::new(),
             history: Vec::new(),
@@ -624,6 +629,8 @@ impl GameState {
         // asks about whoever is acting — so clearing all of them is the
         // same game and one line.
         self.spent.clear();
+        // "This turn" ends here too, whoever set the bonus.
+        self.turn_bonus = None;
     }
 
     /// Whether a once-per-turn limit has been spent.

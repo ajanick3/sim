@@ -178,6 +178,18 @@ pub enum PromoteFollowUp {
     DrawUpTo(u32),
 }
 
+/// What a this-turn damage bonus restricts itself to — always the
+/// opponent's Active, since nothing in the pool bonuses an attack against
+/// a Benched Pokémon.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TurnBonusTarget {
+    /// A Pokémon ex. `Black Belt's Training`.
+    OpponentActiveEx,
+    /// A Pokémon without a Rule Box. `Gladion's Final Battle` — the
+    /// opposite restriction `OpponentActiveEx` reads.
+    OpponentActiveWithoutRuleBox,
+}
+
 /// A Trainer's effect: a value the engine executes, never text read at run
 /// time (ADR 0009). `Phase::Deciding` and the generalized `Phase::Promoting`
 /// cover most of these (ADR 0012); the rest resolve with no phase at all,
@@ -255,6 +267,12 @@ pub enum TrainerEffect {
     /// `Pokémon Center Lady` is the first card to heal a target rather
     /// than the fixed Active `Jumbo Ice Cream` reads.
     HealChosen(u32),
+    /// This turn, the player's attacks do this much more damage to a
+    /// restricted target, before Weakness and Resistance. Cleared the
+    /// moment the turn ends — distinct from a Tool or Stadium's static
+    /// effect, which lasts as long as the card stays in play regardless of
+    /// whose turn it is.
+    BonusDamageThisTurn(u32, TurnBonusTarget),
 }
 
 /// What a card demands before it may be played at all.
@@ -284,6 +302,10 @@ pub enum Requirement {
     /// `OpponentPrizesAtMost` reads the opponent's count alone;
     /// `Rosa's Encouragement` is the first to compare the two.
     MorePrizesThanOpponent,
+    /// The player's hand holds exactly this many cards, this one among
+    /// them. `Gladion's Final Battle` reads "only when it is the last card
+    /// in your hand" — checked before the card leaves it.
+    HandSizeIs(u32),
 }
 
 /// A Trainer as printed.

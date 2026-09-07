@@ -126,7 +126,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     Requirement::OpponentPrizesAtMost(_)
                     | Requirement::KnockedOutDuringOpponentsLastTurn
                     | Requirement::ActiveHasAtLeastEnergy(_)
-                    | Requirement::MorePrizesThanOpponent,
+                    | Requirement::MorePrizesThanOpponent
+                    | Requirement::HandSizeIs(_),
                 ) => {
                     resolve_trainer(state, player, card, trainer.effect);
                 }
@@ -795,6 +796,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             state.phase = Phase::HealingChosen { player, amount };
         }
 
+        TrainerEffect::BonusDamageThisTurn(amount, target) => {
+            state.turn_bonus = Some((amount, target));
+        }
+
         TrainerEffect::CoinFlipDiscardOpponentEnergy => {
             if state.rng.flip() {
                 state.phase = Phase::DiscardingOpponentEnergy {
@@ -955,6 +960,22 @@ pub fn damage_dealt(state: &GameState, attacker: PokemonId, defender: PokemonId,
     // Step 32: effects on the attacking player's Pokémon. Stop at 0.
     if damage == 0 {
         return 0;
+    }
+    if let Some((bonus, target)) = state.turn_bonus
+        && state.pokemon(attacker).owner == state.current
+        && state.player(state.pokemon(attacker).owner).active == Some(attacker)
+    {
+        let defender_def = state.pokemon_def(defender);
+        let restricted_to_defender = match target {
+            crate::card::TurnBonusTarget::OpponentActiveEx => defender_def.prizes > 1,
+            crate::card::TurnBonusTarget::OpponentActiveWithoutRuleBox => defender_def.prizes == 1,
+        };
+        let opponent_active = state
+            .player(state.pokemon(attacker).owner.opponent())
+            .active;
+        if restricted_to_defender && opponent_active == Some(defender) {
+            damage += bonus;
+        }
     }
 
     // Step 33: Weakness, then Resistance. Both read the attacker's type.
