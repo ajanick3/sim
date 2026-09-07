@@ -1006,6 +1006,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Moltres", "Fighting Wings") => AttackEffect::BonusDamageIfDefenderIsEx(90),
         ("Slowpoke", "Dangle Tail") => AttackEffect::TakePokemonFromDiscard,
         ("Duskull", "Come and Get You") => AttackEffect::SearchDiscardForNamedToBench("Duskull", 3),
+        ("Torchic", "Collect") => AttackEffect::DrawCards(1),
+        ("Celebi", "Collect") => AttackEffect::DrawCards(1),
+        ("Buneary", "Run Around") => AttackEffect::SwitchOwnActive,
         _ => return None,
     })
 }
