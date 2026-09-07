@@ -967,6 +967,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Passimian", "Coordinated Throwing") => {
             AttackEffect::DamagePerCount(Count::OwnBasicPokemonInPlay, 20)
         }
+        ("N's Zekrom", "Shred") => AttackEffect::IgnoresDefendersEffects,
+        ("Mega Lopunny ex", "Spiky Hopper") => AttackEffect::IgnoresDefendersEffects,
+        ("Dudunsparce ex", "Destructive Drill") => AttackEffect::IgnoresDefendersEffects,
         _ => return None,
     })
 }

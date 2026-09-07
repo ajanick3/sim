@@ -1488,7 +1488,9 @@ fn attack(state: &mut GameState, index: usize) {
         }
         _ => attack.base_damage,
     };
-    let damage = damage_dealt(state, attacker, defender, base);
+    let ignore_defenders_effects =
+        matches!(attack.effect, Some(crate::card::AttackEffect::IgnoresDefendersEffects));
+    let damage = damage_dealt_with(state, attacker, defender, base, ignore_defenders_effects);
 
     state.pokemon[defender.index()].damage += damage;
     // `Lillie's Pearl` tells this knockout apart from one a checkup
@@ -1535,6 +1537,8 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt` ran — see `attack`'s own
         // `base` computation.
         crate::card::AttackEffect::DamagePerCount(..) => {}
+        // Already spent, before `damage_dealt_with` ran.
+        crate::card::AttackEffect::IgnoresDefendersEffects => {}
     }
 }
 
@@ -1633,6 +1637,20 @@ fn trigger_defenders_tool(state: &mut GameState, attacker: PokemonId, defender: 
 /// damage, so steps 32 and 34 are the identity — the shape is here so a card
 /// that does have one has a place to act.
 pub fn damage_dealt(state: &GameState, attacker: PokemonId, defender: PokemonId, base: u32) -> u32 {
+    damage_dealt_with(state, attacker, defender, base, false)
+}
+
+/// `damage_dealt`'s own order, with step 33 (Weakness, Resistance, and
+/// any other effect on the defender) skippable — `AttackEffect::IgnoresDefendersEffects`'s
+/// own read, kept out of the public `damage_dealt` so every existing
+/// caller, including several tests, keeps reading the ordinary order.
+fn damage_dealt_with(
+    state: &GameState,
+    attacker: PokemonId,
+    defender: PokemonId,
+    base: u32,
+    ignore_defenders_effects: bool,
+) -> u32 {
     let mut damage = base;
 
     // Step 32: effects on the attacking player's Pokémon. Stop at 0.
@@ -1688,13 +1706,19 @@ pub fn damage_dealt(state: &GameState, attacker: PokemonId, defender: PokemonId,
     }
 
     // Step 33: Weakness, then Resistance. Both read the attacker's type.
-    let attacker_type = state.pokemon_def(attacker).kind;
-    let defender_def = state.pokemon_def(defender);
-    if defender_def.weakness == Some(attacker_type) {
-        damage *= 2;
-    }
-    if defender_def.resistance == Some(attacker_type) {
-        damage = damage.saturating_sub(30);
+    // `AttackEffect::IgnoresDefendersEffects` skips this step outright —
+    // "isn't affected by any effects on your opponent's Active Pokémon"
+    // reads as including Weakness and Resistance, not only a Tool or
+    // Stadium bonus.
+    if !ignore_defenders_effects {
+        let attacker_type = state.pokemon_def(attacker).kind;
+        let defender_def = state.pokemon_def(defender);
+        if defender_def.weakness == Some(attacker_type) {
+            damage *= 2;
+        }
+        if defender_def.resistance == Some(attacker_type) {
+            damage = damage.saturating_sub(30);
+        }
     }
 
     // Step 34: effects on the defending Pokémon.

@@ -70,5 +70,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // 1 of Rellor (sv05-023), each a plain recoil attack. Damage
     // multipliers take it up 5 more: 3 of N's Reshiram, 1 of Passimian,
     // and 1 of Paldean Tauros (me02-048, both its attacks now read).
-    assert_eq!(admitted, 524, "coverage moves only on purpose");
+    // Ignoring the defender's own effects completes Dudunsparce ex
+    // (2 prints): its other attack already read from ticket 02.
+    assert_eq!(admitted, 526, "coverage moves only on purpose");
 }
