@@ -294,6 +294,11 @@ pub enum TrainerEffect {
     /// player's Main phase rather than dispatched at play time: put a
     /// card from hand on top of the Library. `Academy at Night`.
     MayPutHandCardOnTopOfDeck,
+    /// A Stadium's own once-a-turn action, gated on a fact from earlier
+    /// this same turn rather than always offered: may draw 2, but only
+    /// for a player who played a Supporter named "Team Rocket" something
+    /// from hand this turn. `Team Rocket's Factory`.
+    MayDrawTwoIfPlayedTeamRocketSupporter,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },

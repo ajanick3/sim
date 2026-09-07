@@ -359,6 +359,11 @@ pub struct GameState {
     /// after the knockout and never again. `Unfair Stamp` is the only
     /// reader.
     pub knocked_out_last_turn: [bool; 2],
+    /// Whether this player played a Supporter whose name holds "Team
+    /// Rocket" from their hand, this turn. Cleared at `begin_turn`, the
+    /// same "this turn" lifetime `turn_bonus` already carries.
+    /// `Team Rocket's Factory` is the only reader.
+    pub played_a_team_rocket_supporter_this_turn: [bool; 2],
     /// A bonus this turn's attacks carry, set by a card such as `Black
     /// Belt's Training`. Cleared at `begin_turn`, the same as `spent` —
     /// "this turn" ends there regardless of whose turn is starting.
@@ -421,6 +426,7 @@ impl GameState {
             stadium: None,
             spent: Vec::new(),
             knocked_out_last_turn: [false, false],
+            played_a_team_rocket_supporter_this_turn: [false, false],
             turn_bonus: None,
             attacking_defender: None,
             rng,
@@ -795,6 +801,7 @@ impl GameState {
         self.spent.clear();
         // "This turn" ends here too, whoever set the bonus.
         self.turn_bonus = None;
+        self.played_a_team_rocket_supporter_this_turn = [false, false];
         for pokemon in &mut self.pokemon {
             pokemon.cannot_evolve_this_turn = false;
         }

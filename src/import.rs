@@ -785,6 +785,10 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Gravity Mountain" => (free, TrainerEffect::ReducesHpForStage(Stage::Stage2, 30)),
         "N's Castle" => (free, TrainerEffect::RemovesRetreatCostForNamePrefix("N's")),
         "Academy at Night" => (free, TrainerEffect::MayPutHandCardOnTopOfDeck),
+        "Team Rocket's Factory" => (
+            free,
+            TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter,
+        ),
         "Transformation Tome" => (
             Some(Requirement::SecondCopyOfThisInHand),
             TrainerEffect::SwapBasicWithDiscard,

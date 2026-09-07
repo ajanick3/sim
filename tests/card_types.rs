@@ -84,8 +84,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Box, Dusk Ball, Prime Catcher, Strange Timepiece, Transformation
     // Tome, Air Balloon, Hero's Cape, Brave Bangle, Binding Mochi,
     // Lillie's Pearl, Punk Helmet, Lucky Helmet, Handheld Fan,
-    // Powerglass, Gravity Mountain, N's Castle, and Academy at Night.
-    assert_eq!(trainers, 289, "the Trainers still refused, by kind");
+    // Powerglass, Gravity Mountain, N's Castle, Academy at Night, and
+    // Team Rocket's Factory.
+    assert_eq!(trainers, 287, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
