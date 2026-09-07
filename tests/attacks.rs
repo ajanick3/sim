@@ -1827,3 +1827,70 @@ fn combusken_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv10-041").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Combusken's Double Kick print should play");
 }
+
+// --- Beyond the spec: moving an Energy between two of the opponent's own Pokemon ---
+
+#[test]
+fn moves_energy_between_two_of_the_opponents_own_pokemon() {
+    let attack = Attack {
+        name: "Slight Shift",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let energy_card = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.pokemon[defender.index()].attached.push(energy_card);
+    let bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::MovingOpponentsEnergy { .. }));
+    apply(
+        &mut state,
+        Action::MoveOpponentsEnergy { card: energy_card, target: bench_mon },
+    )
+    .unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(bench_mon).attached.contains(&energy_card));
+    assert!(!state.pokemon(defender).attached.contains(&energy_card));
+}
+
+#[test]
+fn no_move_available_opens_no_phase() {
+    let attack = Attack {
+        name: "Slight Shift",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "only one opponent Pokemon in play, nowhere to move to");
+}
+
+#[test]
+fn elgyem_slight_shift_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv10.5b-040").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Elgyem's Slight Shift print should play");
+}

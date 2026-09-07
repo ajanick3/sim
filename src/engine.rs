@@ -1028,6 +1028,22 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::MoveOpponentsEnergy { card, target } => {
+            let of = match state.phase {
+                Phase::MovingOpponentsEnergy { of, .. } => of,
+                _ => return Err(IllegalAction),
+            };
+            for pokemon in state.player(of).in_play() {
+                state.pokemon[pokemon.index()].attached.retain(|c| *c != card);
+            }
+            state.pokemon[target.index()].attached.push(card);
+            let energy = state.def_of(card).name();
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{energy} moves to {name}."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1826,6 +1842,18 @@ fn resolve_attack_effect(
                     count,
                     damage,
                 };
+            }
+        }
+        crate::card::AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon => {
+            let owner = state.pokemon(attacker).owner;
+            let opponent = owner.opponent();
+            let in_play = state.player(opponent).in_play();
+            let any_move = in_play.iter().any(|from| {
+                state.pokemon(*from).attached.iter().any(|c| state.def_of(*c).is_energy())
+                    && in_play.iter().any(|target| target != from)
+            });
+            if any_move {
+                state.phase = Phase::MovingOpponentsEnergy { chooser: owner, of: opponent };
             }
         }
         crate::card::AttackEffect::OpponentCannotPlayItemsNextTurn => {

@@ -1027,6 +1027,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Combusken", "Double Kick") => {
             AttackEffect::DamagePerCoinFlipHeads { flips: 2, per_head: 40 }
         }
+        ("Elgyem", "Slight Shift") => AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon,
         _ => return None,
     })
 }

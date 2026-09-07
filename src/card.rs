@@ -693,6 +693,13 @@ pub enum AttackEffect {
     /// already occupies, but counted from flips rather than a board
     /// fact. `Combusken`'s `Double Kick`.
     DamagePerCoinFlipHeads { flips: u32, per_head: u32 },
+    /// Move an Energy from one of the opponent's Pokémon to another —
+    /// the attacker's own choice of both ends, but on the opponent's
+    /// board, unlike `TrainerEffect::MoveAttachedEnergy`'s own board.
+    /// Opens `Phase::MovingOpponentsEnergy`. No move available (fewer
+    /// than 2 Pokémon in play, or none carrying Energy) opens no
+    /// phase. `Elgyem`'s `Slight Shift`.
+    MoveOpponentsEnergyBetweenTheirPokemon,
 }
 
 /// What `AttackEffect::DamagePerCount` counts.
