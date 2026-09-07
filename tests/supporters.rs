@@ -5,7 +5,7 @@
 use sim::action::{Action, legal_actions};
 use sim::card::{
     Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
-    Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    TargetFilter, Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
@@ -530,4 +530,125 @@ fn pokemon_center_lady_is_admitted_from_the_artifact() {
         .find(|t| t.name == "Pokémon Center Lady")
         .expect("Pokémon Center Lady plays");
     assert_eq!(lady.effect, TrainerEffect::HealChosen(60));
+}
+
+// --- Ticket 05: Rosa's Encouragement ---
+
+fn with_rosas_encouragement(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let rosa = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-rosas-encouragement",
+        name: "Rosa's Encouragement",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::MorePrizesThanOpponent),
+        effect: TrainerEffect::Decide {
+            from: Zone::Discard,
+            slots: vec![Slot {
+                filter: CardFilter::BasicEnergy,
+                to: Destination::Attach(TargetFilter::OfStage(Stage::Stage2)),
+                limit: 2,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, rosa)
+}
+
+#[test]
+fn rosas_encouragement_cannot_be_played_without_more_prizes() {
+    let (set, rosa) = with_rosas_encouragement(build());
+    let mut state = game(&set, rosa, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, rosa);
+
+    // A fresh game starts even, six Prizes each.
+    assert!(!legal_actions(&state).contains(&Action::PlayTrainer { card }));
+
+    // The opponent has taken a Prize; the player has not. 6 remaining
+    // against the opponent's 5 is more.
+    state.players[player.opponent().index()].prizes.truncate(5);
+    assert!(
+        legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "6 remaining against the opponent's 5 is more"
+    );
+}
+
+#[test]
+fn rosas_encouragement_targets_only_a_stage_2_active_or_benched() {
+    let (set, rosa) = with_rosas_encouragement(build());
+    let mut state = game(&set, rosa, 3);
+    let player = state.current;
+    state.players[player.opponent().index()].prizes.truncate(5);
+    let card = ensure_in_hand(&mut state, player, rosa);
+
+    // Put the Stage 2 into play as the Active, an ordinary Basic on the
+    // Bench, so the filter is proven against both a wrong stage and a
+    // wrong Bench assumption at once.
+    let active = state.player(player).active.unwrap();
+    let stage2_card = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.cards[c.index()].def == set.stage2)
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != stage2_card);
+    state.pokemon[active.index()].cards.push(stage2_card);
+
+    let energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()].discard.push(energy);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let targets: Vec<PokemonId> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::TakeCardOnto { target, .. } => Some(target),
+            _ => None,
+        })
+        .collect();
+    assert!(
+        targets.contains(&active),
+        "the Stage 2 Active is offered, not only a Benched one"
+    );
+    for bench in &state.player(player).bench {
+        assert!(
+            !targets.contains(bench),
+            "an ordinary Benched Pokémon is not a Stage 2"
+        );
+    }
+}
+
+#[test]
+fn rosas_encouragement_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let rosa = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Rosa's Encouragement")
+        .expect("Rosa's Encouragement plays");
+    assert_eq!(rosa.requirement, Some(Requirement::MorePrizesThanOpponent));
+    assert_eq!(
+        rosa.effect,
+        TrainerEffect::Decide {
+            from: Zone::Discard,
+            slots: vec![Slot {
+                filter: CardFilter::BasicEnergy,
+                to: Destination::Attach(TargetFilter::OfStage(Stage::Stage2)),
+                limit: 2,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        }
+    );
 }

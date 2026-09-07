@@ -76,8 +76,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Rare Candy, Team Rocket's Petrel, N's PP Up, Wondrous Patch, Pokégear
     // 3.0, Bug Catching Set, Ciphermaniac's Codebreaking, Unfair Stamp,
     // Switch, Jumbo Ice Cream, Lana's Aid, Rust Syndicate Grunt, N's Plan,
-    // and Pokémon Center Lady.
-    assert_eq!(trainers, 369, "the Trainers still refused, by kind");
+    // Pokémon Center Lady, and Rosa's Encouragement.
+    assert_eq!(trainers, 366, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),

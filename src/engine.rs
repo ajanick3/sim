@@ -125,7 +125,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 | Some(
                     Requirement::OpponentPrizesAtMost(_)
                     | Requirement::KnockedOutDuringOpponentsLastTurn
-                    | Requirement::ActiveHasAtLeastEnergy(_),
+                    | Requirement::ActiveHasAtLeastEnergy(_)
+                    | Requirement::MorePrizesThanOpponent,
                 ) => {
                     resolve_trainer(state, player, card, trainer.effect);
                 }
