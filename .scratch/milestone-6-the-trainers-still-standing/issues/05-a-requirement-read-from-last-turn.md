@@ -1,7 +1,7 @@
 # A requirement read from last turn
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
 `Unfair Stamp`: *"You can use this card only if any of your Pokémon were
 Knocked Out during your opponent's last turn. Each player shuffles their
@@ -21,9 +21,29 @@ the identical question open for `Fezandipiti ex`'s Ability; whichever
 answer this ticket settles on, record the reasoning so that milestone does
 not have to ask it twice.
 
-- [ ] "A Pokémon of mine was Knocked Out during the opponent's last turn"
+- [x] "A Pokémon of mine was Knocked Out during the opponent's last turn"
       can be asked, and answers correctly across a turn boundary
-- [ ] Both players shuffle their hand into their deck, and draw different
+- [x] Both players shuffle their hand into their deck, and draw different
       counts
-- [ ] `Unfair Stamp` plays, and cannot be played without a Knockout to
+- [x] `Unfair Stamp` plays, and cannot be played without a Knockout to
       point to
+
+## Resolution
+
+`GameState` grows `knocked_out_last_turn: [bool; 2]` — a field, not
+something derived from `history: Vec<Action>`. No `Action` records a
+knockout as its own event, so answering from the log would mean
+re-simulating everything since the last turn boundary on every ask, a
+search rather than a read; [ADR 0024](../../../docs/adr/0024-a-requirement-can-read-history.md)
+records the reasoning, which resolves this milestone's open fog question
+before `Fezandipiti ex`'s Ability has to ask it too. The field is set the
+moment a knockout happens, and cleared once — for the player it belongs
+to, when *their own* turn ends, not when it begins — which is what leaves
+it true for exactly one turn and false again one full cycle later.
+
+`BothShuffleHandThenDraw` grew `you` and `opponent` in place of one shared
+`count`, a rename with a single caller (`Judge`, unaffected since it wants
+the same number for both).
+
+Coverage went 408 → 409 (1 print), and the field went 1527 → 1552
+playable slots of 3660 — 42.4%.

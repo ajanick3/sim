@@ -248,6 +248,12 @@ pub struct GameState {
     pub stadium: Option<(PlayerId, CardId)>,
     /// The once-per-turn limits spent so far. Cleared when a turn begins.
     pub spent: Vec<Limit>,
+    /// Whether a Pokémon this player owns was Knocked Out during the turn
+    /// that just ended. Set when a knockout happens; cleared for a player
+    /// when their own turn ends, so it reads true for exactly the one turn
+    /// after the knockout and never again. `Unfair Stamp` is the only
+    /// reader.
+    pub knocked_out_last_turn: [bool; 2],
     pub rng: Box<dyn Rng>,
     /// What happened, in order, as prose for a reader. It is not the record
     /// a replay reads — that is [`GameState::history`].
@@ -298,6 +304,7 @@ impl GameState {
             outcome: None,
             stadium: None,
             spent: Vec::new(),
+            knocked_out_last_turn: [false, false],
             rng,
             log: Vec::new(),
             history: Vec::new(),

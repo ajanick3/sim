@@ -119,9 +119,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         remaining: count,
                     };
                 }
-                // A requirement read from the board costs nothing, and
-                // `legal_actions` has already checked it.
-                None | Some(Requirement::OpponentPrizesAtMost(_)) => {
+                // A requirement read from the board, or from history,
+                // costs nothing, and `legal_actions` has already checked it.
+                None
+                | Some(
+                    Requirement::OpponentPrizesAtMost(_)
+                    | Requirement::KnockedOutDuringOpponentsLastTurn,
+                ) => {
                     resolve_trainer(state, player, card, trainer.effect);
                 }
             }
@@ -667,11 +671,11 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
-        TrainerEffect::BothShuffleHandThenDraw { count } => {
-            for player in [PlayerId::One, PlayerId::Two] {
-                shuffle_hand_into_library(state, player);
+        TrainerEffect::BothShuffleHandThenDraw { you, opponent } => {
+            for (whose, count) in [(player, you), (player.opponent(), opponent)] {
+                shuffle_hand_into_library(state, whose);
                 for _ in 0..count {
-                    state.draw(player);
+                    state.draw(whose);
                 }
             }
         }
@@ -1034,6 +1038,7 @@ fn knock_out(state: &mut GameState, pokemon: PokemonId) {
     side.bench.retain(|p| *p != pokemon);
 
     state.pokemon[pokemon.index()].knocked_out = true;
+    state.knocked_out_last_turn[owner.index()] = true;
     state.log.push(format!("{name} is Knocked Out."));
 }
 
@@ -1053,6 +1058,11 @@ fn take_prizes(state: &mut GameState, player: PlayerId, count: usize) {
 }
 
 fn start_next_turn(state: &mut GameState) {
+    // The turn that just ended is no longer "last turn" for the player
+    // whose turn it was: whatever it Knocked Out of theirs, `Unfair Stamp`
+    // has had its one turn to read. Clearing it here, not when their own
+    // turn opens, is what leaves it true for that whole turn.
+    state.knocked_out_last_turn[state.current.index()] = false;
     state.current = state.current.opponent();
     state.turn_number += 1;
     state.begin_turn();
