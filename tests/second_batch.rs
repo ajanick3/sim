@@ -48,6 +48,7 @@ fn basic(
         },
         evolve_from,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],
@@ -78,6 +79,7 @@ fn build() -> Set {
         // evolves from Smallmon, so Rare Candy may put Hugemon straight onto
         // a Smallmon in play.
         evolves_from_basic: Some("Smallmon"),
+        ability: None,
         attacks: vec![Attack {
             name: "Slam",
             cost: vec![Type::Colorless, Type::Colorless],
@@ -1659,6 +1661,7 @@ fn with_wondrous_patch(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Zap",
             cost: vec![Type::Psychic],
@@ -1976,6 +1979,7 @@ fn db_add_grass_mon(state: &mut GameState) -> CardDefId {
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Vine",
             cost: vec![Type::Grass],

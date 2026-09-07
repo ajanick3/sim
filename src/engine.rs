@@ -1044,6 +1044,24 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::UseAbility { pokemon } => {
+            let player = state.current;
+            let ability = state
+                .pokemon_def(pokemon)
+                .ability
+                .expect("legal_actions offers UseAbility only for a Pokemon carrying one");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            match ability.effect {
+                crate::card::AbilityEffect::OncePerTurnWhileActiveMayDrawCards(count) => {
+                    for _ in 0..count {
+                        state.draw(player);
+                    }
+                }
+            }
+            let name = state.pokemon_def(pokemon).name;
+            state.log.push(format!("{player:?} uses {name}'s {}.", ability.name));
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1725,6 +1743,13 @@ fn attack(state: &mut GameState, index: usize) {
             let heads = (0..flips).filter(|_| state.rng.flip()).count() as u32;
             heads * per_head
         }
+        Some(crate::card::AttackEffect::DamagePerCoinFlipUntilTails(per_head)) => {
+            let mut heads = 0;
+            while state.rng.flip() {
+                heads += 1;
+            }
+            attack.base_damage + heads * per_head
+        }
         Some(crate::card::AttackEffect::CoinFlipBonusDamage(bonus)) => {
             if state.rng.flip() {
                 attack.base_damage + bonus
@@ -1805,6 +1830,7 @@ fn resolve_attack_effect(
         // `base` computation.
         crate::card::AttackEffect::DamagePerCount(..) => {}
         crate::card::AttackEffect::DamagePerCoinFlipHeads { .. } => {}
+        crate::card::AttackEffect::DamagePerCoinFlipUntilTails(_) => {}
         // Already spent, before `damage_dealt_with` ran.
         crate::card::AttackEffect::IgnoresDefendersEffects => {}
         crate::card::AttackEffect::InflictsCondition(condition) => {

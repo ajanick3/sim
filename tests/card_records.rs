@@ -149,5 +149,11 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Zeraora's Combat Thunder (Count::OpponentBenchedPokemonCount,
     // the same DamagePerCount shape with a new counted fact) admits
     // both sv07-055 and sv07-151 prints.
-    assert_eq!(admitted, 581, "coverage moves only on purpose");
+    // Milestone 8 (Pokémon abilities) starts here: Mega Kangaskhan
+    // ex's Run Errand (an Ability a player opts into once a turn, the
+    // milestone's first primitive) admits all 4 prints — its own
+    // attack (Rapid-Fire Combo, a coin-flip-until-tails count) needed
+    // a new AttackEffect too, since a card admits only once every
+    // printed piece of it reads.
+    assert_eq!(admitted, 585, "coverage moves only on purpose");
 }

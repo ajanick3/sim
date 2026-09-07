@@ -31,6 +31,7 @@ fn build() -> Set {
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],

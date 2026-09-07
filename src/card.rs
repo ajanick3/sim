@@ -693,6 +693,10 @@ pub enum AttackEffect {
     /// already occupies, but counted from flips rather than a board
     /// fact. `Combusken`'s `Double Kick`.
     DamagePerCoinFlipHeads { flips: u32, per_head: u32 },
+    /// Flip a coin until it lands tails; this much more damage, on
+    /// top of the attack's own printed base, for each heads flipped
+    /// along the way. `Mega Kangaskhan ex`'s `Rapid-Fire Combo`.
+    DamagePerCoinFlipUntilTails(u32),
     /// Move an Energy from one of the opponent's Pokémon to another —
     /// the attacker's own choice of both ends, but on the opponent's
     /// board, unlike `TrainerEffect::MoveAttachedEnergy`'s own board.
@@ -764,6 +768,29 @@ pub struct Pokemon {
     /// Stage 2, skipping the Stage 1 `evolve_from` alone would name.
     pub evolves_from_basic: Option<&'static str>,
     pub attacks: Vec<Attack>,
+    /// Every real card prints at most one. `None` for the pool's plain
+    /// majority; `Some` only once the engine can run what it says.
+    pub ability: Option<Ability>,
+}
+
+/// An Ability as printed. Milestone 8's own vocabulary, parallel to
+/// `Attack` and `Trainer`'s own effect fields but read from a
+/// Pokémon's standing power rather than something it does when
+/// attacking or something played from hand.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Ability {
+    pub name: &'static str,
+    pub effect: AbilityEffect,
+}
+
+/// What an Ability actually does, once the engine can run it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AbilityEffect {
+    /// Once during the player's own turn, only while this Pokémon is
+    /// the Active, the player may draw this many cards. No cost, no
+    /// target — the simplest shape an Ability comes in.
+    /// `Mega Kangaskhan ex`'s `Run Errand`.
+    OncePerTurnWhileActiveMayDrawCards(u32),
 }
 
 /// A basic Energy card as printed.
