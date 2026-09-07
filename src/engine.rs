@@ -714,6 +714,13 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                 };
             }
         }
+
+        TrainerEffect::DiscardOpponentEnergy => {
+            state.phase = Phase::DiscardingOpponentEnergy {
+                chooser: player,
+                of: player.opponent(),
+            };
+        }
     }
 }
 
