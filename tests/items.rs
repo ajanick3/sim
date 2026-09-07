@@ -444,3 +444,90 @@ fn team_rockets_transceiver_finds_only_a_team_rocket_supporter() {
         "a Supporter without the name is not offered"
     );
 }
+
+// --- Ticket 05: Hand Trimmer ---
+
+fn with_hand_trimmer(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-hand-trimmer",
+        name: "Hand Trimmer",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::BothDiscardDownTo(5),
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn hand_trimmer_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Hand Trimmer")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Hand Trimmer should play");
+}
+
+#[test]
+fn hand_trimmer_trims_the_opponent_first_then_the_player() {
+    let (set, card) = with_hand_trimmer(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let played = ensure_in_hand(&mut state, player, card);
+
+    // Both hands well past 5.
+    for _ in 0..8 {
+        ensure_in_hand(&mut state, player, set.mon);
+        ensure_in_hand(&mut state, opponent, set.mon);
+    }
+    let opponent_hand_before = state.player(opponent).hand.len();
+    let player_hand_before = state.player(player).hand.len();
+    assert!(opponent_hand_before > 5 && player_hand_before > 5);
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    assert_eq!(
+        sim::action::player_to_act(&state),
+        Some(opponent),
+        "the opponent discards first"
+    );
+    while let Phase::DiscardingFromHand { chooser, .. } = state.phase {
+        if chooser != opponent {
+            break;
+        }
+        let discard = legal_actions(&state)
+            .into_iter()
+            .find_map(|a| match a {
+                Action::DiscardFromHand { card } => Some(card),
+                _ => None,
+            });
+        match discard {
+            Some(card) => apply(&mut state, Action::DiscardFromHand { card }).unwrap(),
+            None => apply(&mut state, Action::FinishDiscardingFromHand).unwrap(),
+        }
+    }
+    assert_eq!(state.player(opponent).hand.len(), 5);
+    assert_eq!(
+        sim::action::player_to_act(&state),
+        Some(player),
+        "the player trims their own hand next"
+    );
+    while state.phase != Phase::Main {
+        let discard = legal_actions(&state)
+            .into_iter()
+            .find_map(|a| match a {
+                Action::DiscardFromHand { card } => Some(card),
+                _ => None,
+            });
+        match discard {
+            Some(card) => apply(&mut state, Action::DiscardFromHand { card }).unwrap(),
+            None => apply(&mut state, Action::FinishDiscardingFromHand).unwrap(),
+        }
+    }
+    assert_eq!(state.player(player).hand.len(), 5);
+}

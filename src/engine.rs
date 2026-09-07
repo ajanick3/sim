@@ -537,9 +537,9 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::DiscardFromHand { card } => {
-            let (chooser, of, filter, remaining) = match state.phase {
-                Phase::DiscardingFromHand { chooser, of, filter, remaining } => {
-                    (chooser, of, filter, remaining)
+            let (chooser, of, filter, remaining, then) = match state.phase {
+                Phase::DiscardingFromHand { chooser, of, filter, remaining, then } => {
+                    (chooser, of, filter, remaining, then)
                 }
                 _ => return Err(IllegalAction),
             };
@@ -552,16 +552,35 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 of,
                 filter,
                 remaining: remaining - 1,
+                then,
             };
         }
 
         Action::FinishDiscardingFromHand => {
-            match state.phase {
-                Phase::DiscardingFromHand { .. } => {}
+            let (chooser, then) = match state.phase {
+                Phase::DiscardingFromHand { chooser, then, .. } => (chooser, then),
                 _ => return Err(IllegalAction),
+            };
+            match then {
+                None => {
+                    state.phase = Phase::Main;
+                    settle(state);
+                }
+                Some(crate::card::DiscardFollowUp::AlsoDiscardOwnHandDownTo(target)) => {
+                    // `chooser` here is still the player whose discard just
+                    // ended (the opponent, for `Hand Trimmer`); the follow-up
+                    // is the other player trimming their own hand next.
+                    let next = chooser.opponent();
+                    let hand_len = state.player(next).hand.len() as u32;
+                    state.phase = Phase::DiscardingFromHand {
+                        chooser: next,
+                        of: next,
+                        filter: crate::card::CardFilter::AnyCard,
+                        remaining: hand_len.saturating_sub(target),
+                        then: None,
+                    };
+                }
             }
-            state.phase = Phase::Main;
-            settle(state);
         }
 
         Action::HealMegaEx { target } => {
@@ -970,6 +989,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                 of: opponent,
                 filter: crate::card::CardFilter::AnyCard,
                 remaining: hand_len.saturating_sub(target),
+                then: None,
             };
         }
 
@@ -979,6 +999,19 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                 of: player.opponent(),
                 filter,
                 remaining: limit,
+                then: None,
+            };
+        }
+
+        TrainerEffect::BothDiscardDownTo(target) => {
+            let opponent = player.opponent();
+            let hand_len = state.player(opponent).hand.len() as u32;
+            state.phase = Phase::DiscardingFromHand {
+                chooser: opponent,
+                of: opponent,
+                filter: crate::card::CardFilter::AnyCard,
+                remaining: hand_len.saturating_sub(target),
+                then: Some(crate::card::DiscardFollowUp::AlsoDiscardOwnHandDownTo(target)),
             };
         }
 

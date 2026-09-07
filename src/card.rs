@@ -182,6 +182,15 @@ pub enum PromoteFollowUp {
     DrawUpTo(u32),
 }
 
+/// What runs once a `DiscardingFromHand` ends. `Hand Trimmer`'s only use
+/// so far: the opponent discards down to a size, then the player does
+/// the same to their own.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DiscardFollowUp {
+    /// The acting player discards from their own hand down to this size.
+    AlsoDiscardOwnHandDownTo(u32),
+}
+
 /// What a this-turn damage bonus restricts itself to — always the
 /// opponent's Active, since nothing in the pool bonuses an attack against
 /// a Benched Pokémon.
@@ -287,6 +296,10 @@ pub enum TrainerEffect {
     /// The opponent discards, their own choice, until their hand holds
     /// this many cards. `Xerosic's Machinations`.
     OpponentDiscardsDownTo(u32),
+    /// Both players discard, each their own choice, down to this many
+    /// cards — the opponent first. `Hand Trimmer` is `OpponentDiscardsDownTo`
+    /// with a `DiscardFollowUp` chained onto it, not a new shape.
+    BothDiscardDownTo(u32),
     /// The player discards up to `limit` cards matching `filter` from the
     /// opponent's hand, their own choice of which. `Eri`'s filter is an
     /// Item card; nothing before it read a zone the opponent controls.

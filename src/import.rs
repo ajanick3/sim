@@ -769,6 +769,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             },
         ),
+        "Hand Trimmer" => (free, TrainerEffect::BothDiscardDownTo(5)),
         "Team Rocket's Transceiver" => (
             free,
             TrainerEffect::Decide {
