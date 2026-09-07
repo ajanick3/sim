@@ -74,6 +74,9 @@ pub enum Action {
     DiscardFromHand { card: CardId },
     /// Stop discarding from that hand before the limit is spent.
     FinishDiscardingFromHand,
+    /// Heal every point of damage from a chosen Mega Evolution ex, and
+    /// move its attachments to hand if the heal did anything.
+    HealMegaEx { target: PokemonId },
     /// Evolve a Basic in play straight into the named Stage 2 from hand,
     /// skipping the Stage 1 between them.
     EvolveSkippingOneStage { card: CardId, target: PokemonId },
@@ -97,6 +100,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::HealingChosen { player, .. } => Some(player),
         Phase::ChoosingOneOf { player, .. } => Some(player),
         Phase::DiscardingFromHand { chooser, .. } => Some(chooser),
+        Phase::HealingMegaEx { player } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::Checkup { player } => Some(player),
@@ -305,6 +309,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::FinishDiscardingFromHand);
             return actions;
         }
+        Phase::HealingMegaEx { player: whose } => {
+            for target in state.player(whose).in_play() {
+                if state.pokemon_def(target).prizes == 3 {
+                    actions.push(Action::HealMegaEx { target });
+                }
+            }
+            return actions;
+        }
         Phase::DiscardingOpponentEnergy { of, .. } => {
             for pokemon in state.player(of).in_play() {
                 for card in &state.pokemon(pokemon).attached {
@@ -406,6 +418,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                         .iter()
                         .any(|c| state.def_of(*c).is_energy())
                 }),
+                // A Mega Evolution ex the player controls.
+                TrainerEffect::HealMegaExAndTakeEnergyIfHealed => side
+                    .in_play()
+                    .iter()
+                    .any(|p| state.pokemon_def(*p).prizes == 3),
                 // A Stage 2 in hand, and a Basic under it in play. Rare
                 // Candy is only playable at all where the pair already
                 // exists — nothing in its phase ever declines.
@@ -575,6 +592,7 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Discard {} from that hand", state.def_of(card).name())
         }
         Action::FinishDiscardingFromHand => "Stop discarding from that hand".to_string(),
+        Action::HealMegaEx { target } => format!("Heal {} fully", state.pokemon_def(target).name),
         Action::EvolveSkippingOneStage { card, target } => format!(
             "Use Rare Candy: evolve {} into {}",
             state.pokemon_def(target).name,
