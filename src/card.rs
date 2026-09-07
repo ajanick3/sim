@@ -275,6 +275,11 @@ pub enum TrainerEffect {
     /// The same trigger as `DamagesAttackerWhenDefenderIsHit`: the
     /// Pokémon's owner draws this many cards. `Lucky Helmet`.
     DrawsWhenDefenderIsHit(u32),
+    /// The same trigger, but with a choice: move one Energy off the
+    /// attacker onto one of the attacker's own Benched Pokémon, the
+    /// defender's controller's choice. Opens `Phase::MovingEnergyForHandheldFan`
+    /// rather than resolving outright. `Handheld Fan`.
+    MovesEnergyFromAttackerToTheirBench,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },

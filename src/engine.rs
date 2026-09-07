@@ -207,7 +207,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         Action::Attack { index } => {
             attack(state, index);
             state.pending_end_turn = true;
-            settle(state);
+            // Handheld Fan can open a phase of its own, mid-attack, that
+            // needs the chooser's own action before anything else moves
+            // on — settle waits for that the same way it already waits
+            // out any other phase a card opens.
+            if state.phase == Phase::Main {
+                settle(state);
+            }
         }
 
         Action::EndTurn => {
@@ -733,6 +739,22 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::MoveEnergyForHandheldFan { card, target } => {
+            let attacker = match state.phase {
+                Phase::MovingEnergyForHandheldFan { attacker, .. } => attacker,
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[attacker.index()].attached.retain(|c| *c != card);
+            state.pokemon[target.index()].attached.push(card);
+            let energy = state.def_of(card).name();
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{energy} moves to {name}."));
+            state.phase = Phase::Main;
+            // The attack this interrupted never got to settle — this is
+            // where the deferred knockout check finally runs.
+            settle(state);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1178,7 +1200,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::BonusDamageIfPoisonedVsActive(_)
         | TrainerEffect::FewerPrizeIfLilliesKnockedOutByAttack
         | TrainerEffect::DamagesAttackerWhenDefenderIsHit(_)
-        | TrainerEffect::DrawsWhenDefenderIsHit(_) => {
+        | TrainerEffect::DrawsWhenDefenderIsHit(_)
+        | TrainerEffect::MovesEnergyFromAttackerToTheirBench => {
             unreachable!(
                 "a static effect is read wherever it applies, never dispatched \
                  at play time — a Tool never reaches resolve_trainer at all"
@@ -1415,6 +1438,20 @@ fn trigger_defenders_tool(state: &mut GameState, attacker: PokemonId, defender: 
                 let owner = state.pokemon(defender).owner;
                 for _ in 0..count {
                     state.draw(owner);
+                }
+            }
+            TrainerEffect::MovesEnergyFromAttackerToTheirBench => {
+                let attacker_owner = state.pokemon(attacker).owner;
+                let has_energy = state
+                    .pokemon(attacker)
+                    .attached
+                    .iter()
+                    .any(|c| state.def_of(*c).is_energy());
+                let has_bench = !state.player(attacker_owner).bench.is_empty();
+                if has_energy && has_bench {
+                    let chooser = state.pokemon(defender).owner;
+                    state.phase = Phase::MovingEnergyForHandheldFan { chooser, attacker };
+                    return;
                 }
             }
             _ => {}
