@@ -280,6 +280,10 @@ pub enum Phase {
         chooser: PlayerId,
         attacker: PokemonId,
     },
+    /// `player`'s turn just ended, and their Active carries `Powerglass`.
+    /// They may attach one Basic Energy from their own discard to it, or
+    /// decline — opened from `settle` itself, before the checkup queues.
+    AttachingFromDiscardForPowerglass { player: PlayerId },
     /// `player` played `Janine's Secret Art` and is choosing up to 2 of
     /// their own Darkness Pokémon, in `chosen`, before any search runs.
     ChoosingJaninesTargets {

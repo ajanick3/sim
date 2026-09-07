@@ -755,6 +755,31 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::AttachFromDiscardForPowerglass { card } => {
+            let player = match state.phase {
+                Phase::AttachingFromDiscardForPowerglass { player } => player,
+                _ => return Err(IllegalAction),
+            };
+            let active = state.player(player).active.expect("Powerglass named this Active");
+            state.players[player.index()].discard.retain(|c| *c != card);
+            state.pokemon[active.index()].attached.push(card);
+            let energy = state.def_of(card).name();
+            state.log.push(format!("Powerglass attaches {energy} from discard."));
+            end_the_turn(state);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DeclinePowerglass => {
+            match state.phase {
+                Phase::AttachingFromDiscardForPowerglass { .. } => {}
+                _ => return Err(IllegalAction),
+            }
+            end_the_turn(state);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1201,7 +1226,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::FewerPrizeIfLilliesKnockedOutByAttack
         | TrainerEffect::DamagesAttackerWhenDefenderIsHit(_)
         | TrainerEffect::DrawsWhenDefenderIsHit(_)
-        | TrainerEffect::MovesEnergyFromAttackerToTheirBench => {
+        | TrainerEffect::MovesEnergyFromAttackerToTheirBench
+        | TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd => {
             unreachable!(
                 "a static effect is read wherever it applies, never dispatched \
                  at play time — a Tool never reaches resolve_trainer at all"
@@ -1561,11 +1587,16 @@ fn settle(state: &mut GameState) {
         }
 
         // Rule 45: the checkup runs after a turn ends and before the next one.
+        // `Powerglass` triggers first — "at the end of your turn" — and, if
+        // it opens a phase, `end_the_turn` runs again once that resolves,
+        // called directly rather than through this loop.
         if state.pending_end_turn {
             state.pending_end_turn = false;
-            fill_checkup(state);
-            clear_paralysis(state);
-            state.pending_turn_start = true;
+            if let Some(player) = powerglass_owner(state) {
+                state.phase = Phase::AttachingFromDiscardForPowerglass { player };
+                return;
+            }
+            end_the_turn(state);
         }
 
         if let Some(player) = next_checkup_player(state) {
@@ -1586,6 +1617,31 @@ fn settle(state: &mut GameState) {
             return;
         }
     }
+}
+
+/// The rest of what a turn ending owes, once `Powerglass` (if any) is
+/// out of the way: queue the checkup, clear Paralysis, and mark the next
+/// turn owed. Called from `settle`'s own loop, and directly by whichever
+/// action resolves `Phase::AttachingFromDiscardForPowerglass`.
+fn end_the_turn(state: &mut GameState) {
+    fill_checkup(state);
+    clear_paralysis(state);
+    state.pending_turn_start = true;
+}
+
+/// The Active of the player whose turn is ending, if it carries
+/// `Powerglass` — the one Tool so far that triggers on the turn ending
+/// itself, rather than on being attacked.
+fn powerglass_owner(state: &GameState) -> Option<PlayerId> {
+    let player = state.current;
+    let active = state.player(player).active?;
+    let carries_powerglass = state.pokemon(active).attached.iter().any(|c| {
+        state
+            .def_of(*c)
+            .as_trainer()
+            .is_some_and(|t| t.effect == TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd)
+    });
+    carries_powerglass.then_some(player)
 }
 
 /// Queue every between-turn effect the conditions owe. Rule 49 keeps a

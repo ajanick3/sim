@@ -104,6 +104,11 @@ pub enum Action {
     /// `Handheld Fan`'s move: this Energy off the attacker, onto this one
     /// of the attacker's own Benched Pokémon.
     MoveEnergyForHandheldFan { card: CardId, target: PokemonId },
+    /// `Powerglass`: attach this Basic Energy from discard to the
+    /// Pokémon it is attached to.
+    AttachFromDiscardForPowerglass { card: CardId },
+    /// Decline `Powerglass`'s attach.
+    DeclinePowerglass,
     /// Choose one of up to 2 targets for `Janine's Secret Art`.
     ChooseJaninesTarget { target: PokemonId },
     /// Stop choosing targets, whether 0, 1, or 2 have been picked.
@@ -142,6 +147,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::Devolving { player, .. } => Some(player),
         Phase::SwappingIdentity { player, .. } => Some(player),
         Phase::MovingEnergyForHandheldFan { chooser, .. } => Some(chooser),
+        Phase::AttachingFromDiscardForPowerglass { player } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
@@ -383,6 +389,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 actions.push(Action::RemoveOneEvolutionCard);
             }
             actions.push(Action::FinishDevolving);
+            return actions;
+        }
+        Phase::AttachingFromDiscardForPowerglass { player: whose } => {
+            for card in &state.player(whose).discard {
+                if state.matches_filter(*card, crate::card::CardFilter::BasicEnergy) {
+                    actions.push(Action::AttachFromDiscardForPowerglass { card: *card });
+                }
+            }
+            actions.push(Action::DeclinePowerglass);
             return actions;
         }
         Phase::MovingEnergyForHandheldFan { attacker, .. } => {
@@ -802,6 +817,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
             state.def_of(card).name(),
             state.pokemon_def(target).name
         ),
+        Action::AttachFromDiscardForPowerglass { card } => {
+            format!("Attach {} from discard", state.def_of(card).name())
+        }
+        Action::DeclinePowerglass => "Decline Powerglass".to_string(),
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
         }
