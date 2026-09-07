@@ -453,6 +453,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 TrainerEffect::SwitchOwnActive | TrainerEffect::SwitchOwnActiveWithFollowUp(_) => {
                     !side.bench.is_empty()
                 }
+                TrainerEffect::SwitchOpponentActiveThenOwn => {
+                    !state.player(player.opponent()).bench.is_empty()
+                }
                 // An Energy to move, and a second Pokémon to move it to.
                 TrainerEffect::MoveAttachedEnergy => {
                     let in_play = side.in_play();

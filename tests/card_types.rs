@@ -23,12 +23,12 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
         Some(Refusal::IsATrainer(TrainerKind::Supporter)),
         "a Supporter is refused as a Supporter"
     );
-    // Prime Catcher, an ACE SPEC. It switches a Benched Pokémon in and
-    // then switches the player's own Active too, which nothing built runs.
+    // Tool Scrapper discards a Tool attached in play — a mechanism the
+    // Tools milestone owns, since nothing attaches a Tool yet.
     assert_eq!(
-        reason_for("sv05-157"),
+        reason_for("me02.5-212"),
         Some(Refusal::IsATrainer(TrainerKind::Item)),
-        "Prime Catcher is an Item"
+        "Tool Scrapper is an Item"
     );
     assert_eq!(
         reason_for("sv10-180"),
@@ -81,8 +81,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Conviction, Xerosic's Machinations, Eri, Brock's Scouting, Wally's
     // Compassion, Janine's Secret Art, Energy Search, Energy Retrieval,
     // Energy Recycler, Team Rocket's Transceiver, Hand Trimmer, Secret
-    // Box, and Dusk Ball.
-    assert_eq!(trainers, 312, "the Trainers still refused, by kind");
+    // Box, Dusk Ball, and Prime Catcher.
+    assert_eq!(trainers, 310, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
