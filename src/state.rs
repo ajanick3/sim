@@ -346,6 +346,13 @@ pub struct GameState {
     /// Belt's Training`. Cleared at `begin_turn`, the same as `spent` —
     /// "this turn" ends there regardless of whose turn is starting.
     pub turn_bonus: Option<(u32, crate::card::TurnBonusTarget)>,
+    /// The defender an attack that just resolved was aimed at, if any.
+    /// `settle`'s knockout check takes this — reads and clears it, every
+    /// call, whether or not it matches a Pokémon that actually died —
+    /// so `Lillie's Pearl` can tell a knockout an attack just caused from
+    /// one a later checkup causes, without this leaking into a settle
+    /// call an attack did not just precede.
+    pub attacking_defender: Option<PokemonId>,
     pub rng: Box<dyn Rng>,
     /// What happened, in order, as prose for a reader. It is not the record
     /// a replay reads — that is [`GameState::history`].
@@ -398,6 +405,7 @@ impl GameState {
             spent: Vec::new(),
             knocked_out_last_turn: [false, false],
             turn_bonus: None,
+            attacking_defender: None,
             rng,
             log: Vec::new(),
             history: Vec::new(),

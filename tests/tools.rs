@@ -526,3 +526,118 @@ fn binding_mochi_adds_damage_only_while_poisoned() {
     state.inflict(attacker, sim::card::Condition::Poisoned);
     assert_eq!(sim::engine::damage_dealt(&state, attacker, defender, 100), 140);
 }
+
+// --- Ticket 05: Lillie's Pearl ---
+
+/// A game where a Lillie's-named Basic, worth 1 Prize, carries
+/// `Lillie's Pearl` and dies to one attack from the opponent's Basic.
+fn lillies_pearl_game(with_pearl: bool) -> (GameState, u32) {
+    let mut db = CardDb::new();
+    let lillies_mon = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-lillies-mon",
+        name: "Lillie's Testmon",
+        hp: 30,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        prizes: 1,
+        attacks: vec![Attack {
+            name: "Nudge",
+            cost: vec![Type::Colorless],
+            base_damage: 30,
+            inflicts: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-colorless-energy-lp",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+    }));
+    let pearl = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-lillies-pearl",
+        name: "Lillie's Pearl",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::FewerPrizeIfLilliesKnockedOutByAttack,
+    }));
+
+    let mut decklist = vec![lillies_mon; 12];
+    while decklist.len() < 60 {
+        decklist.push(energy);
+    }
+    let mut state = GameState::new(
+        db,
+        [decklist.clone(), decklist],
+        Box::new(SeededRng::new(9)),
+    );
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+    let defender = state.player(defender_player).active.unwrap();
+    if with_pearl {
+        let pearl_card = deal_new_card(&mut state, defender_player, pearl);
+        state.pokemon[defender.index()].attached.push(pearl_card);
+    }
+
+    // Pay for the attack.
+    let active = state.player(attacker_player).active.unwrap();
+    let side = state.player(attacker_player);
+    let card = side
+        .hand
+        .iter()
+        .chain(side.library.iter())
+        .find(|c| state.def_of(**c).is_energy())
+        .copied()
+        .expect("the deck is mostly Energy");
+    state.remove_from_hand(attacker_player, card);
+    state.players[attacker_player.index()].library.retain(|c| *c != card);
+    state.pokemon[active.index()].attached.push(card);
+
+    let before = state.player(attacker_player).prizes.len() as u32;
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("a paid-for Active can attack");
+    apply(&mut state, attack).unwrap();
+    let after = state.player(attacker_player).prizes.len() as u32;
+    (state, before - after)
+}
+
+#[test]
+fn lillies_pearl_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Lillie's Pearl")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Lillie's Pearl should play");
+}
+
+#[test]
+fn lillies_pearl_takes_one_fewer_prize_when_its_pokemon_is_knocked_out() {
+    let (_, taken) = lillies_pearl_game(true);
+    assert_eq!(taken, 0, "1 Prize's worth, minus 1, floored at zero");
+}
+
+#[test]
+fn without_lillies_pearl_the_knockout_takes_its_usual_prize() {
+    let (_, taken) = lillies_pearl_game(false);
+    assert_eq!(taken, 1);
+}

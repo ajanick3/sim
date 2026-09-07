@@ -263,6 +263,10 @@ pub enum TrainerEffect {
     /// against the opponent's Active, but only while the Pokémon this is
     /// attached to is Poisoned. `Binding Mochi`.
     BonusDamageIfPoisonedVsActive(u32),
+    /// A static effect, read in `knock_out_the_dead`: if the Lillie's
+    /// Pokémon this is attached to is Knocked Out by an attack — not a
+    /// checkup — the opponent takes 1 fewer Prize. `Lillie's Pearl`.
+    FewerPrizeIfLilliesKnockedOutByAttack,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
