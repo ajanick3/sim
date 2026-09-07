@@ -294,6 +294,13 @@ pub enum TrainerEffect {
     /// fixed amount, and the only one whose follow-up reads whether the
     /// heal did anything at all.
     HealMegaExAndTakeEnergyIfHealed,
+    /// Choose up to 2 Darkness Pokémon; search for a Basic Darkness
+    /// Energy and attach it to each one chosen, one search per target;
+    /// then, if the Active got one this way, it is Poisoned. `Janine's
+    /// Secret Art` is bespoke: nothing else chooses several targets
+    /// before searching once per target, or applies a Special Condition
+    /// outside attack resolution.
+    JaninesSecretArt,
 }
 
 /// What a card demands before it may be played at all.
