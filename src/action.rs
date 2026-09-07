@@ -186,6 +186,11 @@ pub enum Action {
     /// Deal `Phase::ChoosingAnyOpponentPokemonDamageTarget`'s flat
     /// damage to this Pokémon, Active or Benched.
     DamageChosenOpponentPokemon { target: PokemonId },
+    /// Attach this Energy from hand, as part of
+    /// `Phase::DecidingToUseTealDance`.
+    AttachEnergyForTealDance { card: CardId },
+    /// Decline it.
+    DeclineTealDance,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -223,6 +228,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToUseLastDitchCatch { player, .. } => Some(player),
         Phase::DecidingToUsePsychicDraw { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
+        Phase::DecidingToUseTealDance { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -550,6 +556,20 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             for pokemon in state.player(whose.opponent()).in_play() {
                 actions.push(Action::DamageChosenOpponentPokemon { target: pokemon });
             }
+            return actions;
+        }
+        Phase::DecidingToUseTealDance { player: whose, pokemon } => {
+            let crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeThenDraw(kind) =
+                state.pokemon_def(pokemon).ability.expect("named only when carried").effect
+            else {
+                unreachable!("this phase only ever opens for this effect");
+            };
+            for card in &state.player(whose).hand {
+                if state.matches_filter(*card, crate::card::CardFilter::BasicEnergyOfType(kind)) {
+                    actions.push(Action::AttachEnergyForTealDance { card: *card });
+                }
+            }
+            actions.push(Action::DeclineTealDance);
             return actions;
         }
         Phase::MovingOpponentsEnergy { of, .. } => {
@@ -944,6 +964,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::OncePerTurnIfKnockedOutLastTurnMayDrawCards(_) => {
                 state.knocked_out_last_turn[player.index()]
             }
+            crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeThenDraw(kind) => {
+                side.hand.iter().any(|c| {
+                    state.matches_filter(*c, crate::card::CardFilter::BasicEnergyOfType(kind))
+                })
+            }
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_last_ditch_catch`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => false,
@@ -1171,5 +1196,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DamageChosenOpponentPokemon { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
         }
+        Action::AttachEnergyForTealDance { card } => {
+            format!("Attach {} (Teal Dance)", state.def_of(card).name())
+        }
+        Action::DeclineTealDance => "Decline Teal Dance".to_string(),
     }
 }

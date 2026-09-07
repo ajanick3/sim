@@ -2035,3 +2035,48 @@ fn fezandipiti_ex_is_admitted_from_the_artifact() {
         "at least one Fezandipiti ex print should play"
     );
 }
+
+// --- Beyond the spec: damage per Energy on both Active Pokemon combined ---
+
+#[test]
+fn damage_per_energy_on_both_actives_combined() {
+    let attack = multiplier_attack(sim::card::Count::EnergyOnBothActivesCount, 30);
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    // pay_and_attack attaches 1 Energy to the attacker for cost;
+    // attach 1 more to the attacker and 2 to the defender.
+    let energy_card = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    let energy_def = state.cards[energy_card.index()].def;
+    let extra1 = deal_new_card(&mut state, player, energy_def);
+    state.pokemon[attacker.index()].attached.push(extra1);
+    for _ in 0..2 {
+        let extra = deal_new_card(&mut state, opponent, energy_def);
+        state.pokemon[defender.index()].attached.push(extra);
+    }
+
+    pay_and_attack(&mut state);
+
+    // 2 on attacker (1 cost + 1 extra) + 2 on defender = 4, times 30.
+    assert_eq!(state.pokemon(defender).damage, 120);
+}
+
+#[test]
+fn teal_mask_ogerpon_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Teal Mask Ogerpon ex" && c.playable.is_some()),
+        "at least one Teal Mask Ogerpon ex print should play"
+    );
+}

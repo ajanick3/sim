@@ -737,6 +737,9 @@ pub enum Count {
     OwnDamagedWithNamePrefix(&'static str),
     /// The opponent's Benched Pokémon. `Zeraora`'s `Combat Thunder`.
     OpponentBenchedPokemonCount,
+    /// Energy attached to the attacker and the defender combined.
+    /// `Teal Mask Ogerpon ex`'s `Myriad Leaf Shower`.
+    EnergyOnBothActivesCount,
 }
 
 /// How far along its evolution line a Pokémon card is printed. The artifact
@@ -832,6 +835,12 @@ pub enum AbilityEffect {
     /// instead of a Trainer's requirement.
     /// `Fezandipiti ex`'s `Flip the Script`.
     OncePerTurnIfKnockedOutLastTurnMayDrawCards(u32),
+    /// Once during the player's own turn, the player may attach a
+    /// Basic Energy of this type from hand to the Pokémon carrying
+    /// this Ability. If they do, they draw a card. Opens
+    /// `Phase::DecidingToUseTealDance` only when a qualifying Energy
+    /// is in hand. `Teal Mask Ogerpon ex`'s `Teal Dance`.
+    OncePerTurnMayAttachBasicEnergyOfTypeThenDraw(Type),
 }
 
 /// A basic Energy card as printed.
