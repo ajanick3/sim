@@ -408,6 +408,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                         .count() as u32
                         >= least
                 }),
+                Some(Requirement::MorePrizesThanOpponent) => {
+                    side.prizes.len() > state.player(player.opponent()).prizes.len()
+                }
             };
             // Rule 59: not a Stadium whose name is already in play.
             let name_is_free = trainer.kind != TrainerKind::Stadium

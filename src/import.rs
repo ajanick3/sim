@@ -663,6 +663,20 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         ),
         "N's Plan" => (free, TrainerEffect::MoveEnergyFromBenchToActive { limit: 2 }),
         "Pokémon Center Lady" => (free, TrainerEffect::HealChosen(60)),
+        "Rosa's Encouragement" => (
+            Some(Requirement::MorePrizesThanOpponent),
+            TrainerEffect::Decide {
+                from: Zone::Discard,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicEnergy,
+                    to: Destination::Attach(TargetFilter::OfStage(Stage::Stage2)),
+                    limit: 2,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         _ => return None,
     })
 }

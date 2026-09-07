@@ -549,6 +549,10 @@ impl GameState {
                 self.player(player).bench.contains(&pokemon)
                     && self.pokemon_def(pokemon).kind == kind
             }
+            TargetFilter::OfStage(stage) => {
+                self.player(player).in_play().contains(&pokemon)
+                    && self.pokemon_def(pokemon).stage == stage
+            }
         }
     }
 

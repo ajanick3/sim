@@ -76,6 +76,11 @@ pub enum TargetFilter {
     /// A Benched Pokémon printed as this type. `Wondrous Patch` targets
     /// only a Benched Psychic Pokémon.
     BenchedOfType(Type),
+    /// A Pokémon in play, Active or Benched, printed at this stage.
+    /// `Rosa's Encouragement` targets a Stage 2 either way — unlike
+    /// `BenchedNameStartsWith` and `BenchedOfType`, nothing here confines
+    /// it to the Bench.
+    OfStage(Stage),
 }
 
 /// What a card must be for a Trainer effect to offer it. A value, per
@@ -259,6 +264,10 @@ pub enum Requirement {
     /// Pokémon's own attachments rather than the hand or the board at
     /// large.
     ActiveHasAtLeastEnergy(u32),
+    /// The player holds more Prize cards than the opponent.
+    /// `OpponentPrizesAtMost` reads the opponent's count alone;
+    /// `Rosa's Encouragement` is the first to compare the two.
+    MorePrizesThanOpponent,
 }
 
 /// A Trainer as printed.
