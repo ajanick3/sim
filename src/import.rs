@@ -770,6 +770,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             },
         ),
         "Hand Trimmer" => (free, TrainerEffect::BothDiscardDownTo(5)),
+        "Dusk Ball" => (free, TrainerEffect::LookAtBottomOfLibrary { count: 7 }),
         "Secret Box" => (
             Some(Requirement::DiscardOtherCardsFromHand(3)),
             TrainerEffect::Decide {

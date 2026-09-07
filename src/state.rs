@@ -245,6 +245,12 @@ pub enum Phase {
     /// Evolution ex is, per ADR 0010 — the same fact `TurnBonusTarget`
     /// already reads for a plain ex, one prize lower.
     HealingMegaEx { player: PlayerId },
+    /// `player` played `Dusk Ball` and is looking at the bottom of their
+    /// Library. `legal_actions` reads the bottom cards straight off the
+    /// zone, the same way a `peek`ed `Decide` reads the top without
+    /// storing anything here — the Library itself is the source of
+    /// truth, not a copy of it a `Copy` `Phase` could not hold anyway.
+    LookingAtBottomOfLibrary { player: PlayerId, count: u32 },
     /// `player` played `Janine's Secret Art` and is choosing up to 2 of
     /// their own Darkness Pokémon, in `chosen`, before any search runs.
     ChoosingJaninesTargets {
