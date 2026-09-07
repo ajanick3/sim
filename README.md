@@ -114,7 +114,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Wally's Compassion | ✅ |
 | Xerosic's Machinations | ✅ |
 
-### Items (23/28 built)
+### Items (24/28 built)
 
 | Card | Status |
 | --- | --- |
@@ -142,7 +142,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Team Rocket's Transceiver | ✅ |
 | Tera Orb | ❌ |
 | Tool Scrapper | ❌ |
-| Transformation Tome | ❌ |
+| Transformation Tome | ✅ |
 | Ultra Ball | ✅ |
 | Unfair Stamp | ✅ |
 | Wondrous Patch | ✅ |
@@ -292,6 +292,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
   artifact holds, the modelling findings already banked, and what the data
   cannot express.
 - [The ADR directory](docs/adr/) — the decisions and their reasoning.
+
 
 
 

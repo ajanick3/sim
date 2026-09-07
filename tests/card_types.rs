@@ -81,8 +81,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Conviction, Xerosic's Machinations, Eri, Brock's Scouting, Wally's
     // Compassion, Janine's Secret Art, Energy Search, Energy Retrieval,
     // Energy Recycler, Team Rocket's Transceiver, Hand Trimmer, Secret
-    // Box, Dusk Ball, Prime Catcher, and Strange Timepiece.
-    assert_eq!(trainers, 309, "the Trainers still refused, by kind");
+    // Box, Dusk Ball, Prime Catcher, Strange Timepiece, and
+    // Transformation Tome.
+    assert_eq!(trainers, 308, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),

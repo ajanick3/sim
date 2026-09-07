@@ -922,3 +922,85 @@ fn strange_timepiece_devolves_one_layer_and_blocks_evolving_this_turn() {
     assert!(state.player(player).hand.contains(&evolution_card));
     assert!(state.pokemon(stage1).cannot_evolve_this_turn);
 }
+
+// --- Ticket 11: Transformation Tome ---
+
+fn with_transformation_tome(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-transformation-tome",
+        name: "Transformation Tome",
+        kind: TrainerKind::Item,
+        requirement: Some(Requirement::SecondCopyOfThisInHand),
+        effect: TrainerEffect::SwapBasicWithDiscard,
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn transformation_tome_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Transformation Tome")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Transformation Tome should play");
+}
+
+#[test]
+fn transformation_tome_cannot_be_played_with_only_one_copy() {
+    let (set, card) = with_transformation_tome(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    // Remove any second copy the deal might have dealt into hand.
+    state.players[player.index()].hand.retain(|c| *c == played);
+
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card: played }),
+        "one copy cannot pay for two"
+    );
+}
+
+#[test]
+fn transformation_tome_consumes_its_second_copy_and_swaps_in_the_discard() {
+    let (set, card) = with_transformation_tome(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    let second_copy = deal_new_card(&mut state, player, card);
+    state.players[player.index()].hand.push(second_copy);
+
+    let target = state.player(player).active.unwrap();
+    // Give the target some damage, an attached Energy, and a played-on
+    // turn to check they survive the swap.
+    state.pokemon[target.index()].damage = 30;
+    let attached = deal_new_card(&mut state, player, set.energy);
+    state.pokemon[target.index()].attached.push(attached);
+    let old_card = state.pokemon(target).cards[0];
+
+    let replacement = deal_new_card(&mut state, player, set.mon);
+    state.players[player.index()].discard.push(replacement);
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    assert!(
+        !state.player(player).hand.contains(&second_copy),
+        "the second copy is consumed as the cost"
+    );
+    assert!(state.player(player).discard.contains(&second_copy));
+
+    apply(&mut state, Action::ChooseIdentitySwapTarget { target }).unwrap();
+    apply(&mut state, Action::SwapIdentityWithDiscarded { card: replacement }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(target).cards, vec![replacement]);
+    assert!(state.player(player).discard.contains(&old_card));
+    assert!(!state.player(player).discard.contains(&replacement));
+    // Damage and attachments stayed on the same Pokémon in play.
+    assert_eq!(state.pokemon(target).damage, 30);
+    assert!(state.pokemon(target).attached.contains(&attached));
+}

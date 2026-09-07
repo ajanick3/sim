@@ -263,6 +263,14 @@ pub enum Phase {
         player: PlayerId,
         target: Option<PokemonId>,
     },
+    /// `player` played `Transformation Tome` and is swapping a Basic in
+    /// play for one in their discard, keeping the same `PokemonInPlay` —
+    /// damage, attachments, conditions, and `played_on_turn` all stay,
+    /// only the card identifying what the Pokémon is changes.
+    SwappingIdentity {
+        player: PlayerId,
+        target: Option<PokemonId>,
+    },
     /// `player` played `Janine's Secret Art` and is choosing up to 2 of
     /// their own Darkness Pokémon, in `chosen`, before any search runs.
     ChoosingJaninesTargets {
