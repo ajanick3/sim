@@ -574,6 +574,11 @@ pub enum AttackEffect {
     /// The attacker cannot use any attack during their own very next
     /// turn. `N's Zekrom`'s `Rampaging Thunder`.
     AttackerCannotAttackNextTurn,
+    /// Put this many damage counters (10 damage each) on the opponent's
+    /// Benched Pokémon, in any combination the player chooses — opens
+    /// `Phase::DistributingDamageCounters`, since the first read of a
+    /// Benched Pokémon taking damage at all. `Dragapult ex`.
+    DamageCountersToOpponentBenchAnyWay(u32),
 }
 
 /// What `AttackEffect::DamagePerCount` counts.

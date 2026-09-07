@@ -288,6 +288,12 @@ pub enum Phase {
     /// They may attach one Basic Energy from their own discard to it, or
     /// decline — opened from `settle` itself, before the checkup queues.
     AttachingFromDiscardForPowerglass { player: PlayerId },
+    /// `player` used an attack that puts damage counters on the
+    /// opponent's Bench "in any way you like" — placed one at a time,
+    /// any combination, until `remaining` reaches zero or the Bench
+    /// runs out of room to matter (never happens; a counter can always
+    /// stack). `Dragapult ex`'s `Phantom Dive`.
+    DistributingDamageCounters { player: PlayerId, remaining: u32 },
     /// `player` played `Janine's Secret Art` and is choosing up to 2 of
     /// their own Darkness Pokémon, in `chosen`, before any search runs.
     ChoosingJaninesTargets {

@@ -78,6 +78,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // admits Yveltal's me01-088 print (its other attack has no text).
     // A restriction on the attacker's own next turn (can't attack)
     // completes N's Zekrom (2 prints): its other attack (Shred) was
-    // already read in ticket 03.
-    assert_eq!(admitted, 530, "coverage moves only on purpose");
+    // already read in ticket 03. Damage placed on the opponent's
+    // Bench, in the player's own choice of split, admits Dragapult ex
+    // (5 prints; its other attack, Jet Headbutt, has no printed text).
+    assert_eq!(admitted, 535, "coverage moves only on purpose");
 }

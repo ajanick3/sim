@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Team Rocket's Factory | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (24/95 built)
+### Pokémon (25/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -204,7 +204,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Crustle | ❌ |
 | Dedenne | ❌ |
 | Dipplin | ❌ |
-| Dragapult ex | ❌ |
+| Dragapult ex | ✅ |
 | Drakloak | ❌ |
 | Dreepy | ✅ |
 | Drilbur | ✅ |
