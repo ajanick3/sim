@@ -2244,3 +2244,33 @@ fn fan_rotom_is_admitted_from_the_artifact() {
         "at least one Fan Rotom print should play"
     );
 }
+
+// --- Beyond the spec: damage per Prize the opponent has taken ---
+
+#[test]
+fn damage_per_opponent_prizes_taken() {
+    let attack = multiplier_attack(sim::card::Count::OpponentPrizesTakenCount, 60);
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    for _ in 0..2 {
+        state.players[opponent.index()].prizes.pop();
+    }
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 120, "2 Prizes taken times 60");
+}
+
+#[test]
+fn pecharunt_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Pecharunt ex" && c.playable.is_some()),
+        "at least one Pecharunt ex print should play"
+    );
+}

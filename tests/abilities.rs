@@ -1111,3 +1111,87 @@ fn fan_rotom_is_admitted_from_the_artifact() {
         "at least one Fan Rotom print should play"
     );
 }
+
+// --- Beyond the map: a standing switch that Poisons the new Active ---
+
+#[test]
+fn switches_a_benched_dark_pokemon_in_and_poisons_it() {
+    let ability = Ability {
+        name: "Subjugating Chains",
+        effect: sim::card::AbilityEffect::OncePerTurnMaySwitchBenchedOfTypeExcludingNamedThenPoison(
+            Type::Darkness,
+            "Pecharunt ex",
+        ),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let old_active = state.player(player).active.unwrap();
+
+    let dark_bench_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-dark-bench",
+        name: "Darkmon",
+        hp: 200,
+        kind: Type::Darkness,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let bench_card = deal_new_card(&mut state, player, dark_bench_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    apply(&mut state, Action::UseAbility { pokemon: old_active }).unwrap();
+
+    assert!(matches!(state.phase, Phase::DecidingToUseSubjugatingChains { .. }));
+    apply(
+        &mut state,
+        Action::SwitchForSubjugatingChains { target: bench_mon },
+    )
+    .unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).active, Some(bench_mon));
+    assert!(state.player(player).bench.contains(&old_active));
+    assert!(state.has_condition(bench_mon, sim::card::Condition::Poisoned));
+}
+
+#[test]
+fn subjugating_chains_not_offered_with_no_qualifying_bench() {
+    let ability = Ability {
+        name: "Subjugating Chains",
+        effect: sim::card::AbilityEffect::OncePerTurnMaySwitchBenchedOfTypeExcludingNamedThenPoison(
+            Type::Darkness,
+            "Pecharunt ex",
+        ),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(result.is_err(), "no Benched Darkness Pokemon to switch in");
+}
+
+#[test]
+fn pecharunt_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Pecharunt ex" && c.playable.is_some()),
+        "at least one Pecharunt ex print should play"
+    );
+}

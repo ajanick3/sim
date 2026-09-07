@@ -392,6 +392,17 @@ pub enum Phase {
     /// `player` used an Ability that searches the library for up to
     /// `remaining` more Pokémon of a type at some HP or less, to
     /// hand. `Fan Rotom`'s `Fan Call`.
+    /// `player` may switch a Benched Pokémon of `kind` (except one
+    /// named `excluding`) with the Active, choosing which. `name`
+    /// carries the Ability's own printed name, to spend
+    /// `Limit::AbilityUsed` once a switch actually happens.
+    /// `Pecharunt ex`'s `Subjugating Chains`.
+    DecidingToUseSubjugatingChains {
+        player: PlayerId,
+        name: &'static str,
+        kind: crate::card::Type,
+        excluding: &'static str,
+    },
     SearchingForFanCall {
         player: PlayerId,
         pokemon: PokemonId,

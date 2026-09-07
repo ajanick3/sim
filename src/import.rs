@@ -1022,6 +1022,12 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
                 3,
             )
         }
+        ("Pecharunt ex", "Subjugating Chains") => {
+            AbilityEffect::OncePerTurnMaySwitchBenchedOfTypeExcludingNamedThenPoison(
+                Type::Darkness,
+                "Pecharunt ex",
+            )
+        }
         _ => return None,
     })
 }
@@ -1121,6 +1127,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Chien-Pao", "Icicle Loop") => AttackEffect::MoveOwnAttachedEnergyToHand,
         ("Iron Leaves ex", "Prism Edge") => AttackEffect::AttackerCannotAttackNextTurn,
         ("Fan Rotom", "Assault Landing") => AttackEffect::FizzlesWithNoStadiumInPlay,
+        ("Pecharunt ex", "Irritated Outburst") => {
+            AttackEffect::DamagePerCount(Count::OpponentPrizesTakenCount, 60)
+        }
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }

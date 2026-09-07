@@ -69,7 +69,14 @@ same way Milestone 11 continued past its own spec:
   `attack` mirroring `CoinFlipSelfInvulnerableNextTurn`'s own shape).
   Completes all 4 prints.
 
-Coverage: 604 -> 631 across these eight PRs.
+- **Pecharunt ex**'s `Subjugating Chains`
+  (`OncePerTurnMaySwitchBenchedOfTypeExcludingNamedThenPoison`) — a
+  standing switch (no positional requirement, unlike `Run Errand`) of
+  a Benched Pokémon of a type, excluding a name, then Poisoning the
+  newly Active one. Its own attack needed `Count::OpponentPrizesTakenCount`.
+  Completes all 5 prints.
+
+Coverage: 604 -> 636 across these nine PRs.
 
 ## What is left
 
