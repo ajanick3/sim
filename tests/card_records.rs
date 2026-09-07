@@ -51,6 +51,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Petrel, 3 of N's PP Up, 2 of Wondrous Patch, 1 of Pokégear 3.0, 2 of
     // Bug Catching Set, 3 of Ciphermaniac's Codebreaking, 1 of Unfair
     // Stamp, 2 of Switch, 2 of Jumbo Ice Cream, 3 of Lana's Aid, 2 of Rust
-    // Syndicate Grunt, 3 of N's Plan, and 1 of Pokémon Center Lady.
-    assert_eq!(admitted, 422, "coverage moves only on purpose");
+    // Syndicate Grunt, 3 of N's Plan, 1 of Pokémon Center Lady, and 3 of
+    // Rosa's Encouragement.
+    assert_eq!(admitted, 425, "coverage moves only on purpose");
 }
