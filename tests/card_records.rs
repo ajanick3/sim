@@ -89,5 +89,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // attack has no printed text). A search, reusing the Decide-to-
     // Bench shape from an attack, admits Drilbur's me05-046 print and
     // both Toxel prints (their other attacks have no printed text).
-    assert_eq!(admitted, 542, "coverage moves only on purpose");
+    // A hand read — the opponent reveals their hand, which changes no
+    // state the engine tracks separately — admits Hoothoot's sv05-126
+    // print.
+    assert_eq!(admitted, 543, "coverage moves only on purpose");
 }

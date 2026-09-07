@@ -913,3 +913,38 @@ fn toxel_is_admitted_from_the_artifact() {
         "at least one Toxel print should play"
     );
 }
+
+// --- Ticket 11: hand and deck reads ---
+
+#[test]
+fn reveals_the_opponents_hand() {
+    let attack = Attack {
+        name: "Silent Wing",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::RevealOpponentsHand),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "revealing a hand needs no choice");
+    assert!(
+        state.log.iter().any(|line| line.contains("reveals")),
+        "the reveal lands in the log: {:?}",
+        state.log
+    );
+}
+
+#[test]
+fn hoothoot_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Hoothoot" && c.playable.is_some()),
+        "at least one Hoothoot print should play"
+    );
+}

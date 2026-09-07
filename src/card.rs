@@ -597,6 +597,12 @@ pub enum AttackEffect {
     /// rather than a Trainer's `Decide`. `Drilbur` and `Toxel`'s
     /// `Call for Family`.
     SearchLibraryForBasicPokemonToBench(u32),
+    /// The opponent reveals their hand. The engine already tracks every
+    /// zone in full (`view::PlayerView` hides a zone only at render
+    /// time, and nothing in `legal_actions` ever gates a choice on
+    /// hidden opponent-hand knowledge), so there is no state for this
+    /// to change — it lands in the log alone. `Hoothoot`'s `Silent Wing`.
+    RevealOpponentsHand,
 }
 
 /// What `AttackEffect::DamagePerCount` counts.
