@@ -147,13 +147,13 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Unfair Stamp | ✅ |
 | Wondrous Patch | ✅ |
 
-### Tools (2/9 built)
+### Tools (4/9 built)
 
 | Card | Status |
 | --- | --- |
 | Air Balloon | ✅ |
-| Binding Mochi | ❌ |
-| Brave Bangle | ❌ |
+| Binding Mochi | ✅ |
+| Brave Bangle | ✅ |
 | Handheld Fan | ❌ |
 | Hero's Cape | ✅ |
 | Lillie's Pearl | ❌ |
@@ -292,6 +292,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
   artifact holds, the modelling findings already banked, and what the data
   cannot express.
 - [The ADR directory](docs/adr/) — the decisions and their reasoning.
+
 
 
 

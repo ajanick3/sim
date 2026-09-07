@@ -1172,7 +1172,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             state.phase = Phase::SwappingIdentity { player, target: None };
         }
 
-        TrainerEffect::ReducesRetreatCost(_) | TrainerEffect::IncreasesHp(_) => {
+        TrainerEffect::ReducesRetreatCost(_)
+        | TrainerEffect::IncreasesHp(_)
+        | TrainerEffect::BonusDamageWithoutRuleBoxVsEx(_)
+        | TrainerEffect::BonusDamageIfPoisonedVsActive(_) => {
             unreachable!(
                 "a static effect is read wherever it applies, never dispatched \
                  at play time — a Tool never reaches resolve_trainer at all"
@@ -1394,6 +1397,31 @@ pub fn damage_dealt(state: &GameState, attacker: PokemonId, defender: PokemonId,
             .active;
         if restricted_to_defender && opponent_active == Some(defender) {
             damage += bonus;
+        }
+    }
+
+    // Step 32b: a Tool attached to the attacker, unconditioned on whose
+    // turn it is — unlike `turn_bonus`, this reads every attack, not only
+    // "this turn." Both built so far restrict to the opponent's Active,
+    // which the single-Active format makes the defender always is.
+    for tool in state.pokemon(attacker).attached.iter() {
+        let Some(effect) = state.def_of(*tool).as_trainer().map(|t| &t.effect) else {
+            continue;
+        };
+        match effect {
+            crate::card::TrainerEffect::BonusDamageWithoutRuleBoxVsEx(bonus) => {
+                let attacker_has_no_rule_box = state.pokemon_def(attacker).prizes == 1;
+                let defender_is_ex = state.pokemon_def(defender).prizes > 1;
+                if attacker_has_no_rule_box && defender_is_ex {
+                    damage += bonus;
+                }
+            }
+            crate::card::TrainerEffect::BonusDamageIfPoisonedVsActive(bonus) => {
+                if state.has_condition(attacker, Condition::Poisoned) {
+                    damage += bonus;
+                }
+            }
+            _ => {}
         }
     }
 

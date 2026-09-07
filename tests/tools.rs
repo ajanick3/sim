@@ -390,3 +390,139 @@ fn heros_cape_keeps_a_pokemon_alive_past_its_printed_hp() {
     state.pokemon[active.index()].damage = 150;
     assert_eq!(state.remaining_hp(active), 50, "still standing");
 }
+
+// --- Ticket 04: Brave Bangle & Binding Mochi ---
+
+fn with_brave_bangle(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-brave-bangle",
+        name: "Brave Bangle",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::BonusDamageWithoutRuleBoxVsEx(30),
+    }));
+    (Set { db, ..set }, card)
+}
+
+fn with_binding_mochi(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-binding-mochi",
+        name: "Binding Mochi",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::BonusDamageIfPoisonedVsActive(40),
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn brave_bangle_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Brave Bangle")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Brave Bangle should play");
+}
+
+#[test]
+fn brave_bangle_adds_damage_only_without_a_rule_box_against_an_ex() {
+    let (set, bangle) = with_brave_bangle(build());
+    let mut state = game(&set, bangle, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let attacker = state.player(player).active.unwrap();
+    let defender = state.player(opponent).active.unwrap();
+
+    let card = ensure_in_hand(&mut state, player, bangle);
+    apply(&mut state, Action::PlayTool { card, target: attacker }).unwrap();
+
+    // The defender is an ordinary Pokémon (1 Prize) by default: no bonus.
+    assert_eq!(sim::engine::damage_dealt(&state, attacker, defender, 100), 100);
+
+    // Replace the defender with an ex.
+    let ex_card = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.cards[c.index()].def == set.mon_ex)
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != ex_card);
+    state.pokemon[defender.index()].cards = vec![ex_card];
+    assert_eq!(sim::engine::damage_dealt(&state, attacker, defender, 100), 130);
+}
+
+#[test]
+fn brave_bangle_adds_nothing_carrying_a_rule_box_itself() {
+    let (set, bangle) = with_brave_bangle(build());
+    let mut state = game(&set, bangle, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let attacker = state.player(player).active.unwrap();
+    let defender = state.player(opponent).active.unwrap();
+
+    // The attacker itself becomes an ex — a Rule Box.
+    let ex_card = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.cards[c.index()].def == set.mon_ex)
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != ex_card);
+    state.pokemon[attacker.index()].cards = vec![ex_card];
+
+    let card = ensure_in_hand(&mut state, player, bangle);
+    apply(&mut state, Action::PlayTool { card, target: attacker }).unwrap();
+
+    let defender_ex = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.cards[c.index()].def == set.mon_ex)
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != defender_ex);
+    state.pokemon[defender.index()].cards = vec![defender_ex];
+
+    assert_eq!(
+        sim::engine::damage_dealt(&state, attacker, defender, 100),
+        100,
+        "the attacker's own Rule Box turns off the bonus"
+    );
+}
+
+#[test]
+fn binding_mochi_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Binding Mochi")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Binding Mochi should play");
+}
+
+#[test]
+fn binding_mochi_adds_damage_only_while_poisoned() {
+    let (set, mochi) = with_binding_mochi(build());
+    let mut state = game(&set, mochi, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let attacker = state.player(player).active.unwrap();
+    let defender = state.player(opponent).active.unwrap();
+
+    let card = ensure_in_hand(&mut state, player, mochi);
+    apply(&mut state, Action::PlayTool { card, target: attacker }).unwrap();
+    assert_eq!(sim::engine::damage_dealt(&state, attacker, defender, 100), 100);
+
+    state.inflict(attacker, sim::card::Condition::Poisoned);
+    assert_eq!(sim::engine::damage_dealt(&state, attacker, defender, 100), 140);
+}
