@@ -719,3 +719,66 @@ fn dragapult_ex_is_admitted_from_the_artifact() {
         "at least one Dragapult ex print should play"
     );
 }
+
+// --- Ticket 08: a cost paid in the attacker's own Energy ---
+
+#[test]
+fn discards_all_the_attackers_own_energy_then_damages_a_chosen_benched_pokemon() {
+    let attack = Attack {
+        name: "Flamebody Cannon",
+        cost: vec![Type::Colorless],
+        base_damage: 90,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenched(90)),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    let active = state.player(player).active.unwrap();
+    assert!(
+        state.pokemon(active).attached.is_empty(),
+        "the attack discards every Energy from itself"
+    );
+    assert!(matches!(state.phase, Phase::ChoosingBenchDamageTarget { .. }));
+    apply(&mut state, Action::DamageBenchedPokemon { target: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(bench_mon).damage, 90);
+}
+
+#[test]
+fn discards_the_attackers_energy_even_with_no_bench_to_damage() {
+    let attack = Attack {
+        name: "Flamebody Cannon",
+        cost: vec![Type::Colorless],
+        base_damage: 90,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenched(90)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    assert!(state.pokemon(active).attached.is_empty(), "still discards with no Bench");
+    assert_eq!(state.phase, Phase::Main, "no Bench to choose a target on");
+}
+
+#[test]
+fn ns_darmanitan_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "N's Darmanitan" && c.playable.is_some()),
+        "at least one N's Darmanitan print should play"
+    );
+}

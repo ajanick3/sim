@@ -840,6 +840,18 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             }
         }
 
+        Action::DamageBenchedPokemon { target } => {
+            let damage = match state.phase {
+                Phase::ChoosingBenchDamageTarget { damage, .. } => damage,
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[target.index()].damage += damage;
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} takes {damage}."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1596,6 +1608,28 @@ fn resolve_attack_effect(
                 state.phase = Phase::DistributingDamageCounters {
                     player: owner,
                     remaining: count,
+                };
+            }
+        }
+        crate::card::AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenched(damage) => {
+            let owner = state.pokemon(attacker).owner;
+            let energy: Vec<CardId> = state
+                .pokemon(attacker)
+                .attached
+                .iter()
+                .copied()
+                .filter(|c| state.def_of(*c).is_energy())
+                .collect();
+            for card in energy {
+                state.pokemon[attacker.index()].attached.retain(|c| *c != card);
+                state.players[owner.index()].discard.push(card);
+            }
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} discards all its Energy."));
+            if !state.player(owner.opponent()).bench.is_empty() {
+                state.phase = Phase::ChoosingBenchDamageTarget {
+                    player: owner,
+                    damage,
                 };
             }
         }

@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (25/95 built)
+### Pokémon (26/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -246,7 +246,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Metang](src/import.rs#L234) | ✅ |
 | Moltres | ❌ |
 | Munkidori | ❌ |
-| N's Darmanitan | ❌ |
+| [N's Darmanitan](src/import.rs#L961) | ✅ |
 | [N's Darumaka](src/import.rs#L234) | ✅ |
 | [N's Reshiram](src/import.rs#L958) | ✅ |
 | [N's Zekrom](src/import.rs#L970) | ✅ |
