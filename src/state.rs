@@ -233,6 +233,12 @@ pub enum Phase {
         of: PlayerId,
         filter: crate::card::CardFilter,
         remaining: u32,
+        /// What runs once this discard ends. `Hand Trimmer` chains a
+        /// second `DiscardingFromHand` this way — the opponent discards
+        /// down to a size, then the player does the same to their own
+        /// hand — the same "name the next step" shape `Phase::Promoting`
+        /// already carries in `then`.
+        then: Option<crate::card::DiscardFollowUp>,
     },
     /// `player` played `Wally's Compassion` and picks a Mega Evolution ex
     /// they control to heal fully. A prize value of 3 is what a Mega

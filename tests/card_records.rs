@@ -57,6 +57,6 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Morty's Conviction, 2 of Xerosic's Machinations, 4 of Eri, and 2 of
     // Brock's Scouting, 3 of Wally's Compassion, 4 of Janine's Secret
     // Art, 1 of Energy Search, 2 of Energy Retrieval, 2 of Energy
-    // Recycler, and 3 of Team Rocket's Transceiver.
-    assert_eq!(admitted, 476, "coverage moves only on purpose");
+    // Recycler, 3 of Team Rocket's Transceiver, and 1 of Hand Trimmer.
+    assert_eq!(admitted, 477, "coverage moves only on purpose");
 }
