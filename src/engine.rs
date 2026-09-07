@@ -1621,6 +1621,13 @@ fn attack(state: &mut GameState, index: usize) {
                 attack.base_damage
             }
         }
+        Some(crate::card::AttackEffect::BonusDamageIfDefenderIsEx(bonus)) => {
+            if state.pokemon_def(defender).prizes > 1 {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
         _ => attack.base_damage,
     };
     let ignore_defenders_effects =
@@ -1743,6 +1750,9 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::BonusDamageIfOwnDamaged(_) => {}
+        // Already spent, before `damage_dealt_with` ran — see `attack`'s
+        // own `base` computation.
+        crate::card::AttackEffect::BonusDamageIfDefenderIsEx(_) => {}
         crate::card::AttackEffect::DrawCards(count) => {
             let owner = state.pokemon(attacker).owner;
             for _ in 0..count {

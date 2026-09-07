@@ -1252,3 +1252,44 @@ fn dunsparce_trading_places_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv09-120").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Dunsparce's Trading Places print should play");
 }
+
+#[test]
+fn bonus_damage_only_when_the_defender_is_an_ex() {
+    let attack = Attack {
+        name: "Fighting Wings",
+        cost: vec![Type::Colorless],
+        base_damage: 30,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfDefenderIsEx(90)),
+    };
+    let (mut state, defender_ex) = game(attack.clone(), 3);
+    let player = state.current;
+    let defender = state.player(player.opponent()).active.unwrap();
+
+    pay_and_attack(&mut state);
+    assert_eq!(state.pokemon(defender).damage, 30, "no bonus against a plain defender");
+
+    let (mut state2, _defender_ex2) = game(attack, 3);
+    let player2 = state2.current;
+    let opponent2 = player2.opponent();
+    let card = deal_new_card(&mut state2, opponent2, defender_ex);
+    let old_active = state2.player(opponent2).active.unwrap();
+    let ex_active = state2.put_into_play(opponent2, card);
+    state2.players[opponent2.index()].active = Some(ex_active);
+    let _ = old_active;
+
+    pay_and_attack(&mut state2);
+    assert_eq!(state2.pokemon(ex_active).damage, 120, "90 more against a Pokemon ex");
+}
+
+#[test]
+fn moltres_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Moltres" && c.playable.is_some()),
+        "at least one Moltres print should play"
+    );
+}
