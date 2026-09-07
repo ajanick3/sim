@@ -160,5 +160,10 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // choice) and its own attack, Tuck Tail (returns the attacker and
     // its attachments to hand, the same "moves together" rule 22
     // already keeps for a knockout) complete all 3 Meowth ex prints.
-    assert_eq!(admitted, 588, "coverage moves only on purpose");
+    // Kadabra's and Alakazam's Psychic Draw (the same Ability name,
+    // resolved by species alone — known_ability's (species, name)
+    // keying already distinguishes them, no print-override table
+    // needed) admits Kadabra's me01-055 print (its own attack, Super
+    // Psy Bolt, has no printed text).
+    assert_eq!(admitted, 589, "coverage moves only on purpose");
 }

@@ -80,6 +80,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.clear_conditions(target);
             let name = state.pokemon_def(target).name;
             state.log.push(format!("{player:?} evolves into {name}."));
+            trigger_psychic_draw(state, player, target);
         }
 
         Action::PlayTrainer { card } => {
@@ -1058,7 +1059,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         state.draw(player);
                     }
                 }
-                crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => {
+                crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
+                | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_) => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
                 }
             }
@@ -1086,6 +1088,28 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         Action::DeclineLastDitchCatch => {
             match state.phase {
                 Phase::DecidingToUseLastDitchCatch { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::AcceptPsychicDraw => {
+            let (player, name, count) = match state.phase {
+                Phase::DecidingToUsePsychicDraw { player, name, count } => (player, name, count),
+                _ => return Err(IllegalAction),
+            };
+            state.spend(Limit::AbilityUsed(player, name));
+            for _ in 0..count {
+                state.draw(player);
+            }
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DeclinePsychicDraw => {
+            match state.phase {
+                Phase::DecidingToUsePsychicDraw { .. } => {}
                 _ => return Err(IllegalAction),
             };
             state.phase = Phase::Main;
@@ -2433,6 +2457,23 @@ fn trigger_last_ditch_catch(state: &mut GameState, player: PlayerId, pokemon: Po
     if any_supporter {
         state.phase = Phase::DecidingToUseLastDitchCatch { player, pokemon };
     }
+}
+
+/// `Kadabra`'s and `Alakazam`'s `Psychic Draw`, and any future Ability
+/// sharing its "evolved from hand" trigger: checked right after
+/// `Action::Evolve` finishes, the same spot `trigger_last_ditch_catch`
+/// reads a benched-from-hand trigger from.
+fn trigger_psychic_draw(state: &mut GameState, player: PlayerId, target: PokemonId) {
+    let Some(ability) = state.pokemon_def(target).ability else {
+        return;
+    };
+    let crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(count) = ability.effect else {
+        return;
+    };
+    if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
+        return;
+    }
+    state.phase = Phase::DecidingToUsePsychicDraw { player, name: ability.name, count };
 }
 
 fn powerglass_owner(state: &GameState) -> Option<PlayerId> {

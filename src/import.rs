@@ -985,6 +985,8 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
             AbilityEffect::OncePerTurnWhileActiveMayDrawCards(2)
         }
         ("Meowth ex", "Last-Ditch Catch") => AbilityEffect::WhenBenchedFromHandMaySearchSupporter,
+        ("Kadabra", "Psychic Draw") => AbilityEffect::WhenEvolvedFromHandMayDrawCards(2),
+        ("Alakazam", "Psychic Draw") => AbilityEffect::WhenEvolvedFromHandMayDrawCards(3),
         _ => return None,
     })
 }

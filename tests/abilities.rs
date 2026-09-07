@@ -308,3 +308,61 @@ fn meowth_ex_is_admitted_from_the_artifact() {
         "at least one Meowth ex print should play"
     );
 }
+
+// --- Ticket 04: the same Ability name, two effects ---
+
+#[test]
+fn evolving_offers_the_draw() {
+    let ability = Ability {
+        name: "Psychic Draw",
+        effect: sim::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(2),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let basic = state.player(player).active.unwrap();
+    let basic_name = state.pokemon_def(basic).name;
+
+    let evolution_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-evolution",
+        name: "Evolvemon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Stage1,
+        evolve_from: Some(basic_name),
+        evolves_from_basic: None,
+        ability: Some(ability),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let evolution = deal_new_card(&mut state, player, evolution_def);
+    state.players[player.index()].hand.push(evolution);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::Evolve { card: evolution, target: basic }).unwrap();
+
+    assert!(matches!(state.phase, Phase::DecidingToUsePsychicDraw { .. }));
+    apply(&mut state, Action::AcceptPsychicDraw).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    // The evolution card itself left the hand to evolve; the draw adds 2.
+    assert_eq!(state.player(player).hand.len(), before - 1 + 2);
+}
+
+#[test]
+fn kadabra_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me01-055").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Kadabra's Super Psy Bolt print should play");
+}

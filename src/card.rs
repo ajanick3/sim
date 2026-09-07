@@ -807,6 +807,16 @@ pub enum AbilityEffect {
     /// way `OncePerTurnWhileActiveMayDrawCards` is.
     /// `Meowth ex`'s `Last-Ditch Catch`.
     WhenBenchedFromHandMaySearchSupporter,
+    /// Once during the player's own turn, the moment this Pokémon is
+    /// played from hand to evolve one of the player's own Pokémon,
+    /// the player may draw this many cards. The same "tied to a
+    /// moment" shape `WhenBenchedFromHandMaySearchSupporter` already
+    /// takes, hooked to a different play. `Kadabra`'s and
+    /// `Alakazam`'s `Psychic Draw` — the same name, two prints, two
+    /// counts, resolved by species name alone (`known_ability` is
+    /// already keyed by species, so no print-override table is
+    /// needed the way `known_trainer_by_print` is).
+    WhenEvolvedFromHandMayDrawCards(u32),
 }
 
 /// A basic Energy card as printed.

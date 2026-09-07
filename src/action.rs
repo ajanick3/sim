@@ -179,6 +179,10 @@ pub enum Action {
     TakeSupporterForLastDitchCatch { card: CardId },
     /// Decline it — nothing else about this play changes.
     DeclineLastDitchCatch,
+    /// Accept `Phase::DecidingToUsePsychicDraw`'s draw.
+    AcceptPsychicDraw,
+    /// Decline it.
+    DeclinePsychicDraw,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -214,6 +218,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::TakingPokemonFromDiscard { player } => Some(player),
         Phase::DecidingToShuffleEnergyForBenchDamage { player, .. } => Some(player),
         Phase::DecidingToUseLastDitchCatch { player, .. } => Some(player),
+        Phase::DecidingToUsePsychicDraw { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -530,6 +535,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::DeclineLastDitchCatch);
+            return actions;
+        }
+        Phase::DecidingToUsePsychicDraw { .. } => {
+            actions.push(Action::AcceptPsychicDraw);
+            actions.push(Action::DeclinePsychicDraw);
             return actions;
         }
         Phase::MovingOpponentsEnergy { of, .. } => {
@@ -924,6 +934,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_last_ditch_catch`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => false,
+            // Triggered the moment this Pokémon evolves from hand
+            // (`trigger_psychic_draw`), never a standing choice.
+            crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_) => false,
         };
         if eligible {
             actions.push(Action::UseAbility { pokemon });
@@ -1140,5 +1153,7 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Take {} (Last-Ditch Catch)", state.def_of(card).name())
         }
         Action::DeclineLastDitchCatch => "Decline Last-Ditch Catch".to_string(),
+        Action::AcceptPsychicDraw => "Use Psychic Draw".to_string(),
+        Action::DeclinePsychicDraw => "Decline Psychic Draw".to_string(),
     }
 }
