@@ -662,6 +662,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             TrainerEffect::DiscardOpponentEnergy,
         ),
         "N's Plan" => (free, TrainerEffect::MoveEnergyFromBenchToActive { limit: 2 }),
+        "Pokémon Center Lady" => (free, TrainerEffect::HealChosen(60)),
         _ => return None,
     })
 }

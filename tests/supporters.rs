@@ -469,3 +469,65 @@ fn ns_plan_is_admitted_from_the_artifact() {
         TrainerEffect::MoveEnergyFromBenchToActive { limit: 2 }
     );
 }
+
+// --- Ticket 04: Pokémon Center Lady ---
+
+fn with_pokemon_center_lady(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let lady = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-pokemon-center-lady",
+        name: "Pokémon Center Lady",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::HealChosen(60),
+    }));
+    (Set { db, ..set }, lady)
+}
+
+#[test]
+fn pokemon_center_lady_can_heal_a_benched_pokemon_not_only_the_active() {
+    let (set, lady) = with_pokemon_center_lady(build());
+    let mut state = game(&set, lady, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, lady);
+    let bench = state.player(player).bench[0];
+    state.pokemon[bench.index()].damage = 100;
+    state.pokemon[bench.index()]
+        .conditions
+        .push(sim::card::Condition::Poisoned);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let targets: Vec<PokemonId> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::HealTarget { target } => Some(target),
+            _ => None,
+        })
+        .collect();
+    assert!(
+        targets.contains(&bench),
+        "a Benched Pokémon may be healed, not only the Active"
+    );
+
+    apply(&mut state, Action::HealTarget { target: bench }).unwrap();
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(bench).damage, 40, "60 healed off 100 leaves 40");
+    assert!(
+        state.pokemon(bench).conditions.is_empty(),
+        "every Special Condition clears"
+    );
+}
+
+#[test]
+fn pokemon_center_lady_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let lady = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Pokémon Center Lady")
+        .expect("Pokémon Center Lady plays");
+    assert_eq!(lady.effect, TrainerEffect::HealChosen(60));
+}

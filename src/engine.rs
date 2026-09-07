@@ -463,6 +463,20 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::HealTarget { target } => {
+            let amount = match state.phase {
+                Phase::HealingChosen { amount, .. } => amount,
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[target.index()].damage =
+                state.pokemon(target).damage.saturating_sub(amount);
+            state.clear_conditions(target);
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} is healed."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::EvolveSkippingOneStage { card, target } => {
             let player = match state.phase {
                 Phase::EvolvingWithRareCandy { player } => player,
@@ -743,6 +757,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                 .expect("the requirement already confirmed an Active");
             state.pokemon[active.index()].damage =
                 state.pokemon(active).damage.saturating_sub(amount);
+        }
+
+        TrainerEffect::HealChosen(amount) => {
+            state.phase = Phase::HealingChosen { player, amount };
         }
 
         TrainerEffect::CoinFlipDiscardOpponentEnergy => {
