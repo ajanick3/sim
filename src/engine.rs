@@ -801,6 +801,21 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.log.push(format!("{player:?} draws 2 (Team Rocket's Factory)."));
         }
 
+        Action::UseLumioseCity => {
+            let player = state.current;
+            let (_, stadium_card) = state.stadium.expect("Lumiose City is in play to offer this");
+            state.spend(Limit::StadiumEffectUsed(player));
+            enter_slot(
+                state,
+                player,
+                stadium_card,
+                0,
+                crate::card::Zone::Library,
+                Some(crate::card::Then::EndTurnIfMoved),
+                Progress { moved: 0, previous: None },
+            );
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1008,10 +1023,16 @@ fn enter_slot(
             let library = &mut state.players[chooser.index()].library;
             shuffle(state.rng.as_mut(), library);
         }
-        if let Some(crate::card::Then::DrawPerCardMoved(per_card)) = then {
-            for _ in 0..(moved * per_card) {
-                state.draw(chooser);
+        match then {
+            Some(crate::card::Then::DrawPerCardMoved(per_card)) => {
+                for _ in 0..(moved * per_card) {
+                    state.draw(chooser);
+                }
             }
+            Some(crate::card::Then::EndTurnIfMoved) if moved > 0 => {
+                state.pending_end_turn = true;
+            }
+            Some(crate::card::Then::EndTurnIfMoved) | None => {}
         }
         state.phase = Phase::Main;
         settle(state);
@@ -1264,7 +1285,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         TrainerEffect::ReducesHpForStage(..)
         | TrainerEffect::RemovesRetreatCostForNamePrefix(_)
         | TrainerEffect::MayPutHandCardOnTopOfDeck
-        | TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter => {}
+        | TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter
+        | TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn => {}
 
         TrainerEffect::JaninesSecretArt => {
             state.phase = Phase::ChoosingJaninesTargets {

@@ -147,6 +147,11 @@ pub enum CardFilter {
 pub enum Then {
     /// Draw this many cards for each one the phase moved.
     DrawPerCardMoved(u32),
+    /// If the search moved at least one card, the turn ends — not if it
+    /// found nothing or the player declined. `Lumiose City`'s own
+    /// once-a-turn search, not a played card's effect, but the same
+    /// `Decide` machinery either way.
+    EndTurnIfMoved,
 }
 
 /// One step of a search: what to look for, where it goes, and how many. A
@@ -299,6 +304,13 @@ pub enum TrainerEffect {
     /// for a player who played a Supporter named "Team Rocket" something
     /// from hand this turn. `Team Rocket's Factory`.
     MayDrawTwoIfPlayedTeamRocketSupporter,
+    /// A Stadium's own once-a-turn action: search for a Basic Pokémon
+    /// onto the Bench; if one is taken, the turn ends. No-op at play
+    /// time, the same as every other Stadium static — the search itself
+    /// runs only from `Action::UseLumioseCity`, through the same
+    /// `enter_slot` a played card's own `Decide` uses.
+    /// `Lumiose City`.
+    MaySearchBasicToBenchThenMaybeEndTurn,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
@@ -450,8 +462,19 @@ impl Trainer {
     /// search. A caller walking a search reads them here rather than
     /// matching the effect again.
     pub fn slots(&self) -> &[Slot] {
+        // `Lumiose City`'s search shape is fixed, not read from its own
+        // stored effect (which stays a no-op at play time — a Stadium's
+        // once-a-turn action isn't dispatched by playing it).
+        const LUMIOSE_CITY_SLOT: [Slot; 1] = [Slot {
+            filter: CardFilter::PokemonOfStage(Stage::Basic),
+            to: Destination::Bench,
+            limit: 1,
+            excludes_type_of_previous: false,
+            peek: None,
+        }];
         match &self.effect {
             TrainerEffect::Decide { slots, .. } => slots,
+            TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn => &LUMIOSE_CITY_SLOT,
             _ => &[],
         }
     }

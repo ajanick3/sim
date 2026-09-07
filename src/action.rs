@@ -114,6 +114,9 @@ pub enum Action {
     PutOnTopOfDeckForAcademyAtNight { card: CardId },
     /// `Team Rocket's Factory`'s once-a-turn action.
     DrawTwoForTeamRocketsFactory,
+    /// `Lumiose City`'s once-a-turn search — opens the same `Deciding`
+    /// phase a played card's own `Decide` effect would.
+    UseLumioseCity,
     /// Choose one of up to 2 targets for `Janine's Secret Art`.
     ChooseJaninesTarget { target: PokemonId },
     /// Stop choosing targets, whether 0, 1, or 2 have been picked.
@@ -509,6 +512,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
     {
         actions.push(Action::DrawTwoForTeamRocketsFactory);
     }
+    if state.stadium_effect()
+        == Some(crate::card::TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn)
+        && !state.is_spent(Limit::StadiumEffectUsed(player))
+    {
+        actions.push(Action::UseLumioseCity);
+    }
 
     for card in &side.hand {
         let def = state.def_of(*card);
@@ -847,6 +856,7 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Put {} on top of the deck", state.def_of(card).name())
         }
         Action::DrawTwoForTeamRocketsFactory => "Draw 2 (Team Rocket's Factory)".to_string(),
+        Action::UseLumioseCity => "Search for a Basic Pokémon (Lumiose City)".to_string(),
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
         }

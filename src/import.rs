@@ -789,6 +789,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter,
         ),
+        "Lumiose City" => (free, TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn),
         "Transformation Tome" => (
             Some(Requirement::SecondCopyOfThisInHand),
             TrainerEffect::SwapBasicWithDiscard,
