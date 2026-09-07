@@ -984,6 +984,7 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Mega Kangaskhan ex", "Run Errand") => {
             AbilityEffect::OncePerTurnWhileActiveMayDrawCards(2)
         }
+        ("Meowth ex", "Last-Ditch Catch") => AbilityEffect::WhenBenchedFromHandMaySearchSupporter,
         _ => return None,
     })
 }
@@ -1078,6 +1079,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }
+        ("Meowth ex", "Tuck Tail") => AttackEffect::ReturnSelfAndAttachedToHand,
         ("Zeraora", "Combat Thunder") => {
             AttackEffect::DamagePerCount(Count::OpponentBenchedPokemonCount, 20)
         }

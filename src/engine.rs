@@ -67,6 +67,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             let name = state.def_of(card).name();
             state.log.push(format!("{player:?} benches {name}."));
             apply_risky_ruins(state, pokemon);
+            trigger_last_ditch_catch(state, player, pokemon);
         }
 
         Action::Evolve { card, target } => {
@@ -1057,9 +1058,38 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         state.draw(player);
                     }
                 }
+                crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => {
+                    unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
+                }
             }
             let name = state.pokemon_def(pokemon).name;
             state.log.push(format!("{player:?} uses {name}'s {}.", ability.name));
+        }
+
+        Action::TakeSupporterForLastDitchCatch { card } => {
+            let (player, pokemon) = match state.phase {
+                Phase::DecidingToUseLastDitchCatch { player, pokemon } => (player, pokemon),
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} joins the hand (Last-Ditch Catch)."));
+            let library = &mut state.players[player.index()].library;
+            shuffle(state.rng.as_mut(), library);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DeclineLastDitchCatch => {
+            match state.phase {
+                Phase::DecidingToUseLastDitchCatch { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
         }
 
         Action::ChooseJaninesTarget { target } => {
@@ -1796,12 +1826,15 @@ fn attack(state: &mut GameState, index: usize) {
         let name = state.pokemon_def(defender).name;
         state.log.push(format!("{name} is now {condition:?}."));
     }
+    // Named before `resolve_attack_effect` runs: `ReturnSelfAndAttachedToHand`
+    // empties the attacker's own card stack, and `pokemon_def` reads its
+    // last card.
+    let attacker_name = state.pokemon_def(attacker).name;
+    let defender_name = state.pokemon_def(defender).name;
     if let Some(effect) = attack.effect {
         resolve_attack_effect(state, attacker, defender, effect);
     }
 
-    let attacker_name = state.pokemon_def(attacker).name;
-    let defender_name = state.pokemon_def(defender).name;
     state.log.push(format!(
         "{attacker_name} uses {} on {defender_name} for {damage}.",
         attack.name
@@ -2033,6 +2066,20 @@ fn resolve_attack_effect(
             if any_pokemon {
                 state.phase = Phase::TakingPokemonFromDiscard { player: owner };
             }
+        }
+        crate::card::AttackEffect::ReturnSelfAndAttachedToHand => {
+            let owner = state.pokemon(attacker).owner;
+            if state.player(owner).bench.is_empty() {
+                return;
+            }
+            let cards = std::mem::take(&mut state.pokemon[attacker.index()].cards);
+            let attached = std::mem::take(&mut state.pokemon[attacker.index()].attached);
+            let side = &mut state.players[owner.index()];
+            side.hand.extend(cards);
+            side.hand.extend(attached);
+            side.active = None;
+            state.log.push("The attacker returns to hand.".to_string());
+            state.phase = Phase::Promoting { of: owner, chooser: owner, then: None };
         }
         crate::card::AttackEffect::TakeTrainerFromDiscard => {
             let owner = state.pokemon(attacker).owner;
@@ -2362,6 +2409,30 @@ fn apply_risky_ruins(state: &mut GameState, pokemon: PokemonId) {
     state.pokemon[pokemon.index()].damage += amount;
     let name = state.pokemon_def(pokemon).name;
     state.log.push(format!("{name} takes {amount} (Risky Ruins)."));
+}
+
+/// `Meowth ex`'s `Last-Ditch Catch`, and any future Ability sharing its
+/// "played from hand onto the Bench" trigger: checked right after
+/// `Action::PlayBasic` benches the card, the same site
+/// `apply_risky_ruins` already reads from.
+fn trigger_last_ditch_catch(state: &mut GameState, player: PlayerId, pokemon: PokemonId) {
+    let Some(ability) = state.pokemon_def(pokemon).ability else {
+        return;
+    };
+    if !matches!(ability.effect, crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter) {
+        return;
+    }
+    if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
+        return;
+    }
+    let any_supporter = state
+        .player(player)
+        .library
+        .iter()
+        .any(|c| state.matches_filter(*c, crate::card::CardFilter::TrainerOfKind(TrainerKind::Supporter)));
+    if any_supporter {
+        state.phase = Phase::DecidingToUseLastDitchCatch { player, pokemon };
+    }
 }
 
 fn powerglass_owner(state: &GameState) -> Option<PlayerId> {
