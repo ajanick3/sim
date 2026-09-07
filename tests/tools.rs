@@ -761,3 +761,105 @@ fn lucky_helmet_draws_two_for_its_owner() {
     };
     assert_eq!(with, without + 2, "Lucky Helmet draws 2 on top of the ordinary turn draw");
 }
+
+// --- Ticket 07: Handheld Fan ---
+
+fn with_handheld_fan(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-handheld-fan",
+        name: "Handheld Fan",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::MovesEnergyFromAttackerToTheirBench,
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn handheld_fan_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Handheld Fan")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Handheld Fan should play");
+}
+
+#[test]
+fn handheld_fan_opens_a_choice_of_where_the_energy_goes() {
+    let (set, fan) = with_handheld_fan(build());
+    let mut state = game(&set, fan, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+    let defender = state.player(defender_player).active.unwrap();
+    let attacker = state.player(attacker_player).active.unwrap();
+    let bench_target = state.player(attacker_player).bench[0];
+
+    let card = deal_new_card(&mut state, defender_player, fan);
+    state.pokemon[defender.index()].attached.push(card);
+
+    let side = state.player(attacker_player);
+    let energy = side
+        .hand
+        .iter()
+        .chain(side.library.iter())
+        .find(|c| state.def_of(**c).is_energy())
+        .copied()
+        .expect("the deck holds Energy");
+    state.remove_from_hand(attacker_player, energy);
+    state.players[attacker_player.index()].library.retain(|c| *c != energy);
+    state.pokemon[attacker.index()].attached.push(energy);
+
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("a paid-for Active can attack");
+    apply(&mut state, attack).unwrap();
+
+    assert!(matches!(
+        state.phase,
+        Phase::MovingEnergyForHandheldFan { .. }
+    ));
+    assert_eq!(sim::action::player_to_act(&state), Some(defender_player));
+    assert!(legal_actions(&state).contains(&Action::MoveEnergyForHandheldFan {
+        card: energy,
+        target: bench_target,
+    }));
+
+    apply(
+        &mut state,
+        Action::MoveEnergyForHandheldFan { card: energy, target: bench_target },
+    )
+    .unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "the deferred attack resolution finally runs");
+    assert!(!state.pokemon(attacker).attached.contains(&energy));
+    assert!(state.pokemon(bench_target).attached.contains(&energy));
+}
+
+#[test]
+fn handheld_fan_does_nothing_with_no_bench_to_receive_it() {
+    let (set, fan) = with_handheld_fan(build());
+    let mut state = game(&set, fan, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+    let defender = state.player(defender_player).active.unwrap();
+
+    let card = deal_new_card(&mut state, defender_player, fan);
+    state.pokemon[defender.index()].attached.push(card);
+    // The attacker has nowhere on their own Bench to receive the Energy.
+    state.players[attacker_player.index()].bench.clear();
+
+    pay_and_attack(&mut state, attacker_player);
+
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "no Bench to move the Energy to, so the trigger does nothing"
+    );
+}

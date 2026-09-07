@@ -101,6 +101,9 @@ pub enum Action {
     /// Finish the swap `Phase::SwappingIdentity` names, using this Basic
     /// from the discard.
     SwapIdentityWithDiscarded { card: CardId },
+    /// `Handheld Fan`'s move: this Energy off the attacker, onto this one
+    /// of the attacker's own Benched Pokémon.
+    MoveEnergyForHandheldFan { card: CardId, target: PokemonId },
     /// Choose one of up to 2 targets for `Janine's Secret Art`.
     ChooseJaninesTarget { target: PokemonId },
     /// Stop choosing targets, whether 0, 1, or 2 have been picked.
@@ -138,6 +141,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::LookingAtBottomOfLibrary { player, .. } => Some(player),
         Phase::Devolving { player, .. } => Some(player),
         Phase::SwappingIdentity { player, .. } => Some(player),
+        Phase::MovingEnergyForHandheldFan { chooser, .. } => Some(chooser),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
@@ -379,6 +383,21 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 actions.push(Action::RemoveOneEvolutionCard);
             }
             actions.push(Action::FinishDevolving);
+            return actions;
+        }
+        Phase::MovingEnergyForHandheldFan { attacker, .. } => {
+            let owner = state.pokemon(attacker).owner;
+            for card in &state.pokemon(attacker).attached {
+                if !state.def_of(*card).is_energy() {
+                    continue;
+                }
+                for target in &state.player(owner).bench {
+                    actions.push(Action::MoveEnergyForHandheldFan {
+                        card: *card,
+                        target: *target,
+                    });
+                }
+            }
             return actions;
         }
         Phase::SwappingIdentity { player: whose, target: None } => {
@@ -778,6 +797,11 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::SwapIdentityWithDiscarded { card } => {
             format!("Swap in {}", state.def_of(card).name())
         }
+        Action::MoveEnergyForHandheldFan { card, target } => format!(
+            "Move {} to {}",
+            state.def_of(card).name(),
+            state.pokemon_def(target).name
+        ),
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
         }

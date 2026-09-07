@@ -271,6 +271,15 @@ pub enum Phase {
         player: PlayerId,
         target: Option<PokemonId>,
     },
+    /// `Handheld Fan` triggered mid-attack: `chooser` (the Tool's owner)
+    /// moves one Energy off `attacker` onto one of the attacker's own
+    /// Benched Pokémon. Opened from inside `attack`, before `settle` runs
+    /// at all — "even if Knocked Out" means the trigger cannot wait for
+    /// a knockout to be decided first.
+    MovingEnergyForHandheldFan {
+        chooser: PlayerId,
+        attacker: PokemonId,
+    },
     /// `player` played `Janine's Secret Art` and is choosing up to 2 of
     /// their own Darkness Pokémon, in `chosen`, before any search runs.
     ChoosingJaninesTargets {
