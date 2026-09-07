@@ -182,5 +182,10 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // shuffle-self shape as Run Away Draw, but no draw and Active-
     // only) admits its sv06-080 print (its other print's only attack
     // has no printed text and no Ability at all).
-    assert_eq!(admitted, 605, "coverage moves only on purpose");
+    // Dusclops's and Dusknoir's Cursed Blast (an Ability that damages
+    // a chosen opponent Pokemon, then Knocks itself out — modeled by
+    // raising its own damage to its effective HP rather than a
+    // separate forced-knockout primitive) complete all 3 Dusclops
+    // prints and all 3 Dusknoir prints (Shadow Bind, already built).
+    assert_eq!(admitted, 611, "coverage moves only on purpose");
 }

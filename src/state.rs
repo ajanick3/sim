@@ -353,6 +353,10 @@ pub enum Phase {
     /// from hand as the effect itself. `Teal Mask Ogerpon ex`'s
     /// `Teal Dance`.
     DecidingToUseTealDance { player: PlayerId, pokemon: PokemonId },
+    /// `player` opened `pokemon`'s own Ability that damages a chosen
+    /// opponent Pokémon and then Knocks itself out. `Dusclops`'s and
+    /// `Dusknoir`'s `Cursed Blast`.
+    DecidingCursedBlastTarget { player: PlayerId, pokemon: PokemonId, damage: u32 },
     /// `player` used an attack that searches their own discard pile
     /// for up to `remaining` more copies of a named Pokémon to the
     /// Bench. `Duskull`'s `Come and Get You`.

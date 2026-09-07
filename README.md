@@ -181,52 +181,52 @@ regenerates this section from `data/cards.json` and the committed
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (47/95 built)
+### Pokémon (49/95 built)
 
 | Card | Attacks | Ability |
 | --- | --- | --- |
-| Abra | [✅](src/import.rs#L1052) | [✅](src/import.rs#L999) |
+| Abra | [✅](src/import.rs#L1054) | [✅](src/import.rs#L999) |
 | Alakazam | ❌ | [✅](src/import.rs#L989) |
 | Annihilape | ❌ | ❌ |
-| Applin | [✅](src/import.rs#L1042) | — |
-| Bayleef | [✅](src/import.rs#L1072) | — |
-| Beldum | [✅](src/import.rs#L1064) | — |
+| Applin | [✅](src/import.rs#L1044) | — |
+| Bayleef | [✅](src/import.rs#L1074) | — |
+| Beldum | [✅](src/import.rs#L1066) | — |
 | Blaziken ex | ❌ | ❌ |
 | Bloodmoon Ursaluna ex | ❌ | ❌ |
 | Brute Bonnet | ❌ | — |
-| Budew | [✅](src/import.rs#L1077) | — |
-| Buneary | [✅](src/import.rs#L1071) | — |
-| Carvanha | [✅](src/import.rs#L1011) | — |
-| Celebi | [✅](src/import.rs#L1070) | — |
+| Budew | [✅](src/import.rs#L1079) | — |
+| Buneary | [✅](src/import.rs#L1073) | — |
+| Carvanha | [✅](src/import.rs#L1013) | — |
+| Celebi | [✅](src/import.rs#L1072) | — |
 | Chi-Yu | ❌ | — |
 | Chien-Pao | ❌ | ❌ |
-| Chikorita | [✅](src/import.rs#L1073) | — |
+| Chikorita | [✅](src/import.rs#L1075) | — |
 | Cofagrigus | ❌ | — |
-| Combusken | [✅](src/import.rs#L1087) | — |
+| Combusken | [✅](src/import.rs#L1089) | — |
 | Crustle | ❌ | ❌ |
-| Dedenne | [✅](src/import.rs#L1039) | — |
+| Dedenne | [✅](src/import.rs#L1041) | — |
 | Dipplin | ❌ | ❌ |
-| Dragapult ex | [✅](src/import.rs#L1046) | — |
+| Dragapult ex | [✅](src/import.rs#L1048) | — |
 | Drakloak | [✅](src/import.rs#L234) | ❌ |
 | Dreepy | [✅](src/import.rs#L234) | — |
-| Drilbur | [✅](src/import.rs#L1053) | ❌ |
+| Drilbur | [✅](src/import.rs#L1055) | ❌ |
 | Dudunsparce | [✅](src/import.rs#L234) | [✅](src/import.rs#L996) |
-| Dudunsparce ex | [✅](src/import.rs#L1024) | — |
-| Dunsparce | [✅](src/import.rs#L1065) | — |
-| Dusclops | [✅](src/import.rs#L234) | ❌ |
-| Dusknoir | ❌ | ❌ |
-| Duskull | [✅](src/import.rs#L1068) | — |
-| Dwebble | [✅](src/import.rs#L1058) | — |
-| Elgyem | [✅](src/import.rs#L1076) | — |
+| Dudunsparce ex | [✅](src/import.rs#L1026) | — |
+| Dunsparce | [✅](src/import.rs#L1067) | — |
+| Dusclops | [✅](src/import.rs#L234) | [✅](src/import.rs#L1000) |
+| Dusknoir | [✅](src/import.rs#L1093) | [✅](src/import.rs#L1001) |
+| Duskull | [✅](src/import.rs#L1070) | — |
+| Dwebble | [✅](src/import.rs#L1060) | — |
+| Elgyem | [✅](src/import.rs#L1078) | — |
 | Enamorus | ❌ | — |
 | Fan Rotom | ❌ | ❌ |
-| Fezandipiti ex | [✅](src/import.rs#L1095) | [✅](src/import.rs#L990) |
+| Fezandipiti ex | [✅](src/import.rs#L1098) | [✅](src/import.rs#L990) |
 | Flutter Mane | ❌ | ❌ |
 | Genesect | [✅](src/import.rs#L234) | ❌ |
 | Genesect ex | ❌ | ❌ |
 | Goldeen | [✅](src/import.rs#L234) | ❌ |
 | Grookey | [✅](src/import.rs#L234) | — |
-| Hoothoot | [✅](src/import.rs#L1055) | ❌ |
+| Hoothoot | [✅](src/import.rs#L1057) | ❌ |
 | Hydrapple ex | ❌ | ❌ |
 | Iron Crown ex | ❌ | ❌ |
 | Iron Leaves ex | ❌ | ❌ |
@@ -237,49 +237,49 @@ regenerates this section from `data/cards.json` and the committed
 | Lillie's Clefairy ex | ❌ | ❌ |
 | Mega Absol ex | ❌ | — |
 | Mega Excadrill ex | ❌ | — |
-| Mega Kangaskhan ex | [✅](src/import.rs#L1091) | [✅](src/import.rs#L984) |
+| Mega Kangaskhan ex | [✅](src/import.rs#L1094) | [✅](src/import.rs#L984) |
 | Mega Lopunny ex | ❌ | — |
-| Mega Sharpedo ex | [✅](src/import.rs#L1056) | — |
+| Mega Sharpedo ex | [✅](src/import.rs#L1058) | — |
 | Mega Skarmory ex | ❌ | — |
 | Mega Slowbro ex | ❌ | — |
 | Meganium | [✅](src/import.rs#L234) | ❌ |
-| Meowth ex | [✅](src/import.rs#L1094) | [✅](src/import.rs#L987) |
+| Meowth ex | [✅](src/import.rs#L1097) | [✅](src/import.rs#L987) |
 | Metagross | ❌ | — |
 | Metang | [✅](src/import.rs#L234) | ❌ |
-| Moltres | [✅](src/import.rs#L1066) | — |
+| Moltres | [✅](src/import.rs#L1068) | — |
 | Munkidori | ❌ | ❌ |
-| N's Darmanitan | [✅](src/import.rs#L1021) | — |
+| N's Darmanitan | [✅](src/import.rs#L1023) | — |
 | N's Darumaka | [✅](src/import.rs#L234) | — |
-| N's Reshiram | [✅](src/import.rs#L1018) | — |
-| N's Zekrom | [✅](src/import.rs#L1030) | — |
+| N's Reshiram | [✅](src/import.rs#L1020) | — |
+| N's Zekrom | [✅](src/import.rs#L1032) | — |
 | N's Zoroark ex | ❌ | ❌ |
 | N's Zorua | [✅](src/import.rs#L234) | — |
 | Noctowl | [✅](src/import.rs#L234) | ❌ |
-| Paldean Tauros | [✅](src/import.rs#L1014) | — |
-| Passimian | [✅](src/import.rs#L1027) | — |
+| Paldean Tauros | [✅](src/import.rs#L1016) | — |
+| Passimian | [✅](src/import.rs#L1029) | — |
 | Patrat | [✅](src/import.rs#L234) | ❌ |
 | Pecharunt | ❌ | ❌ |
 | Pecharunt ex | ❌ | ❌ |
 | Psyduck | [✅](src/import.rs#L234) | ❌ |
 | Rabsca | ❌ | ❌ |
 | Raging Bolt ex | ❌ | — |
-| Rellor | [✅](src/import.rs#L1012) | — |
+| Rellor | [✅](src/import.rs#L1014) | — |
 | Seaking | ❌ | ❌ |
 | Shaymin | [✅](src/import.rs#L234) | ❌ |
-| Slowking | [✅](src/import.rs#L1059) | — |
-| Slowpoke | [✅](src/import.rs#L1067) | ❌ |
+| Slowking | [✅](src/import.rs#L1061) | — |
+| Slowpoke | [✅](src/import.rs#L1069) | ❌ |
 | Smoochum | ❌ | — |
 | Stunfisk | ❌ | — |
-| Tapu Bulu | [✅](src/import.rs#L1013) | — |
+| Tapu Bulu | [✅](src/import.rs#L1015) | — |
 | Tatsugiri | [✅](src/import.rs#L234) | ❌ |
-| Teal Mask Ogerpon ex | [✅](src/import.rs#L1096) | [✅](src/import.rs#L993) |
+| Teal Mask Ogerpon ex | [✅](src/import.rs#L1099) | [✅](src/import.rs#L993) |
 | Thwackey | [✅](src/import.rs#L234) | ❌ |
-| Torchic | [✅](src/import.rs#L1069) | — |
-| Toxel | [✅](src/import.rs#L1054) | — |
+| Torchic | [✅](src/import.rs#L1071) | — |
+| Toxel | [✅](src/import.rs#L1056) | — |
 | Toxtricity | [✅](src/import.rs#L234) | ❌ |
-| Wellspring Mask Ogerpon ex | [✅](src/import.rs#L1044) | — |
-| Yveltal | [✅](src/import.rs#L1043) | — |
-| Zeraora | [✅](src/import.rs#L1036) | — |
+| Wellspring Mask Ogerpon ex | [✅](src/import.rs#L1046) | — |
+| Yveltal | [✅](src/import.rs#L1045) | — |
+| Zeraora | [✅](src/import.rs#L1038) | — |
 
 ## The documents
 

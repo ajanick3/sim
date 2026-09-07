@@ -619,3 +619,54 @@ fn abra_beam_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv06-080").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Abra's Beam print should play");
 }
+
+// --- Beyond the map: an Ability that knocks out its own carrier ---
+
+#[test]
+fn damages_the_opponent_then_knocks_out_the_carrier() {
+    let ability = Ability {
+        name: "Cursed Blast",
+        effect: sim::card::AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(5),
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let active = state.player(player).active.unwrap();
+    let defender = state.player(opponent).active.unwrap();
+    // A Bench Pokemon of the player's own, so a promotion has somewhere to go.
+    let bench_card = deal_new_card(&mut state, player, carrier_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+
+    assert!(matches!(state.phase, Phase::DecidingCursedBlastTarget { .. }));
+    apply(&mut state, Action::DamageOpponentForCursedBlast { target: defender }).unwrap();
+
+    assert_eq!(state.pokemon(defender).damage, 50);
+    assert!(state.pokemon(active).knocked_out, "the carrier is Knocked Out too");
+}
+
+#[test]
+fn dusclops_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Dusclops" && c.playable.is_some()),
+        "at least one Dusclops print should play"
+    );
+}
+
+#[test]
+fn dusknoir_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Dusknoir" && c.playable.is_some()),
+        "at least one Dusknoir print should play"
+    );
+}
