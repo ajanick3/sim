@@ -531,3 +531,158 @@ fn hand_trimmer_trims_the_opponent_first_then_the_player() {
     }
     assert_eq!(state.player(player).hand.len(), 5);
 }
+
+// --- Ticket 06: Secret Box ---
+
+fn with_secret_box(set: Set) -> (Set, CardDefId, CardDefId, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let an_item = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-an-item",
+        name: "An Item",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Nothing,
+    }));
+    let a_tool = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-a-tool",
+        name: "A Tool",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::Nothing,
+    }));
+    let a_supporter = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-a-supporter",
+        name: "A Supporter",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Nothing,
+    }));
+    let a_stadium = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-a-stadium",
+        name: "A Stadium",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::Nothing,
+    }));
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-secret-box",
+        name: "Secret Box",
+        kind: TrainerKind::Item,
+        requirement: Some(Requirement::DiscardOtherCardsFromHand(3)),
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![
+                Slot {
+                    filter: CardFilter::TrainerOfKind(TrainerKind::Item),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+                Slot {
+                    filter: CardFilter::TrainerOfKind(TrainerKind::Tool),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+                Slot {
+                    filter: CardFilter::TrainerOfKind(TrainerKind::Supporter),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+                Slot {
+                    filter: CardFilter::TrainerOfKind(TrainerKind::Stadium),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+            ],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, card, an_item, a_tool, a_supporter, a_stadium)
+}
+
+#[test]
+fn secret_box_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Secret Box")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Secret Box should play");
+}
+
+#[test]
+fn secret_box_cannot_be_played_without_three_other_cards_to_discard() {
+    let (set, card, ..) = with_secret_box(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    state.players[player.index()].hand.retain(|c| *c == played);
+
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card: played }),
+        "no other cards in hand to pay the cost"
+    );
+}
+
+#[test]
+fn secret_box_pays_its_cost_then_finds_one_of_each_kind() {
+    let (set, card, an_item, a_tool, a_supporter, a_stadium) = with_secret_box(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    for _ in 0..3 {
+        ensure_in_hand(&mut state, player, set.mon);
+    }
+    for def in [an_item, a_tool, a_supporter, a_stadium] {
+        let placed = deal_new_card(&mut state, player, def);
+        state.players[player.index()].library.push(placed);
+    }
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    assert!(matches!(state.phase, Phase::Paying { .. }));
+    for _ in 0..3 {
+        let pay = match legal_actions(&state)[0] {
+            Action::PayWithCard { card } => card,
+            other => panic!("expected a payment: {other:?}"),
+        };
+        apply(&mut state, Action::PayWithCard { card: pay }).unwrap();
+    }
+    assert!(
+        matches!(state.phase, Phase::Deciding { .. }),
+        "the cost paid, the search runs: {:?}",
+        state.phase
+    );
+
+    for expect in [an_item, a_tool, a_supporter, a_stadium] {
+        let found = offered(&state)[0];
+        assert_eq!(
+            state.cards[found.index()].def, expect,
+            "each slot offers only its own kind"
+        );
+        apply(&mut state, Action::TakeCard { card: found }).unwrap();
+        apply(&mut state, Action::FinishDeciding).unwrap();
+    }
+
+    assert_eq!(state.phase, Phase::Main);
+    for def in [an_item, a_tool, a_supporter, a_stadium] {
+        assert!(
+            state
+                .player(player)
+                .hand
+                .iter()
+                .any(|c| state.cards[c.index()].def == def),
+            "one of each kind was found"
+        );
+    }
+}

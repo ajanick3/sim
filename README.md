@@ -114,7 +114,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Wally's Compassion | ✅ |
 | Xerosic's Machinations | ✅ |
 
-### Items (19/28 built)
+### Items (20/28 built)
 
 | Card | Status |
 | --- | --- |
@@ -135,7 +135,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Prime Catcher | ❌ |
 | Rare Candy | ✅ |
 | Sacred Ash | ✅ |
-| Secret Box | ❌ |
+| Secret Box | ✅ |
 | Special Red Card | ✅ |
 | Strange Timepiece | ❌ |
 | Switch | ✅ |
@@ -292,6 +292,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
   artifact holds, the modelling findings already banked, and what the data
   cannot express.
 - [The ADR directory](docs/adr/) — the decisions and their reasoning.
+
 
 
 
