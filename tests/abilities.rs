@@ -670,3 +670,66 @@ fn dusknoir_is_admitted_from_the_artifact() {
         "at least one Dusknoir print should play"
     );
 }
+
+// --- Beyond the map: a standing search for Evolution Pokemon of a type ---
+
+#[test]
+fn searches_for_up_to_two_evolution_pokemon_of_a_type() {
+    let ability = Ability {
+        name: "Metallic Signal",
+        effect: sim::card::AbilityEffect::OncePerTurnMaySearchEvolutionPokemonOfType(Type::Metal, 2),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let evolution_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-metal-evolution",
+        name: "Metalmon",
+        hp: 120,
+        kind: Type::Metal,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Stage1,
+        evolve_from: Some("Anything"),
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let evolution = deal_new_card(&mut state, player, evolution_def);
+    state.players[player.index()].library.push(evolution);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+
+    assert!(matches!(state.phase, Phase::SearchingLibraryForEvolutionPokemonOfType { .. }));
+    apply(
+        &mut state,
+        Action::TakeEvolutionPokemonOfType { card: evolution },
+    )
+    .unwrap();
+    apply(&mut state, Action::FinishSearchingEvolutionPokemonOfType).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).hand.len(), before + 1);
+}
+
+#[test]
+fn genesect_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Genesect ex" && c.playable.is_some()),
+        "at least one Genesect ex print should play"
+    );
+}

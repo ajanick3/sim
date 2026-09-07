@@ -196,6 +196,11 @@ pub enum Action {
     DamageOpponentForCursedBlast { target: PokemonId },
     /// Decline it.
     DeclineCursedBlast,
+    /// Take this Evolution Pokémon from the library into hand, as
+    /// part of `Phase::SearchingLibraryForEvolutionPokemonOfType`.
+    TakeEvolutionPokemonOfType { card: CardId },
+    /// Stop that search before its limit is spent.
+    FinishSearchingEvolutionPokemonOfType,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -235,6 +240,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
         Phase::DecidingToUseTealDance { player, .. } => Some(player),
         Phase::DecidingCursedBlastTarget { player, .. } => Some(player),
+        Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -585,6 +591,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::DeclineCursedBlast);
             return actions;
         }
+        Phase::SearchingLibraryForEvolutionPokemonOfType { player: whose, kind, .. } => {
+            for card in &state.player(whose).library {
+                if state.matches_filter(*card, crate::card::CardFilter::EvolutionPokemonOfType(kind)) {
+                    actions.push(Action::TakeEvolutionPokemonOfType { card: *card });
+                }
+            }
+            actions.push(Action::FinishSearchingEvolutionPokemonOfType);
+            return actions;
+        }
         Phase::MovingOpponentsEnergy { of, .. } => {
             let in_play = state.player(of).in_play();
             for from in &in_play {
@@ -793,7 +808,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         if let Some(trainer) = def.as_trainer().filter(|t| t.kind != TrainerKind::Tool) {
             let cannot_play_items = matches!(
                 state.opponent_next_turn_restriction,
-                Some((target, crate::card::AttackEffect::OpponentCannotPlayItemsNextTurn))
+                Some((target, crate::card::AttackEffect::OpponentCannotPlayItemsNextTurn, _))
                     if state.pokemon(target).owner == player
             );
             let timing = match trainer.kind {
@@ -931,7 +946,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         let cost = state.effective_retreat_cost(active);
         let cannot_retreat = matches!(
             state.opponent_next_turn_restriction,
-            Some((target, crate::card::AttackEffect::DefenderCannotRetreatNextTurn))
+            Some((target, crate::card::AttackEffect::DefenderCannotRetreatNextTurn, _))
                 if target == active
         );
         if !state.is_spent(Limit::Retreated(player))
@@ -989,6 +1004,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             // Works from the Active Spot or the Bench alike.
             crate::card::AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(_) => true,
+            crate::card::AbilityEffect::OncePerTurnMaySearchEvolutionPokemonOfType(kind, _) => {
+                side.library.iter().any(|c| {
+                    state.matches_filter(*c, crate::card::CardFilter::EvolutionPokemonOfType(kind))
+                })
+            }
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_last_ditch_catch`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => false,
@@ -1224,5 +1244,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Damage {} (Cursed Blast)", state.pokemon_def(target).name)
         }
         Action::DeclineCursedBlast => "Decline Cursed Blast".to_string(),
+        Action::TakeEvolutionPokemonOfType { card } => {
+            format!("Take {}", state.def_of(card).name())
+        }
+        Action::FinishSearchingEvolutionPokemonOfType => "Stop searching".to_string(),
     }
 }

@@ -357,6 +357,15 @@ pub enum Phase {
     /// opponent Pokémon and then Knocks itself out. `Dusclops`'s and
     /// `Dusknoir`'s `Cursed Blast`.
     DecidingCursedBlastTarget { player: PlayerId, pokemon: PokemonId, damage: u32 },
+    /// `player` used an Ability that searches the library for up to
+    /// `remaining` more Evolution Pokémon of `kind` to hand.
+    /// `Genesect ex`'s `Protect Charge`.
+    SearchingLibraryForEvolutionPokemonOfType {
+        player: PlayerId,
+        pokemon: PokemonId,
+        kind: crate::card::Type,
+        remaining: u32,
+    },
     /// `player` used an attack that searches their own discard pile
     /// for up to `remaining` more copies of a named Pokémon to the
     /// Bench. `Duskull`'s `Come and Get You`.
@@ -443,7 +452,16 @@ pub struct GameState {
     /// next turn, then clear at the one after that. Cleared in
     /// `begin_turn`, but only once it is the *granting* player's turn
     /// again — see the check there for why.
-    pub opponent_next_turn_restriction: Option<(PokemonId, crate::card::AttackEffect)>,
+    /// The third field names who granted it — the player whose turn
+    /// it was at the moment this was set, always `attacker`'s owner
+    /// since every grant happens mid-attack. Explicit rather than
+    /// inferred from the target's own owner, since a self-targeted
+    /// restriction (`CoinFlipSelfInvulnerableNextTurn`,
+    /// `SelfDamageReductionNextTurn`) names the granting player's own
+    /// Pokémon as its target — inferring from target ownership alone
+    /// would clear those the instant the granting turn ends, one turn
+    /// too early.
+    pub opponent_next_turn_restriction: Option<(PokemonId, crate::card::AttackEffect, PlayerId)>,
     /// The mirror of `opponent_next_turn_restriction`: a restriction on
     /// the *attacker's own* very next turn, granted mid-turn (so it must
     /// not apply to the turn granting it). `armed` becomes `true` the
@@ -824,6 +842,10 @@ impl GameState {
             CardFilter::PokemonNamed(name) => {
                 self.def_of(card).as_pokemon().is_some_and(|p| p.name == name)
             }
+            CardFilter::EvolutionPokemonOfType(kind) => self
+                .def_of(card)
+                .as_pokemon()
+                .is_some_and(|p| p.stage != crate::card::Stage::Basic && p.kind == kind),
         }
     }
 
@@ -923,10 +945,12 @@ impl GameState {
         }
         // A restriction granted "during your opponent's next turn" is
         // cleared here only once it is the granting player's own turn
-        // again — the target's owner's turn just ended, so the one turn
-        // the restriction covered already happened.
-        if let Some((target, _)) = self.opponent_next_turn_restriction
-            && self.pokemon[target.index()].owner != self.current
+        // again — read from the explicit granting player, not the
+        // target's owner (a self-targeted restriction names the
+        // granting player's own Pokémon, so that inference would clear
+        // it one turn too early).
+        if let Some((_, _, granted_by)) = self.opponent_next_turn_restriction
+            && self.current == granted_by
         {
             self.opponent_next_turn_restriction = None;
         }

@@ -1132,6 +1132,16 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         damage: count * 10,
                     };
                 }
+                crate::card::AbilityEffect::OncePerTurnMaySearchEvolutionPokemonOfType(kind, limit) => {
+                    // Not spent here: opening the choice is not using it —
+                    // only actually taking a card is.
+                    state.phase = Phase::SearchingLibraryForEvolutionPokemonOfType {
+                        player,
+                        pokemon,
+                        kind,
+                        remaining: limit,
+                    };
+                }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
                 | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_) => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
@@ -1250,6 +1260,45 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 Phase::DecidingCursedBlastTarget { .. } => {}
                 _ => return Err(IllegalAction),
             };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::TakeEvolutionPokemonOfType { card } => {
+            let (player, pokemon, kind, remaining) = match state.phase {
+                Phase::SearchingLibraryForEvolutionPokemonOfType { player, pokemon, kind, remaining } => {
+                    (player, pokemon, kind, remaining)
+                }
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} joins the hand."));
+            if remaining <= 1 {
+                let library = &mut state.players[player.index()].library;
+                shuffle(state.rng.as_mut(), library);
+                state.phase = Phase::Main;
+                settle(state);
+            } else {
+                state.phase = Phase::SearchingLibraryForEvolutionPokemonOfType {
+                    player,
+                    pokemon,
+                    kind,
+                    remaining: remaining - 1,
+                };
+            }
+        }
+
+        Action::FinishSearchingEvolutionPokemonOfType => {
+            let player = match state.phase {
+                Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => player,
+                _ => return Err(IllegalAction),
+            };
+            let library = &mut state.players[player.index()].library;
+            shuffle(state.rng.as_mut(), library);
             state.phase = Phase::Main;
             settle(state);
         }
@@ -1907,7 +1956,7 @@ fn attack(state: &mut GameState, index: usize) {
     // this attack, not only its damage, is prevented outright.
     if matches!(
         state.opponent_next_turn_restriction,
-        Some((target, crate::card::AttackEffect::CoinFlipSelfInvulnerableNextTurn))
+        Some((target, crate::card::AttackEffect::CoinFlipSelfInvulnerableNextTurn, _))
             if target == defender
     ) {
         let name = state.pokemon_def(defender).name;
@@ -2044,7 +2093,7 @@ fn resolve_attack_effect(
         // own `base` computation.
         crate::card::AttackEffect::CoinFlipBonusDamage(_) => {}
         crate::card::AttackEffect::DefenderCannotRetreatNextTurn => {
-            state.opponent_next_turn_restriction = Some((defender, effect));
+            state.opponent_next_turn_restriction = Some((defender, effect, state.current));
             let name = state.pokemon_def(defender).name;
             state.log.push(format!("{name} cannot retreat next turn."));
         }
@@ -2078,19 +2127,19 @@ fn resolve_attack_effect(
             }
         }
         crate::card::AttackEffect::OpponentCannotPlayItemsNextTurn => {
-            state.opponent_next_turn_restriction = Some((defender, effect));
+            state.opponent_next_turn_restriction = Some((defender, effect, state.current));
             let owner = state.pokemon(defender).owner;
             state.log.push(format!("{owner:?} cannot play Item cards next turn."));
         }
         crate::card::AttackEffect::CoinFlipSelfInvulnerableNextTurn => {
             if state.rng.flip() {
-                state.opponent_next_turn_restriction = Some((attacker, effect));
+                state.opponent_next_turn_restriction = Some((attacker, effect, state.current));
                 let name = state.pokemon_def(attacker).name;
                 state.log.push(format!("{name} is invulnerable next turn."));
             }
         }
         crate::card::AttackEffect::DefenderDealsLessDamageNextTurn(amount) => {
-            state.opponent_next_turn_restriction = Some((defender, effect));
+            state.opponent_next_turn_restriction = Some((defender, effect, state.current));
             let name = state.pokemon_def(defender).name;
             state
                 .log
@@ -2232,6 +2281,11 @@ fn resolve_attack_effect(
         crate::card::AttackEffect::DamageChosenOpponentPokemon(damage) => {
             let owner = state.pokemon(attacker).owner;
             state.phase = Phase::ChoosingAnyOpponentPokemonDamageTarget { player: owner, damage };
+        }
+        crate::card::AttackEffect::SelfDamageReductionNextTurn(amount) => {
+            state.opponent_next_turn_restriction = Some((attacker, effect, state.current));
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} takes {amount} less damage next turn."));
         }
         crate::card::AttackEffect::ReturnSelfAndAttachedToHand => {
             let owner = state.pokemon(attacker).owner;
@@ -2429,7 +2483,7 @@ fn damage_dealt_with(
     // A restriction granted on a previous turn against this Pokémon,
     // read only during the granting player's very next turn — the
     // same lifetime `DefenderCannotRetreatNextTurn` already carries.
-    if let Some((target, crate::card::AttackEffect::DefenderDealsLessDamageNextTurn(amount))) =
+    if let Some((target, crate::card::AttackEffect::DefenderDealsLessDamageNextTurn(amount), _)) =
         state.opponent_next_turn_restriction
         && target == attacker
     {
@@ -2483,7 +2537,18 @@ fn damage_dealt_with(
         }
     }
 
-    // Step 34: effects on the defending Pokémon.
+    // Step 34: effects on the defending Pokémon. A restriction granted
+    // on a previous turn against this Pokémon, read only during the
+    // granting player's very next turn — the same lifetime
+    // `DefenderCannotRetreatNextTurn` already carries, but read after
+    // Weakness and Resistance per the printed text.
+    if let Some((target, crate::card::AttackEffect::SelfDamageReductionNextTurn(amount), _)) =
+        state.opponent_next_turn_restriction
+        && target == defender
+    {
+        damage = damage.saturating_sub(amount);
+    }
+
     // Step 35: 1 counter per 10 damage, so damage lands in tens.
     damage - damage % 10
 }

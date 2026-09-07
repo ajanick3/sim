@@ -1515,7 +1515,7 @@ fn defender_deals_less_damage_only_during_its_own_next_turn() {
     pay_and_attack(&mut state);
     assert_eq!(
         state.opponent_next_turn_restriction,
-        Some((defender, AttackEffect::DefenderDealsLessDamageNextTurn(20)))
+        Some((defender, AttackEffect::DefenderDealsLessDamageNextTurn(20), player))
     );
     // The attack itself already ended the attacker's turn.
     assert_eq!(state.current, opponent, "now the restricted Pokemon's own turn");
@@ -1564,7 +1564,7 @@ fn heads_makes_the_attacker_invulnerable_on_the_opponents_next_turn() {
     pay_and_attack(&mut state);
     assert_eq!(state.current, player.opponent());
     let heads = state.opponent_next_turn_restriction
-        == Some((attacker, AttackEffect::CoinFlipSelfInvulnerableNextTurn));
+        == Some((attacker, AttackEffect::CoinFlipSelfInvulnerableNextTurn, player));
 
     // Pay the opponent's own attack cost, the same way pay_and_attack does.
     let opponent = player.opponent();
@@ -2078,5 +2078,43 @@ fn teal_mask_ogerpon_ex_is_admitted_from_the_artifact() {
     assert!(
         import.cards.iter().any(|c| c.name == "Teal Mask Ogerpon ex" && c.playable.is_some()),
         "at least one Teal Mask Ogerpon ex print should play"
+    );
+}
+
+// --- Beyond the spec: reduced damage taken through the opponent's next turn ---
+
+#[test]
+fn takes_less_damage_only_during_the_opponents_next_turn_after_weakness() {
+    let attack = Attack {
+        name: "Protect Charge",
+        cost: vec![Type::Colorless],
+        base_damage: 20,
+        inflicts: None,
+        effect: Some(AttackEffect::SelfDamageReductionNextTurn(30)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+
+    pay_and_attack(&mut state);
+    assert_eq!(
+        state.opponent_next_turn_restriction,
+        Some((attacker, AttackEffect::SelfDamageReductionNextTurn(30), player))
+    );
+    assert_eq!(state.current, player.opponent(), "now the opponent's turn");
+
+    let damage = sim::engine::damage_dealt(&state, state.player(player.opponent()).active.unwrap(), attacker, 50);
+    assert_eq!(damage, 20, "50 less 30, after Weakness and Resistance");
+}
+
+#[test]
+fn genesect_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Genesect ex" && c.playable.is_some()),
+        "at least one Genesect ex print should play"
     );
 }

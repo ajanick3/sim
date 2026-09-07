@@ -187,5 +187,14 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // raising its own damage to its effective HP rather than a
     // separate forced-knockout primitive) complete all 3 Dusclops
     // prints and all 3 Dusknoir prints (Shadow Bind, already built).
-    assert_eq!(admitted, 611, "coverage moves only on purpose");
+    // Genesect ex's Metallic Signal (a standing search for Evolution
+    // Pokemon of a type, CardFilter::EvolutionPokemonOfType) and its
+    // own attack, Protect Charge (reduced damage taken through the
+    // opponent's next turn, after Weakness and Resistance — the
+    // mirror of DefenderDealsLessDamageNextTurn's own lifetime and
+    // reduction) complete all 3 prints. Fixed along the way: the
+    // opponent_next_turn_restriction clearing bug this uncovered — a
+    // self-targeted restriction was cleared one turn too early,
+    // inferred from the wrong owner (ADR 0077).
+    assert_eq!(admitted, 614, "coverage moves only on purpose");
 }
