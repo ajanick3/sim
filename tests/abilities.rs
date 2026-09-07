@@ -928,3 +928,94 @@ fn iron_leaves_ex_is_admitted_from_the_artifact() {
         "at least one Iron Leaves ex print should play"
     );
 }
+
+// --- Beyond the map: search + attach + self-damage as one Ability ---
+
+#[test]
+fn searches_energy_attaches_to_benched_of_type_then_damages_it() {
+    let ability = Ability {
+        name: "Sinister Surge",
+        effect: sim::card::AbilityEffect::OncePerTurnMaySearchBasicEnergyOfTypeAttachToBenchedThenDamage(
+            Type::Darkness,
+            20,
+        ),
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let dark_bench_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-dark-bench",
+        name: "Darkmon",
+        hp: 200,
+        kind: Type::Darkness,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let bench_card = deal_new_card(&mut state, player, dark_bench_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    let energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-dark-energy",
+        name: "Darkness Energy",
+        kind: Type::Darkness,
+    }));
+    let energy = deal_new_card(&mut state, player, energy_def);
+    state.players[player.index()].library.push(energy);
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+
+    assert!(matches!(state.phase, Phase::SearchingForSinisterSurgeTarget { .. }));
+    apply(
+        &mut state,
+        Action::AttachSinisterSurgeEnergyTo { target: bench_mon },
+    )
+    .unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(bench_mon).attached.contains(&energy));
+    assert_eq!(state.pokemon(bench_mon).damage, 20);
+}
+
+#[test]
+fn sinister_surge_not_offered_with_no_energy_or_no_benched_target() {
+    let ability = Ability {
+        name: "Sinister Surge",
+        effect: sim::card::AbilityEffect::OncePerTurnMaySearchBasicEnergyOfTypeAttachToBenchedThenDamage(
+            Type::Darkness,
+            20,
+        ),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(result.is_err(), "no Darkness Energy and no Benched Darkness Pokemon");
+}
+
+#[test]
+fn toxtricity_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Toxtricity" && c.playable.is_some()),
+        "at least one Toxtricity print should play"
+    );
+}

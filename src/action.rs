@@ -222,6 +222,9 @@ pub enum Action {
     MoveEnergyForRapidVernier { card: CardId },
     /// Stop moving Energy.
     FinishMovingEnergyForRapidVernier,
+    /// Attach `Phase::SearchingForSinisterSurgeTarget`'s Energy to
+    /// this Benched Pokémon, and deal it the damage.
+    AttachSinisterSurgeEnergyTo { target: PokemonId },
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -267,6 +270,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToUseSnowSink { player, .. } => Some(player),
         Phase::DecidingToSwitchInForRapidVernier { player, .. } => Some(player),
         Phase::MovingAnyEnergyForRapidVernier { player, .. } => Some(player),
+        Phase::SearchingForSinisterSurgeTarget { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -669,6 +673,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::FinishMovingEnergyForRapidVernier);
+            return actions;
+        }
+        Phase::SearchingForSinisterSurgeTarget { player: whose, kind, .. } => {
+            for target in &state.player(whose).bench {
+                if state.pokemon_def(*target).kind == kind {
+                    actions.push(Action::AttachSinisterSurgeEnergyTo { target: *target });
+                }
+            }
             return actions;
         }
         Phase::MovingOpponentsEnergy { of, .. } => {
@@ -1083,6 +1095,16 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyFromDiscardToChosen => {
                 side.discard.iter().any(|c| state.def_of(*c).is_energy())
             }
+            crate::card::AbilityEffect::OncePerTurnMaySearchBasicEnergyOfTypeAttachToBenchedThenDamage(
+                kind,
+                _,
+            ) => {
+                let has_energy = side.library.iter().any(|c| {
+                    state.matches_filter(*c, crate::card::CardFilter::BasicEnergyOfType(kind))
+                });
+                let has_target = side.bench.iter().any(|p| state.pokemon_def(*p).kind == kind);
+                has_energy && has_target
+            }
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_last_ditch_catch`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => false,
@@ -1345,5 +1367,8 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Move {} (Rapid Vernier)", state.def_of(card).name())
         }
         Action::FinishMovingEnergyForRapidVernier => "Stop moving Energy".to_string(),
+        Action::AttachSinisterSurgeEnergyTo { target } => {
+            format!("Attach Energy to {} (Sinister Surge)", state.pokemon_def(target).name)
+        }
     }
 }

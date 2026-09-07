@@ -384,6 +384,11 @@ pub enum Phase {
     /// `player` switched `pokemon` in and may now move any amount of
     /// Energy from their other Pokémon to it, one card at a time.
     MovingAnyEnergyForRapidVernier { player: PlayerId, pokemon: PokemonId },
+    /// `player` used an Ability that searches for a Basic Energy of
+    /// `kind` and attaches it to a Benched Pokémon of the same type,
+    /// choosing which, then deals `damage` to it. `Toxtricity`'s
+    /// `Sinister Surge`.
+    SearchingForSinisterSurgeTarget { player: PlayerId, pokemon: PokemonId, kind: crate::card::Type, damage: u32 },
     /// `player` used an attack that searches their own discard pile
     /// for up to `remaining` more copies of a named Pokémon to the
     /// Bench. `Duskull`'s `Come and Get You`.
