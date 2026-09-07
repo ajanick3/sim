@@ -52,10 +52,13 @@ on one another and may run in any order once the first four land.
   the identical question for `Fezandipiti ex`'s Ability and left it open;
   this settles it for both. See
   [ADR 0024](../../docs/adr/0024-a-requirement-can-read-history.md).
+- **`Phase::Promoting` needed no new shape for `Switch`** —
+  `TrainerEffect::SwitchOwnActive` opens it with `of == chooser`, the same
+  as after a knockout — **but its one handler had a real bug the knockout
+  case had always hidden**: `Action::Promote` never returned a *displaced*
+  (not knocked out) old Active to the Bench, silently dropping it from
+  play. Fixed in the shared handler, retroactively correcting `Boss's
+  Orders` too. See
+  [ADR 0025](../../docs/adr/0025-a-live-switch-returns-the-old-active-to-the-bench.md).
 
 ## Fog
-
-- Whether `Switch`'s new call site for `Phase::Promoting` needs the phase
-  to change shape at all, or only needs a new way to enter the one that
-  exists: `of == chooser`, opened by the player's own choice rather than by
-  a knockout. If the shape already fits, say so and change nothing.
