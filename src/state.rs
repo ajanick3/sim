@@ -537,11 +537,21 @@ impl GameState {
         &self.players[id.index()]
     }
 
+    /// The Trainer effect of whichever Stadium is in play, if any. Read
+    /// by both players alike — a Stadium is nobody's Pokémon, nobody's
+    /// hand.
+    pub fn stadium_effect(&self) -> Option<crate::card::TrainerEffect> {
+        let (_, card) = self.stadium?;
+        self.def_of(card).as_trainer().map(|t| t.effect.clone())
+    }
+
     /// The HP this Pokémon actually has: the printed value, plus whatever
-    /// an attached Tool like `Hero's Cape` adds. `pokemon_def(id).hp`
-    /// stays the printed value — a card in a zone has no Tool attached to
-    /// raise it, so only an in-play read needs this split, the same way
-    /// `effective_retreat_cost` splits from the printed Retreat Cost.
+    /// an attached Tool like `Hero's Cape` adds, less whatever a Stadium
+    /// like `Gravity Mountain` takes off, floored at zero.
+    /// `pokemon_def(id).hp` stays the printed value — a card in a zone
+    /// has nothing attached and no Stadium reads it, so only an in-play
+    /// read needs this split, the same way `effective_retreat_cost`
+    /// splits from the printed Retreat Cost.
     pub fn effective_hp(&self, id: PokemonId) -> u32 {
         let printed = self.pokemon_def(id).hp;
         let bonus: u32 = self
@@ -554,7 +564,15 @@ impl GameState {
                 _ => 0,
             })
             .sum();
-        printed + bonus
+        let stadium_reduction = match self.stadium_effect() {
+            Some(crate::card::TrainerEffect::ReducesHpForStage(stage, amount))
+                if self.pokemon_def(id).stage == stage =>
+            {
+                amount
+            }
+            _ => 0,
+        };
+        (printed + bonus).saturating_sub(stadium_reduction)
     }
 
     pub fn remaining_hp(&self, id: PokemonId) -> u32 {
@@ -568,11 +586,18 @@ impl GameState {
     }
 
     /// The Retreat Cost this Pokémon actually pays: the printed cost, less
-    /// whatever an attached Tool like `Air Balloon` takes off, floored at
-    /// zero. `pokemon_def(id).retreat_cost` stays the printed value — a
-    /// card sitting in a zone has no Tool to read a reduction from, so
-    /// only an in-play read needs this split at all.
+    /// whatever an attached Tool like `Air Balloon` takes off, or zero
+    /// outright under a Stadium like `N's Castle`. `pokemon_def(id).retreat_cost`
+    /// stays the printed value — a card sitting in a zone has no Tool to
+    /// read a reduction from, and no Stadium reads it either, so only an
+    /// in-play read needs this split at all.
     pub fn effective_retreat_cost(&self, id: PokemonId) -> u32 {
+        if let Some(crate::card::TrainerEffect::RemovesRetreatCostForNamePrefix(prefix)) =
+            self.stadium_effect()
+            && self.pokemon_def(id).name.starts_with(prefix)
+        {
+            return 0;
+        }
         let printed = self.pokemon_def(id).retreat_cost as u32;
         let reduction: u32 = self
             .pokemon(id)

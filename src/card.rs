@@ -284,6 +284,12 @@ pub enum TrainerEffect {
     /// attach a Basic Energy from their discard to the Pokémon this is
     /// attached to, if it is still the Active. `Powerglass`.
     MayAttachBasicEnergyFromDiscardAtTurnEnd,
+    /// A Stadium's static effect: every Pokémon in play at this printed
+    /// Stage loses this much HP, both sides alike. `Gravity Mountain`.
+    ReducesHpForStage(Stage, u32),
+    /// A Stadium's static effect: every Pokémon in play whose name starts
+    /// with this has no Retreat Cost, both sides alike. `N's Castle`.
+    RemovesRetreatCostForNamePrefix(&'static str),
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },

@@ -782,6 +782,8 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Lucky Helmet" => (free, TrainerEffect::DrawsWhenDefenderIsHit(2)),
         "Handheld Fan" => (free, TrainerEffect::MovesEnergyFromAttackerToTheirBench),
         "Powerglass" => (free, TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd),
+        "Gravity Mountain" => (free, TrainerEffect::ReducesHpForStage(Stage::Stage2, 30)),
+        "N's Castle" => (free, TrainerEffect::RemovesRetreatCostForNamePrefix("N's")),
         "Transformation Tome" => (
             Some(Requirement::SecondCopyOfThisInHand),
             TrainerEffect::SwapBasicWithDiscard,

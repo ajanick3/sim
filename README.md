@@ -161,7 +161,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Powerglass | ✅ |
 | Punk Helmet | ✅ |
 
-### Stadiums (0/13 built)
+### Stadiums (2/13 built)
 
 | Card | Status |
 | --- | --- |
@@ -170,10 +170,10 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Battle Cage | ❌ |
 | Festival Grounds | ❌ |
 | Forest of Vitality | ❌ |
-| Gravity Mountain | ❌ |
+| Gravity Mountain | ✅ |
 | Jamming Tower | ❌ |
 | Lumiose City | ❌ |
-| N's Castle | ❌ |
+| N's Castle | ✅ |
 | Nighttime Mine | ❌ |
 | Risky Ruins | ❌ |
 | Team Rocket's Factory | ❌ |
@@ -292,6 +292,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
   artifact holds, the modelling findings already banked, and what the data
   cannot express.
 - [The ADR directory](docs/adr/) — the decisions and their reasoning.
+
 
 
 
