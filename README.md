@@ -39,7 +39,7 @@ Trainers. What it does not do yet: Abilities and Stadiums.
 | `src/import.rs` | Reading the card artifact, and refusing what it cannot run |
 | `src/decklist.rs` | Reading a decklist, and checking deck construction       |
 | `src/main.rs`   | The text interface                                        |
-| `src/bin/`      | `selfplay`, `coverage`, and `deckcheck`                   |
+| `src/bin/`      | `selfplay`, `coverage`, `deckcheck`, `blockers`, `progress_table` |
 
 ## Card data
 
@@ -75,6 +75,209 @@ per player, named `<placement>-<player-slug>.txt`.
 site. Sixty-one of the sixty-four are kept: three named their cards by
 Japanese-region set codes this artifact does not hold, and were dropped rather
 than guessed at, so the placement numbers have three gaps.
+
+## Card progress
+
+Which cards in `decks/` the engine plays today, by kind, in the order the
+Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
+`cargo run --bin progress_table` regenerates this section from
+`data/cards.json` and the committed decks.
+
+### Supporters (25/26 built)
+
+| Card | Status |
+| --- | --- |
+| AZ's Tranquility | ✅ |
+| Black Belt's Training | ✅ |
+| Boss's Orders | ✅ |
+| Briar | ❌ |
+| Brock's Scouting | ✅ |
+| Ciphermaniac's Codebreaking | ✅ |
+| Crispin | ✅ |
+| Cyrano | ✅ |
+| Dawn | ✅ |
+| Eri | ✅ |
+| Gladion's Final Battle | ✅ |
+| Gwynn | ✅ |
+| Hilda | ✅ |
+| Janine's Secret Art | ✅ |
+| Judge | ✅ |
+| Kieran | ✅ |
+| Lana's Aid | ✅ |
+| Lillie's Determination | ✅ |
+| Morty's Conviction | ✅ |
+| N's Plan | ✅ |
+| Rosa's Encouragement | ✅ |
+| Rust Syndicate Grunt | ✅ |
+| Surfer | ✅ |
+| Team Rocket's Petrel | ✅ |
+| Wally's Compassion | ✅ |
+| Xerosic's Machinations | ✅ |
+
+### Items (14/28 built)
+
+| Card | Status |
+| --- | --- |
+| Buddy-Buddy Poffin | ✅ |
+| Bug Catching Set | ✅ |
+| Crushing Hammer | ✅ |
+| Dusk Ball | ❌ |
+| Energy Recycler | ❌ |
+| Energy Retrieval | ❌ |
+| Energy Search | ❌ |
+| Energy Switch | ✅ |
+| Enhanced Hammer | ❌ |
+| Glass Trumpet | ❌ |
+| Hand Trimmer | ❌ |
+| Jumbo Ice Cream | ✅ |
+| N's PP Up | ✅ |
+| Night Stretcher | ✅ |
+| Prime Catcher | ❌ |
+| Rare Candy | ✅ |
+| Sacred Ash | ✅ |
+| Secret Box | ❌ |
+| Special Red Card | ✅ |
+| Strange Timepiece | ❌ |
+| Switch | ✅ |
+| Team Rocket's Transceiver | ❌ |
+| Tera Orb | ❌ |
+| Tool Scrapper | ❌ |
+| Transformation Tome | ❌ |
+| Ultra Ball | ✅ |
+| Unfair Stamp | ✅ |
+| Wondrous Patch | ✅ |
+
+### Tools (0/9 built)
+
+| Card | Status |
+| --- | --- |
+| Air Balloon | ❌ |
+| Binding Mochi | ❌ |
+| Brave Bangle | ❌ |
+| Handheld Fan | ❌ |
+| Hero's Cape | ❌ |
+| Lillie's Pearl | ❌ |
+| Lucky Helmet | ❌ |
+| Powerglass | ❌ |
+| Punk Helmet | ❌ |
+
+### Stadiums (0/13 built)
+
+| Card | Status |
+| --- | --- |
+| Academy at Night | ❌ |
+| Area Zero Underdepths | ❌ |
+| Battle Cage | ❌ |
+| Festival Grounds | ❌ |
+| Forest of Vitality | ❌ |
+| Gravity Mountain | ❌ |
+| Jamming Tower | ❌ |
+| Lumiose City | ❌ |
+| N's Castle | ❌ |
+| Nighttime Mine | ❌ |
+| Risky Ruins | ❌ |
+| Team Rocket's Factory | ❌ |
+| Team Rocket's Watchtower | ❌ |
+
+### Pokémon (16/95 built)
+
+| Card | Status |
+| --- | --- |
+| Abra | ❌ |
+| Alakazam | ❌ |
+| Annihilape | ❌ |
+| Applin | ✅ |
+| Bayleef | ✅ |
+| Beldum | ✅ |
+| Blaziken ex | ❌ |
+| Bloodmoon Ursaluna ex | ❌ |
+| Brute Bonnet | ❌ |
+| Budew | ❌ |
+| Buneary | ✅ |
+| Carvanha | ✅ |
+| Celebi | ❌ |
+| Chi-Yu | ❌ |
+| Chien-Pao | ❌ |
+| Chikorita | ✅ |
+| Cofagrigus | ❌ |
+| Combusken | ✅ |
+| Crustle | ❌ |
+| Dedenne | ❌ |
+| Dipplin | ❌ |
+| Dragapult ex | ❌ |
+| Drakloak | ❌ |
+| Dreepy | ✅ |
+| Drilbur | ✅ |
+| Dudunsparce | ❌ |
+| Dudunsparce ex | ❌ |
+| Dunsparce | ❌ |
+| Dusclops | ❌ |
+| Dusknoir | ❌ |
+| Duskull | ❌ |
+| Dwebble | ❌ |
+| Elgyem | ❌ |
+| Enamorus | ❌ |
+| Fan Rotom | ❌ |
+| Fezandipiti ex | ❌ |
+| Flutter Mane | ❌ |
+| Genesect | ❌ |
+| Genesect ex | ❌ |
+| Goldeen | ✅ |
+| Grookey | ✅ |
+| Hoothoot | ❌ |
+| Hydrapple ex | ❌ |
+| Iron Crown ex | ❌ |
+| Iron Leaves ex | ❌ |
+| Kadabra | ❌ |
+| Koraidon ex | ❌ |
+| Kyurem | ❌ |
+| Latias ex | ❌ |
+| Lillie's Clefairy ex | ❌ |
+| Mega Absol ex | ❌ |
+| Mega Excadrill ex | ❌ |
+| Mega Kangaskhan ex | ❌ |
+| Mega Lopunny ex | ❌ |
+| Mega Sharpedo ex | ❌ |
+| Mega Skarmory ex | ❌ |
+| Mega Slowbro ex | ❌ |
+| Meganium | ❌ |
+| Meowth ex | ❌ |
+| Metagross | ❌ |
+| Metang | ✅ |
+| Moltres | ❌ |
+| Munkidori | ❌ |
+| N's Darmanitan | ❌ |
+| N's Darumaka | ✅ |
+| N's Reshiram | ❌ |
+| N's Zekrom | ❌ |
+| N's Zoroark ex | ❌ |
+| N's Zorua | ✅ |
+| Noctowl | ❌ |
+| Paldean Tauros | ❌ |
+| Passimian | ❌ |
+| Patrat | ❌ |
+| Pecharunt | ❌ |
+| Pecharunt ex | ❌ |
+| Psyduck | ❌ |
+| Rabsca | ❌ |
+| Raging Bolt ex | ❌ |
+| Rellor | ❌ |
+| Seaking | ❌ |
+| Shaymin | ❌ |
+| Slowking | ❌ |
+| Slowpoke | ✅ |
+| Smoochum | ❌ |
+| Stunfisk | ❌ |
+| Tapu Bulu | ❌ |
+| Tatsugiri | ❌ |
+| Teal Mask Ogerpon ex | ❌ |
+| Thwackey | ❌ |
+| Torchic | ✅ |
+| Toxel | ❌ |
+| Toxtricity | ❌ |
+| Wellspring Mask Ogerpon ex | ❌ |
+| Yveltal | ❌ |
+| Zeraora | ❌ |
 
 ## The documents
 

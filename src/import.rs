@@ -740,6 +740,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             },
         ),
         "Wally's Compassion" => (free, TrainerEffect::HealMegaExAndTakeEnergyIfHealed),
+        "Janine's Secret Art" => (free, TrainerEffect::JaninesSecretArt),
         _ => return None,
     })
 }

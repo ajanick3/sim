@@ -581,6 +581,76 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::ChooseJaninesTarget { target } => {
+            let (player, remaining, mut chosen) = match state.phase {
+                Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
+                    (player, remaining, chosen)
+                }
+                _ => return Err(IllegalAction),
+            };
+            let slot = chosen
+                .iter_mut()
+                .find(|c| c.is_none())
+                .expect("legal_actions never offers a third choice");
+            *slot = Some(target);
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{player:?} chooses {name}."));
+            state.phase = Phase::ChoosingJaninesTargets {
+                player,
+                remaining: remaining - 1,
+                chosen,
+            };
+        }
+
+        Action::FinishChoosingJaninesTargets => {
+            let (player, chosen) = match state.phase {
+                Phase::ChoosingJaninesTargets { player, chosen, .. } => (player, chosen),
+                _ => return Err(IllegalAction),
+            };
+            if chosen[0].is_none() {
+                // Nothing chosen, nothing to search: the card resolved
+                // without doing anything more.
+                state.phase = Phase::Main;
+                settle(state);
+            } else {
+                state.phase = Phase::JaninesSearch {
+                    player,
+                    targets: chosen,
+                    index: 0,
+                    attached_to_active: false,
+                };
+            }
+        }
+
+        Action::TakeEnergyForJanine { card } => {
+            let (player, targets, index, mut attached_to_active) = match state.phase {
+                Phase::JaninesSearch { player, targets, index, attached_to_active } => {
+                    (player, targets, index, attached_to_active)
+                }
+                _ => return Err(IllegalAction),
+            };
+            let target = targets[index as usize].expect("this search always names a target");
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.pokemon[target.index()].attached.push(card);
+            if state.player(player).active == Some(target) {
+                attached_to_active = true;
+            }
+            let energy = state.def_of(card).name();
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{energy} moves to {name}."));
+            advance_janines_search(state, player, targets, index, attached_to_active);
+        }
+
+        Action::FinishJaninesSearch => {
+            let (player, targets, index, attached_to_active) = match state.phase {
+                Phase::JaninesSearch { player, targets, index, attached_to_active } => {
+                    (player, targets, index, attached_to_active)
+                }
+                _ => return Err(IllegalAction),
+            };
+            advance_janines_search(state, player, targets, index, attached_to_active);
+        }
+
         Action::EvolveSkippingOneStage { card, target } => {
             let player = match state.phase {
                 Phase::EvolvingWithRareCandy { player } => player,
@@ -916,6 +986,14 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             state.phase = Phase::HealingMegaEx { player };
         }
 
+        TrainerEffect::JaninesSecretArt => {
+            state.phase = Phase::ChoosingJaninesTargets {
+                player,
+                remaining: 2,
+                chosen: [None, None],
+            };
+        }
+
         TrainerEffect::CoinFlipDiscardOpponentEnergy => {
             if state.rng.flip() {
                 state.phase = Phase::DiscardingOpponentEnergy {
@@ -941,6 +1019,38 @@ fn shuffle_hand_into_library(state: &mut GameState, player: PlayerId) {
     state.players[player.index()].library.extend(hand);
     let library = &mut state.players[player.index()].library;
     shuffle(state.rng.as_mut(), library);
+}
+
+/// Move Janine's Secret Art on to its next step: the second target's search,
+/// or the end of the effect. Both `Action::TakeEnergyForJanine` (a card was
+/// found) and `Action::FinishJaninesSearch` (the player declines to search
+/// further for this target) land here.
+fn advance_janines_search(
+    state: &mut GameState,
+    player: PlayerId,
+    targets: [Option<PokemonId>; 2],
+    index: u8,
+    attached_to_active: bool,
+) {
+    if index == 0 && targets[1].is_some() {
+        state.phase = Phase::JaninesSearch {
+            player,
+            targets,
+            index: 1,
+            attached_to_active,
+        };
+        return;
+    }
+    let library = &mut state.players[player.index()].library;
+    shuffle(state.rng.as_mut(), library);
+    state.log.push(format!("{player:?} shuffles their library."));
+    if attached_to_active
+        && let Some(active) = state.player(player).active
+    {
+        state.inflict(active, Condition::Poisoned);
+    }
+    state.phase = Phase::Main;
+    settle(state);
 }
 
 fn setup_player(state: &GameState) -> Result<PlayerId, IllegalAction> {

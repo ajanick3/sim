@@ -77,6 +77,16 @@ pub enum Action {
     /// Heal every point of damage from a chosen Mega Evolution ex, and
     /// move its attachments to hand if the heal did anything.
     HealMegaEx { target: PokemonId },
+    /// Choose one of up to 2 targets for `Janine's Secret Art`.
+    ChooseJaninesTarget { target: PokemonId },
+    /// Stop choosing targets, whether 0, 1, or 2 have been picked.
+    FinishChoosingJaninesTargets,
+    /// Take the Basic Darkness Energy found for the current target of
+    /// `Janine's Secret Art`, attaching it there.
+    TakeEnergyForJanine { card: CardId },
+    /// Nothing was found, or the player declines: move on to the next
+    /// target, or end the card if there is none.
+    FinishJaninesSearch,
     /// Evolve a Basic in play straight into the named Stage 2 from hand,
     /// skipping the Stage 1 between them.
     EvolveSkippingOneStage { card: CardId, target: PokemonId },
@@ -101,6 +111,8 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingOneOf { player, .. } => Some(player),
         Phase::DiscardingFromHand { chooser, .. } => Some(chooser),
         Phase::HealingMegaEx { player } => Some(player),
+        Phase::ChoosingJaninesTargets { player, .. } => Some(player),
+        Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::Checkup { player } => Some(player),
@@ -317,6 +329,34 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
+        Phase::ChoosingJaninesTargets { player: whose, remaining, chosen } => {
+            if remaining > 0 {
+                for target in state.player(whose).in_play() {
+                    let already_chosen = chosen.contains(&Some(target));
+                    if !already_chosen
+                        && state.pokemon_def(target).kind == crate::card::Type::Darkness
+                    {
+                        actions.push(Action::ChooseJaninesTarget { target });
+                    }
+                }
+            }
+            actions.push(Action::FinishChoosingJaninesTargets);
+            return actions;
+        }
+        Phase::JaninesSearch { player: whose, targets, index, .. } => {
+            if targets[index as usize].is_some() {
+                for card in state.player(whose).library.iter() {
+                    if state.matches_filter(
+                        *card,
+                        crate::card::CardFilter::BasicEnergyOfType(crate::card::Type::Darkness),
+                    ) {
+                        actions.push(Action::TakeEnergyForJanine { card: *card });
+                    }
+                }
+            }
+            actions.push(Action::FinishJaninesSearch);
+            return actions;
+        }
         Phase::DiscardingOpponentEnergy { of, .. } => {
             for pokemon in state.player(of).in_play() {
                 for card in &state.pokemon(pokemon).attached {
@@ -423,6 +463,8 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     .in_play()
                     .iter()
                     .any(|p| state.pokemon_def(*p).prizes == 3),
+                // "Up to 2" — legal even holding no Darkness Pokémon at all.
+                TrainerEffect::JaninesSecretArt => true,
                 // A Stage 2 in hand, and a Basic under it in play. Rare
                 // Candy is only playable at all where the pair already
                 // exists — nothing in its phase ever declines.
@@ -593,6 +635,14 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::FinishDiscardingFromHand => "Stop discarding from that hand".to_string(),
         Action::HealMegaEx { target } => format!("Heal {} fully", state.pokemon_def(target).name),
+        Action::ChooseJaninesTarget { target } => {
+            format!("Choose {}", state.pokemon_def(target).name)
+        }
+        Action::FinishChoosingJaninesTargets => "Stop choosing targets".to_string(),
+        Action::TakeEnergyForJanine { card } => {
+            format!("Attach {}", state.def_of(card).name())
+        }
+        Action::FinishJaninesSearch => "Move on".to_string(),
         Action::EvolveSkippingOneStage { card, target } => format!(
             "Use Rare Candy: evolve {} into {}",
             state.pokemon_def(target).name,

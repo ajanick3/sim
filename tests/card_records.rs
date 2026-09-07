@@ -55,6 +55,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Encouragement, 3 of AZ's Tranquility, 4 of Surfer, 10 of Black
     // Belt's Training, 3 of Gladion's Final Battle, 5 of Kieran, 3 of
     // Morty's Conviction, 2 of Xerosic's Machinations, 4 of Eri, and 2 of
-    // Brock's Scouting, and 3 of Wally's Compassion.
-    assert_eq!(admitted, 464, "coverage moves only on purpose");
+    // Brock's Scouting, 3 of Wally's Compassion, and 4 of Janine's Secret
+    // Art.
+    assert_eq!(admitted, 468, "coverage moves only on purpose");
 }

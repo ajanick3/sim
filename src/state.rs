@@ -239,6 +239,23 @@ pub enum Phase {
     /// Evolution ex is, per ADR 0010 — the same fact `TurnBonusTarget`
     /// already reads for a plain ex, one prize lower.
     HealingMegaEx { player: PlayerId },
+    /// `player` played `Janine's Secret Art` and is choosing up to 2 of
+    /// their own Darkness Pokémon, in `chosen`, before any search runs.
+    ChoosingJaninesTargets {
+        player: PlayerId,
+        remaining: u32,
+        chosen: [Option<PokemonId>; 2],
+    },
+    /// One search per target `Janine's Secret Art` chose, run in order.
+    /// `index` says which of `targets` this search attaches to;
+    /// `attached_to_active` remembers whether the Active has received one
+    /// yet, read once both searches are done to decide the Poison.
+    JaninesSearch {
+        player: PlayerId,
+        targets: [Option<PokemonId>; 2],
+        index: u8,
+        attached_to_active: bool,
+    },
     /// The game is decided.
     Over,
 }
