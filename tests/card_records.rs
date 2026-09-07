@@ -48,6 +48,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // takes it up from there — 2 prints of Cyrano, 5 of Buddy-Buddy Poffin,
     // then 3 of Ultra Ball, 2 of Special Red Card, 2 of Energy Switch, 3 of
     // Hilda, 3 of Dawn, 4 of Crispin, 2 of Rare Candy, 3 of Team Rocket's
-    // Petrel, 3 of N's PP Up, and 2 of Wondrous Patch.
-    assert_eq!(admitted, 402, "coverage moves only on purpose");
+    // Petrel, 3 of N's PP Up, 2 of Wondrous Patch, 1 of Pokégear 3.0, and
+    // 2 of Bug Catching Set.
+    assert_eq!(admitted, 405, "coverage moves only on purpose");
 }

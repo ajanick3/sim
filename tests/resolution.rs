@@ -61,6 +61,7 @@ fn deck_search(limit: u32) -> Vec<Slot> {
         to: Destination::Zone(Zone::Hand),
         limit,
         excludes_type_of_previous: false,
+        peek: None,
     }]
 }
 
@@ -84,6 +85,7 @@ fn deciding_offers_only_cards_the_filter_admits() {
         to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
         excludes_type_of_previous: false,
+        peek: None,
         remaining: 1,
         previous: None,
         moved: 0,
@@ -122,6 +124,7 @@ fn taking_a_card_moves_it_and_counts_down_remaining() {
         to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
         excludes_type_of_previous: false,
+        peek: None,
         remaining: 2,
         previous: None,
         moved: 0,
@@ -142,6 +145,7 @@ fn taking_a_card_moves_it_and_counts_down_remaining() {
             to: Destination::Zone(Zone::Hand),
             filter: CardFilter::AnyPokemon,
             excludes_type_of_previous: false,
+            peek: None,
             remaining: 1,
             previous: Some(card),
             moved: 1,
@@ -163,6 +167,7 @@ fn remaining_at_zero_offers_only_finishing() {
         to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
         excludes_type_of_previous: false,
+        peek: None,
         remaining: 0,
         previous: None,
         moved: 0,
@@ -183,6 +188,7 @@ fn finishing_into_the_library_shuffles_it() {
         to: Destination::Zone(Zone::Library),
         limit: 1,
         excludes_type_of_previous: false,
+        peek: None,
     }];
     let (mut state, player, search) =
         game_with_a_search(Box::new(ScriptedRng::new(vec![0])), Zone::Discard, put_back);
@@ -196,6 +202,7 @@ fn finishing_into_the_library_shuffles_it() {
         to: Destination::Zone(Zone::Library),
         filter: CardFilter::AnyPokemon,
         excludes_type_of_previous: false,
+        peek: None,
         remaining: 0,
         previous: None,
         moved: 0,
@@ -223,6 +230,7 @@ fn only_the_chooser_may_act_in_a_deciding_phase() {
         to: Destination::Zone(Zone::Hand),
         filter: CardFilter::AnyPokemon,
         excludes_type_of_previous: false,
+        peek: None,
         remaining: 1,
         previous: None,
         moved: 0,

@@ -107,6 +107,14 @@ pub enum CardFilter {
     /// A basic Energy card of this type. `BasicEnergy` matches every one;
     /// `Wondrous Patch` wants only a Psychic one.
     BasicEnergyOfType(Type),
+    /// A Trainer of exactly this kind. `Pokégear 3.0` wants a Supporter,
+    /// where `AnyTrainer` matches every kind at once.
+    TrainerOfKind(TrainerKind),
+    /// A Pokémon of this type, or a basic Energy of the same type.
+    /// `Bug Catching Set` wants "a Grass Pokémon or a Basic Grass Energy
+    /// card" — one filter admitting two kinds of card, the same shape
+    /// `PokemonOrBasicEnergy` already is, narrowed to one type.
+    PokemonOfTypeOrBasicEnergyOfType(Type),
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
@@ -132,6 +140,11 @@ pub struct Slot {
     /// Basic Energy, and no static `CardFilter` can read a fact that depends
     /// on what a different slot's choice was.
     pub excludes_type_of_previous: bool,
+    /// Read only the first this-many cards of the zone, nearest to being
+    /// drawn, rather than the whole of it. `None` is every search built
+    /// before `Pokégear 3.0`: the whole zone. `Pokégear 3.0` and
+    /// `Bug Catching Set` both peek exactly 7.
+    pub peek: Option<u32>,
 }
 
 /// A Trainer's effect: a value the engine executes, never text read at run

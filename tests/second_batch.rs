@@ -107,6 +107,7 @@ fn build() -> Set {
                 to: Destination::Zone(Zone::Hand),
                 limit: 3,
                 excludes_type_of_previous: false,
+                peek: None,
             }],
             then: None,
         },
@@ -268,6 +269,7 @@ fn the_small_basic_filter_reads_both_the_stage_and_the_hp() {
                 to: Destination::Zone(Zone::Hand),
                 limit: 2,
                 excludes_type_of_previous: false,
+                peek: None,
             }],
             then: None,
         },
@@ -312,6 +314,7 @@ fn with_poffin(set: Set) -> (Set, CardDefId) {
                 to: Destination::Bench,
                 limit: 2,
                 excludes_type_of_previous: false,
+                peek: None,
             }],
             then: None,
         },
@@ -446,6 +449,7 @@ fn a_search_that_ends_in_the_library_still_shuffles() {
                 to: Destination::Zone(Zone::Library),
                 limit: 5,
                 excludes_type_of_previous: false,
+                peek: None,
             }],
             then: None,
         },
@@ -495,6 +499,7 @@ fn with_requirements(set: Set) -> (Set, CardDefId, CardDefId) {
                 to: Destination::Zone(Zone::Hand),
                 limit: 1,
                 excludes_type_of_previous: false,
+                peek: None,
             }],
             then: None,
         },
@@ -873,6 +878,7 @@ fn the_stage_filters_offer_what_they_name() {
                     to: Destination::Zone(Zone::Hand),
                     limit: 1,
                     excludes_type_of_previous: false,
+                    peek: None,
                 }],
                 then: None,
             },
@@ -944,6 +950,7 @@ fn slot(filter: CardFilter) -> Slot {
         to: Destination::Zone(Zone::Hand),
         limit: 1,
         excludes_type_of_previous: false,
+        peek: None,
     }
 }
 
@@ -1194,12 +1201,14 @@ fn with_crispin(set: Set) -> (Set, CardDefId) {
                     to: Destination::Zone(Zone::Hand),
                     limit: 1,
                     excludes_type_of_previous: false,
+                    peek: None,
                 },
                 Slot {
                     filter: CardFilter::BasicEnergy,
                     to: Destination::Attach(TargetFilter::AnyInPlay),
                     limit: 1,
                     excludes_type_of_previous: true,
+                    peek: None,
                 },
             ],
             then: None,
@@ -1306,12 +1315,14 @@ fn crispin_is_admitted_from_the_artifact() {
                     to: Destination::Zone(Zone::Hand),
                     limit: 1,
                     excludes_type_of_previous: false,
+                    peek: None,
                 },
                 Slot {
                     filter: CardFilter::BasicEnergy,
                     to: Destination::Attach(TargetFilter::AnyInPlay),
                     limit: 1,
                     excludes_type_of_previous: true,
+                    peek: None,
                 },
             ],
             then: None,
@@ -1488,6 +1499,7 @@ fn with_petrel(set: Set) -> (Set, CardDefId) {
                 to: Destination::Zone(Zone::Hand),
                 limit: 1,
                 excludes_type_of_previous: false,
+                peek: None,
             }],
             then: None,
         },
@@ -1530,9 +1542,7 @@ fn the_any_trainer_filter_never_offers_a_pokemon_or_an_energy() {
             let def = state.def_of(**c);
             def.as_pokemon().is_some() || def.is_energy()
         })
-        .any(|c| {
-            legal_actions(&state).contains(&Action::TakeCard { card: *c })
-        });
+        .any(|c| legal_actions(&state).contains(&Action::TakeCard { card: *c }));
     assert!(!offered_mons_and_energy);
 }
 
@@ -1556,6 +1566,7 @@ fn team_rockets_petrel_is_admitted_from_the_artifact() {
                 to: Destination::Zone(Zone::Hand),
                 limit: 1,
                 excludes_type_of_previous: false,
+                peek: None,
             }],
             then: None,
         }
@@ -1579,6 +1590,7 @@ fn with_pp_up(set: Set) -> (Set, CardDefId, CardDefId) {
                 to: Destination::Attach(TargetFilter::BenchedNameStartsWith("N's")),
                 limit: 1,
                 excludes_type_of_previous: false,
+                peek: None,
             }],
             then: None,
         },
@@ -1609,7 +1621,9 @@ fn pp_up_offers_only_a_benched_pokemon_whose_name_starts_with_ns() {
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()]
+        .library
+        .retain(|c| *c != energy);
     state.players[player.index()].discard.push(energy);
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
@@ -1669,6 +1683,7 @@ fn with_wondrous_patch(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
                 to: Destination::Attach(TargetFilter::BenchedOfType(Type::Psychic)),
                 limit: 1,
                 excludes_type_of_previous: false,
+                peek: None,
             }],
             then: None,
         },
@@ -1699,10 +1714,14 @@ fn wondrous_patch_offers_only_a_psychic_energy_onto_a_psychic_pokemon() {
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != colorless_energy);
+    state.players[player.index()]
+        .library
+        .retain(|c| *c != colorless_energy);
     state.players[player.index()].discard.push(colorless_energy);
     let psychic_energy_card = deal_new_card(&mut state, player, psychic_energy);
-    state.players[player.index()].discard.push(psychic_energy_card);
+    state.players[player.index()]
+        .discard
+        .push(psychic_energy_card);
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
     let offers: Vec<Action> = legal_actions(&state)
@@ -1750,6 +1769,7 @@ fn pp_up_is_admitted_from_the_artifact() {
                 to: Destination::Attach(TargetFilter::BenchedNameStartsWith("N's")),
                 limit: 1,
                 excludes_type_of_previous: false,
+                peek: None,
             }],
             then: None,
         }
@@ -1776,6 +1796,251 @@ fn wondrous_patch_is_admitted_from_the_artifact() {
                 to: Destination::Attach(TargetFilter::BenchedOfType(Type::Psychic)),
                 limit: 1,
                 excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        }
+    );
+}
+
+// --- Milestone 6, ticket 03: a search bounded to the top of the deck ---
+
+fn with_pokegear(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let supporter_a = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-supporter-a",
+        name: "Test Supporter A",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Nothing,
+    }));
+    let supporter_b = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-supporter-b",
+        name: "Test Supporter B",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Nothing,
+    }));
+    let pokegear = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-pokegear",
+        name: "Pokégear 3.0",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::TrainerOfKind(TrainerKind::Supporter),
+                to: Destination::Zone(Zone::Hand),
+                limit: 1,
+                excludes_type_of_previous: false,
+                peek: Some(7),
+            }],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, pokegear, supporter_a, supporter_b)
+}
+
+/// Library order, from bottom (index 0) to top (the end — `draw` pops from
+/// there). `top` lands within the peek window; `bottom` lands well below
+/// it, but is never lost from the deck.
+fn arrange_library_with_one_card_near_the_top(
+    state: &mut GameState,
+    player: PlayerId,
+    top: CardId,
+    bottom: CardId,
+) {
+    let mut library = std::mem::take(&mut state.players[player.index()].library);
+    library.insert(0, bottom);
+    library.push(top);
+    state.players[player.index()].library = library;
+}
+
+#[test]
+fn a_peeked_search_offers_only_the_top_of_the_deck() {
+    let (set, pokegear, supporter_a, supporter_b) = with_pokegear(build());
+    let mut state = game(&set, pokegear, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, pokegear);
+
+    let near_top = deal_new_card(&mut state, player, supporter_a);
+    let buried = deal_new_card(&mut state, player, supporter_b);
+    arrange_library_with_one_card_near_the_top(&mut state, player, near_top, buried);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let choices = offered(&state);
+    assert!(
+        choices.contains(&near_top),
+        "a Supporter within the top 7 is offered"
+    );
+    assert!(
+        !choices.contains(&buried),
+        "a Supporter buried below the top 7 is not, even though it matches"
+    );
+}
+
+#[test]
+fn a_peeked_search_still_shuffles_the_deck_when_it_ends() {
+    let (set, pokegear, supporter_a, supporter_b) = with_pokegear(build());
+    let mut state = game(&set, pokegear, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, pokegear);
+
+    let near_top = deal_new_card(&mut state, player, supporter_a);
+    let buried = deal_new_card(&mut state, player, supporter_b);
+    arrange_library_with_one_card_near_the_top(&mut state, player, near_top, buried);
+    let before = state.player(player).library.clone();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    let after = &state.player(player).library;
+    assert_eq!(before.len(), after.len(), "nothing was taken");
+    assert!(after.contains(&buried), "the buried card is not lost");
+    assert_ne!(&before, after, "the deck is shuffled once the search ends");
+}
+
+fn with_bug_catching_set(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let bug_catching_set = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-bug-catching-set",
+        name: "Bug Catching Set",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::PokemonOfTypeOrBasicEnergyOfType(Type::Grass),
+                to: Destination::Zone(Zone::Hand),
+                limit: 2,
+                excludes_type_of_previous: false,
+                peek: Some(7),
+            }],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, bug_catching_set)
+}
+
+#[test]
+fn bug_catching_sets_filter_admits_grass_pokemon_and_grass_energy_alike() {
+    let (set, bug_catching_set) = with_bug_catching_set(build());
+    let mut state = game(&set, bug_catching_set, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, bug_catching_set);
+
+    // A Grass Pokémon and a Grass Energy, both dealt near the top; a
+    // Colorless Pokémon dealt alongside them to prove the type still
+    // matters, not only "any Pokémon or any Energy".
+    let grass_mon = db_add_grass_mon(&mut state);
+    let grass_energy = db_add_grass_energy(&mut state);
+    let grass_mon_card = deal_new_card(&mut state, player, grass_mon);
+    let grass_energy_card = deal_new_card(&mut state, player, grass_energy);
+    let colorless_card = deal_new_card(&mut state, player, set.mon);
+
+    let mut library = std::mem::take(&mut state.players[player.index()].library);
+    library.push(colorless_card);
+    library.push(grass_mon_card);
+    library.push(grass_energy_card);
+    state.players[player.index()].library = library;
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let choices = offered(&state);
+    assert!(
+        choices.contains(&grass_mon_card),
+        "a Grass Pokémon is offered"
+    );
+    assert!(
+        choices.contains(&grass_energy_card),
+        "a Grass Energy is offered"
+    );
+    assert!(
+        !choices.contains(&colorless_card),
+        "a Colorless Pokémon is not"
+    );
+}
+
+/// A Grass-typed Basic Pokémon, added directly to the running game's own
+/// database — `Set` is built once, before the game starts, so a filter
+/// this specific gets its fixture dealt in rather than pre-built.
+fn db_add_grass_mon(state: &mut GameState) -> CardDefId {
+    state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-grass-mon",
+        name: "Grassmon",
+        hp: 60,
+        kind: Type::Grass,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        attacks: vec![Attack {
+            name: "Vine",
+            cost: vec![Type::Grass],
+            base_damage: 10,
+            inflicts: None,
+        }],
+    }))
+}
+
+fn db_add_grass_energy(state: &mut GameState) -> CardDefId {
+    state.db.add(CardDef::Energy(Energy {
+        print_id: "test-grass-energy",
+        name: "Grass Energy",
+        kind: Type::Grass,
+    }))
+}
+
+#[test]
+fn pokegear_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let pokegear = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Pokégear 3.0")
+        .expect("Pokégear 3.0 plays");
+    assert_eq!(
+        pokegear.effect,
+        TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::TrainerOfKind(TrainerKind::Supporter),
+                to: Destination::Zone(Zone::Hand),
+                limit: 1,
+                excludes_type_of_previous: false,
+                peek: Some(7),
+            }],
+            then: None,
+        }
+    );
+}
+
+#[test]
+fn bug_catching_set_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let bug_catching_set = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Bug Catching Set")
+        .expect("Bug Catching Set plays");
+    assert_eq!(
+        bug_catching_set.effect,
+        TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::PokemonOfTypeOrBasicEnergyOfType(Type::Grass),
+                to: Destination::Zone(Zone::Hand),
+                limit: 2,
+                excludes_type_of_previous: false,
+                peek: Some(7),
             }],
             then: None,
         }
@@ -1804,6 +2069,7 @@ fn buddy_buddy_poffin_is_admitted_from_the_artifact() {
                 to: Destination::Bench,
                 limit: 2,
                 excludes_type_of_previous: false,
+                peek: None,
             }],
             then: None,
         }
@@ -1830,6 +2096,7 @@ fn cyrano_is_admitted_from_the_artifact() {
                 to: Destination::Zone(Zone::Hand),
                 limit: 3,
                 excludes_type_of_previous: false,
+                peek: None,
             }],
             then: None,
         }
