@@ -281,7 +281,11 @@ fn a_card_can_be_matched_by_print_id_when_its_name_is_not_enough() {
 
     let effect_of = |print_id: &str| {
         let playable = import.cards.iter().find(|c| c.id == print_id)?.playable?;
-        import.db.get(playable).as_trainer().map(|t| t.effect.clone())
+        import
+            .db
+            .get(playable)
+            .as_trainer()
+            .map(|t| t.effect.clone())
     };
     assert_eq!(effect_of("test-print-a"), Some(TrainerEffect::Nothing));
     assert_eq!(

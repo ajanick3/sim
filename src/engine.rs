@@ -206,7 +206,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::TakeCard { card } => {
-            let (chooser, played, step, from, to, filter, excludes, remaining, moved, then) =
+            let (chooser, played, step, from, to, filter, excludes, peek, remaining, moved, then) =
                 match state.phase {
                     Phase::Deciding {
                         chooser,
@@ -216,6 +216,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         to,
                         filter,
                         excludes_type_of_previous,
+                        peek,
                         remaining,
                         moved,
                         then,
@@ -228,6 +229,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         to,
                         filter,
                         excludes_type_of_previous,
+                        peek,
                         remaining,
                         moved,
                         then,
@@ -265,6 +267,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 to,
                 filter,
                 excludes_type_of_previous: excludes,
+                peek,
                 remaining: remaining - 1,
                 moved: moved + 1,
                 previous: Some(card),
@@ -273,7 +276,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::TakeCardOnto { card, target } => {
-            let (chooser, played, step, from, to, filter, excludes, remaining, moved, then) =
+            let (chooser, played, step, from, to, filter, excludes, peek, remaining, moved, then) =
                 match state.phase {
                     Phase::Deciding {
                         chooser,
@@ -283,6 +286,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         to: to @ Destination::Attach(_),
                         filter,
                         excludes_type_of_previous,
+                        peek,
                         remaining,
                         moved,
                         then,
@@ -295,6 +299,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         to,
                         filter,
                         excludes_type_of_previous,
+                        peek,
                         remaining,
                         moved,
                         then,
@@ -316,6 +321,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 to,
                 filter,
                 excludes_type_of_previous: excludes,
+                peek,
                 remaining: remaining - 1,
                 moved: moved + 1,
                 previous: Some(card),
@@ -554,6 +560,7 @@ fn enter_slot(
         to: slot.to,
         filter: slot.filter,
         excludes_type_of_previous: slot.excludes_type_of_previous,
+        peek: slot.peek,
         remaining: slot.limit,
         moved,
         // A new slot keeps what the search has taken so far: the constraint

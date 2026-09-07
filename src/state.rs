@@ -159,6 +159,9 @@ pub enum Phase {
         to: crate::card::Destination,
         filter: crate::card::CardFilter,
         excludes_type_of_previous: bool,
+        /// Read only the top this-many cards of `from`, not the whole zone.
+        /// `None` for every search before `Pokégear 3.0`.
+        peek: Option<u32>,
         remaining: u32,
         /// How many have been taken so far, across every slot. `then` reads
         /// it when the search ends; nothing else needs it.
@@ -492,12 +495,26 @@ impl GameState {
                 CardDef::Energy(energy) => energy.kind == kind,
                 CardDef::Pokemon(_) | CardDef::Trainer(_) => false,
             },
+            CardFilter::TrainerOfKind(kind) => self
+                .def_of(card)
+                .as_trainer()
+                .is_some_and(|t| t.kind == kind),
+            CardFilter::PokemonOfTypeOrBasicEnergyOfType(kind) => match self.def_of(card) {
+                CardDef::Pokemon(p) => p.kind == kind,
+                CardDef::Energy(e) => e.kind == kind,
+                CardDef::Trainer(_) => false,
+            },
         }
     }
 
     /// Whether a Pokémon in play meets `Destination::Attach`'s target
     /// filter.
-    pub fn matches_target(&self, player: PlayerId, pokemon: PokemonId, filter: crate::card::TargetFilter) -> bool {
+    pub fn matches_target(
+        &self,
+        player: PlayerId,
+        pokemon: PokemonId,
+        filter: crate::card::TargetFilter,
+    ) -> bool {
         use crate::card::TargetFilter;
         match filter {
             TargetFilter::AnyInPlay => true,

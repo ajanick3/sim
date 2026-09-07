@@ -157,6 +157,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             excludes_type_of_previous,
             remaining,
             previous,
+            peek,
             ..
         } => {
             // A card bound for the Bench needs a space on it. Rule 14 caps
@@ -178,8 +179,17 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     to,
                     limit: remaining,
                     excludes_type_of_previous,
+                    peek,
                 };
-                for card in state.zone(chooser, from) {
+                let zone = state.zone(chooser, from);
+                // A peeked search reads only the cards nearest to being
+                // drawn — the end of the Vec, since `draw` pops from
+                // there — not the whole zone.
+                let visible: Box<dyn Iterator<Item = &CardId>> = match peek {
+                    Some(n) => Box::new(zone.iter().rev().take(n as usize)),
+                    None => Box::new(zone.iter()),
+                };
+                for card in visible {
                     if !state.matches_slot(*card, &slot, previous) {
                         continue;
                     }
@@ -394,7 +404,10 @@ fn rare_candy_pairs(state: &GameState, player: PlayerId) -> Vec<(CardId, Pokemon
     let side = state.player(player);
     let mut pairs = Vec::new();
     for card in &side.hand {
-        let Some(from) = state.def_of(*card).as_pokemon().and_then(|p| p.evolves_from_basic)
+        let Some(from) = state
+            .def_of(*card)
+            .as_pokemon()
+            .and_then(|p| p.evolves_from_basic)
         else {
             continue;
         };

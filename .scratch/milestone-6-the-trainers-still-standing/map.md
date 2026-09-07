@@ -36,15 +36,16 @@ on one another and may run in any order once the first four land.
   onto a Psychic Pokémon — as two filters checked against two different
   values, not one combined expression. See
   [ADR 0021](../../docs/adr/0021-an-attach-can-filter-its-target.md).
+- **The top-of-deck peek is `Slot::peek: Option<u32>`, not a new
+  `Zone`.** A peek limit is a fact about the search, not about where a
+  card sits — the same 7 cards are there whichever Trainer asks — and the
+  cards not taken need no new shuffle rule: a plain whole-Library shuffle
+  already lands on the same distribution as "shuffle only the cards seen
+  back in." See
+  [ADR 0022](../../docs/adr/0022-a-search-can-peek-a-bounded-prefix.md).
 
 ## Fog
 
-- Whether the top-of-deck peek (`Pokégear 3.0`, `Bug Catching Set`) is a new
-  field on `Slot`, or a new `Zone`-shaped concept of its own. Both cards
-  peek exactly 7 and shuffle whatever they do not take back into the deck;
-  since a search that shuffles the deck already loses track of the order
-  the player saw, peeking the first `n` elements of the zone `Phase::Deciding`
-  already reads may be enough — check before adding a second mechanism.
 - Whether Unfair Stamp's requirement — "a Pokémon of mine was Knocked Out
   during the opponent's last turn" — is a new field on `GameState`, cleared
   at `begin_turn`, or derivable from `history: Vec<Action>` without a new
