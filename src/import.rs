@@ -1009,6 +1009,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Torchic", "Collect") => AttackEffect::DrawCards(1),
         ("Celebi", "Collect") => AttackEffect::DrawCards(1),
         ("Buneary", "Run Around") => AttackEffect::SwitchOwnActive,
+        ("Bayleef", "Push Down") => AttackEffect::SwitchOpponentActive,
         _ => return None,
     })
 }
