@@ -1015,6 +1015,12 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Dunsparce", "Dig") => AttackEffect::CoinFlipSelfInvulnerableNextTurn,
         ("Elgyem", "Hide") => AttackEffect::CoinFlipSelfInvulnerableNextTurn,
         ("Budew", "Itchy Pollen") => AttackEffect::OpponentCannotPlayItemsNextTurn,
+        ("Wellspring Mask Ogerpon ex", "Torrential Pump") => {
+            AttackEffect::MayShuffleFixedEnergyThenDamageChosenBenched {
+                count: 3,
+                damage: 120,
+            }
+        }
         _ => return None,
     })
 }

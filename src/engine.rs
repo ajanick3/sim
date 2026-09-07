@@ -987,6 +987,47 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::AcceptShuffleEnergyForBenchDamage => {
+            let (player, attacker, count, damage) = match state.phase {
+                Phase::DecidingToShuffleEnergyForBenchDamage { player, attacker, count, damage } => {
+                    (player, attacker, count, damage)
+                }
+                _ => return Err(IllegalAction),
+            };
+            let energy: Vec<CardId> = state
+                .pokemon(attacker)
+                .attached
+                .iter()
+                .copied()
+                .filter(|c| state.def_of(*c).is_energy())
+                .take(count as usize)
+                .collect();
+            for card in &energy {
+                state.pokemon[attacker.index()].attached.retain(|c| c != card);
+            }
+            let library = &mut state.players[player.index()].library;
+            library.extend(energy);
+            shuffle(state.rng.as_mut(), library);
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} shuffles Energy back into the deck."));
+            let opponent = player.opponent();
+            if !state.player(opponent).bench.is_empty() {
+                state.phase = Phase::ChoosingBenchDamageTarget { player, damage };
+            } else {
+                state.phase = Phase::Main;
+                settle(state);
+            }
+        }
+
+        Action::DeclineShuffleEnergyForBenchDamage => {
+            match state.phase {
+                Phase::DecidingToShuffleEnergyForBenchDamage { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1757,6 +1798,23 @@ fn resolve_attack_effect(
             state.opponent_next_turn_restriction = Some((defender, effect));
             let name = state.pokemon_def(defender).name;
             state.log.push(format!("{name} cannot retreat next turn."));
+        }
+        crate::card::AttackEffect::MayShuffleFixedEnergyThenDamageChosenBenched { count, damage } => {
+            let owner = state.pokemon(attacker).owner;
+            let energy_count = state
+                .pokemon(attacker)
+                .attached
+                .iter()
+                .filter(|c| state.def_of(**c).is_energy())
+                .count() as u32;
+            if energy_count >= count {
+                state.phase = Phase::DecidingToShuffleEnergyForBenchDamage {
+                    player: owner,
+                    attacker,
+                    count,
+                    damage,
+                };
+            }
         }
         crate::card::AttackEffect::OpponentCannotPlayItemsNextTurn => {
             state.opponent_next_turn_restriction = Some((defender, effect));

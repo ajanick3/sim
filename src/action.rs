@@ -157,6 +157,10 @@ pub enum Action {
     /// Take this Pokémon card from the discard pile into hand, as part
     /// of `Phase::TakingPokemonFromDiscard`.
     TakePokemonFromDiscard { card: CardId },
+    /// Accept `Phase::DecidingToShuffleEnergyForBenchDamage`'s cost.
+    AcceptShuffleEnergyForBenchDamage,
+    /// Decline it — nothing else about this attack changes.
+    DeclineShuffleEnergyForBenchDamage,
     /// Bench this named Pokémon from the discard pile, as part of
     /// `Phase::SearchingDiscardForNamedToBench`.
     TakeNamedFromDiscardToBench { card: CardId },
@@ -196,6 +200,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::TakingTrainerFromDiscard { player } => Some(player),
         Phase::SearchingLibraryToEvolveSelf { player, .. } => Some(player),
         Phase::TakingPokemonFromDiscard { player } => Some(player),
+        Phase::DecidingToShuffleEnergyForBenchDamage { player, .. } => Some(player),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
@@ -497,6 +502,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     actions.push(Action::TakePokemonFromDiscard { card: *card });
                 }
             }
+            return actions;
+        }
+        Phase::DecidingToShuffleEnergyForBenchDamage { .. } => {
+            actions.push(Action::AcceptShuffleEnergyForBenchDamage);
+            actions.push(Action::DeclineShuffleEnergyForBenchDamage);
             return actions;
         }
         Phase::SearchingDiscardForNamedToBench { player: whose, name, .. } => {
@@ -1012,6 +1022,8 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::TakePokemonFromDiscard { card } => {
             format!("Take {} from discard", state.def_of(card).name())
         }
+        Action::AcceptShuffleEnergyForBenchDamage => "Shuffle Energy for bench damage".to_string(),
+        Action::DeclineShuffleEnergyForBenchDamage => "Decline".to_string(),
         Action::TakeNamedFromDiscardToBench { card } => {
             format!("Bench {} from discard", state.def_of(card).name())
         }
