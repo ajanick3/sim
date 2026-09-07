@@ -1482,7 +1482,13 @@ fn attack(state: &mut GameState, index: usize) {
     }
 
     let attack = state.pokemon_def(attacker).attacks[index].clone();
-    let damage = damage_dealt(state, attacker, defender, attack.base_damage);
+    let base = match attack.effect {
+        Some(crate::card::AttackEffect::DamagePerCount(count, per_unit)) => {
+            count_for_attack(state, attacker, count) * per_unit
+        }
+        _ => attack.base_damage,
+    };
+    let damage = damage_dealt(state, attacker, defender, base);
 
     state.pokemon[defender.index()].damage += damage;
     // `Lillie's Pearl` tells this knockout apart from one a checkup
@@ -1526,6 +1532,43 @@ fn resolve_attack_effect(
             let name = state.pokemon_def(attacker).name;
             state.log.push(format!("{name} also takes {amount} damage."));
         }
+        // Already spent, before `damage_dealt` ran — see `attack`'s own
+        // `base` computation.
+        crate::card::AttackEffect::DamagePerCount(..) => {}
+    }
+}
+
+/// What `AttackEffect::DamagePerCount` reads for this attack, counted
+/// fresh from the board.
+fn count_for_attack(state: &GameState, attacker: PokemonId, count: crate::card::Count) -> u32 {
+    let owner = state.pokemon(attacker).owner;
+    let opponent = owner.opponent();
+    match count {
+        crate::card::Count::OwnDamageCounters => state.pokemon(attacker).damage / 10,
+        crate::card::Count::OpponentBasicEnergyInDiscard => state
+            .player(opponent)
+            .discard
+            .iter()
+            .filter(|c| state.def_of(**c).is_energy())
+            .count() as u32,
+        crate::card::Count::OpponentPokemonExInPlay => state
+            .player(opponent)
+            .in_play()
+            .iter()
+            .filter(|p| state.pokemon_def(**p).prizes > 1)
+            .count() as u32,
+        crate::card::Count::OwnBasicPokemonInPlay => state
+            .player(owner)
+            .in_play()
+            .iter()
+            .filter(|p| state.pokemon_def(**p).stage == crate::card::Stage::Basic)
+            .count() as u32,
+        crate::card::Count::OwnDamagedWithNamePrefix(prefix) => state
+            .player(owner)
+            .in_play()
+            .iter()
+            .filter(|p| state.pokemon_def(**p).name.starts_with(prefix) && state.pokemon(**p).damage > 0)
+            .count() as u32,
     }
 }
 

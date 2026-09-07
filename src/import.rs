@@ -13,7 +13,7 @@ use std::collections::HashMap;
 use serde_json::Value;
 
 use crate::card::{
-    Attack, AttackEffect, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon,
+    Attack, AttackEffect, CardDb, CardDef, CardFilter, Count, Destination, Energy, Pokemon,
     PromoteFollowUp, Requirement, Slot, Stage, TargetFilter, Then, Trainer, TrainerEffect,
     TrainerKind, TurnBonusTarget, Type, Zone,
 };
@@ -910,6 +910,16 @@ fn read_attack(pokemon_name: &str, attack: &Value) -> Result<Attack, Refusal> {
     let base_damage = match &attack["damage"] {
         Value::Number(damage) => damage.as_u64().ok_or(Refusal::DamageIsNotANumber)? as u32,
         Value::Null => 0,
+        // "40×": the printed damage is entirely a per-count multiplier,
+        // computed by `AttackEffect::DamagePerCount` before `damage_dealt`
+        // runs rather than added as a flat base. The digits here are read
+        // only to confirm the effect already matched carries the same
+        // number — `known_attack` is what actually supplies it.
+        Value::String(s) if effect.is_some() && s.ends_with('×') => {
+            s.trim_end_matches('×')
+                .parse::<u32>()
+                .map_err(|_| Refusal::DamageIsNotANumber)?
+        }
         _ => return Err(Refusal::DamageIsNotANumber),
     };
 
@@ -942,6 +952,21 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Rellor", "Slight Intrusion") => AttackEffect::Recoil(10),
         ("Tapu Bulu", "Wood Hammer") => AttackEffect::Recoil(30),
         ("Paldean Tauros", "Double-Edge") => AttackEffect::Recoil(20),
+        ("Paldean Tauros", "Raging Charge") => {
+            AttackEffect::DamagePerCount(Count::OwnDamagedWithNamePrefix("Tauros"), 40)
+        }
+        ("N's Reshiram", "Powerful Rage") => {
+            AttackEffect::DamagePerCount(Count::OwnDamageCounters, 20)
+        }
+        ("N's Darmanitan", "Back Draft") => {
+            AttackEffect::DamagePerCount(Count::OpponentBasicEnergyInDiscard, 30)
+        }
+        ("Dudunsparce ex", "Tenacious Tail") => {
+            AttackEffect::DamagePerCount(Count::OpponentPokemonExInPlay, 60)
+        }
+        ("Passimian", "Coordinated Throwing") => {
+            AttackEffect::DamagePerCount(Count::OwnBasicPokemonInPlay, 20)
+        }
         _ => return None,
     })
 }

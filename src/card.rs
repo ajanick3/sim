@@ -544,6 +544,29 @@ pub enum AttackEffect {
     /// whatever the attack did to the defender. `Carvanha`'s "This
     /// Pokémon also does 10 damage to itself."
     Recoil(u32),
+    /// This attack's damage is entirely `per_unit * count`, where `count`
+    /// is read fresh from the board at attack time — not added to a
+    /// printed base, since the printed base is the "×" marker itself.
+    /// Computed before `damage_dealt` runs, so Weakness, Resistance, and
+    /// any Tool or Stadium bonus still apply to the total, the same as
+    /// a plain attack's damage.
+    DamagePerCount(Count, u32),
+}
+
+/// What `AttackEffect::DamagePerCount` counts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Count {
+    /// Damage counters already on the attacker itself. `N's Reshiram`.
+    OwnDamageCounters,
+    /// Basic Energy cards in the opponent's discard pile. `N's Darmanitan`.
+    OpponentBasicEnergyInDiscard,
+    /// The opponent's Pokémon ex in play. `Dudunsparce ex`.
+    OpponentPokemonExInPlay,
+    /// The player's own Basic Pokémon in play. `Passimian`.
+    OwnBasicPokemonInPlay,
+    /// The player's own Pokémon whose name holds this substring, only
+    /// counting one already carrying damage. `Paldean Tauros`.
+    OwnDamagedWithNamePrefix(&'static str),
 }
 
 /// How far along its evolution line a Pokémon card is printed. The artifact
