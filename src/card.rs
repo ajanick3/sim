@@ -603,6 +603,14 @@ pub enum AttackEffect {
     /// hidden opponent-hand knowledge), so there is no state for this
     /// to change — it lands in the log alone. `Hoothoot`'s `Silent Wing`.
     RevealOpponentsHand,
+    /// Draw this many cards outright, no choice involved.
+    /// `Mega Sharpedo ex`'s `Greedy Fang`.
+    DrawCards(u32),
+    /// This much more damage, but only if the attacker already carries
+    /// at least one damage counter — a threshold read once, before
+    /// `damage_dealt_with` runs, the same as `CoinFlipBonusDamage`.
+    /// `Mega Sharpedo ex`'s `Hungry Jaws`.
+    BonusDamageIfOwnDamaged(u32),
 }
 
 /// What `AttackEffect::DamagePerCount` counts.

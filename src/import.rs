@@ -993,6 +993,8 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Drilbur", "Call for Family") => AttackEffect::SearchLibraryForBasicPokemonToBench(2),
         ("Toxel", "Call for Family") => AttackEffect::SearchLibraryForBasicPokemonToBench(2),
         ("Hoothoot", "Silent Wing") => AttackEffect::RevealOpponentsHand,
+        ("Mega Sharpedo ex", "Greedy Fang") => AttackEffect::DrawCards(2),
+        ("Mega Sharpedo ex", "Hungry Jaws") => AttackEffect::BonusDamageIfOwnDamaged(150),
         _ => return None,
     })
 }

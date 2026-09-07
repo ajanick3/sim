@@ -948,3 +948,68 @@ fn hoothoot_is_admitted_from_the_artifact() {
         "at least one Hoothoot print should play"
     );
 }
+
+// --- Ticket 12: draws ---
+
+#[test]
+fn draws_a_fixed_count_outright() {
+    let attack = Attack {
+        name: "Greedy Fang",
+        cost: vec![Type::Colorless],
+        base_damage: 70,
+        inflicts: None,
+        effect: Some(AttackEffect::DrawCards(2)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let before = state.player(player).hand.len();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "a fixed draw needs no choice");
+    // Paying the attack's cost removed 1 card from hand; the draw adds 2.
+    assert_eq!(state.player(player).hand.len(), before - 1 + 2);
+}
+
+#[test]
+fn bonus_damage_only_when_the_attacker_already_carries_damage() {
+    let attack = Attack {
+        name: "Hungry Jaws",
+        cost: vec![Type::Colorless],
+        base_damage: 120,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfOwnDamaged(150)),
+    };
+    let (mut state, _defender_ex) = game(attack.clone(), 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let defender = state.player(player.opponent()).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(
+        state.pokemon(defender).damage, 120,
+        "no bonus while the attacker carries no damage"
+    );
+
+    let (mut state2, _defender_ex2) = game(attack.clone(), 3);
+    let player2 = state2.current;
+    let attacker2 = state2.player(player2).active.unwrap();
+    state2.pokemon[attacker2.index()].damage = 10;
+    let defender2 = state2.player(player2.opponent()).active.unwrap();
+    pay_and_attack(&mut state2);
+    assert_eq!(state2.pokemon(defender2).damage, 270, "150 more with damage already on it");
+    let _ = attacker;
+}
+
+#[test]
+fn mega_sharpedo_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Mega Sharpedo ex" && c.playable.is_some()),
+        "at least one Mega Sharpedo ex print should play"
+    );
+}

@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (29/95 built)
+### Pokémon (30/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -237,7 +237,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Mega Excadrill ex | ❌ |
 | Mega Kangaskhan ex | ❌ |
 | Mega Lopunny ex | ❌ |
-| Mega Sharpedo ex | ❌ |
+| [Mega Sharpedo ex](src/import.rs#L996) | ✅ |
 | Mega Skarmory ex | ❌ |
 | Mega Slowbro ex | ❌ |
 | Meganium | ❌ |

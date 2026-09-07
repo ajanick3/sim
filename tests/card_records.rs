@@ -91,6 +91,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // both Toxel prints (their other attacks have no printed text).
     // A hand read — the opponent reveals their hand, which changes no
     // state the engine tracks separately — admits Hoothoot's sv05-126
-    // print.
-    assert_eq!(admitted, 543, "coverage moves only on purpose");
+    // print. A fixed draw, and a bonus read once from a boolean board
+    // fact ("if this Pokémon has any damage counters on it"), complete
+    // Mega Sharpedo ex (3 prints).
+    assert_eq!(admitted, 546, "coverage moves only on purpose");
 }
