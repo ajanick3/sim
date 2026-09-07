@@ -254,6 +254,15 @@ pub enum TrainerEffect {
     ReducesRetreatCost(u32),
     /// A static effect, read wherever HP is read. `Hero's Cape`.
     IncreasesHp(u32),
+    /// A static effect, read in `damage_dealt`: this many more damage
+    /// against the opponent's Active, but only while the Pokémon this is
+    /// attached to carries no Rule Box and that Active is worth more than
+    /// 1 Prize. `Brave Bangle`.
+    BonusDamageWithoutRuleBoxVsEx(u32),
+    /// A static effect, read in `damage_dealt`: this many more damage
+    /// against the opponent's Active, but only while the Pokémon this is
+    /// attached to is Poisoned. `Binding Mochi`.
+    BonusDamageIfPoisonedVsActive(u32),
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },

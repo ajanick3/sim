@@ -775,6 +775,8 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Strange Timepiece" => (free, TrainerEffect::DevolveChosen),
         "Air Balloon" => (free, TrainerEffect::ReducesRetreatCost(2)),
         "Hero's Cape" => (free, TrainerEffect::IncreasesHp(100)),
+        "Brave Bangle" => (free, TrainerEffect::BonusDamageWithoutRuleBoxVsEx(30)),
+        "Binding Mochi" => (free, TrainerEffect::BonusDamageIfPoisonedVsActive(40)),
         "Transformation Tome" => (
             Some(Requirement::SecondCopyOfThisInHand),
             TrainerEffect::SwapBasicWithDiscard,
