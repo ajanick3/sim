@@ -77,8 +77,8 @@ fn the_kinds_add_up_to_the_pool() {
     // 3.0, Bug Catching Set, Ciphermaniac's Codebreaking, Unfair Stamp,
     // Switch, Jumbo Ice Cream, Lana's Aid, Rust Syndicate Grunt, N's Plan,
     // Pokémon Center Lady, Rosa's Encouragement, AZ's Tranquility, Surfer,
-    // Black Belt's Training, and Gladion's Final Battle.
-    assert_eq!(trainers, 346, "the Trainers still refused, by kind");
+    // Black Belt's Training, Gladion's Final Battle, and Kieran.
+    assert_eq!(trainers, 341, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),

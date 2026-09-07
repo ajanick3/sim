@@ -957,3 +957,74 @@ fn gladions_final_battle_is_admitted_from_the_artifact() {
         TrainerEffect::BonusDamageThisTurn(80, TurnBonusTarget::OpponentActiveWithoutRuleBox)
     );
 }
+
+// --- Ticket 08: Kieran ---
+
+fn with_kieran(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let kieran = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-kieran",
+        name: "Kieran",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::ChooseOneOf(
+            Box::new(TrainerEffect::SwitchOwnActive),
+            Box::new(TrainerEffect::BonusDamageThisTurn(30, TurnBonusTarget::OpponentActiveEx)),
+        ),
+    }));
+    (Set { db, ..set }, kieran)
+}
+
+#[test]
+fn kieran_offers_a_choice_and_resolves_only_the_one_picked() {
+    let (set, kieran) = with_kieran(build());
+    let mut state = game(&set, kieran, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, kieran);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let options = legal_actions(&state);
+    assert!(options.contains(&Action::ChooseOption { first: true }));
+    assert!(options.contains(&Action::ChooseOption { first: false }));
+
+    apply(&mut state, Action::ChooseOption { first: false }).unwrap();
+    // The damage-bonus branch was chosen: no Promoting phase opens.
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.turn_bonus.is_some(), "the unchosen switch never ran");
+}
+
+#[test]
+fn kieran_can_choose_the_switch_instead() {
+    let (set, kieran) = with_kieran(build());
+    let mut state = game(&set, kieran, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, kieran);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::ChooseOption { first: true }).unwrap();
+    assert!(
+        matches!(state.phase, Phase::Promoting { .. }),
+        "the switch branch opens Promoting"
+    );
+    assert!(state.turn_bonus.is_none(), "the unchosen bonus never ran");
+}
+
+#[test]
+fn kieran_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let kieran = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Kieran")
+        .expect("Kieran plays");
+    assert_eq!(
+        kieran.effect,
+        TrainerEffect::ChooseOneOf(
+            Box::new(TrainerEffect::SwitchOwnActive),
+            Box::new(TrainerEffect::BonusDamageThisTurn(30, TurnBonusTarget::OpponentActiveEx)),
+        )
+    );
+}

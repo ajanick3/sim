@@ -67,6 +67,9 @@ pub enum Action {
     FinishMovingEnergyToActive,
     /// Heal the chosen Pokémon, and clear its Special Conditions.
     HealTarget { target: PokemonId },
+    /// Pick the first (`true`) or second (`false`) of a card's two named
+    /// effects. Only the one picked ever runs.
+    ChooseOption { first: bool },
     /// Evolve a Basic in play straight into the named Stage 2 from hand,
     /// skipping the Stage 1 between them.
     EvolveSkippingOneStage { card: CardId, target: PokemonId },
@@ -88,6 +91,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::MovingEnergy { player } => Some(player),
         Phase::MovingEnergyFromBenchToActive { player, .. } => Some(player),
         Phase::HealingChosen { player, .. } => Some(player),
+        Phase::ChoosingOneOf { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::Checkup { player } => Some(player),
@@ -278,6 +282,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             for target in state.player(whose).in_play() {
                 actions.push(Action::HealTarget { target });
             }
+            return actions;
+        }
+        Phase::ChoosingOneOf { .. } => {
+            actions.push(Action::ChooseOption { first: true });
+            actions.push(Action::ChooseOption { first: false });
             return actions;
         }
         Phase::DiscardingOpponentEnergy { of, .. } => {
@@ -543,6 +552,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::FinishMovingEnergyToActive => "Stop moving Energy".to_string(),
         Action::HealTarget { target } => format!("Heal {}", state.pokemon_def(target).name),
+        Action::ChooseOption { first } => {
+            format!("Choose the {} option", if first { "first" } else { "second" })
+        }
         Action::EvolveSkippingOneStage { card, target } => format!(
             "Use Rare Candy: evolve {} into {}",
             state.pokemon_def(target).name,
