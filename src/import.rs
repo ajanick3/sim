@@ -1028,6 +1028,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::DamagePerCoinFlipHeads { flips: 2, per_head: 40 }
         }
         ("Elgyem", "Slight Shift") => AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon,
+        ("Zeraora", "Combat Thunder") => {
+            AttackEffect::DamagePerCount(Count::OpponentBenchedPokemonCount, 20)
+        }
         _ => return None,
     })
 }

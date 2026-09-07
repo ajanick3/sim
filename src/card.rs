@@ -716,6 +716,8 @@ pub enum Count {
     /// The player's own Pokémon whose name holds this substring, only
     /// counting one already carrying damage. `Paldean Tauros`.
     OwnDamagedWithNamePrefix(&'static str),
+    /// The opponent's Benched Pokémon. `Zeraora`'s `Combat Thunder`.
+    OpponentBenchedPokemonCount,
 }
 
 /// How far along its evolution line a Pokémon card is printed. The artifact

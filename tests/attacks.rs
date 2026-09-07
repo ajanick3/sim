@@ -1894,3 +1894,33 @@ fn elgyem_slight_shift_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv10.5b-040").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Elgyem's Slight Shift print should play");
 }
+
+// --- Beyond the spec: damage per the opponent's Benched Pokemon ---
+
+#[test]
+fn damage_per_opponent_benched_pokemon() {
+    let attack = multiplier_attack(sim::card::Count::OpponentBenchedPokemonCount, 20);
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    for _ in 0..2 {
+        let card = deal_new_card(&mut state, opponent, defender_ex);
+        let bench_mon = state.put_into_play(opponent, card);
+        state.players[opponent.index()].bench.push(bench_mon);
+    }
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 40, "2 Benched Pokemon times 20");
+}
+
+#[test]
+fn zeraora_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv07-055").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Zeraora's Combat Thunder print should play");
+}

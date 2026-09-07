@@ -2075,6 +2075,9 @@ fn count_for_attack(state: &GameState, attacker: PokemonId, count: crate::card::
             .iter()
             .filter(|p| state.pokemon_def(**p).name.starts_with(prefix) && state.pokemon(**p).damage > 0)
             .count() as u32,
+        crate::card::Count::OpponentBenchedPokemonCount => {
+            state.player(opponent).bench.len() as u32
+        }
     }
 }
 

@@ -146,5 +146,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // opponent's own Pokemon, the mirror of MoveAttachedEnergy played
     // on the opponent's board instead of the player's own — completes
     // both Elgyem prints (Hide was already read this session).
-    assert_eq!(admitted, 579, "coverage moves only on purpose");
+    // Zeraora's Combat Thunder (Count::OpponentBenchedPokemonCount,
+    // the same DamagePerCount shape with a new counted fact) admits
+    // both sv07-055 and sv07-151 prints.
+    assert_eq!(admitted, 581, "coverage moves only on purpose");
 }
