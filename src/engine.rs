@@ -1552,6 +1552,13 @@ fn attack(state: &mut GameState, index: usize) {
                 attack.base_damage
             }
         }
+        Some(crate::card::AttackEffect::BonusDamageIfOwnDamaged(bonus)) => {
+            if state.pokemon(attacker).damage > 0 {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
         _ => attack.base_damage,
     };
     let ignore_defenders_effects =
@@ -1670,6 +1677,17 @@ fn resolve_attack_effect(
                     then: None,
                 };
             }
+        }
+        // Already spent, before `damage_dealt_with` ran — see `attack`'s
+        // own `base` computation.
+        crate::card::AttackEffect::BonusDamageIfOwnDamaged(_) => {}
+        crate::card::AttackEffect::DrawCards(count) => {
+            let owner = state.pokemon(attacker).owner;
+            for _ in 0..count {
+                state.draw(owner);
+            }
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} draws {count}."));
         }
         crate::card::AttackEffect::RevealOpponentsHand => {
             let opponent = state.pokemon(attacker).owner.opponent();
