@@ -1003,6 +1003,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Dwebble", "Ascension") => AttackEffect::SearchLibraryToEvolveSelf,
         ("Beldum", "Iron Tackle") => AttackEffect::Recoil(10),
         ("Dunsparce", "Trading Places") => AttackEffect::SwitchOwnActive,
+        ("Moltres", "Fighting Wings") => AttackEffect::BonusDamageIfDefenderIsEx(90),
         _ => return None,
     })
 }

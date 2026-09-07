@@ -104,5 +104,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Beyond the spec's own ticket list: Beldum's Iron Tackle (Recoil,
     // already built) and Dunsparce's Trading Places (SwitchOwnActive,
     // already built) each admit one more print with no new shape.
-    assert_eq!(admitted, 553, "coverage moves only on purpose");
+    // Moltres's Fighting Wings (a bonus read once against a boolean
+    // defender fact, the mirror of BonusDamageIfOwnDamaged) admits
+    // its one print.
+    assert_eq!(admitted, 554, "coverage moves only on purpose");
 }

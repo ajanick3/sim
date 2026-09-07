@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (34/95 built)
+### Pokémon (35/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -244,7 +244,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Meowth ex | ❌ |
 | Metagross | ❌ |
 | [Metang](src/import.rs#L234) | ✅ |
-| Moltres | ❌ |
+| [Moltres](src/import.rs#L1006) | ✅ |
 | Munkidori | ❌ |
 | [N's Darmanitan](src/import.rs#L961) | ✅ |
 | [N's Darumaka](src/import.rs#L234) | ✅ |

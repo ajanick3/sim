@@ -628,6 +628,11 @@ pub enum AttackEffect {
     /// (Rare Candy) already runs, but pulled from the library instead
     /// of the hand. `Dwebble`'s `Ascension`.
     SearchLibraryToEvolveSelf,
+    /// This much more damage, but only if the opponent's Active
+    /// Pokémon is a Pokémon ex — read once, the same pre-`damage_dealt_with`
+    /// slot every other conditional bonus already occupies.
+    /// `Moltres`'s `Fighting Wings`.
+    BonusDamageIfDefenderIsEx(u32),
 }
 
 /// What `AttackEffect::DamagePerCount` counts.
