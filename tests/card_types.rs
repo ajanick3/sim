@@ -79,8 +79,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Pokémon Center Lady, Rosa's Encouragement, AZ's Tranquility, Surfer,
     // Black Belt's Training, Gladion's Final Battle, Kieran, Morty's
     // Conviction, Xerosic's Machinations, Eri, Brock's Scouting, Wally's
-    // Compassion, and Janine's Secret Art.
-    assert_eq!(trainers, 323, "the Trainers still refused, by kind");
+    // Compassion, Janine's Secret Art, Energy Search, and Energy
+    // Retrieval.
+    assert_eq!(trainers, 320, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
