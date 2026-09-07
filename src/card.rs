@@ -885,6 +885,13 @@ pub enum AbilityEffect {
     /// qualifying card in the library opens no phase.
     /// `Genesect ex`'s `Protect Charge`.
     OncePerTurnMaySearchEvolutionPokemonOfType(Type, u32),
+    /// Once during the player's own turn, the player may attach a
+    /// Basic Energy card from their own discard pile to one of their
+    /// own Pokémon, choosing both. Opens
+    /// `Phase::DecidingToUseSeethingSpirit`. No qualifying Energy in
+    /// the discard pile opens no phase. `Blaziken ex`'s
+    /// `Seething Spirit`.
+    OncePerTurnMayAttachBasicEnergyFromDiscardToChosen,
 }
 
 /// A basic Energy card as printed.

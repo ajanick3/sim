@@ -733,3 +733,66 @@ fn genesect_ex_is_admitted_from_the_artifact() {
         "at least one Genesect ex print should play"
     );
 }
+
+// --- Beyond the map: attaching Energy from discard to a chosen own Pokemon ---
+
+#[test]
+fn attaches_energy_from_discard_to_a_chosen_own_pokemon() {
+    let ability = Ability {
+        name: "Seething Spirit",
+        effect: sim::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyFromDiscardToChosen,
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let bench_card = deal_new_card(&mut state, player, carrier_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    let energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-basic-energy",
+        name: "Basic Energy",
+        kind: Type::Colorless,
+    }));
+    let energy = deal_new_card(&mut state, player, energy_def);
+    state.players[player.index()].discard.push(energy);
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+
+    assert!(matches!(state.phase, Phase::DecidingToUseSeethingSpirit { .. }));
+    apply(
+        &mut state,
+        Action::AttachEnergyForSeethingSpirit { card: energy, target: bench_mon },
+    )
+    .unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(bench_mon).attached.contains(&energy));
+    assert!(!state.player(player).discard.contains(&energy));
+}
+
+#[test]
+fn seething_spirit_not_offered_with_no_energy_in_discard() {
+    let ability = Ability {
+        name: "Seething Spirit",
+        effect: sim::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyFromDiscardToChosen,
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(result.is_err(), "no Basic Energy in the discard pile");
+}
+
+#[test]
+fn blaziken_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Blaziken ex" && c.playable.is_some()),
+        "at least one Blaziken ex print should play"
+    );
+}

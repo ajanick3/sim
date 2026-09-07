@@ -31,7 +31,14 @@ same way Milestone 11 continued past its own spec:
   new effect both do) was cleared one turn too early, inferred from
   the wrong owner. Completes all 3 Genesect ex prints.
 
-Coverage: 604 -> 614 across these three PRs.
+- **Blaziken ex**'s `Seething Spirit`
+  (`OncePerTurnMayAttachBasicEnergyFromDiscardToChosen`) — attaching
+  Energy from the discard pile to a chosen own Pokémon, the mirror of
+  `Teal Dance`'s hand-to-self attach but from a different zone to a
+  free choice of target. Its own attack reuses
+  `AttackerCannotAttackNextTurn`. Admits its one print.
+
+Coverage: 604 -> 615 across these four PRs.
 
 ## What is left
 

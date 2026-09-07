@@ -201,6 +201,11 @@ pub enum Action {
     TakeEvolutionPokemonOfType { card: CardId },
     /// Stop that search before its limit is spent.
     FinishSearchingEvolutionPokemonOfType,
+    /// Attach this Energy from the discard pile to this Pokémon, as
+    /// part of `Phase::DecidingToUseSeethingSpirit`.
+    AttachEnergyForSeethingSpirit { card: CardId, target: PokemonId },
+    /// Decline it.
+    DeclineSeethingSpirit,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -241,6 +246,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToUseTealDance { player, .. } => Some(player),
         Phase::DecidingCursedBlastTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => Some(player),
+        Phase::DecidingToUseSeethingSpirit { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -598,6 +604,19 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::FinishSearchingEvolutionPokemonOfType);
+            return actions;
+        }
+        Phase::DecidingToUseSeethingSpirit { player: whose, .. } => {
+            let side = state.player(whose);
+            for card in &side.discard {
+                if !state.def_of(*card).is_energy() {
+                    continue;
+                }
+                for target in side.in_play() {
+                    actions.push(Action::AttachEnergyForSeethingSpirit { card: *card, target });
+                }
+            }
+            actions.push(Action::DeclineSeethingSpirit);
             return actions;
         }
         Phase::MovingOpponentsEnergy { of, .. } => {
@@ -1009,6 +1028,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     state.matches_filter(*c, crate::card::CardFilter::EvolutionPokemonOfType(kind))
                 })
             }
+            crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyFromDiscardToChosen => {
+                side.discard.iter().any(|c| state.def_of(*c).is_energy())
+            }
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_last_ditch_catch`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => false,
@@ -1248,5 +1270,11 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Take {}", state.def_of(card).name())
         }
         Action::FinishSearchingEvolutionPokemonOfType => "Stop searching".to_string(),
+        Action::AttachEnergyForSeethingSpirit { card, target } => format!(
+            "Attach {} to {} (Seething Spirit)",
+            state.def_of(card).name(),
+            state.pokemon_def(target).name
+        ),
+        Action::DeclineSeethingSpirit => "Decline Seething Spirit".to_string(),
     }
 }
