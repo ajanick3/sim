@@ -642,10 +642,10 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
     // Rules 23-24: once per turn, pay the Retreat Cost in Energy, and only
     // with somewhere to retreat to.
     if let Some(active) = side.active {
-        let cost = state.pokemon_def(active).retreat_cost;
+        let cost = state.effective_retreat_cost(active);
         if !state.is_spent(Limit::Retreated(player))
             && !held(active)
-            && state.energy_attached(active) >= cost
+            && state.energy_attached(active) as u32 >= cost
         {
             for pokemon in &side.bench {
                 actions.push(Action::Retreat { to: *pokemon });

@@ -59,6 +59,6 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Art, 1 of Energy Search, 2 of Energy Retrieval, 2 of Energy
     // Recycler, 3 of Team Rocket's Transceiver, 1 of Hand Trimmer, 1 of
     // Secret Box, 1 of Dusk Ball, 2 of Prime Catcher, 1 of Strange
-    // Timepiece, and 1 of Transformation Tome.
-    assert_eq!(admitted, 483, "coverage moves only on purpose");
+    // Timepiece, 1 of Transformation Tome, and 3 of Air Balloon.
+    assert_eq!(admitted, 486, "coverage moves only on purpose");
 }

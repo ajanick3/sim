@@ -773,6 +773,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Dusk Ball" => (free, TrainerEffect::LookAtBottomOfLibrary { count: 7 }),
         "Prime Catcher" => (free, TrainerEffect::SwitchOpponentActiveThenOwn),
         "Strange Timepiece" => (free, TrainerEffect::DevolveChosen),
+        "Air Balloon" => (free, TrainerEffect::ReducesRetreatCost(2)),
         "Transformation Tome" => (
             Some(Requirement::SecondCopyOfThisInHand),
             TrainerEffect::SwapBasicWithDiscard,

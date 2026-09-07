@@ -528,6 +528,26 @@ impl GameState {
         self.attached_energy_types(id).len() as u8
     }
 
+    /// The Retreat Cost this Pokémon actually pays: the printed cost, less
+    /// whatever an attached Tool like `Air Balloon` takes off, floored at
+    /// zero. `pokemon_def(id).retreat_cost` stays the printed value — a
+    /// card sitting in a zone has no Tool to read a reduction from, so
+    /// only an in-play read needs this split at all.
+    pub fn effective_retreat_cost(&self, id: PokemonId) -> u32 {
+        let printed = self.pokemon_def(id).retreat_cost as u32;
+        let reduction: u32 = self
+            .pokemon(id)
+            .attached
+            .iter()
+            .filter_map(|c| self.def_of(*c).as_trainer())
+            .map(|t| match t.effect {
+                crate::card::TrainerEffect::ReducesRetreatCost(amount) => amount,
+                _ => 0,
+            })
+            .sum();
+        printed.saturating_sub(reduction)
+    }
+
     /// The cards in one of a player's zones. A Trainer effect moves between
     /// these; a Pokémon's attachments are not one of them.
     pub fn zone(&self, player: PlayerId, zone: crate::card::Zone) -> &Vec<CardId> {
