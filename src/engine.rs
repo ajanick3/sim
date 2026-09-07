@@ -1059,6 +1059,11 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         state.draw(player);
                     }
                 }
+                crate::card::AbilityEffect::OncePerTurnIfKnockedOutLastTurnMayDrawCards(count) => {
+                    for _ in 0..count {
+                        state.draw(player);
+                    }
+                }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
                 | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_) => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
@@ -1112,6 +1117,18 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 Phase::DecidingToUsePsychicDraw { .. } => {}
                 _ => return Err(IllegalAction),
             };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DamageChosenOpponentPokemon { target } => {
+            let damage = match state.phase {
+                Phase::ChoosingAnyOpponentPokemonDamageTarget { damage, .. } => damage,
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[target.index()].damage += damage;
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} takes {damage}."));
             state.phase = Phase::Main;
             settle(state);
         }
@@ -2090,6 +2107,10 @@ fn resolve_attack_effect(
             if any_pokemon {
                 state.phase = Phase::TakingPokemonFromDiscard { player: owner };
             }
+        }
+        crate::card::AttackEffect::DamageChosenOpponentPokemon(damage) => {
+            let owner = state.pokemon(attacker).owner;
+            state.phase = Phase::ChoosingAnyOpponentPokemonDamageTarget { player: owner, damage };
         }
         crate::card::AttackEffect::ReturnSelfAndAttachedToHand => {
             let owner = state.pokemon(attacker).owner;

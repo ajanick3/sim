@@ -345,6 +345,10 @@ pub enum Phase {
     /// Ability may draw `count` cards. `Kadabra`'s and `Alakazam`'s
     /// `Psychic Draw`.
     DecidingToUsePsychicDraw { player: PlayerId, name: &'static str, count: u32 },
+    /// `player` used an attack that deals flat damage to one of the
+    /// opponent's Pokémon of their choosing, Active or Benched alike.
+    /// `Fezandipiti ex`'s `Cruel Arrow`.
+    ChoosingAnyOpponentPokemonDamageTarget { player: PlayerId, damage: u32 },
     /// `player` used an attack that searches their own discard pile
     /// for up to `remaining` more copies of a named Pokémon to the
     /// Bench. `Duskull`'s `Come and Get You`.

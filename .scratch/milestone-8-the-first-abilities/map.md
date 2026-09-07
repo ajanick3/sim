@@ -52,6 +52,9 @@ one new thing to it.
   checks the real collision case (one species, one name, two texts)
   and found two unrelated ones already in the pool, neither built yet.
   See ADR 0072.
+- Ticket 05: a fact read from last turn reuses `knocked_out_last_turn`
+  unchanged — the same field `Unfair Stamp`'s own `Requirement`
+  already reads (ADR 0024). No new state. See ADR 0073.
 
 ## Fog
 

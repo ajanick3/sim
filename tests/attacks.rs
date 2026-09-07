@@ -1990,3 +1990,48 @@ fn meowth_ex_attack_is_admitted_from_the_artifact() {
         "at least one Meowth ex print should play"
     );
 }
+
+// --- Beyond the spec: damage a chosen opponent Pokemon, Active or Benched ---
+
+#[test]
+fn deals_flat_damage_to_a_chosen_opponent_pokemon_including_active() {
+    let attack = Attack {
+        name: "Cruel Arrow",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DamageChosenOpponentPokemon(100)),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingAnyOpponentPokemonDamageTarget { .. }));
+    let actions = legal_actions(&state);
+    assert!(actions.contains(&Action::DamageChosenOpponentPokemon { target: defender }));
+    assert!(actions.contains(&Action::DamageChosenOpponentPokemon { target: bench_mon }));
+
+    apply(&mut state, Action::DamageChosenOpponentPokemon { target: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(bench_mon).damage, 100);
+    assert_eq!(state.pokemon(defender).damage, 0);
+}
+
+#[test]
+fn fezandipiti_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Fezandipiti ex" && c.playable.is_some()),
+        "at least one Fezandipiti ex print should play"
+    );
+}

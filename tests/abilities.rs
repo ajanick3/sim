@@ -366,3 +366,38 @@ fn kadabra_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "me01-055").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Kadabra's Super Psy Bolt print should play");
 }
+
+// --- Ticket 05: a fact read from last turn ---
+
+#[test]
+fn draws_only_if_a_pokemon_was_knocked_out_last_turn() {
+    let ability = Ability {
+        name: "Flip the Script",
+        effect: sim::card::AbilityEffect::OncePerTurnIfKnockedOutLastTurnMayDrawCards(3),
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let carrier = state.player(player).active.unwrap();
+
+    // Not knocked out last turn: not offered at all.
+    let result = apply(&mut state, Action::UseAbility { pokemon: carrier });
+    assert!(result.is_err(), "nothing was Knocked Out last turn");
+
+    state.knocked_out_last_turn[player.index()] = true;
+    let before = state.player(player).hand.len();
+    apply(&mut state, Action::UseAbility { pokemon: carrier }).unwrap();
+    assert_eq!(state.player(player).hand.len(), before + 3);
+    let _ = carrier_def;
+}
+
+#[test]
+fn fezandipiti_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Fezandipiti ex" && c.playable.is_some()),
+        "at least one Fezandipiti ex print should play"
+    );
+}

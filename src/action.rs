@@ -183,6 +183,9 @@ pub enum Action {
     AcceptPsychicDraw,
     /// Decline it.
     DeclinePsychicDraw,
+    /// Deal `Phase::ChoosingAnyOpponentPokemonDamageTarget`'s flat
+    /// damage to this Pokémon, Active or Benched.
+    DamageChosenOpponentPokemon { target: PokemonId },
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -219,6 +222,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToShuffleEnergyForBenchDamage { player, .. } => Some(player),
         Phase::DecidingToUseLastDitchCatch { player, .. } => Some(player),
         Phase::DecidingToUsePsychicDraw { player, .. } => Some(player),
+        Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -540,6 +544,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::DecidingToUsePsychicDraw { .. } => {
             actions.push(Action::AcceptPsychicDraw);
             actions.push(Action::DeclinePsychicDraw);
+            return actions;
+        }
+        Phase::ChoosingAnyOpponentPokemonDamageTarget { player: whose, .. } => {
+            for pokemon in state.player(whose.opponent()).in_play() {
+                actions.push(Action::DamageChosenOpponentPokemon { target: pokemon });
+            }
             return actions;
         }
         Phase::MovingOpponentsEnergy { of, .. } => {
@@ -931,6 +941,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::OncePerTurnWhileActiveMayDrawCards(_) => {
                 side.active == Some(pokemon)
             }
+            crate::card::AbilityEffect::OncePerTurnIfKnockedOutLastTurnMayDrawCards(_) => {
+                state.knocked_out_last_turn[player.index()]
+            }
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_last_ditch_catch`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => false,
@@ -1155,5 +1168,8 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DeclineLastDitchCatch => "Decline Last-Ditch Catch".to_string(),
         Action::AcceptPsychicDraw => "Use Psychic Draw".to_string(),
         Action::DeclinePsychicDraw => "Decline Psychic Draw".to_string(),
+        Action::DamageChosenOpponentPokemon { target } => {
+            format!("Damage {}", state.pokemon_def(target).name)
+        }
     }
 }
