@@ -20,6 +20,7 @@ fn game(inflicts: Condition, rng: Box<dyn Rng>) -> GameState {
         retreat_cost: 1,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         stage: Stage::Basic,
         prizes: 1,
         attacks: vec![Attack {

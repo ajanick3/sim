@@ -49,6 +49,7 @@ fn basic(
         },
         evolve_from,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],
@@ -75,6 +76,7 @@ fn build() -> Set {
         stage: Stage::Stage2,
         evolve_from: Some("Bigmon"),
         evolves_from_basic: Some("Smallmon"),
+        ability: None,
         attacks: vec![Attack {
             name: "Slam",
             cost: vec![Type::Colorless, Type::Colorless],
@@ -1374,6 +1376,7 @@ fn with_wallys_compassion(set: Set) -> (Set, CardDefId, CardDefId) {
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Smash",
             cost: vec![Type::Colorless, Type::Colorless],
@@ -1523,6 +1526,7 @@ fn with_janines_secret_art(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: Vec::new(),
     }));
     let dark_energy = db.add(CardDef::Energy(Energy {

@@ -48,6 +48,7 @@ fn basic(
         },
         evolve_from,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],
@@ -74,6 +75,7 @@ fn build() -> Set {
         stage: Stage::Stage2,
         evolve_from: Some("Bigmon"),
         evolves_from_basic: Some("Smallmon"),
+        ability: None,
         attacks: vec![Attack {
             name: "Slam",
             cost: vec![Type::Colorless, Type::Colorless],
@@ -607,6 +609,7 @@ fn with_risky_ruins(set: Set) -> (Set, CardDefId, CardDefId) {
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![],
     }));
     let card = db.add(CardDef::Trainer(Trainer {
@@ -703,6 +706,7 @@ fn with_forest_of_vitality(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![],
     }));
     let grass_stage1 = db.add(CardDef::Pokemon(Pokemon {
@@ -717,6 +721,7 @@ fn with_forest_of_vitality(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
         stage: Stage::Stage1,
         evolve_from: Some("Leafmon"),
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![],
     }));
     let card = db.add(CardDef::Trainer(Trainer {

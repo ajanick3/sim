@@ -13,9 +13,9 @@ use std::collections::HashMap;
 use serde_json::Value;
 
 use crate::card::{
-    Attack, AttackEffect, CardDb, CardDef, CardFilter, Count, Destination, Energy, Pokemon,
-    PromoteFollowUp, Requirement, Slot, Stage, TargetFilter, Then, Trainer, TrainerEffect,
-    TrainerKind, TurnBonusTarget, Type, Zone,
+    Ability, AbilityEffect, Attack, AttackEffect, CardDb, CardDef, CardFilter, Count, Destination,
+    Energy, Pokemon, PromoteFollowUp, Requirement, Slot, Stage, TargetFilter, Then, Trainer,
+    TrainerEffect, TrainerKind, TurnBonusTarget, Type, Zone,
 };
 use crate::ids::CardDefId;
 
@@ -272,9 +272,8 @@ fn read_card(card: &Value, lineage: &HashMap<&str, &str>) -> Result<CardDef, Ref
         },
         None => return Err(Refusal::NotABasicPokemon),
     };
-    if card["abilities"].as_array().is_some_and(|a| !a.is_empty()) {
-        return Err(Refusal::HasAnAbility);
-    }
+    let name_for_ability = card["name"].as_str().unwrap_or("?");
+    let ability = read_ability(name_for_ability, card["abilities"].as_array())?;
     if card["item"].is_object() {
         return Err(Refusal::HasAHeldItem);
     }
@@ -320,6 +319,7 @@ fn read_card(card: &Value, lineage: &HashMap<&str, &str>) -> Result<CardDef, Ref
         stage,
         evolve_from,
         evolves_from_basic,
+        ability,
         attacks,
     }))
 }
@@ -897,6 +897,24 @@ fn prizes_for(name: &str) -> u32 {
     if name.starts_with("Mega ") { 3 } else { 2 }
 }
 
+/// Whether every attack this raw print carries would read on its own,
+/// regardless of whether its Ability (if any) also reads. Milestone 11
+/// and Milestone 8 track separate progress on the same species; the
+/// README's own progress table reads this to tell them apart, since
+/// `playable` alone answers only "does the whole card run."
+pub fn attacks_read(raw: &Value) -> bool {
+    let name = raw["name"].as_str().unwrap_or("?");
+    raw["attacks"]
+        .as_array()
+        .is_some_and(|attacks| attacks.iter().all(|attack| read_attack(name, attack).is_ok()))
+}
+
+/// The Ability half of the same split `attacks_read` draws.
+pub fn ability_reads(raw: &Value) -> bool {
+    let name = raw["name"].as_str().unwrap_or("?");
+    read_ability(name, raw["abilities"].as_array()).is_ok()
+}
+
 fn read_attack(pokemon_name: &str, attack: &Value) -> Result<Attack, Refusal> {
     let attack_name = attack["name"].as_str().unwrap_or("?");
     let effect = if attack["effect"].as_str().is_some_and(|e| !e.is_empty()) {
@@ -938,6 +956,35 @@ fn read_attack(pokemon_name: &str, attack: &Value) -> Result<Attack, Refusal> {
         base_damage,
         inflicts: None,
         effect,
+    })
+}
+
+/// A Pokémon's own Ability, if it has one — refused unless
+/// `known_ability` already matches it, the same "checked before the
+/// unconditional refusal" shape `read_attack` already takes.
+fn read_ability(pokemon_name: &str, abilities: Option<&Vec<Value>>) -> Result<Option<Ability>, Refusal> {
+    let Some(ability_json) = abilities.and_then(|a| a.first()) else {
+        return Ok(None);
+    };
+    let ability_name = ability_json["name"].as_str().unwrap_or("?");
+    match known_ability(pokemon_name, ability_name) {
+        Some(effect) => Ok(Some(Ability { name: leak(ability_name), effect })),
+        None => Err(Refusal::HasAnAbility),
+    }
+}
+
+/// An Ability's own effect, matched by the Pokémon's printed name and
+/// the Ability's own name — the same shape `known_attack` matches an
+/// attack by, mirrored here since an Ability dispatches through its
+/// own machinery (`Action::UseAbility`), not `attack` or
+/// `resolve_trainer`. Empty until this milestone's first ticket
+/// admits a real card.
+fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect> {
+    Some(match (pokemon_name, ability_name) {
+        ("Mega Kangaskhan ex", "Run Errand") => {
+            AbilityEffect::OncePerTurnWhileActiveMayDrawCards(2)
+        }
+        _ => return None,
     })
 }
 
@@ -1028,6 +1075,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::DamagePerCoinFlipHeads { flips: 2, per_head: 40 }
         }
         ("Elgyem", "Slight Shift") => AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon,
+        ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
+            AttackEffect::DamagePerCoinFlipUntilTails(50)
+        }
         ("Zeraora", "Combat Thunder") => {
             AttackEffect::DamagePerCount(Count::OpponentBenchedPokemonCount, 20)
         }

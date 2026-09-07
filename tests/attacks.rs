@@ -24,6 +24,7 @@ fn game(attacker_attack: Attack, seed: u64) -> (GameState, sim::ids::CardDefId) 
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![attacker_attack],
     }));
     let defender_mon = db.add(CardDef::Pokemon(Pokemon {
@@ -38,6 +39,7 @@ fn game(attacker_attack: Attack, seed: u64) -> (GameState, sim::ids::CardDefId) 
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],
@@ -58,6 +60,7 @@ fn game(attacker_attack: Attack, seed: u64) -> (GameState, sim::ids::CardDefId) 
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],
@@ -326,6 +329,7 @@ fn game_with_weak_defender(attacker_attack: Attack, seed: u64) -> GameState {
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![attacker_attack],
     }));
     let defender_mon = db.add(CardDef::Pokemon(Pokemon {
@@ -340,6 +344,7 @@ fn game_with_weak_defender(attacker_attack: Attack, seed: u64) -> GameState {
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],
@@ -1181,6 +1186,7 @@ fn searches_the_library_to_evolve_itself() {
         stage: Stage::Stage1,
         evolve_from: Some(attacker_name),
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],

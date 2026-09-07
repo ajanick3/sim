@@ -28,6 +28,7 @@ fn build() -> Set {
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Vine",
             cost: vec![Type::Colorless],
@@ -47,6 +48,7 @@ fn build() -> Set {
         stage: Stage::Stage1,
         evolve_from: Some("Seedling"),
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Petal Slash",
             cost: vec![Type::Grass, Type::Colorless],

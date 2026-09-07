@@ -30,7 +30,12 @@ one new thing to it.
 
 ## Decisions so far
 
-Nothing resolved yet.
+- Ticket 01: an Ability is offered as a standing `Action::UseAbility`
+  straight out of `Phase::Main`, not a phase a card opens — nothing
+  about using one needs a follow-up choice. `Limit::AbilityUsed` is
+  keyed by the player and the Ability's own printed name, not by
+  which Pokémon carries it, matching `Run Errand`'s own restriction
+  text. See ADR 0069.
 
 ## Fog
 

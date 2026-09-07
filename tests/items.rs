@@ -48,6 +48,7 @@ fn basic(
         },
         evolve_from,
         evolves_from_basic: None,
+        ability: None,
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],
@@ -74,6 +75,7 @@ fn build() -> Set {
         stage: Stage::Stage2,
         evolve_from: Some("Bigmon"),
         evolves_from_basic: Some("Smallmon"),
+        ability: None,
         attacks: vec![Attack {
             name: "Slam",
             cost: vec![Type::Colorless, Type::Colorless],

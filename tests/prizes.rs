@@ -21,6 +21,7 @@ fn game(prizes: u32) -> (GameState, u32) {
         stage: Stage::Basic,
         evolve_from: None,
         evolves_from_basic: None,
+        ability: None,
         prizes,
         attacks: vec![Attack {
             name: "Nudge",

@@ -170,6 +170,10 @@ pub enum Action {
     /// Stop `Phase::SearchingDiscardForNamedToBench` before its limit
     /// is spent.
     FinishSearchingDiscardForNamedToBench,
+    /// Use this Pokémon's own Ability. `Phase::Main` offers it only
+    /// when its own gates (whose turn, in the Active Spot, not
+    /// already spent) all hold.
+    UseAbility { pokemon: PokemonId },
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -887,6 +891,27 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         }
     }
 
+    // An Ability, offered once its own gates all hold: whose turn it
+    // is (already true — `legal_actions` only ever builds this list
+    // for `player_to_act`), which Pokémon it demands, and whether the
+    // player has already used one with this name this turn.
+    for pokemon in side.in_play() {
+        let Some(ability) = state.pokemon_def(pokemon).ability else {
+            continue;
+        };
+        if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
+            continue;
+        }
+        let eligible = match ability.effect {
+            crate::card::AbilityEffect::OncePerTurnWhileActiveMayDrawCards(_) => {
+                side.active == Some(pokemon)
+            }
+        };
+        if eligible {
+            actions.push(Action::UseAbility { pokemon });
+        }
+    }
+
     actions.push(Action::EndTurn);
     actions
 }
@@ -1089,5 +1114,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
             "Resolve {condition:?} on {}",
             state.pokemon_def(pokemon).name
         ),
+        Action::UseAbility { pokemon } => {
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            format!("Use {}'s {}", state.pokemon_def(pokemon).name, ability.name)
+        }
     }
 }

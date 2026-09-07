@@ -80,6 +80,11 @@ pub enum Limit {
     /// `Team Rocket's Factory`, `Lumiose City`. Only one Stadium is ever in
     /// play, so one variant covers whichever it is.
     StadiumEffectUsed(PlayerId),
+    /// An Ability named "You can't use more than 1 [Name] Ability each
+    /// turn" — keyed by the player using it and the Ability's own
+    /// name, not by which Pokémon carries it, since the restriction is
+    /// printed to cover every copy the player controls at once.
+    AbilityUsed(PlayerId, &'static str),
 }
 
 /// One player's zones.
