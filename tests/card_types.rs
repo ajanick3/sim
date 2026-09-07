@@ -71,11 +71,11 @@ fn the_kinds_add_up_to_the_pool() {
     // Ticket 03 of the record effort admitted 22 prints of the eight
     // Trainers it built (each name in one, sometimes several, printings), so
     // the pool of 445 split: the rest were still refused, named by kind. The
-    // second batch of Trainers takes 40 more: Cyrano, Buddy-Buddy Poffin,
+    // second batch of Trainers takes 41 more: Cyrano, Buddy-Buddy Poffin,
     // Ultra Ball, Special Red Card, Energy Switch, Hilda, Dawn, Crispin,
     // Rare Candy, Team Rocket's Petrel, N's PP Up, Wondrous Patch, Pokégear
-    // 3.0, Bug Catching Set, and Ciphermaniac's Codebreaking.
-    assert_eq!(trainers, 383, "the Trainers still refused, by kind");
+    // 3.0, Bug Catching Set, Ciphermaniac's Codebreaking, and Unfair Stamp.
+    assert_eq!(trainers, 382, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),

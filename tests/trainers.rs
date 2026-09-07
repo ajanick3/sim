@@ -48,7 +48,7 @@ fn build() -> Set {
         name: "Judge",
         kind: TrainerKind::Supporter,
         requirement: None,
-        effect: TrainerEffect::BothShuffleHandThenDraw { count: 4 },
+        effect: TrainerEffect::BothShuffleHandThenDraw { you: 4, opponent: 4 },
     }));
     let lillie = db.add(CardDef::Trainer(Trainer {
         print_id: "test-lillie",

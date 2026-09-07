@@ -176,8 +176,11 @@ pub enum TrainerEffect {
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
-    /// Both players shuffle their hand into their Library, then draw.
-    BothShuffleHandThenDraw { count: u32 },
+    /// Both players shuffle their hand into their Library, then draw — the
+    /// player who played the card drawing `you`, the opponent drawing
+    /// `opponent`. `Judge` prints the same count for both; `Unfair Stamp`
+    /// is why the two are named separately rather than shared.
+    BothShuffleHandThenDraw { you: u32, opponent: u32 },
     /// The opponent shuffles their hand and puts it under their Library, then
     /// draws — but only if they held anything. The cards go to the bottom
     /// rather than being shuffled in, so what they gave up is the last thing
@@ -218,6 +221,10 @@ pub enum Requirement {
     /// The opponent holds at most this many Prize cards. Read from the
     /// board, and costs nothing.
     OpponentPrizesAtMost(usize),
+    /// A Pokémon of the player's own was Knocked Out during the opponent's
+    /// last turn. `Unfair Stamp` reads this; nothing else in the pool
+    /// needed history rather than the board as it stands.
+    KnockedOutDuringOpponentsLastTurn,
 }
 
 /// A Trainer as printed.

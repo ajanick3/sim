@@ -43,15 +43,18 @@ on one another and may run in any order once the first four land.
   already lands on the same distribution as "shuffle only the cards seen
   back in." See
   [ADR 0022](../../docs/adr/0022-a-search-can-peek-a-bounded-prefix.md).
+- **"A Pokémon of mine was Knocked Out during the opponent's last turn" is
+  `GameState::knocked_out_last_turn: [bool; 2]`, set when a knockout
+  happens and cleared when the owning player's own turn ends — not
+  derived from `history: Vec<Action>`.** No `Action` records a knockout as
+  its own event, so reading it from the log would mean re-simulating
+  everything since the last turn boundary on every ask. Milestone 7 asked
+  the identical question for `Fezandipiti ex`'s Ability and left it open;
+  this settles it for both. See
+  [ADR 0024](../../docs/adr/0024-a-requirement-can-read-history.md).
 
 ## Fog
 
-- Whether Unfair Stamp's requirement — "a Pokémon of mine was Knocked Out
-  during the opponent's last turn" — is a new field on `GameState`, cleared
-  at `begin_turn`, or derivable from `history: Vec<Action>` without a new
-  field. Milestone 7 asked the identical question for `Fezandipiti ex`'s
-  Ability and left it open; whichever answer this ticket settles on
-  applies there too, so record the reasoning, not only the result.
 - Whether `Switch`'s new call site for `Phase::Promoting` needs the phase
   to change shape at all, or only needs a new way to enter the one that
   exists: `of == chooser`, opened by the player's own choice rather than by
