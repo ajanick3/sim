@@ -1012,6 +1012,8 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Bayleef", "Push Down") => AttackEffect::SwitchOpponentActive,
         ("Chikorita", "Growl") => AttackEffect::DefenderDealsLessDamageNextTurn(20),
         ("Buneary", "Charm") => AttackEffect::DefenderDealsLessDamageNextTurn(20),
+        ("Dunsparce", "Dig") => AttackEffect::CoinFlipSelfInvulnerableNextTurn,
+        ("Elgyem", "Hide") => AttackEffect::CoinFlipSelfInvulnerableNextTurn,
         _ => return None,
     })
 }

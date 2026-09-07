@@ -122,5 +122,10 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // me02.5-008 print (Growl).
     // Buneary's Charm (the same shape, printed word for word) admits
     // its me01-107 print too.
-    assert_eq!(admitted, 564, "coverage moves only on purpose");
+    // A coin-flipped invulnerability through the opponent's next turn
+    // — every effect of an attack against this Pokemon prevented
+    // outright, a full short-circuit at the top of `attack` rather
+    // than a `damage_dealt_with` read — admits Dunsparce's Dig prints
+    // (2) and Elgyem's Hide print (1).
+    assert_eq!(admitted, 567, "coverage moves only on purpose");
 }

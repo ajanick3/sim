@@ -1636,6 +1636,18 @@ fn attack(state: &mut GameState, index: usize) {
         return;
     };
 
+    // A coin-flipped invulnerability granted last turn: every effect of
+    // this attack, not only its damage, is prevented outright.
+    if matches!(
+        state.opponent_next_turn_restriction,
+        Some((target, crate::card::AttackEffect::CoinFlipSelfInvulnerableNextTurn))
+            if target == defender
+    ) {
+        let name = state.pokemon_def(defender).name;
+        state.log.push(format!("{name} is invulnerable this turn."));
+        return;
+    }
+
     // Rule 30: Confusion flips before the attack happens. Rule 52: on tails
     // the attack does not happen and 3 damage counters go on your own Pokémon.
     if state.has_condition(attacker, Condition::Confused) && !state.rng.flip() {
@@ -1745,6 +1757,13 @@ fn resolve_attack_effect(
             state.opponent_next_turn_restriction = Some((defender, effect));
             let name = state.pokemon_def(defender).name;
             state.log.push(format!("{name} cannot retreat next turn."));
+        }
+        crate::card::AttackEffect::CoinFlipSelfInvulnerableNextTurn => {
+            if state.rng.flip() {
+                state.opponent_next_turn_restriction = Some((attacker, effect));
+                let name = state.pokemon_def(attacker).name;
+                state.log.push(format!("{name} is invulnerable next turn."));
+            }
         }
         crate::card::AttackEffect::DefenderDealsLessDamageNextTurn(amount) => {
             state.opponent_next_turn_restriction = Some((defender, effect));
