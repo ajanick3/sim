@@ -1286,7 +1286,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::RemovesRetreatCostForNamePrefix(_)
         | TrainerEffect::MayPutHandCardOnTopOfDeck
         | TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter
-        | TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn => {}
+        | TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn
+        | TrainerEffect::ToolsHaveNoEffect => {}
 
         TrainerEffect::JaninesSecretArt => {
             state.phase = Phase::ChoosingJaninesTargets {
@@ -1490,6 +1491,9 @@ fn attack(state: &mut GameState, index: usize) {
 /// before `settle` decides that; nothing here reads whether the
 /// defender survives.
 fn trigger_defenders_tool(state: &mut GameState, attacker: PokemonId, defender: PokemonId) {
+    if state.tools_disabled() {
+        return;
+    }
     let tools: Vec<CardId> = state
         .pokemon(defender)
         .attached
@@ -1570,7 +1574,13 @@ pub fn damage_dealt(state: &GameState, attacker: PokemonId, defender: PokemonId,
     // turn it is — unlike `turn_bonus`, this reads every attack, not only
     // "this turn." Both built so far restrict to the opponent's Active,
     // which the single-Active format makes the defender always is.
-    for tool in state.pokemon(attacker).attached.iter() {
+    // `Jamming Tower` turns this step off entirely.
+    let attacker_tools: &[CardId] = if state.tools_disabled() {
+        &[]
+    } else {
+        &state.pokemon(attacker).attached
+    };
+    for tool in attacker_tools {
         let Some(effect) = state.def_of(*tool).as_trainer().map(|t| &t.effect) else {
             continue;
         };
@@ -1687,6 +1697,9 @@ fn end_the_turn(state: &mut GameState) {
 /// `Powerglass` — the one Tool so far that triggers on the turn ending
 /// itself, rather than on being attacked.
 fn powerglass_owner(state: &GameState) -> Option<PlayerId> {
+    if state.tools_disabled() {
+        return None;
+    }
     let player = state.current;
     let active = state.player(player).active?;
     let carries_powerglass = state.pokemon(active).attached.iter().any(|c| {
