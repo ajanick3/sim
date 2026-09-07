@@ -1123,6 +1123,15 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         state.phase = Phase::Promoting { of: player, chooser: player, then: None };
                     }
                 }
+                crate::card::AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(count) => {
+                    // Not spent here: opening the choice is not using it —
+                    // only actually damaging (`Action::DamageOpponentForCursedBlast`) is.
+                    state.phase = Phase::DecidingCursedBlastTarget {
+                        player,
+                        pokemon,
+                        damage: count * 10,
+                    };
+                }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
                 | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_) => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
@@ -1209,6 +1218,36 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         Action::DeclineTealDance => {
             match state.phase {
                 Phase::DecidingToUseTealDance { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DamageOpponentForCursedBlast { target } => {
+            let (player, pokemon, damage) = match state.phase {
+                Phase::DecidingCursedBlastTarget { player, pokemon, damage } => {
+                    (player, pokemon, damage)
+                }
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.pokemon[target.index()].damage += damage;
+            let target_name = state.pokemon_def(target).name;
+            state.log.push(format!("{target_name} takes {damage}."));
+            // "This Pokémon is Knocked Out" outright: raising its own
+            // damage to its effective HP, not a separate forced-knockout
+            // primitive, so the ordinary sweep still awards the Prize.
+            let effective_hp = state.effective_hp(pokemon);
+            state.pokemon[pokemon.index()].damage = state.pokemon[pokemon.index()].damage.max(effective_hp);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DeclineCursedBlast => {
+            match state.phase {
+                Phase::DecidingCursedBlastTarget { .. } => {}
                 _ => return Err(IllegalAction),
             };
             state.phase = Phase::Main;

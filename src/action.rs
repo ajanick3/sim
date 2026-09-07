@@ -191,6 +191,11 @@ pub enum Action {
     AttachEnergyForTealDance { card: CardId },
     /// Decline it.
     DeclineTealDance,
+    /// Place `Phase::DecidingCursedBlastTarget`'s damage counters on
+    /// this Pokémon, and Knock Out the Ability's own carrier.
+    DamageOpponentForCursedBlast { target: PokemonId },
+    /// Decline it.
+    DeclineCursedBlast,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -229,6 +234,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToUsePsychicDraw { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
         Phase::DecidingToUseTealDance { player, .. } => Some(player),
+        Phase::DecidingCursedBlastTarget { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -570,6 +576,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::DeclineTealDance);
+            return actions;
+        }
+        Phase::DecidingCursedBlastTarget { player: whose, .. } => {
+            for pokemon in state.player(whose.opponent()).in_play() {
+                actions.push(Action::DamageOpponentForCursedBlast { target: pokemon });
+            }
+            actions.push(Action::DeclineCursedBlast);
             return actions;
         }
         Phase::MovingOpponentsEnergy { of, .. } => {
@@ -974,6 +987,8 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::OncePerTurnWhileActiveMayShuffleSelfIntoDeck => {
                 side.active == Some(pokemon)
             }
+            // Works from the Active Spot or the Bench alike.
+            crate::card::AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(_) => true,
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_last_ditch_catch`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => false,
@@ -1205,5 +1220,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Attach {} (Teal Dance)", state.def_of(card).name())
         }
         Action::DeclineTealDance => "Decline Teal Dance".to_string(),
+        Action::DamageOpponentForCursedBlast { target } => {
+            format!("Damage {} (Cursed Blast)", state.pokemon_def(target).name)
+        }
+        Action::DeclineCursedBlast => "Decline Cursed Blast".to_string(),
     }
 }

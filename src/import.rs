@@ -997,6 +997,8 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
             AbilityEffect::OncePerTurnMayDrawThenShuffleSelfIntoDeck(3)
         }
         ("Abra", "Teleporter") => AbilityEffect::OncePerTurnWhileActiveMayShuffleSelfIntoDeck,
+        ("Dusclops", "Cursed Blast") => AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(5),
+        ("Dusknoir", "Cursed Blast") => AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(13),
         _ => return None,
     })
 }
@@ -1088,6 +1090,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::DamagePerCoinFlipHeads { flips: 2, per_head: 40 }
         }
         ("Elgyem", "Slight Shift") => AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon,
+        ("Dusknoir", "Shadow Bind") => AttackEffect::DefenderCannotRetreatNextTurn,
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }

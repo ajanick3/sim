@@ -857,6 +857,14 @@ pub enum AbilityEffect {
     /// `OncePerTurnMayDrawThenShuffleSelfIntoDeck` takes, but with no
     /// draw and no condition beyond being Active. `Abra`'s `Beam`.
     OncePerTurnWhileActiveMayShuffleSelfIntoDeck,
+    /// Once during the player's own turn, the player may put this
+    /// many damage counters on one of the opponent's Pokémon,
+    /// choosing which. If they do, the Pokémon carrying this Ability
+    /// is Knocked Out outright — modeled by raising its own damage to
+    /// its effective HP rather than a separate forced-knockout
+    /// primitive, so the ordinary `knock_out_the_dead` sweep still
+    /// awards the Prize. `Dusclops`'s and `Dusknoir`'s `Cursed Blast`.
+    OncePerTurnMayDamageOpponentThenKnockOutSelf(u32),
 }
 
 /// A basic Energy card as printed.
