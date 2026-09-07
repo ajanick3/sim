@@ -1,22 +1,36 @@
 # A Pokémon that returns to the deck
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
-`Dudunsparce`'s Ability, "Run Away Draw": *"Once during your turn, you may
-draw 3 cards. If you drew any cards in this way, shuffle this Pokémon and
-all attached cards into your deck."* 27 slots.
+`Dudunsparce`'s Ability, "Run Away Draw": *"Once during your turn,
+you may draw 3 cards. If you drew any cards in this way, shuffle this
+Pokémon and all attached cards into your deck."* 27 slots.
 
-Nothing built so far removes a Pokémon from play except a knockout, and a
-knockout sends the stack to discard, never back into the Library. This
-Ability's own Pokémon — cards and attachments together — leaves play by its
-own choice, mid-game, and rejoins the deck to be drawn again. Whatever a
-Bench or an Active empties into does not apply here: there is no zone this
-belongs to on the way out, only the one it lands in.
+- [x] Drawing and the shuffle-back are one Ability, one action, but
+      the shuffle only happens if the draw actually landed something
+- [x] Removing an Active `Dudunsparce` opens `Phase::Promoting` only
+      with a Bench to promote from
+- [x] `Dudunsparce` plays
 
-- [ ] A Pokémon in play, its whole card stack and every attachment, can be
-      shuffled into its owner's Library
-- [ ] Whatever `Retreat`, evolution's `Limit::Evolved`, or an attack's
-      spent state remembered about this Pokémon Id does not survive it,
-      since the Id itself stops meaning anything
-- [ ] `Dudunsparce` plays
+Recorded in [ADR 0075](../../../docs/adr/0075-a-pokemon-returning-to-the-deck-reuses-knockouts-together-rule.md).
+
+## Resolution
+
+`AbilityEffect::OncePerTurnMayDrawThenShuffleSelfIntoDeck(u32)`, a
+standing Ability. Draws first; only if at least one card actually
+landed does the Pokémon's whole card stack and every attachment move
+into the library together (rule 22's "moves together," the third
+zone this milestone has moved a Pokémon's own stack to, after hand
+and discard). Removing the Active opens `Phase::Promoting` only when
+a Bench exists to promote from, the same guard
+`ReturnSelfAndAttachedToHand` already takes; with no Bench, it stays
+in play.
+
+Admits both Dudunsparce prints (`Land Crush` has no printed text).
+Coverage: `admitted` 602 -> 604.
+
+This closes Milestone 8's own planned ticket order (01-07). `blockers`
+still shows real weight in `HasAnAbility` — the milestone continues
+past its own map the same way Milestone 11 did, picking off whatever
+`blockers` shows next.

@@ -993,6 +993,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Teal Mask Ogerpon ex", "Teal Dance") => {
             AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeThenDraw(Type::Grass)
         }
+        ("Dudunsparce", "Run Away Draw") => {
+            AbilityEffect::OncePerTurnMayDrawThenShuffleSelfIntoDeck(3)
+        }
         _ => return None,
     })
 }

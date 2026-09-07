@@ -1074,6 +1074,38 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     // only actually attaching (`Action::AttachEnergyForTealDance`) is.
                     state.phase = Phase::DecidingToUseTealDance { player, pokemon };
                 }
+                crate::card::AbilityEffect::OncePerTurnMayDrawThenShuffleSelfIntoDeck(count) => {
+                    state.spend(Limit::AbilityUsed(player, ability.name));
+                    let mut drew_any = false;
+                    for _ in 0..count {
+                        if state.draw(player) {
+                            drew_any = true;
+                        }
+                    }
+                    if drew_any {
+                        let was_active = state.player(player).active == Some(pokemon);
+                        let has_bench = !state.player(player).bench.is_empty();
+                        if !was_active || has_bench {
+                            let name = state.pokemon_def(pokemon).name;
+                            let cards = std::mem::take(&mut state.pokemon[pokemon.index()].cards);
+                            let attached = std::mem::take(&mut state.pokemon[pokemon.index()].attached);
+                            let side = &mut state.players[player.index()];
+                            side.library.extend(cards);
+                            side.library.extend(attached);
+                            side.bench.retain(|p| *p != pokemon);
+                            if was_active {
+                                side.active = None;
+                            }
+                            state.log.push(format!("{name} shuffles itself into the deck."));
+                            let library = &mut state.players[player.index()].library;
+                            shuffle(state.rng.as_mut(), library);
+                            if was_active {
+                                state.phase =
+                                    Phase::Promoting { of: player, chooser: player, then: None };
+                            }
+                        }
+                    }
+                }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
                 | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_) => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")

@@ -174,5 +174,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Energy from hand as the effect itself, then may draw) and its
     // own attack, Myriad Leaf Shower (damage per Energy on both
     // Active Pokemon combined) admit all 8 prints.
-    assert_eq!(admitted, 602, "coverage moves only on purpose");
+    // Dudunsparce's Run Away Draw (a Pokemon that shuffles itself
+    // into the deck as part of its own Ability, the "moves together"
+    // rule 22 already keeps but into the library) admits both prints
+    // (Land Crush has no printed text).
+    assert_eq!(admitted, 604, "coverage moves only on purpose");
 }

@@ -841,6 +841,16 @@ pub enum AbilityEffect {
     /// `Phase::DecidingToUseTealDance` only when a qualifying Energy
     /// is in hand. `Teal Mask Ogerpon ex`'s `Teal Dance`.
     OncePerTurnMayAttachBasicEnergyOfTypeThenDraw(Type),
+    /// Once during the player's own turn, the player may draw this
+    /// many cards. If any were actually drawn, this Pokémon and every
+    /// card attached to it shuffle into the player's own library —
+    /// the same "moves together" rule 22 already keeps for a
+    /// knockout, but into the deck rather than discard or hand.
+    /// Opens `Phase::Promoting` if this Pokémon was the Active and
+    /// the player has a Bench to promote from; otherwise it simply
+    /// stays in play, since there would be nothing to replace it
+    /// with. `Dudunsparce`'s `Run Away Draw`.
+    OncePerTurnMayDrawThenShuffleSelfIntoDeck(u32),
 }
 
 /// A basic Energy card as printed.
