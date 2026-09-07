@@ -1106,6 +1106,23 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         }
                     }
                 }
+                crate::card::AbilityEffect::OncePerTurnWhileActiveMayShuffleSelfIntoDeck => {
+                    state.spend(Limit::AbilityUsed(player, ability.name));
+                    let has_bench = !state.player(player).bench.is_empty();
+                    if has_bench {
+                        let name = state.pokemon_def(pokemon).name;
+                        let cards = std::mem::take(&mut state.pokemon[pokemon.index()].cards);
+                        let attached = std::mem::take(&mut state.pokemon[pokemon.index()].attached);
+                        let side = &mut state.players[player.index()];
+                        side.library.extend(cards);
+                        side.library.extend(attached);
+                        side.active = None;
+                        state.log.push(format!("{name} shuffles itself into the deck."));
+                        let library = &mut state.players[player.index()].library;
+                        shuffle(state.rng.as_mut(), library);
+                        state.phase = Phase::Promoting { of: player, chooser: player, then: None };
+                    }
+                }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
                 | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_) => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")

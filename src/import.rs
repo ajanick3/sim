@@ -996,6 +996,7 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Dudunsparce", "Run Away Draw") => {
             AbilityEffect::OncePerTurnMayDrawThenShuffleSelfIntoDeck(3)
         }
+        ("Abra", "Teleporter") => AbilityEffect::OncePerTurnWhileActiveMayShuffleSelfIntoDeck,
         _ => return None,
     })
 }
