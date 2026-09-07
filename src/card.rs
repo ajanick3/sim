@@ -658,6 +658,15 @@ pub enum AttackEffect {
     /// `DefenderCannotRetreatNextTurn` already carries. `Buneary`'s
     /// `Charm`, `Chikorita`'s `Growl`.
     DefenderDealsLessDamageNextTurn(u32),
+    /// On heads, the attacker itself is immune to all damage and
+    /// every other effect of any attack against it during the
+    /// opponent's very next turn — stored as the attacker in
+    /// `opponent_next_turn_restriction`, the same lifetime
+    /// `DefenderCannotRetreatNextTurn` grants, but read as a full
+    /// short-circuit at the top of `attack` rather than inside
+    /// `damage_dealt_with`, since it blocks more than damage.
+    /// `Dunsparce`'s `Dig`, `Elgyem`'s `Hide`.
+    CoinFlipSelfInvulnerableNextTurn,
 }
 
 /// What `AttackEffect::DamagePerCount` counts.

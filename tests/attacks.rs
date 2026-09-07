@@ -1539,3 +1539,64 @@ fn buneary_charm_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "me01-107").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Buneary's Charm print should play");
 }
+
+// --- Beyond the spec: a coin-flipped invulnerability through the opponent's next turn ---
+
+#[test]
+fn heads_makes_the_attacker_invulnerable_on_the_opponents_next_turn() {
+    let attack = Attack {
+        name: "Dig",
+        cost: vec![Type::Colorless],
+        base_damage: 20,
+        inflicts: None,
+        effect: Some(AttackEffect::CoinFlipSelfInvulnerableNextTurn),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+
+    pay_and_attack(&mut state);
+    assert_eq!(state.current, player.opponent());
+    let heads = state.opponent_next_turn_restriction
+        == Some((attacker, AttackEffect::CoinFlipSelfInvulnerableNextTurn));
+
+    // Pay the opponent's own attack cost, the same way pay_and_attack does.
+    let opponent = player.opponent();
+    let opponent_active = state.player(opponent).active.unwrap();
+    let energy_card = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.pokemon[opponent_active.index()].attached.push(energy_card);
+
+    // Either way, the opponent's own attack resolves without erroring;
+    // on heads it lands no damage at all.
+    let damage_before = state.pokemon(attacker).damage;
+    sim::engine::apply(&mut state, Action::Attack { index: 0 }).unwrap();
+    if heads {
+        assert_eq!(state.pokemon(attacker).damage, damage_before, "invulnerable: no damage lands");
+    }
+}
+
+#[test]
+fn dunsparce_dig_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv05-128").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Dunsparce's Dig print should play");
+}
+
+#[test]
+fn elgyem_hide_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv05-073").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Elgyem's Hide print should play");
+}

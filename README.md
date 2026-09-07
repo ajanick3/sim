@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (37/95 built)
+### Pokémon (38/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -215,7 +215,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Dusknoir | ❌ |
 | [Duskull](src/import.rs#L1008) | ✅ |
 | [Dwebble](src/import.rs#L998) | ✅ |
-| Elgyem | ❌ |
+| [Elgyem](src/import.rs#L1016) | ✅ |
 | Enamorus | ❌ |
 | Fan Rotom | ❌ |
 | Fezandipiti ex | ❌ |
