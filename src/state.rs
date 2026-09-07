@@ -341,6 +341,10 @@ pub enum Phase {
     /// its own Ability may search the library for a Supporter card.
     /// `Meowth ex`'s `Last-Ditch Catch`.
     DecidingToUseLastDitchCatch { player: PlayerId, pokemon: PokemonId },
+    /// `player` just evolved from hand, and the evolution's own
+    /// Ability may draw `count` cards. `Kadabra`'s and `Alakazam`'s
+    /// `Psychic Draw`.
+    DecidingToUsePsychicDraw { player: PlayerId, name: &'static str, count: u32 },
     /// `player` used an attack that searches their own discard pile
     /// for up to `remaining` more copies of a named Pokémon to the
     /// Bench. `Duskull`'s `Come and Get You`.

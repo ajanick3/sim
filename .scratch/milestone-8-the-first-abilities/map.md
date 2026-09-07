@@ -45,6 +45,13 @@ one new thing to it.
   already reads from) rather than opening through `Action::UseAbility`.
   It shares `Limit::AbilityUsed` with the standing shape unchanged.
   See ADR 0071.
+- Ticket 04: the same Ability name across two species needs no
+  print-override table — `known_ability` was already keyed by species
+  and name together, so `Kadabra` and `Alakazam` are two ordinary
+  entries, not a collision. `tools/check_ability_name_safety.py`
+  checks the real collision case (one species, one name, two texts)
+  and found two unrelated ones already in the pool, neither built yet.
+  See ADR 0072.
 
 ## Fog
 

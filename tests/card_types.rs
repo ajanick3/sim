@@ -41,9 +41,10 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
         "Ignition Energy is a special Energy"
     );
     assert_eq!(
-        reason_for("me01-055"),
+        reason_for("me02.5-137"),
         Some(Refusal::HasAnAbility),
-        "Kadabra is a Stage 1 with an ability; evolution alone does not admit it"
+        "N's Zoroark ex's Ability cost is deferred (no sample-deck card \
+         pairs one with a buildable attack yet — ADR 0070)"
     );
 }
 
