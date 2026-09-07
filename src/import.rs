@@ -716,6 +716,29 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 limit: 2,
             },
         ),
+        "Brock's Scouting" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![
+                    Slot {
+                        filter: CardFilter::PokemonOfStage(Stage::Basic),
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 2,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    },
+                    Slot {
+                        filter: CardFilter::EvolutionPokemon,
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    },
+                ],
+                then: None,
+            },
+        ),
         _ => return None,
     })
 }

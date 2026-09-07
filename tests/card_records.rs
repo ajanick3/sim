@@ -54,6 +54,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Syndicate Grunt, 3 of N's Plan, 1 of Pokémon Center Lady, 3 of Rosa's
     // Encouragement, 3 of AZ's Tranquility, 4 of Surfer, 10 of Black
     // Belt's Training, 3 of Gladion's Final Battle, 5 of Kieran, 3 of
-    // Morty's Conviction, 2 of Xerosic's Machinations, and 4 of Eri.
-    assert_eq!(admitted, 459, "coverage moves only on purpose");
+    // Morty's Conviction, 2 of Xerosic's Machinations, 4 of Eri, and 2 of
+    // Brock's Scouting.
+    assert_eq!(admitted, 461, "coverage moves only on purpose");
 }
