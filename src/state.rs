@@ -504,6 +504,7 @@ impl GameState {
                 CardDef::Energy(e) => e.kind == kind,
                 CardDef::Trainer(_) => false,
             },
+            CardFilter::AnyCard => true,
         }
     }
 

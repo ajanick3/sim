@@ -254,6 +254,16 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 // `legal_actions` never offers `TakeCard` for a slot bound
                 // to attach: that needs a target, which is `TakeCardOnto`.
                 Destination::Attach(_) => unreachable!("Attach is taken with a target"),
+                Destination::TopOfLibraryInOrder => {
+                    // The library was already shuffled when this slot
+                    // opened; each card taken lands right back on top,
+                    // undisturbed, in the order it was taken.
+                    state.zone_mut(chooser, from).retain(|c| *c != card);
+                    state.players[chooser.index()].library.push(card);
+                    state
+                        .log
+                        .push(format!("{chooser:?} puts {name} on top of the deck."));
+                }
             }
             // A slot whose limit runs out does not move the search on by
             // itself. ADR 0012 keeps the choice to stop with the player, and
@@ -531,14 +541,19 @@ fn enter_slot(
         // slot. Either end of a move calls for it: a card put back into the
         // deck is shuffled in, and a deck that was searched is shuffled
         // because the player has seen the order of it.
-        let puts_back = state
+        let slots = state
             .def_of(card)
             .as_trainer()
             .expect("a search is only ever a Trainer's effect")
-            .slots()
+            .slots();
+        let puts_back = slots.iter().any(|s| s.to == Destination::Zone(Zone::Library));
+        // A search that places its cards on top in order already shuffled
+        // the rest of the deck when that slot opened, and placed its cards
+        // afterward. Shuffling again here would scramble them right back in.
+        let already_ordered_on_top = slots
             .iter()
-            .any(|s| s.to == Destination::Zone(Zone::Library));
-        if from == Zone::Library || puts_back {
+            .any(|s| s.to == Destination::TopOfLibraryInOrder);
+        if (from == Zone::Library || puts_back) && !already_ordered_on_top {
             let library = &mut state.players[chooser.index()].library;
             shuffle(state.rng.as_mut(), library);
         }
@@ -551,6 +566,15 @@ fn enter_slot(
         settle(state);
         return;
     };
+
+    // "Shuffle your deck, then put those cards on top of it": the shuffle
+    // happens before anything is placed, on whatever the search has not
+    // yet taken. Cards taken during this slot are pushed onto the end of
+    // the Library one at a time, undisturbed by any shuffle after this one.
+    if slot.to == Destination::TopOfLibraryInOrder {
+        let library = &mut state.players[chooser.index()].library;
+        shuffle(state.rng.as_mut(), library);
+    }
 
     state.phase = Phase::Deciding {
         chooser,
