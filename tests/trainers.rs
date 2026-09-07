@@ -420,6 +420,7 @@ fn boss_orders_switches_the_opponents_active() {
         Phase::Promoting {
             of: player.opponent(),
             chooser: player,
+            then: None,
         }
     );
     apply(

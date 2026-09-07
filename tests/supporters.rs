@@ -4,8 +4,8 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
-    TargetFilter, Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, PromoteFollowUp,
+    Requirement, Slot, Stage, TargetFilter, Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
@@ -650,5 +650,131 @@ fn rosas_encouragement_is_admitted_from_the_artifact() {
             }],
             then: None,
         }
+    );
+}
+
+// --- Ticket 06: AZ's Tranquility and Surfer ---
+
+fn with_az_tranquility(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let az = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-az-tranquility",
+        name: "AZ's Tranquility",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::SwitchOwnActiveWithFollowUp(PromoteFollowUp::HealDisplacedIfEx(80)),
+    }));
+    (Set { db, ..set }, az)
+}
+
+fn with_surfer(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let surfer = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-surfer",
+        name: "Surfer",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::SwitchOwnActiveWithFollowUp(PromoteFollowUp::DrawUpTo(5)),
+    }));
+    (Set { db, ..set }, surfer)
+}
+
+#[test]
+fn az_tranquility_heals_an_ex_moved_to_the_bench_but_not_an_ordinary_mon() {
+    let (set, az) = with_az_tranquility(build());
+    let mut state = game(&set, az, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, az);
+
+    // The Active is an ordinary Pokémon here; the follow-up must not fire.
+    let active = state.player(player).active.unwrap();
+    state.pokemon[active.index()].damage = 50;
+    let bench = state.player(player).bench[0];
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::Promote { pokemon: bench }).unwrap();
+    assert_eq!(
+        state.pokemon(active).damage,
+        50,
+        "an ordinary Pokémon moved to the Bench is not healed"
+    );
+}
+
+#[test]
+fn az_tranquility_heals_an_ex_that_gets_displaced() {
+    let (set, az) = with_az_tranquility(build());
+    let mut state = game(&set, az, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, az);
+
+    // Swap the Active for a Pokémon ex directly, bypassing the once-a-turn
+    // Evolve/Play limits this fixture does not need.
+    let active = state.player(player).active.unwrap();
+    let ex_card = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.cards[c.index()].def == set.mon_ex)
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != ex_card);
+    state.pokemon[active.index()].cards = vec![ex_card];
+    state.pokemon[active.index()].damage = 50;
+    let bench = state.player(player).bench[0];
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::Promote { pokemon: bench }).unwrap();
+    assert_eq!(
+        state.pokemon(active).damage,
+        0,
+        "the displaced Pokémon ex heals 80, floored at zero from 50"
+    );
+}
+
+#[test]
+fn surfer_draws_up_to_five_once_the_switch_happens() {
+    let (set, surfer) = with_surfer(build());
+    let mut state = game(&set, surfer, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, surfer);
+    // Empty the hand down to nothing but the card about to be played.
+    state.players[player.index()].hand = vec![card];
+    let bench = state.player(player).bench[0];
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::Promote { pokemon: bench }).unwrap();
+    assert_eq!(state.player(player).hand.len(), 5);
+}
+
+#[test]
+fn az_tranquility_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let az = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "AZ's Tranquility")
+        .expect("AZ's Tranquility plays");
+    assert_eq!(
+        az.effect,
+        TrainerEffect::SwitchOwnActiveWithFollowUp(PromoteFollowUp::HealDisplacedIfEx(80))
+    );
+}
+
+#[test]
+fn surfer_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let surfer = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Surfer")
+        .expect("Surfer plays");
+    assert_eq!(
+        surfer.effect,
+        TrainerEffect::SwitchOwnActiveWithFollowUp(PromoteFollowUp::DrawUpTo(5))
     );
 }

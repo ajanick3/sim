@@ -402,6 +402,7 @@ fn a_checkup_knockout_takes_a_prize_before_the_next_turn() {
         Phase::Promoting {
             of: attacker.opponent(),
             chooser: attacker.opponent(),
+            then: None,
         },
         "the owner of the knocked-out Pokémon chooses the next Active"
     );
