@@ -638,6 +638,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 opponent: 2,
             },
         ),
+        "Switch" => (free, TrainerEffect::SwitchOwnActive),
         _ => return None,
     })
 }

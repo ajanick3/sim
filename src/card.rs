@@ -173,6 +173,10 @@ pub enum TrainerEffect {
     /// Switch the opponent's Active with one of their Benched Pokémon,
     /// chosen by the player who played the card.
     SwitchOpponentActive,
+    /// Switch the player's own Active with one of their own Benched
+    /// Pokémon, by their own choice — not after a knockout, and not the
+    /// opponent's. `Switch` is the plain form of this.
+    SwitchOwnActive,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },

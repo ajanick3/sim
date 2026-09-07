@@ -196,7 +196,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             };
             let side = &mut state.players[of.index()];
             side.bench.retain(|p| *p != pokemon);
-            side.active = Some(pokemon);
+            // A knockout already cleared the old Active to `None` before
+            // this phase opened, so there is nothing here to lose. A live
+            // switch — `Switch`, `Boss's Orders` — has not: its Active is
+            // displaced, not gone, and belongs back on the Bench.
+            if let Some(displaced) = side.active.replace(pokemon) {
+                side.bench.push(displaced);
+            }
             state.phase = Phase::Main;
             let name = state.pokemon_def(pokemon).name;
             if of == chooser {
@@ -632,6 +638,13 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         TrainerEffect::SwitchOpponentActive => {
             state.phase = Phase::Promoting {
                 of: player.opponent(),
+                chooser: player,
+            };
+        }
+
+        TrainerEffect::SwitchOwnActive => {
+            state.phase = Phase::Promoting {
+                of: player,
                 chooser: player,
             };
         }
