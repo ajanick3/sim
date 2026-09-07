@@ -780,6 +780,15 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::PutOnTopOfDeckForAcademyAtNight { card } => {
+            let player = state.current;
+            state.remove_from_hand(player, card);
+            state.players[player.index()].library.push(card);
+            state.spend(Limit::StadiumEffectUsed(player));
+            let name = state.def_of(card).name();
+            state.log.push(format!("{player:?} puts {name} on top of the deck."));
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1240,7 +1249,9 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         // to do at play time: `state.stadium` already names the card,
         // and every reader (`effective_hp`, `effective_retreat_cost`, …)
         // reads the effect from there, not from this dispatch.
-        TrainerEffect::ReducesHpForStage(..) | TrainerEffect::RemovesRetreatCostForNamePrefix(_) => {}
+        TrainerEffect::ReducesHpForStage(..)
+        | TrainerEffect::RemovesRetreatCostForNamePrefix(_)
+        | TrainerEffect::MayPutHandCardOnTopOfDeck => {}
 
         TrainerEffect::JaninesSecretArt => {
             state.phase = Phase::ChoosingJaninesTargets {

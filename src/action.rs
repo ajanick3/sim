@@ -109,6 +109,9 @@ pub enum Action {
     AttachFromDiscardForPowerglass { card: CardId },
     /// Decline `Powerglass`'s attach.
     DeclinePowerglass,
+    /// `Academy at Night`'s once-a-turn action: put this card from hand
+    /// on top of the Library.
+    PutOnTopOfDeckForAcademyAtNight { card: CardId },
     /// Choose one of up to 2 targets for `Janine's Secret Art`.
     ChooseJaninesTarget { target: PokemonId },
     /// Stop choosing targets, whether 0, 1, or 2 have been picked.
@@ -488,6 +491,17 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         return actions;
     }
 
+    // A Stadium's own once-a-turn action — not dispatched through
+    // PlayTrainer, since the Stadium is already in play; offered
+    // directly, the way AttachEnergy and PlayTool are.
+    if state.stadium_effect() == Some(crate::card::TrainerEffect::MayPutHandCardOnTopOfDeck)
+        && !state.is_spent(Limit::StadiumEffectUsed(player))
+    {
+        for card in &side.hand {
+            actions.push(Action::PutOnTopOfDeckForAcademyAtNight { card: *card });
+        }
+    }
+
     for card in &side.hand {
         let def = state.def_of(*card);
         if def.is_basic_pokemon() && side.bench.len() < BENCH_LIMIT {
@@ -821,6 +835,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Attach {} from discard", state.def_of(card).name())
         }
         Action::DeclinePowerglass => "Decline Powerglass".to_string(),
+        Action::PutOnTopOfDeckForAcademyAtNight { card } => {
+            format!("Put {} on top of the deck", state.def_of(card).name())
+        }
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
         }
