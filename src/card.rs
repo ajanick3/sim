@@ -633,6 +633,11 @@ pub enum AttackEffect {
     /// slot every other conditional bonus already occupies.
     /// `Moltres`'s `Fighting Wings`.
     BonusDamageIfDefenderIsEx(u32),
+    /// Put a Pokémon card from the player's own discard pile into
+    /// their hand, choosing which if more than one qualifies — opens
+    /// `Phase::TakingPokemonFromDiscard`. No Pokémon in the discard
+    /// pile opens no phase. `Slowpoke`'s `Dangle Tail`.
+    TakePokemonFromDiscard,
 }
 
 /// What `AttackEffect::DamagePerCount` counts.

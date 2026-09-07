@@ -154,6 +154,9 @@ pub enum Action {
     /// Evolve into this card from the library, as part of
     /// `Phase::SearchingLibraryToEvolveSelf`.
     EvolveWithAscension { card: CardId },
+    /// Take this Pokémon card from the discard pile into hand, as part
+    /// of `Phase::TakingPokemonFromDiscard`.
+    TakePokemonFromDiscard { card: CardId },
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -186,6 +189,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::MovingOpponentsActiveEnergyToHand { player, .. } => Some(player),
         Phase::TakingTrainerFromDiscard { player } => Some(player),
         Phase::SearchingLibraryToEvolveSelf { player, .. } => Some(player),
+        Phase::TakingPokemonFromDiscard { player } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
@@ -476,6 +480,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             for card in &state.player(whose).discard {
                 if state.matches_filter(*card, crate::card::CardFilter::AnyTrainer) {
                     actions.push(Action::TakeTrainerFromDiscard { card: *card });
+                }
+            }
+            return actions;
+        }
+        Phase::TakingPokemonFromDiscard { player: whose } => {
+            for card in &state.player(whose).discard {
+                if state.matches_filter(*card, crate::card::CardFilter::AnyPokemon) {
+                    actions.push(Action::TakePokemonFromDiscard { card: *card });
                 }
             }
             return actions;
@@ -975,6 +987,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::EvolveWithAscension { card } => {
             format!("Evolve into {}", state.def_of(card).name())
+        }
+        Action::TakePokemonFromDiscard { card } => {
+            format!("Take {} from discard", state.def_of(card).name())
         }
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
