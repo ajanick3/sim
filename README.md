@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (30/95 built)
+### Pokémon (33/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -202,7 +202,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Cofagrigus | ❌ |
 | [Combusken](src/import.rs#L234) | ✅ |
 | Crustle | ❌ |
-| Dedenne | ❌ |
+| [Dedenne](src/import.rs#L979) | ✅ |
 | Dipplin | ❌ |
 | [Dragapult ex](src/import.rs#L986) | ✅ |
 | Drakloak | ❌ |
@@ -214,7 +214,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Dusclops | ❌ |
 | Dusknoir | ❌ |
 | Duskull | ❌ |
-| Dwebble | ❌ |
+| [Dwebble](src/import.rs#L998) | ✅ |
 | Elgyem | ❌ |
 | Enamorus | ❌ |
 | Fan Rotom | ❌ |
@@ -264,7 +264,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Rellor](src/import.rs#L952) | ✅ |
 | Seaking | ❌ |
 | Shaymin | ❌ |
-| Slowking | ❌ |
+| [Slowking](src/import.rs#L999) | ✅ |
 | [Slowpoke](src/import.rs#L234) | ✅ |
 | Smoochum | ❌ |
 | Stunfisk | ❌ |

@@ -142,6 +142,18 @@ pub enum Action {
     /// Stop `Phase::SearchingLibraryForBasics` before its limit is
     /// spent.
     FinishCallForFamily,
+    /// Move this Energy from the opponent's Active into their hand, as
+    /// part of `Phase::MovingOpponentsActiveEnergyToHand`.
+    MoveOpponentsActiveEnergyToHand { card: CardId },
+    /// Stop `Phase::MovingOpponentsActiveEnergyToHand` before its
+    /// limit is spent — the effect is optional ("may").
+    FinishMovingOpponentsActiveEnergyToHand,
+    /// Take this Trainer card from the discard pile into hand, as part
+    /// of `Phase::TakingTrainerFromDiscard`.
+    TakeTrainerFromDiscard { card: CardId },
+    /// Evolve into this card from the library, as part of
+    /// `Phase::SearchingLibraryToEvolveSelf`.
+    EvolveWithAscension { card: CardId },
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -171,6 +183,9 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DistributingDamageCounters { player, .. } => Some(player),
         Phase::ChoosingBenchDamageTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForBasics { player, .. } => Some(player),
+        Phase::MovingOpponentsActiveEnergyToHand { player, .. } => Some(player),
+        Phase::TakingTrainerFromDiscard { player } => Some(player),
+        Phase::SearchingLibraryToEvolveSelf { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
@@ -444,6 +459,34 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::FinishCallForFamily);
+            return actions;
+        }
+        Phase::MovingOpponentsActiveEnergyToHand { player: whose, .. } => {
+            let opponent = whose.opponent();
+            let active = state.player(opponent).active.expect("this effect needs an Active to read");
+            for card in &state.pokemon(active).attached {
+                if state.def_of(*card).is_energy() {
+                    actions.push(Action::MoveOpponentsActiveEnergyToHand { card: *card });
+                }
+            }
+            actions.push(Action::FinishMovingOpponentsActiveEnergyToHand);
+            return actions;
+        }
+        Phase::TakingTrainerFromDiscard { player: whose } => {
+            for card in &state.player(whose).discard {
+                if state.matches_filter(*card, crate::card::CardFilter::AnyTrainer) {
+                    actions.push(Action::TakeTrainerFromDiscard { card: *card });
+                }
+            }
+            return actions;
+        }
+        Phase::SearchingLibraryToEvolveSelf { player: whose, target } => {
+            let from = state.pokemon_def(target).name;
+            for card in &state.player(whose).library {
+                if state.def_of(*card).as_pokemon().is_some_and(|p| p.evolve_from == Some(from)) {
+                    actions.push(Action::EvolveWithAscension { card: *card });
+                }
+            }
             return actions;
         }
         Phase::MovingEnergyForHandheldFan { attacker, .. } => {
@@ -923,6 +966,16 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Bench {}", state.def_of(card).name())
         }
         Action::FinishCallForFamily => "Stop searching".to_string(),
+        Action::MoveOpponentsActiveEnergyToHand { card } => {
+            format!("Move {} to their hand", state.def_of(card).name())
+        }
+        Action::FinishMovingOpponentsActiveEnergyToHand => "Stop moving Energy".to_string(),
+        Action::TakeTrainerFromDiscard { card } => {
+            format!("Take {} from discard", state.def_of(card).name())
+        }
+        Action::EvolveWithAscension { card } => {
+            format!("Evolve into {}", state.def_of(card).name())
+        }
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
         }

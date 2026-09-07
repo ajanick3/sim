@@ -303,6 +303,17 @@ pub enum Phase {
     /// from an attack, not a Trainer's `Decide`, so it names no card
     /// to read slots back from. `Drilbur`/`Toxel`'s `Call for Family`.
     SearchingLibraryForBasics { player: PlayerId, remaining: u32 },
+    /// `player` used an attack that may move Energy off the opponent's
+    /// Active into the opponent's hand, up to `remaining` more.
+    /// `Slowking`'s `Wash the Slate Clean`.
+    MovingOpponentsActiveEnergyToHand { player: PlayerId, remaining: u32 },
+    /// `player` used an attack that puts a Trainer card from their own
+    /// discard pile into their hand. `Dedenne`'s
+    /// `Electromagnetic Sonar`.
+    TakingTrainerFromDiscard { player: PlayerId },
+    /// `player` used an attack that searches the library for a card to
+    /// evolve the attacker into directly. `Dwebble`'s `Ascension`.
+    SearchingLibraryToEvolveSelf { player: PlayerId, target: PokemonId },
     /// `player` played `Janine's Secret Art` and is choosing up to 2 of
     /// their own Darkness Pokémon, in `chosen`, before any search runs.
     ChoosingJaninesTargets {

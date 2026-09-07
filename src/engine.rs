@@ -880,6 +880,68 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             finish_searching_library_for_basics(state, player);
         }
 
+        Action::MoveOpponentsActiveEnergyToHand { card } => {
+            let (player, remaining) = match state.phase {
+                Phase::MovingOpponentsActiveEnergyToHand { player, remaining } => (player, remaining),
+                _ => return Err(IllegalAction),
+            };
+            let opponent = player.opponent();
+            let active = state.player(opponent).active.expect("this effect needs an Active to read");
+            state.pokemon[active.index()].attached.retain(|c| *c != card);
+            state.players[opponent.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} moves to {opponent:?}'s hand."));
+            if remaining <= 1 {
+                state.phase = Phase::Main;
+                settle(state);
+            } else {
+                state.phase = Phase::MovingOpponentsActiveEnergyToHand {
+                    player,
+                    remaining: remaining - 1,
+                };
+            }
+        }
+
+        Action::FinishMovingOpponentsActiveEnergyToHand => {
+            match state.phase {
+                Phase::MovingOpponentsActiveEnergyToHand { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::TakeTrainerFromDiscard { card } => {
+            let player = match state.phase {
+                Phase::TakingTrainerFromDiscard { player } => player,
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].discard.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} returns to hand."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::EvolveWithAscension { card } => {
+            let (player, target) = match state.phase {
+                Phase::SearchingLibraryToEvolveSelf { player, target } => (player, target),
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.pokemon[target.index()].cards.push(card);
+            // Rule 22: evolving clears every Special Condition. Damage and
+            // attachments are untouched — nothing here moves them.
+            state.clear_conditions(target);
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("Ascension evolves into {name}."));
+            let library = &mut state.players[player.index()].library;
+            shuffle(state.rng.as_mut(), library);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1693,6 +1755,45 @@ fn resolve_attack_effect(
             let opponent = state.pokemon(attacker).owner.opponent();
             let name = state.pokemon_def(attacker).name;
             state.log.push(format!("{name} reveals {opponent:?}'s hand."));
+        }
+        crate::card::AttackEffect::MayReturnOpponentsActiveEnergyToHand(count) => {
+            let owner = state.pokemon(attacker).owner;
+            let opponent = owner.opponent();
+            let has_energy = state.player(opponent).active.is_some_and(|active| {
+                state.pokemon(active).attached.iter().any(|c| state.def_of(*c).is_energy())
+            });
+            if has_energy {
+                state.phase = Phase::MovingOpponentsActiveEnergyToHand {
+                    player: owner,
+                    remaining: count,
+                };
+            }
+        }
+        crate::card::AttackEffect::SearchLibraryToEvolveSelf => {
+            let owner = state.pokemon(attacker).owner;
+            let from = state.pokemon_def(attacker).name;
+            let any_evolution = state
+                .player(owner)
+                .library
+                .iter()
+                .any(|c| state.def_of(*c).as_pokemon().is_some_and(|p| p.evolve_from == Some(from)));
+            if any_evolution {
+                state.phase = Phase::SearchingLibraryToEvolveSelf {
+                    player: owner,
+                    target: attacker,
+                };
+            }
+        }
+        crate::card::AttackEffect::TakeTrainerFromDiscard => {
+            let owner = state.pokemon(attacker).owner;
+            let any_trainer = state
+                .player(owner)
+                .discard
+                .iter()
+                .any(|c| state.matches_filter(*c, crate::card::CardFilter::AnyTrainer));
+            if any_trainer {
+                state.phase = Phase::TakingTrainerFromDiscard { player: owner };
+            }
         }
         crate::card::AttackEffect::SearchLibraryForBasicPokemonToBench(count) => {
             let owner = state.pokemon(attacker).owner;
