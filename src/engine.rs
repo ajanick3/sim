@@ -1566,6 +1566,11 @@ fn resolve_attack_effect(
             let name = state.pokemon_def(defender).name;
             state.log.push(format!("{name} cannot retreat next turn."));
         }
+        crate::card::AttackEffect::AttackerCannotAttackNextTurn => {
+            state.own_next_turn_restriction = Some((attacker, effect, false));
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} cannot attack next turn."));
+        }
     }
 }
 

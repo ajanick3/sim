@@ -982,6 +982,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Applin", "Tumbling Attack") => AttackEffect::CoinFlipBonusDamage(20),
         ("Yveltal", "Clutch") => AttackEffect::DefenderCannotRetreatNextTurn,
         ("Wellspring Mask Ogerpon ex", "Sob") => AttackEffect::DefenderCannotRetreatNextTurn,
+        ("N's Zekrom", "Rampaging Thunder") => AttackEffect::AttackerCannotAttackNextTurn,
         _ => return None,
     })
 }

@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Team Rocket's Factory | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (23/95 built)
+### Pokémon (24/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -249,7 +249,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | N's Darmanitan | ❌ |
 | N's Darumaka | ✅ |
 | N's Reshiram | ✅ |
-| N's Zekrom | ❌ |
+| N's Zekrom | ✅ |
 | N's Zoroark ex | ❌ |
 | N's Zorua | ✅ |
 | Noctowl | ❌ |
@@ -292,6 +292,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
   artifact holds, the modelling findings already banked, and what the data
   cannot express.
 - [The ADR directory](docs/adr/) — the decisions and their reasoning.
+
 
 
 

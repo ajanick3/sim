@@ -371,6 +371,14 @@ pub struct GameState {
     /// `begin_turn`, but only once it is the *granting* player's turn
     /// again — see the check there for why.
     pub opponent_next_turn_restriction: Option<(PokemonId, crate::card::AttackEffect)>,
+    /// The mirror of `opponent_next_turn_restriction`: a restriction on
+    /// the *attacker's own* very next turn, granted mid-turn (so it must
+    /// not apply to the turn granting it). `armed` becomes `true` the
+    /// first `begin_turn` after granting — the opponent's turn starting
+    /// — marking that the *next* time it is the target owner's own turn
+    /// is the one restricted turn; the field clears at the `begin_turn`
+    /// after that one ends.
+    pub own_next_turn_restriction: Option<(PokemonId, crate::card::AttackEffect, bool)>,
     /// A bonus this turn's attacks carry, set by a card such as `Black
     /// Belt's Training`. Cleared at `begin_turn`, the same as `spent` —
     /// "this turn" ends there regardless of whose turn is starting.
@@ -435,6 +443,7 @@ impl GameState {
             knocked_out_last_turn: [false, false],
             played_a_team_rocket_supporter_this_turn: [false, false],
             opponent_next_turn_restriction: None,
+            own_next_turn_restriction: None,
             turn_bonus: None,
             attacking_defender: None,
             rng,
@@ -844,6 +853,18 @@ impl GameState {
             && self.pokemon[target.index()].owner != self.current
         {
             self.opponent_next_turn_restriction = None;
+        }
+        // The mirror, for a restriction on the attacker's own next
+        // turn: arm it the first turn after granting (the opponent's,
+        // which does not clear it — that only happens once armed), then
+        // clear it once the target owner's one restricted turn ends.
+        if let Some((target, effect, armed)) = self.own_next_turn_restriction {
+            let is_targets_turn = self.pokemon[target.index()].owner == self.current;
+            if armed && !is_targets_turn {
+                self.own_next_turn_restriction = None;
+            } else if !armed && !is_targets_turn {
+                self.own_next_turn_restriction = Some((target, effect, true));
+            }
         }
     }
 

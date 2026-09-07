@@ -571,6 +571,9 @@ pub enum AttackEffect {
     /// The defending Pokémon cannot retreat during the opponent's very
     /// next turn. `Yveltal`, `Wellspring Mask Ogerpon ex`.
     DefenderCannotRetreatNextTurn,
+    /// The attacker cannot use any attack during their own very next
+    /// turn. `N's Zekrom`'s `Rampaging Thunder`.
+    AttackerCannotAttackNextTurn,
 }
 
 /// What `AttackEffect::DamagePerCount` counts.

@@ -76,5 +76,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // damage bonus, admit Applin's sv06-017 print (its only attack).
     // A restriction through the opponent's next turn (can't retreat)
     // admits Yveltal's me01-088 print (its other attack has no text).
-    assert_eq!(admitted, 528, "coverage moves only on purpose");
+    // A restriction on the attacker's own next turn (can't attack)
+    // completes N's Zekrom (2 prints): its other attack (Shred) was
+    // already read in ticket 03.
+    assert_eq!(admitted, 530, "coverage moves only on purpose");
 }
