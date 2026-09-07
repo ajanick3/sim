@@ -796,3 +796,63 @@ fn blaziken_ex_is_admitted_from_the_artifact() {
         "at least one Blaziken ex print should play"
     );
 }
+
+// --- Beyond the map: a play-triggered may-discard-the-Stadium Ability ---
+
+#[test]
+fn benching_from_hand_offers_discarding_the_stadium() {
+    let ability = Ability {
+        name: "Snow Sink",
+        effect: sim::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium,
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+
+    let stadium_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-stadium",
+        name: "Test Stadium",
+        kind: sim::card::TrainerKind::Stadium,
+        requirement: None,
+        effect: sim::card::TrainerEffect::MoveAttachedEnergy,
+    }));
+    let stadium = deal_new_card(&mut state, player, stadium_def);
+    state.stadium = Some((player.opponent(), stadium));
+
+    let second_copy = deal_new_card(&mut state, player, carrier_def);
+    state.players[player.index()].hand.push(second_copy);
+
+    apply(&mut state, Action::PlayBasic { card: second_copy }).unwrap();
+
+    assert!(matches!(state.phase, Phase::DecidingToUseSnowSink { .. }));
+    apply(&mut state, Action::AcceptSnowSink).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.stadium, None);
+    assert!(state.player(player.opponent()).discard.contains(&stadium));
+}
+
+#[test]
+fn no_stadium_in_play_opens_no_phase_for_snow_sink() {
+    let ability = Ability {
+        name: "Snow Sink",
+        effect: sim::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium,
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let second_copy = deal_new_card(&mut state, player, carrier_def);
+    state.players[player.index()].hand.push(second_copy);
+
+    apply(&mut state, Action::PlayBasic { card: second_copy }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "no Stadium in play");
+}
+
+#[test]
+fn chien_pao_snow_sink_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv08-056").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Chien-Pao's Snow Sink print should play");
+}

@@ -68,6 +68,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.log.push(format!("{player:?} benches {name}."));
             apply_risky_ruins(state, pokemon);
             trigger_last_ditch_catch(state, player, pokemon);
+            trigger_snow_sink(state, player, pokemon);
         }
 
         Action::Evolve { card, target } => {
@@ -1148,7 +1149,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     state.phase = Phase::DecidingToUseSeethingSpirit { player, pokemon };
                 }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
-                | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_) => {
+                | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_)
+                | crate::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
                 }
             }
@@ -1327,6 +1329,43 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         Action::DeclineSeethingSpirit => {
             match state.phase {
                 Phase::DecidingToUseSeethingSpirit { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::MoveOwnAttachedEnergyToHand { card } => {
+            let (player, attacker) = match state.phase {
+                Phase::ChoosingOwnEnergyToHand { player, attacker } => (player, attacker),
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[attacker.index()].attached.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} returns to hand."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::AcceptSnowSink => {
+            let (player, pokemon) = match state.phase {
+                Phase::DecidingToUseSnowSink { player, pokemon } => (player, pokemon),
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            let (owner, card) = state.stadium.take().expect("legal_actions offers this only with a Stadium in play");
+            state.players[owner.index()].discard.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} is discarded (Snow Sink)."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DeclineSnowSink => {
+            match state.phase {
+                Phase::DecidingToUseSnowSink { .. } => {}
                 _ => return Err(IllegalAction),
             };
             state.phase = Phase::Main;
@@ -2312,6 +2351,13 @@ fn resolve_attack_effect(
             let owner = state.pokemon(attacker).owner;
             state.phase = Phase::ChoosingAnyOpponentPokemonDamageTarget { player: owner, damage };
         }
+        crate::card::AttackEffect::MoveOwnAttachedEnergyToHand => {
+            let owner = state.pokemon(attacker).owner;
+            let any_energy = state.pokemon(attacker).attached.iter().any(|c| state.def_of(*c).is_energy());
+            if any_energy {
+                state.phase = Phase::ChoosingOwnEnergyToHand { player: owner, attacker };
+            }
+        }
         crate::card::AttackEffect::SelfDamageReductionNextTurn(amount) => {
             state.opponent_next_turn_restriction = Some((attacker, effect, state.current));
             let name = state.pokemon_def(attacker).name;
@@ -2701,6 +2747,24 @@ fn trigger_last_ditch_catch(state: &mut GameState, player: PlayerId, pokemon: Po
         .any(|c| state.matches_filter(*c, crate::card::CardFilter::TrainerOfKind(TrainerKind::Supporter)));
     if any_supporter {
         state.phase = Phase::DecidingToUseLastDitchCatch { player, pokemon };
+    }
+}
+
+/// `Chien-Pao`'s `Snow Sink`, the same "played from hand onto the
+/// Bench" trigger `trigger_last_ditch_catch` reads, but discarding
+/// whichever Stadium is in play instead of searching.
+fn trigger_snow_sink(state: &mut GameState, player: PlayerId, pokemon: PokemonId) {
+    let Some(ability) = state.pokemon_def(pokemon).ability else {
+        return;
+    };
+    if !matches!(ability.effect, crate::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium) {
+        return;
+    }
+    if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
+        return;
+    }
+    if state.stadium.is_some() {
+        state.phase = Phase::DecidingToUseSnowSink { player, pokemon };
     }
 }
 

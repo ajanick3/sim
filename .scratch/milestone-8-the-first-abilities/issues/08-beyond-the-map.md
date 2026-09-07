@@ -38,7 +38,15 @@ same way Milestone 11 continued past its own spec:
   free choice of target. Its own attack reuses
   `AttackerCannotAttackNextTurn`. Admits its one print.
 
-Coverage: 604 -> 615 across these four PRs.
+- **Chien-Pao** — its `Strafe`/`Rising Blade` print reuses
+  `SwitchOwnActive` and `BonusDamageIfDefenderIsEx` outright. Its
+  other prints pair `Icicle Loop` (`MoveOwnAttachedEnergyToHand`, puts
+  one of the attacker's own attached Energy into hand) with
+  `Snow Sink` (`WhenBenchedFromHandMayDiscardStadium`, a play-triggered
+  Ability sharing `trigger_last_ditch_catch`'s trigger site).
+  Completes all 3 prints.
+
+Coverage: 604 -> 618 across these five PRs.
 
 ## What is left
 

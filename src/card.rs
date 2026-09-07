@@ -725,6 +725,11 @@ pub enum AttackEffect {
     /// attack and after Weakness/Resistance rather than before.
     /// `Genesect ex`'s `Protect Charge`.
     SelfDamageReductionNextTurn(u32),
+    /// Put an Energy attached to the attacker into the owner's hand,
+    /// choosing which if more than one is attached — opens
+    /// `Phase::ChoosingOwnEnergyToHand`. No Energy attached opens no
+    /// phase. `Chien-Pao`'s `Icicle Loop`.
+    MoveOwnAttachedEnergyToHand,
     /// Move an Energy from one of the opponent's Pokémon to another —
     /// the attacker's own choice of both ends, but on the opponent's
     /// board, unlike `TrainerEffect::MoveAttachedEnergy`'s own board.
@@ -892,6 +897,12 @@ pub enum AbilityEffect {
     /// the discard pile opens no phase. `Blaziken ex`'s
     /// `Seething Spirit`.
     OncePerTurnMayAttachBasicEnergyFromDiscardToChosen,
+    /// Once during the player's own turn, the moment this Pokémon is
+    /// played from hand onto the Bench, the player may discard
+    /// whichever Stadium is in play — opens
+    /// `Phase::DecidingToUseSnowSink`. No Stadium in play opens no
+    /// phase. `Chien-Pao`'s `Snow Sink`.
+    WhenBenchedFromHandMayDiscardStadium,
 }
 
 /// A basic Energy card as printed.

@@ -200,5 +200,11 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // discard pile to a chosen own Pokemon) and its own attack,
     // Smolder-sault (AttackerCannotAttackNextTurn, already built)
     // admit its one print.
-    assert_eq!(admitted, 615, "coverage moves only on purpose");
+    // Chien-Pao's Strafe/Rising Blade print reuses SwitchOwnActive and
+    // BonusDamageIfDefenderIsEx outright. Its other prints pair
+    // Icicle Loop (puts an attached Energy into hand,
+    // MoveOwnAttachedEnergyToHand) with Snow Sink (a play-triggered
+    // Ability that may discard whichever Stadium is in play).
+    // Completes all 3 Chien-Pao prints.
+    assert_eq!(admitted, 618, "coverage moves only on purpose");
 }

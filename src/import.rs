@@ -1005,6 +1005,7 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Blaziken ex", "Seething Spirit") => {
             AbilityEffect::OncePerTurnMayAttachBasicEnergyFromDiscardToChosen
         }
+        ("Chien-Pao", "Snow Sink") => AbilityEffect::WhenBenchedFromHandMayDiscardStadium,
         _ => return None,
     })
 }
@@ -1099,6 +1100,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Dusknoir", "Shadow Bind") => AttackEffect::DefenderCannotRetreatNextTurn,
         ("Genesect ex", "Protect Charge") => AttackEffect::SelfDamageReductionNextTurn(30),
         ("Blaziken ex", "Smolder-sault") => AttackEffect::AttackerCannotAttackNextTurn,
+        ("Chien-Pao", "Strafe") => AttackEffect::SwitchOwnActive,
+        ("Chien-Pao", "Rising Blade") => AttackEffect::BonusDamageIfDefenderIsEx(80),
+        ("Chien-Pao", "Icicle Loop") => AttackEffect::MoveOwnAttachedEnergyToHand,
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }
