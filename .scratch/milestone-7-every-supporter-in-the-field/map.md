@@ -49,8 +49,10 @@ Nothing resolved yet.
 - Whether "a choice between two named effects" is a `TrainerEffect`
   variant carrying two others, or a phase that reads the card's own
   definition twice. `Kieran` is the only card that needs it today.
-- Whether `Brock's Scouting`'s two-count search is a second field on
-  `Slot`, or two slots that share one destination and reveal together
-  rather than in sequence. `Dawn` and `Hilda` already showed that a
-  sequence of slots is one search; whether *simultaneous* independent
-  counts are the same shape or a different one is this ticket's question.
+- **`Brock's Scouting`'s two-count search needed nothing new.** Taking
+  from an earlier slot in a sequence never reduces what a later slot
+  allows, since each slot's own `remaining` is set fresh when it opens —
+  "two independent counts" and "a sequence of slots" reach the same final
+  hand, they only differ in the order choices are presented. `Brock's
+  Scouting` plays as an ordinary two-slot `Decide`, the same shape `Dawn`
+  already is.

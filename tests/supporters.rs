@@ -1254,3 +1254,106 @@ fn eri_is_admitted_from_the_artifact() {
         }
     );
 }
+
+// --- Ticket 11: Brock's Scouting ---
+
+fn with_brocks_scouting(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-brocks-scouting",
+        name: "Brock's Scouting",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![
+                Slot {
+                    filter: CardFilter::PokemonOfStage(Stage::Basic),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 2,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+                Slot {
+                    filter: CardFilter::EvolutionPokemon,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+            ],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn brocks_scouting_takes_from_both_categories_in_one_search() {
+    // The ticket that planned this milestone worried a shared sequence of
+    // slots (`Dawn`'s shape) could not express "two counts, each
+    // independent of the other" — but taking from one slot never reduces
+    // what a later slot allows, so the two-slot search already is that,
+    // with nothing new to build. This test is the check that finding
+    // rests on: both categories are actually reachable from one card.
+    let (set, card) = with_brocks_scouting(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    let hand_before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    // Slot 0: up to 2 Basic.
+    let first_basic = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: first_basic }).unwrap();
+    let second_basic = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: second_basic }).unwrap();
+    assert!(offered(&state).is_empty(), "two Basics is that slot's limit");
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    // Slot 1: up to 1 Evolution — untouched by what slot 0 already took.
+    let evolution = offered(&state)[0];
+    assert!(state.def_of(evolution).as_pokemon().unwrap().stage != Stage::Basic);
+    apply(&mut state, Action::TakeCard { card: evolution }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    // The Supporter itself, plus 2 Basics and 1 Evolution.
+    assert_eq!(state.player(player).hand.len(), hand_before + 3 - 1);
+}
+
+#[test]
+fn brocks_scouting_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let card = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Brock's Scouting")
+        .expect("Brock's Scouting plays");
+    assert_eq!(
+        card.effect,
+        TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![
+                Slot {
+                    filter: CardFilter::PokemonOfStage(Stage::Basic),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 2,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+                Slot {
+                    filter: CardFilter::EvolutionPokemon,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+            ],
+            then: None,
+        }
+    );
+}
