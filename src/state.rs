@@ -317,6 +317,15 @@ pub enum Phase {
     /// `player` used an attack that puts a Pokémon card from their own
     /// discard pile into their hand. `Slowpoke`'s `Dangle Tail`.
     TakingPokemonFromDiscard { player: PlayerId },
+    /// `player` used an attack that may shuffle a fixed count of the
+    /// attacker's own Energy into the library for bench damage.
+    /// `Wellspring Mask Ogerpon ex`'s `Torrential Pump`.
+    DecidingToShuffleEnergyForBenchDamage {
+        player: PlayerId,
+        attacker: PokemonId,
+        count: u32,
+        damage: u32,
+    },
     /// `player` used an attack that searches their own discard pile
     /// for up to `remaining` more copies of a named Pokémon to the
     /// Bench. `Duskull`'s `Come and Get You`.

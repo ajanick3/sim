@@ -673,6 +673,16 @@ pub enum AttackEffect {
     /// the Item-offering site in `legal_actions` rather than at
     /// retreat's. `Budew`'s `Itchy Pollen`.
     OpponentCannotPlayItemsNextTurn,
+    /// The player may shuffle exactly `count` Energy attached to the
+    /// attacker into their own library; if they do, this attack also
+    /// deals `damage` (flat) to one Benched Pokémon they choose. Opens
+    /// `Phase::DecidingToShuffleEnergyForBenchDamage` only when the
+    /// attacker carries at least `count` Energy — otherwise the
+    /// option was never really available. Which Energy cards shuffle
+    /// is not the player's choice: they are interchangeable for this
+    /// effect, so the engine takes the first `count` it finds.
+    /// `Wellspring Mask Ogerpon ex`'s `Torrential Pump`.
+    MayShuffleFixedEnergyThenDamageChosenBenched { count: u32, damage: u32 },
 }
 
 /// What `AttackEffect::DamagePerCount` counts.

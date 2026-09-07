@@ -131,5 +131,10 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // next turn only — the same opponent_next_turn_restriction
     // lifetime, read at the Item-offering site instead of retreat's
     // — completes all 3 Budew prints.
-    assert_eq!(admitted, 570, "coverage moves only on purpose");
+    // An optional fixed-count Energy shuffle-back paid for bench
+    // damage — the player's choice is whether to pay at all, not
+    // which cards, since the Energy is interchangeable for this
+    // effect — completes all 5 Wellspring Mask Ogerpon ex prints
+    // (Sob was already read in ticket 05).
+    assert_eq!(admitted, 575, "coverage moves only on purpose");
 }

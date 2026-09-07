@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (39/95 built)
+### Pokémon (40/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -275,7 +275,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Torchic](src/import.rs#L1009) | ✅ |
 | [Toxel](src/import.rs#L994) | ✅ |
 | Toxtricity | ❌ |
-| Wellspring Mask Ogerpon ex | ❌ |
+| [Wellspring Mask Ogerpon ex](src/import.rs#L984) | ✅ |
 | [Yveltal](src/import.rs#L983) | ✅ |
 | Zeraora | ❌ |
 

@@ -1646,3 +1646,121 @@ fn budew_is_admitted_from_the_artifact() {
         "at least one Budew print should play"
     );
 }
+
+// --- Beyond the spec: an optional Energy cost paid for bench damage ---
+
+#[test]
+fn accepting_shuffles_energy_then_damages_a_chosen_benched_pokemon() {
+    let attack = Attack {
+        name: "Torrential Pump",
+        cost: vec![Type::Colorless],
+        base_damage: 30,
+        inflicts: None,
+        effect: Some(AttackEffect::MayShuffleFixedEnergyThenDamageChosenBenched {
+            count: 3,
+            damage: 120,
+        }),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let attacker = state.player(player).active.unwrap();
+    let bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    // Give the attacker 3 Energy beyond the 1 it pays the cost with.
+    let energy_card = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    let energy_def = state.cards[energy_card.index()].def;
+    for _ in 0..3 {
+        let extra = deal_new_card(&mut state, player, energy_def);
+        state.pokemon[attacker.index()].attached.push(extra);
+    }
+    pay_and_attack(&mut state);
+    let attached_before = state.pokemon(attacker).attached.len();
+
+    assert!(matches!(state.phase, Phase::DecidingToShuffleEnergyForBenchDamage { .. }));
+    apply(&mut state, Action::AcceptShuffleEnergyForBenchDamage).unwrap();
+
+    assert!(matches!(state.phase, Phase::ChoosingBenchDamageTarget { .. }));
+    apply(&mut state, Action::DamageBenchedPokemon { target: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(bench_mon).damage, 120);
+    assert_eq!(state.pokemon(attacker).attached.len(), attached_before - 3);
+}
+
+#[test]
+fn declining_leaves_everything_as_is() {
+    let attack = Attack {
+        name: "Torrential Pump",
+        cost: vec![Type::Colorless],
+        base_damage: 30,
+        inflicts: None,
+        effect: Some(AttackEffect::MayShuffleFixedEnergyThenDamageChosenBenched {
+            count: 3,
+            damage: 120,
+        }),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let energy_card = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    let energy_def = state.cards[energy_card.index()].def;
+    for _ in 0..3 {
+        let extra = deal_new_card(&mut state, player, energy_def);
+        state.pokemon[attacker.index()].attached.push(extra);
+    }
+    pay_and_attack(&mut state);
+    let attached_before = state.pokemon(attacker).attached.len();
+
+    assert!(matches!(state.phase, Phase::DecidingToShuffleEnergyForBenchDamage { .. }));
+    apply(&mut state, Action::DeclineShuffleEnergyForBenchDamage).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(attacker).attached.len(), attached_before);
+}
+
+#[test]
+fn not_enough_energy_opens_no_phase_at_all() {
+    let attack = Attack {
+        name: "Torrential Pump",
+        cost: vec![Type::Colorless],
+        base_damage: 30,
+        inflicts: None,
+        effect: Some(AttackEffect::MayShuffleFixedEnergyThenDamageChosenBenched {
+            count: 3,
+            damage: 120,
+        }),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "only 1 Energy attached, need 3");
+}
+
+#[test]
+fn wellspring_mask_ogerpon_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import
+            .cards
+            .iter()
+            .any(|c| c.name == "Wellspring Mask Ogerpon ex" && c.playable.is_some()),
+        "at least one Wellspring Mask Ogerpon ex print should play"
+    );
+}
