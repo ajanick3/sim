@@ -536,6 +536,34 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             resolve_trainer(state, player, played, chosen);
         }
 
+        Action::DiscardFromHand { card } => {
+            let (chooser, of, filter, remaining) = match state.phase {
+                Phase::DiscardingFromHand { chooser, of, filter, remaining } => {
+                    (chooser, of, filter, remaining)
+                }
+                _ => return Err(IllegalAction),
+            };
+            state.players[of.index()].hand.retain(|c| *c != card);
+            state.players[of.index()].discard.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{chooser:?} discards {name}."));
+            state.phase = Phase::DiscardingFromHand {
+                chooser,
+                of,
+                filter,
+                remaining: remaining - 1,
+            };
+        }
+
+        Action::FinishDiscardingFromHand => {
+            match state.phase {
+                Phase::DiscardingFromHand { .. } => {}
+                _ => return Err(IllegalAction),
+            }
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::EvolveSkippingOneStage { card, target } => {
             let player = match state.phase {
                 Phase::EvolvingWithRareCandy { player } => player,
@@ -845,6 +873,26 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             for _ in 0..count {
                 state.draw(player);
             }
+        }
+
+        TrainerEffect::OpponentDiscardsDownTo(target) => {
+            let opponent = player.opponent();
+            let hand_len = state.player(opponent).hand.len() as u32;
+            state.phase = Phase::DiscardingFromHand {
+                chooser: opponent,
+                of: opponent,
+                filter: crate::card::CardFilter::AnyCard,
+                remaining: hand_len.saturating_sub(target),
+            };
+        }
+
+        TrainerEffect::DiscardFromOpponentsHand { filter, limit } => {
+            state.phase = Phase::DiscardingFromHand {
+                chooser: player,
+                of: player.opponent(),
+                filter,
+                remaining: limit,
+            };
         }
 
         TrainerEffect::CoinFlipDiscardOpponentEnergy => {
