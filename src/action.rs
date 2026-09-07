@@ -686,8 +686,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         // once a turn. A Tool is handled above, by `PlayTool` — it always
         // names a target, which `PlayTrainer` never does.
         if let Some(trainer) = def.as_trainer().filter(|t| t.kind != TrainerKind::Tool) {
+            let cannot_play_items = matches!(
+                state.opponent_next_turn_restriction,
+                Some((target, crate::card::AttackEffect::OpponentCannotPlayItemsNextTurn))
+                    if state.pokemon(target).owner == player
+            );
             let timing = match trainer.kind {
-                TrainerKind::Item => true,
+                TrainerKind::Item => !cannot_play_items,
                 TrainerKind::Tool => unreachable!("filtered out above"),
                 TrainerKind::Supporter => {
                     !state.is_spent(Limit::SupporterPlayed(player))

@@ -667,6 +667,12 @@ pub enum AttackEffect {
     /// `damage_dealt_with`, since it blocks more than damage.
     /// `Dunsparce`'s `Dig`, `Elgyem`'s `Hide`.
     CoinFlipSelfInvulnerableNextTurn,
+    /// The opponent cannot play any Item card during their very next
+    /// turn — the same `opponent_next_turn_restriction` lifetime
+    /// `DefenderCannotRetreatNextTurn` already carries, but read at
+    /// the Item-offering site in `legal_actions` rather than at
+    /// retreat's. `Budew`'s `Itchy Pollen`.
+    OpponentCannotPlayItemsNextTurn,
 }
 
 /// What `AttackEffect::DamagePerCount` counts.
