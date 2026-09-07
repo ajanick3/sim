@@ -107,5 +107,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Moltres's Fighting Wings (a bonus read once against a boolean
     // defender fact, the mirror of BonusDamageIfOwnDamaged) admits
     // its one print.
-    assert_eq!(admitted, 554, "coverage moves only on purpose");
+    // Slowpoke's Dangle Tail (a Pokemon taken from the discard pile,
+    // the mirror of TakeTrainerFromDiscard) admits its sv07-057 print.
+    assert_eq!(admitted, 555, "coverage moves only on purpose");
 }

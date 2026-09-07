@@ -942,6 +942,19 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::TakePokemonFromDiscard { card } => {
+            let player = match state.phase {
+                Phase::TakingPokemonFromDiscard { player } => player,
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].discard.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} returns to hand."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1792,6 +1805,17 @@ fn resolve_attack_effect(
                     player: owner,
                     target: attacker,
                 };
+            }
+        }
+        crate::card::AttackEffect::TakePokemonFromDiscard => {
+            let owner = state.pokemon(attacker).owner;
+            let any_pokemon = state
+                .player(owner)
+                .discard
+                .iter()
+                .any(|c| state.matches_filter(*c, crate::card::CardFilter::AnyPokemon));
+            if any_pokemon {
+                state.phase = Phase::TakingPokemonFromDiscard { player: owner };
             }
         }
         crate::card::AttackEffect::TakeTrainerFromDiscard => {

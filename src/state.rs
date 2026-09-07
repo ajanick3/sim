@@ -314,6 +314,9 @@ pub enum Phase {
     /// `player` used an attack that searches the library for a card to
     /// evolve the attacker into directly. `Dwebble`'s `Ascension`.
     SearchingLibraryToEvolveSelf { player: PlayerId, target: PokemonId },
+    /// `player` used an attack that puts a Pokémon card from their own
+    /// discard pile into their hand. `Slowpoke`'s `Dangle Tail`.
+    TakingPokemonFromDiscard { player: PlayerId },
     /// `player` played `Janine's Secret Art` and is choosing up to 2 of
     /// their own Darkness Pokémon, in `chosen`, before any search runs.
     ChoosingJaninesTargets {

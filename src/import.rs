@@ -1004,6 +1004,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Beldum", "Iron Tackle") => AttackEffect::Recoil(10),
         ("Dunsparce", "Trading Places") => AttackEffect::SwitchOwnActive,
         ("Moltres", "Fighting Wings") => AttackEffect::BonusDamageIfDefenderIsEx(90),
+        ("Slowpoke", "Dangle Tail") => AttackEffect::TakePokemonFromDiscard,
         _ => return None,
     })
 }

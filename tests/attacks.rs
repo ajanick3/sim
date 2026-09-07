@@ -1293,3 +1293,55 @@ fn moltres_is_admitted_from_the_artifact() {
         "at least one Moltres print should play"
     );
 }
+
+// --- Beyond the spec: Slowpoke's Dangle Tail ---
+
+#[test]
+fn takes_a_pokemon_card_from_the_discard_pile() {
+    let attack = Attack {
+        name: "Dangle Tail",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::TakePokemonFromDiscard),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+
+    let pokemon = deal_new_card(&mut state, player, defender_ex);
+    state.players[player.index()].discard.push(pokemon);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::TakingPokemonFromDiscard { .. }));
+    apply(&mut state, Action::TakePokemonFromDiscard { card: pokemon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&pokemon));
+}
+
+#[test]
+fn no_pokemon_in_discard_opens_no_phase_for_dangle_tail() {
+    let attack = Attack {
+        name: "Dangle Tail",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::TakePokemonFromDiscard),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no Pokemon in the discard pile");
+}
+
+#[test]
+fn slowpoke_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv07-057").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Slowpoke's Dangle Tail print should play");
+}

@@ -265,7 +265,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Seaking | ❌ |
 | Shaymin | ❌ |
 | [Slowking](src/import.rs#L999) | ✅ |
-| [Slowpoke](src/import.rs#L234) | ✅ |
+| [Slowpoke](src/import.rs#L1007) | ✅ |
 | Smoochum | ❌ |
 | Stunfisk | ❌ |
 | [Tapu Bulu](src/import.rs#L953) | ✅ |
