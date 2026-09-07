@@ -726,7 +726,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         }
 
         // Rule 17: the player going first skips their attack step.
-        if !state.is_first_turn_of_game() && !held(active) {
+        let cannot_attack_at_all = matches!(
+            state.own_next_turn_restriction,
+            Some((target, crate::card::AttackEffect::AttackerCannotAttackNextTurn, true))
+                if target == active
+        );
+        if !state.is_first_turn_of_game() && !held(active) && !cannot_attack_at_all {
             for (index, attack) in state.pokemon_def(active).attacks.iter().enumerate() {
                 if state.pays_cost(active, &attack.cost) {
                     actions.push(Action::Attack { index });

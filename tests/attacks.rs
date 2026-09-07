@@ -588,3 +588,69 @@ fn yveltal_is_admitted_from_the_artifact() {
         "at least one Yveltal print should play"
     );
 }
+
+// --- Ticket 06: a restriction on the attacker's own next turn ---
+
+#[test]
+fn cannot_attack_next_turn_blocks_all_attacks_that_one_turn_only() {
+    let attack = Attack {
+        name: "Rampaging Thunder",
+        cost: vec![Type::Colorless],
+        base_damage: 50, // well short of the fixture's 200 HP: no knockout
+        inflicts: None,
+        effect: Some(AttackEffect::AttackerCannotAttackNextTurn),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let attacker = state.player(player).active.unwrap();
+
+    pay_and_attack(&mut state);
+    assert_eq!(state.current, opponent, "the attack ended the attacker's turn");
+
+    // Not yet the attacker's own next turn: no restriction observable
+    // through their own attack offer, since it is not their turn.
+    assert!(!legal_actions(&state).into_iter().any(|a| matches!(a, Action::Attack { .. })));
+
+    // The opponent's turn passes; now it is the attacker's own next turn.
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    assert_eq!(state.current, player, "the attacker's own next turn");
+    assert_eq!(state.player(player).active, Some(attacker));
+    assert!(
+        !legal_actions(&state).into_iter().any(|a| matches!(a, Action::Attack { .. })),
+        "cannot attack during this, the one restricted turn"
+    );
+
+    // A further turn on, the restriction is gone.
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    assert_eq!(state.current, player, "the attacker's turn again");
+    assert!(
+        legal_actions(&state).into_iter().any(|a| matches!(a, Action::Attack { .. })),
+        "the restriction does not survive past the one turn it applied to"
+    );
+}
+
+#[test]
+fn ns_zekrom_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "N's Zekrom" && c.playable.is_some()),
+        "at least one N's Zekrom print should play"
+    );
+}
