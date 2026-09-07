@@ -178,5 +178,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // into the deck as part of its own Ability, the "moves together"
     // rule 22 already keeps but into the library) admits both prints
     // (Land Crush has no printed text).
-    assert_eq!(admitted, 604, "coverage moves only on purpose");
+    // Beyond Milestone 8's own map: Abra's Teleporter (the same
+    // shuffle-self shape as Run Away Draw, but no draw and Active-
+    // only) admits its sv06-080 print (its other print's only attack
+    // has no printed text and no Ability at all).
+    assert_eq!(admitted, 605, "coverage moves only on purpose");
 }

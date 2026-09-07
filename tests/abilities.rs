@@ -546,3 +546,76 @@ fn dudunsparce_is_admitted_from_the_artifact() {
         "at least one Dudunsparce print should play"
     );
 }
+
+// --- Beyond the map: Abra's own shuffle-self ability ---
+
+#[test]
+fn shuffles_itself_into_the_deck_while_active_no_draw() {
+    let ability = Ability {
+        name: "Teleporter",
+        effect: sim::card::AbilityEffect::OncePerTurnWhileActiveMayShuffleSelfIntoDeck,
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let bench_card_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-bench-filler",
+        name: "Fillermon",
+        hp: 100,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let bench_card = deal_new_card(&mut state, player, bench_card_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+    let library_before = state.player(player).library.len();
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+
+    assert!(matches!(state.phase, Phase::Promoting { .. }));
+    apply(&mut state, Action::Promote { pokemon: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).active, Some(bench_mon));
+    assert_eq!(state.player(player).library.len(), library_before + 1);
+}
+
+#[test]
+fn cannot_shuffle_self_from_the_bench() {
+    let ability = Ability {
+        name: "Teleporter",
+        effect: sim::card::AbilityEffect::OncePerTurnWhileActiveMayShuffleSelfIntoDeck,
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let bench_card = deal_new_card(&mut state, player, carrier_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: bench_mon });
+    assert!(result.is_err(), "only works from the Active Spot");
+}
+
+#[test]
+fn abra_beam_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv06-080").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Abra's Beam print should play");
+}

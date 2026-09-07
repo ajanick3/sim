@@ -851,6 +851,12 @@ pub enum AbilityEffect {
     /// stays in play, since there would be nothing to replace it
     /// with. `Dudunsparce`'s `Run Away Draw`.
     OncePerTurnMayDrawThenShuffleSelfIntoDeck(u32),
+    /// Once during the player's own turn, only while this Pokémon is
+    /// the Active, the player may shuffle it and every card attached
+    /// to it into the library — the same "moves together" shape
+    /// `OncePerTurnMayDrawThenShuffleSelfIntoDeck` takes, but with no
+    /// draw and no condition beyond being Active. `Abra`'s `Beam`.
+    OncePerTurnWhileActiveMayShuffleSelfIntoDeck,
 }
 
 /// A basic Energy card as printed.
