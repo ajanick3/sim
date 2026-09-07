@@ -640,6 +640,40 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::ChooseDevolveTarget { target } => {
+            let player = match state.phase {
+                Phase::Devolving { player, target: None } => player,
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Devolving { player, target: Some(target) };
+        }
+
+        Action::RemoveOneEvolutionCard => {
+            let (player, target) = match state.phase {
+                Phase::Devolving { player, target: Some(target) } => (player, target),
+                _ => return Err(IllegalAction),
+            };
+            let removed = state.pokemon[target.index()]
+                .cards
+                .pop()
+                .expect("a Pokémon in play always keeps its Basic");
+            state.players[player.index()].hand.push(removed);
+            state.pokemon[target.index()].cannot_evolve_this_turn = true;
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} devolves."));
+            // Still in Devolving: `legal_actions` offers another card to
+            // remove, or FinishDevolving, depending on what is left.
+        }
+
+        Action::FinishDevolving => {
+            match state.phase {
+                Phase::Devolving { target: Some(_), .. } => {}
+                _ => return Err(IllegalAction),
+            }
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1069,6 +1103,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::LookAtBottomOfLibrary { count } => {
             state.phase = Phase::LookingAtBottomOfLibrary { player, count };
+        }
+
+        TrainerEffect::DevolveChosen => {
+            state.phase = Phase::Devolving { player, target: None };
         }
 
         TrainerEffect::JaninesSecretArt => {

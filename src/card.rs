@@ -240,6 +240,10 @@ pub enum TrainerEffect {
     /// `SwitchOpponentActive` with `PromoteFollowUp::AlsoSwitchOwnActive`
     /// chained onto it, not a new shape of switch.
     SwitchOpponentActiveThenOwn,
+    /// Devolve one of the player's own evolved Pokémon, any number of
+    /// evolution cards, into their hand; the Pokémon cannot evolve again
+    /// this turn. `Strange Timepiece`.
+    DevolveChosen,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
