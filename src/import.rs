@@ -14,7 +14,8 @@ use serde_json::Value;
 
 use crate::card::{
     Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, PromoteFollowUp,
-    Requirement, Slot, Stage, TargetFilter, Then, Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    Requirement, Slot, Stage, TargetFilter, Then, Trainer, TrainerEffect, TrainerKind,
+    TurnBonusTarget, Type, Zone,
 };
 use crate::ids::CardDefId;
 
@@ -684,6 +685,14 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Surfer" => (
             free,
             TrainerEffect::SwitchOwnActiveWithFollowUp(PromoteFollowUp::DrawUpTo(5)),
+        ),
+        "Black Belt's Training" => (
+            free,
+            TrainerEffect::BonusDamageThisTurn(40, TurnBonusTarget::OpponentActiveEx),
+        ),
+        "Gladion's Final Battle" => (
+            Some(Requirement::HandSizeIs(1)),
+            TrainerEffect::BonusDamageThisTurn(80, TurnBonusTarget::OpponentActiveWithoutRuleBox),
         ),
         _ => return None,
     })

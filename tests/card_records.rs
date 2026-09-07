@@ -52,6 +52,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Bug Catching Set, 3 of Ciphermaniac's Codebreaking, 1 of Unfair
     // Stamp, 2 of Switch, 2 of Jumbo Ice Cream, 3 of Lana's Aid, 2 of Rust
     // Syndicate Grunt, 3 of N's Plan, 1 of Pokémon Center Lady, 3 of Rosa's
-    // Encouragement, 3 of AZ's Tranquility, and 4 of Surfer.
-    assert_eq!(admitted, 432, "coverage moves only on purpose");
+    // Encouragement, 3 of AZ's Tranquility, 4 of Surfer, 10 of Black
+    // Belt's Training, and 3 of Gladion's Final Battle.
+    assert_eq!(admitted, 445, "coverage moves only on purpose");
 }
