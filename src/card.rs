@@ -317,6 +317,11 @@ pub enum TrainerEffect {
     /// `attack`'s own Tool loops, `powerglass_owner` — rather than
     /// removing the Tool or its attachment. `Jamming Tower`.
     ToolsHaveNoEffect,
+    /// A Stadium's static effect: a Basic Pokémon of any other type,
+    /// benched this turn, takes this much damage — read wherever a
+    /// Pokémon newly arrives on a Bench (`PlayBasic`, a search's own
+    /// `Destination::Bench`), both sides alike. `Risky Ruins`.
+    DamagesNonDarknessBasicBenched(u32),
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },

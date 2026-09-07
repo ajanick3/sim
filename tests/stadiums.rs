@@ -590,3 +590,99 @@ fn jamming_tower_turns_off_an_attached_tools_effect() {
     );
     assert!(state.pokemon(active).attached.contains(&cape_card));
 }
+
+// --- Ticket 07: Risky Ruins ---
+
+fn with_risky_ruins(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let darkness_mon = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-darkness-mon-rr",
+        name: "Duskmon",
+        hp: 90,
+        kind: Type::Darkness,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        attacks: vec![],
+    }));
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-risky-ruins",
+        name: "Risky Ruins",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::DamagesNonDarknessBasicBenched(20),
+    }));
+    (Set { db, ..set }, card, darkness_mon)
+}
+
+#[test]
+fn risky_ruins_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Risky Ruins")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Risky Ruins should play");
+}
+
+#[test]
+fn risky_ruins_damages_a_non_darkness_basic_benched_from_hand() {
+    let (set, card, _) = with_risky_ruins(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    let basic_card = ensure_in_hand(&mut state, player, set.mon);
+    apply(&mut state, Action::PlayBasic { card: basic_card }).unwrap();
+    let benched = *state.player(player).bench.last().unwrap();
+
+    assert_eq!(state.pokemon(benched).damage, 20);
+}
+
+#[test]
+fn risky_ruins_spares_a_darkness_basic() {
+    let (set, card, darkness_mon) = with_risky_ruins(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    let dark_card = deal_new_card(&mut state, player, darkness_mon);
+    state.players[player.index()].hand.push(dark_card);
+    apply(&mut state, Action::PlayBasic { card: dark_card }).unwrap();
+    let benched = *state.player(player).bench.last().unwrap();
+
+    assert_eq!(state.pokemon(benched).damage, 0, "Darkness is exempt");
+}
+
+#[test]
+fn risky_ruins_applies_on_the_opponents_side_too() {
+    let (set, card, _) = with_risky_ruins(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    // Now the opponent's own turn, benching their own Basic.
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    assert_eq!(state.current, opponent);
+    let basic_card = ensure_in_hand(&mut state, opponent, set.mon);
+    apply(&mut state, Action::PlayBasic { card: basic_card }).unwrap();
+    let benched = *state.player(opponent).bench.last().unwrap();
+
+    assert_eq!(state.pokemon(benched).damage, 20, "both sides alike");
+}
