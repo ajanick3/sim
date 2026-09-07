@@ -2471,6 +2471,103 @@ fn switch_is_admitted_from_the_artifact() {
     assert_eq!(switch.effect, TrainerEffect::SwitchOwnActive);
 }
 
+// --- Milestone 6, ticket 07: healing ---
+
+fn with_jumbo_ice_cream(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let jumbo_ice_cream = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-jumbo-ice-cream",
+        name: "Jumbo Ice Cream",
+        kind: TrainerKind::Item,
+        requirement: Some(Requirement::ActiveHasAtLeastEnergy(3)),
+        effect: TrainerEffect::HealActive(80),
+    }));
+    (Set { db, ..set }, jumbo_ice_cream)
+}
+
+/// Attach `count` Energy from the library to the player's own Active,
+/// bypassing the once-a-turn attach action — this ticket's fixtures need
+/// more than one attached at a time, set up directly.
+fn attach_energy_to_active(state: &mut GameState, player: PlayerId, count: usize) {
+    let active = state.player(player).active.expect("an Active is in play");
+    for _ in 0..count {
+        let energy = *state
+            .player(player)
+            .library
+            .iter()
+            .find(|c| state.def_of(**c).is_energy())
+            .expect("the deck is mostly Energy");
+        state.players[player.index()].library.retain(|c| *c != energy);
+        state.pokemon[active.index()].attached.push(energy);
+    }
+}
+
+#[test]
+fn jumbo_ice_cream_cannot_be_played_under_three_energy() {
+    let (set, jumbo_ice_cream) = with_jumbo_ice_cream(build());
+    let mut state = game(&set, jumbo_ice_cream, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, jumbo_ice_cream);
+
+    attach_energy_to_active(&mut state, player, 2);
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "two Energy is not enough"
+    );
+
+    attach_energy_to_active(&mut state, player, 1);
+    assert!(
+        legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "three Energy meets the requirement"
+    );
+}
+
+#[test]
+fn jumbo_ice_cream_heals_eighty_floored_at_zero() {
+    let (set, jumbo_ice_cream) = with_jumbo_ice_cream(build());
+    let mut state = game(&set, jumbo_ice_cream, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, jumbo_ice_cream);
+    attach_energy_to_active(&mut state, player, 3);
+
+    let active = state.player(player).active.unwrap();
+    state.pokemon[active.index()].damage = 30;
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert_eq!(
+        state.pokemon(active).damage,
+        0,
+        "80 healed off 30 damage floors at zero, not a negative number"
+    );
+
+    let card = ensure_in_hand(&mut state, player, jumbo_ice_cream);
+    attach_energy_to_active(&mut state, player, 1);
+    state.pokemon[active.index()].damage = 100;
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert_eq!(
+        state.pokemon(active).damage,
+        20,
+        "80 healed off 100 damage leaves 20"
+    );
+}
+
+#[test]
+fn jumbo_ice_cream_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let jumbo_ice_cream = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Jumbo Ice Cream")
+        .expect("Jumbo Ice Cream plays");
+    assert_eq!(
+        jumbo_ice_cream.requirement,
+        Some(Requirement::ActiveHasAtLeastEnergy(3))
+    );
+    assert_eq!(jumbo_ice_cream.effect, TrainerEffect::HealActive(80));
+}
+
 // --- The card data ---
 
 #[test]

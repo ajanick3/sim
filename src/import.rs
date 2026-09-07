@@ -639,6 +639,10 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             },
         ),
         "Switch" => (free, TrainerEffect::SwitchOwnActive),
+        "Jumbo Ice Cream" => (
+            Some(Requirement::ActiveHasAtLeastEnergy(3)),
+            TrainerEffect::HealActive(80),
+        ),
         _ => return None,
     })
 }
