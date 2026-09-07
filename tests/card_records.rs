@@ -101,5 +101,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // (a Trainer taken from the discard pile) admits sv08-087; and
     // Dwebble's Ascension (a search straight to evolution, no hand
     // step) admits sv10-011.
-    assert_eq!(admitted, 551, "coverage moves only on purpose");
+    // Beyond the spec's own ticket list: Beldum's Iron Tackle (Recoil,
+    // already built) and Dunsparce's Trading Places (SwitchOwnActive,
+    // already built) each admit one more print with no new shape.
+    assert_eq!(admitted, 553, "coverage moves only on purpose");
 }

@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (33/95 built)
+### Pokémon (34/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -188,7 +188,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Annihilape | ❌ |
 | [Applin](src/import.rs#L982) | ✅ |
 | [Bayleef](src/import.rs#L234) | ✅ |
-| [Beldum](src/import.rs#L234) | ✅ |
+| [Beldum](src/import.rs#L1004) | ✅ |
 | Blaziken ex | ❌ |
 | Bloodmoon Ursaluna ex | ❌ |
 | Brute Bonnet | ❌ |
@@ -210,7 +210,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Drilbur](src/import.rs#L993) | ✅ |
 | Dudunsparce | ❌ |
 | [Dudunsparce ex](src/import.rs#L964) | ✅ |
-| Dunsparce | ❌ |
+| [Dunsparce](src/import.rs#L1005) | ✅ |
 | Dusclops | ❌ |
 | Dusknoir | ❌ |
 | Duskull | ❌ |
