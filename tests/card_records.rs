@@ -165,5 +165,10 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // keying already distinguishes them, no print-override table
     // needed) admits Kadabra's me01-055 print (its own attack, Super
     // Psy Bolt, has no printed text).
-    assert_eq!(admitted, 589, "coverage moves only on purpose");
+    // Fezandipiti ex's Flip the Script (a fact read from last turn —
+    // the same knocked_out_last_turn field Unfair Stamp's own
+    // requirement already reads) and its own attack, Cruel Arrow (flat
+    // damage to any chosen opponent Pokemon, Active or Benched) admit
+    // all 5 prints.
+    assert_eq!(admitted, 594, "coverage moves only on purpose");
 }

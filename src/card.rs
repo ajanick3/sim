@@ -705,6 +705,13 @@ pub enum AttackEffect {
     /// there would be no Active left to leave. `Meowth ex`'s
     /// `Tuck Tail`.
     ReturnSelfAndAttachedToHand,
+    /// This much flat damage (no Weakness or Resistance) to one of
+    /// the opponent's Pokémon, the player's choice of which — unlike
+    /// `DamageCountersToOpponentBenchAnyWay` and
+    /// `DiscardsOwnEnergyThenDamagesChosenBenched`, the choice is not
+    /// limited to the Bench; the opponent's Active is offered too.
+    /// `Fezandipiti ex`'s `Cruel Arrow`.
+    DamageChosenOpponentPokemon(u32),
     /// Move an Energy from one of the opponent's Pokémon to another —
     /// the attacker's own choice of both ends, but on the opponent's
     /// board, unlike `TrainerEffect::MoveAttachedEnergy`'s own board.
@@ -817,6 +824,14 @@ pub enum AbilityEffect {
     /// already keyed by species, so no print-override table is
     /// needed the way `known_trainer_by_print` is).
     WhenEvolvedFromHandMayDrawCards(u32),
+    /// Once during the player's own turn, only if any of the
+    /// player's own Pokémon were Knocked Out during the opponent's
+    /// last turn, the player may draw this many cards — the same
+    /// `knocked_out_last_turn` fact `Requirement::KnockedOutDuringOpponentsLastTurn`
+    /// already reads for `Unfair Stamp`, read here for an Ability
+    /// instead of a Trainer's requirement.
+    /// `Fezandipiti ex`'s `Flip the Script`.
+    OncePerTurnIfKnockedOutLastTurnMayDrawCards(u32),
 }
 
 /// A basic Energy card as printed.
