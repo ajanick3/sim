@@ -661,6 +661,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             Some(Requirement::KnockedOutDuringOpponentsLastTurn),
             TrainerEffect::DiscardOpponentEnergy,
         ),
+        "N's Plan" => (free, TrainerEffect::MoveEnergyFromBenchToActive { limit: 2 }),
         _ => return None,
     })
 }

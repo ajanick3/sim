@@ -61,6 +61,10 @@ pub enum Action {
     PayWithCard { card: CardId },
     /// Move one attached Energy onto another Pokémon you control.
     MoveEnergy { card: CardId, target: PokemonId },
+    /// Move one Energy from a Benched Pokémon onto the Active.
+    MoveEnergyToActive { card: CardId },
+    /// Stop moving Energy onto the Active before the limit is spent.
+    FinishMovingEnergyToActive,
     /// Evolve a Basic in play straight into the named Stage 2 from hand,
     /// skipping the Stage 1 between them.
     EvolveSkippingOneStage { card: CardId, target: PokemonId },
@@ -80,6 +84,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::Deciding { chooser, .. } => Some(chooser),
         Phase::Paying { player, .. } => Some(player),
         Phase::MovingEnergy { player } => Some(player),
+        Phase::MovingEnergyFromBenchToActive { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::Checkup { player } => Some(player),
@@ -253,6 +258,19 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
+        Phase::MovingEnergyFromBenchToActive { player: whose, remaining } => {
+            if remaining > 0 {
+                for pokemon in &state.player(whose).bench {
+                    for card in &state.pokemon(*pokemon).attached {
+                        if state.def_of(*card).is_energy() {
+                            actions.push(Action::MoveEnergyToActive { card: *card });
+                        }
+                    }
+                }
+            }
+            actions.push(Action::FinishMovingEnergyToActive);
+            return actions;
+        }
         Phase::DiscardingOpponentEnergy { of, .. } => {
             for pokemon in state.player(of).in_play() {
                 for card in &state.pokemon(pokemon).attached {
@@ -342,6 +360,16 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                                 .any(|c| state.def_of(*c).is_energy())
                         })
                 }
+                // An Energy on some Benched Pokémon to move onto the
+                // Active. `N's Plan` is only ever "up to" a limit, so a
+                // Bench with nothing on it still leaves nothing to offer.
+                TrainerEffect::MoveEnergyFromBenchToActive { .. } => side.bench.iter().any(|p| {
+                    state
+                        .pokemon(*p)
+                        .attached
+                        .iter()
+                        .any(|c| state.def_of(*c).is_energy())
+                }),
                 // A Stage 2 in hand, and a Basic under it in play. Rare
                 // Candy is only playable at all where the pair already
                 // exists — nothing in its phase ever declines.
@@ -495,6 +523,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
             state.def_of(card).name(),
             state.pokemon_def(target).name
         ),
+        Action::MoveEnergyToActive { card } => {
+            format!("Move {} to the Active", state.def_of(card).name())
+        }
+        Action::FinishMovingEnergyToActive => "Stop moving Energy".to_string(),
         Action::EvolveSkippingOneStage { card, target } => format!(
             "Use Rare Candy: evolve {} into {}",
             state.pokemon_def(target).name,
