@@ -564,6 +564,23 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::HealMegaEx { target } => {
+            let player = match state.phase {
+                Phase::HealingMegaEx { player } => player,
+                _ => return Err(IllegalAction),
+            };
+            let healed = state.pokemon(target).damage > 0;
+            state.pokemon[target.index()].damage = 0;
+            if healed {
+                let attached = std::mem::take(&mut state.pokemon[target.index()].attached);
+                state.players[player.index()].hand.extend(attached);
+            }
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} is healed fully."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::EvolveSkippingOneStage { card, target } => {
             let player = match state.phase {
                 Phase::EvolvingWithRareCandy { player } => player,
@@ -893,6 +910,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                 filter,
                 remaining: limit,
             };
+        }
+
+        TrainerEffect::HealMegaExAndTakeEnergyIfHealed => {
+            state.phase = Phase::HealingMegaEx { player };
         }
 
         TrainerEffect::CoinFlipDiscardOpponentEnergy => {
