@@ -999,6 +999,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Abra", "Teleporter") => AbilityEffect::OncePerTurnWhileActiveMayShuffleSelfIntoDeck,
         ("Dusclops", "Cursed Blast") => AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(5),
         ("Dusknoir", "Cursed Blast") => AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(13),
+        ("Genesect ex", "Metallic Signal") => {
+            AbilityEffect::OncePerTurnMaySearchEvolutionPokemonOfType(Type::Metal, 2)
+        }
         _ => return None,
     })
 }
@@ -1091,6 +1094,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         }
         ("Elgyem", "Slight Shift") => AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon,
         ("Dusknoir", "Shadow Bind") => AttackEffect::DefenderCannotRetreatNextTurn,
+        ("Genesect ex", "Protect Charge") => AttackEffect::SelfDamageReductionNextTurn(30),
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }

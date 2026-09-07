@@ -142,6 +142,12 @@ pub enum CardFilter {
     /// `Come and Get You` searches its own discard pile for copies of
     /// itself, unlike `SupporterNameContains`'s substring match.
     PokemonNamed(&'static str),
+    /// A Pokémon that evolves from something, printed at this type.
+    /// `Genesect ex`'s `Protect Charge` wants an Evolution Metal
+    /// Pokémon — the same shape `EvolutionPokemon` already is,
+    /// narrowed by type the way `PokemonOfTypeOrBasicEnergyOfType`
+    /// narrows `PokemonOrBasicEnergy`.
+    EvolutionPokemonOfType(Type),
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
@@ -712,6 +718,13 @@ pub enum AttackEffect {
     /// limited to the Bench; the opponent's Active is offered too.
     /// `Fezandipiti ex`'s `Cruel Arrow`.
     DamageChosenOpponentPokemon(u32),
+    /// The attacker takes this much less damage from attacks during
+    /// the opponent's very next turn, after Weakness and Resistance —
+    /// the mirror of `DefenderDealsLessDamageNextTurn`'s own lifetime
+    /// and reduction, but read on the defending side of a later
+    /// attack and after Weakness/Resistance rather than before.
+    /// `Genesect ex`'s `Protect Charge`.
+    SelfDamageReductionNextTurn(u32),
     /// Move an Energy from one of the opponent's Pokémon to another —
     /// the attacker's own choice of both ends, but on the opponent's
     /// board, unlike `TrainerEffect::MoveAttachedEnergy`'s own board.
@@ -865,6 +878,13 @@ pub enum AbilityEffect {
     /// primitive, so the ordinary `knock_out_the_dead` sweep still
     /// awards the Prize. `Dusclops`'s and `Dusknoir`'s `Cursed Blast`.
     OncePerTurnMayDamageOpponentThenKnockOutSelf(u32),
+    /// Once during the player's own turn, the player may search the
+    /// library for up to `limit` Evolution Pokémon of this type and
+    /// put them into hand — opens
+    /// `Phase::SearchingLibraryForEvolutionPokemonOfType`. No
+    /// qualifying card in the library opens no phase.
+    /// `Genesect ex`'s `Protect Charge`.
+    OncePerTurnMaySearchEvolutionPokemonOfType(Type, u32),
 }
 
 /// A basic Energy card as printed.

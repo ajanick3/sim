@@ -16,7 +16,22 @@ same way Milestone 11 continued past its own spec:
   to effective HP rather than a separate forced-knockout primitive
   (ADR 0076). Completes both species (6 prints).
 
-Coverage: 604 -> 611 across these two PRs.
+- **Genesect ex**'s `Metallic Signal`
+  (`OncePerTurnMaySearchEvolutionPokemonOfType`) — a standing search
+  for Evolution Pokémon of a type, `CardFilter::EvolutionPokemonOfType`
+  reused from `EvolutionPokemon` narrowed by type, the same way
+  `PokemonOfTypeOrBasicEnergyOfType` narrows `PokemonOrBasicEnergy`.
+  Its own attack, `Protect Charge`, needed
+  `AttackEffect::SelfDamageReductionNextTurn` — reduced damage taken
+  through the opponent's next turn, after Weakness and Resistance.
+  Building this uncovered a real bug in `opponent_next_turn_restriction`'s
+  own clearing logic, fixed and recorded as an erratum on ADR 0077:
+  a self-targeted restriction (the granting player's own Pokémon
+  named as the target, as `CoinFlipSelfInvulnerableNextTurn` and this
+  new effect both do) was cleared one turn too early, inferred from
+  the wrong owner. Completes all 3 Genesect ex prints.
+
+Coverage: 604 -> 614 across these three PRs.
 
 ## What is left
 
