@@ -2047,6 +2047,140 @@ fn bug_catching_set_is_admitted_from_the_artifact() {
     );
 }
 
+// --- Milestone 6, ticket 04: a search with no filter, returned in order ---
+
+fn with_codebreaking(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let codebreaking = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-codebreaking",
+        name: "Ciphermaniac's Codebreaking",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::AnyCard,
+                to: Destination::TopOfLibraryInOrder,
+                limit: 2,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, codebreaking)
+}
+
+#[test]
+fn the_any_card_filter_admits_every_kind_at_once() {
+    let (set, codebreaking) = with_codebreaking(build());
+    let mut state = game(&set, codebreaking, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, codebreaking);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let choices = offered(&state);
+    let has = |pred: fn(&sim::card::CardDef) -> bool| {
+        choices.iter().any(|c| pred(state.def_of(*c)))
+    };
+    assert!(
+        has(|def| def.as_pokemon().is_some()),
+        "a Pokémon is offered"
+    );
+    assert!(has(|def| def.is_energy()), "an Energy is offered");
+    assert!(
+        has(|def| def.as_trainer().is_some()),
+        "a Trainer is offered"
+    );
+}
+
+#[test]
+fn codebreaking_returns_the_two_taken_to_the_top_in_the_order_taken() {
+    let (set, codebreaking) = with_codebreaking(build());
+    let mut state = game(&set, codebreaking, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, codebreaking);
+    let library_before = state.player(player).library.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let first = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: first }).unwrap();
+    let second = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: second }).unwrap();
+    // ADR 0012 keeps the choice to stop with the player, even at the limit.
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "two taken, the limit is spent");
+    assert_ne!(first, second);
+    let library = &state.player(player).library;
+    assert_eq!(
+        library.len(),
+        library_before,
+        "the two return to the deck; nothing leaves it"
+    );
+    // `draw` pops from the end, so the end is the top: the second card
+    // taken sits above the first, the same order the player chose.
+    assert_eq!(
+        &library[library.len() - 2..],
+        &[first, second],
+        "the two land on top, in the order they were taken"
+    );
+}
+
+#[test]
+fn codebreaking_shuffles_what_is_left_before_placing_the_two_on_top() {
+    let (set, codebreaking) = with_codebreaking(build());
+    let mut state = game(&set, codebreaking, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, codebreaking);
+    let before = state.player(player).library.clone();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let first = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: first }).unwrap();
+    let second = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: second }).unwrap();
+
+    let after = &state.player(player).library;
+    let beneath_the_top_two = &after[..after.len() - 2];
+    let original_beneath = before
+        .iter()
+        .filter(|c| **c != first && **c != second)
+        .copied()
+        .collect::<Vec<_>>();
+    assert_ne!(
+        beneath_the_top_two, original_beneath,
+        "the rest of the deck is shuffled, not merely missing two cards"
+    );
+}
+
+#[test]
+fn codebreaking_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let codebreaking = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Ciphermaniac's Codebreaking")
+        .expect("Ciphermaniac's Codebreaking plays");
+    assert_eq!(
+        codebreaking.effect,
+        TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::AnyCard,
+                to: Destination::TopOfLibraryInOrder,
+                limit: 2,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        }
+    );
+}
+
 // --- The card data ---
 
 #[test]

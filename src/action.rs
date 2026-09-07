@@ -171,7 +171,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     .in_play()
                     .into_iter()
                     .any(|p| state.matches_target(chooser, p, target_filter)),
-                Destination::Zone(_) => true,
+                Destination::Zone(_) | Destination::TopOfLibraryInOrder => true,
             };
             if remaining > 0 && room {
                 let slot = crate::card::Slot {
@@ -193,6 +193,16 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     if !state.matches_slot(*card, &slot, previous) {
                         continue;
                     }
+                    // A card bound for the top of its own zone is moved
+                    // within it, not out of it, so the card just taken is
+                    // still there to be found again. `previous` is the one
+                    // to exclude — enough for the two `Ciphermaniac's
+                    // Codebreaking` ever asks for, though a limit past two
+                    // would need every card taken this slot remembered, not
+                    // only the last.
+                    if to == Destination::TopOfLibraryInOrder && Some(*card) == previous {
+                        continue;
+                    }
                     match to {
                         Destination::Attach(target_filter) => {
                             for target in state.player(chooser).in_play() {
@@ -204,7 +214,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                                 }
                             }
                         }
-                        Destination::Bench | Destination::Zone(_) => {
+                        Destination::Bench
+                        | Destination::Zone(_)
+                        | Destination::TopOfLibraryInOrder => {
                             actions.push(Action::TakeCard { card: *card });
                         }
                     }
