@@ -770,6 +770,43 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             },
         ),
         "Hand Trimmer" => (free, TrainerEffect::BothDiscardDownTo(5)),
+        "Secret Box" => (
+            Some(Requirement::DiscardOtherCardsFromHand(3)),
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![
+                    Slot {
+                        filter: CardFilter::TrainerOfKind(TrainerKind::Item),
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    },
+                    Slot {
+                        filter: CardFilter::TrainerOfKind(TrainerKind::Tool),
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    },
+                    Slot {
+                        filter: CardFilter::TrainerOfKind(TrainerKind::Supporter),
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    },
+                    Slot {
+                        filter: CardFilter::TrainerOfKind(TrainerKind::Stadium),
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    },
+                ],
+                then: None,
+            },
+        ),
         "Team Rocket's Transceiver" => (
             free,
             TrainerEffect::Decide {

@@ -80,8 +80,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Black Belt's Training, Gladion's Final Battle, Kieran, Morty's
     // Conviction, Xerosic's Machinations, Eri, Brock's Scouting, Wally's
     // Compassion, Janine's Secret Art, Energy Search, Energy Retrieval,
-    // Energy Recycler, Team Rocket's Transceiver, and Hand Trimmer.
-    assert_eq!(trainers, 314, "the Trainers still refused, by kind");
+    // Energy Recycler, Team Rocket's Transceiver, Hand Trimmer, and
+    // Secret Box.
+    assert_eq!(trainers, 313, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
