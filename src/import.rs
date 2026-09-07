@@ -643,6 +643,20 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             Some(Requirement::ActiveHasAtLeastEnergy(3)),
             TrainerEffect::HealActive(80),
         ),
+        "Lana's Aid" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Discard,
+                slots: vec![Slot {
+                    filter: CardFilter::PokemonWithoutRuleBoxOrBasicEnergy,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 3,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         _ => return None,
     })
 }

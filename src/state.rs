@@ -512,6 +512,10 @@ impl GameState {
                 CardDef::Trainer(_) => false,
             },
             CardFilter::AnyCard => true,
+            CardFilter::PokemonWithoutRuleBoxOrBasicEnergy => {
+                let def = self.def_of(card);
+                def.as_pokemon().is_some_and(|p| p.prizes == 1) || def.is_energy()
+            }
         }
     }
 

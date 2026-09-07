@@ -50,6 +50,6 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Hilda, 3 of Dawn, 4 of Crispin, 2 of Rare Candy, 3 of Team Rocket's
     // Petrel, 3 of N's PP Up, 2 of Wondrous Patch, 1 of Pokégear 3.0, 2 of
     // Bug Catching Set, 3 of Ciphermaniac's Codebreaking, 1 of Unfair
-    // Stamp, 2 of Switch, and 2 of Jumbo Ice Cream.
-    assert_eq!(admitted, 413, "coverage moves only on purpose");
+    // Stamp, 2 of Switch, 2 of Jumbo Ice Cream, and 3 of Lana's Aid.
+    assert_eq!(admitted, 416, "coverage moves only on purpose");
 }

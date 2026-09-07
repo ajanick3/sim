@@ -120,6 +120,11 @@ pub enum CardFilter {
     /// card" — one filter admitting two kinds of card, the same shape
     /// `PokemonOrBasicEnergy` already is, narrowed to one type.
     PokemonOfTypeOrBasicEnergyOfType(Type),
+    /// A Pokémon without a Rule Box, or a basic Energy of any type. The
+    /// same shape `PokemonOrBasicEnergy` already is, narrowed the other
+    /// way `PokemonOfTypeOrBasicEnergyOfType` is — by a Rule Box instead
+    /// of by a type. `Lana's Aid` is the first card to exclude one.
+    PokemonWithoutRuleBoxOrBasicEnergy,
     /// Any card at all — a Pokémon, an Energy, or a Trainer alike.
     /// `Ciphermaniac's Codebreaking` names no kind: "search your deck for
     /// 2 cards" is the whole of its filter.
