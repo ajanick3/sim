@@ -142,5 +142,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Combusken's Double Kick (damage per heads across several coin
     // flips, the same pre-damage slot DamagePerCount already
     // occupies) admits its sv10-041 print.
-    assert_eq!(admitted, 577, "coverage moves only on purpose");
+    // Elgyem's Slight Shift moves an Energy between two of the
+    // opponent's own Pokemon, the mirror of MoveAttachedEnergy played
+    // on the opponent's board instead of the player's own — completes
+    // both Elgyem prints (Hide was already read this session).
+    assert_eq!(admitted, 579, "coverage moves only on purpose");
 }

@@ -161,6 +161,9 @@ pub enum Action {
     AcceptShuffleEnergyForBenchDamage,
     /// Decline it — nothing else about this attack changes.
     DeclineShuffleEnergyForBenchDamage,
+    /// Move this Energy to this Pokémon, as part of
+    /// `Phase::MovingOpponentsEnergy`.
+    MoveOpponentsEnergy { card: CardId, target: PokemonId },
     /// Bench this named Pokémon from the discard pile, as part of
     /// `Phase::SearchingDiscardForNamedToBench`.
     TakeNamedFromDiscardToBench { card: CardId },
@@ -201,6 +204,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::SearchingLibraryToEvolveSelf { player, .. } => Some(player),
         Phase::TakingPokemonFromDiscard { player } => Some(player),
         Phase::DecidingToShuffleEnergyForBenchDamage { player, .. } => Some(player),
+        Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
@@ -507,6 +511,25 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::DecidingToShuffleEnergyForBenchDamage { .. } => {
             actions.push(Action::AcceptShuffleEnergyForBenchDamage);
             actions.push(Action::DeclineShuffleEnergyForBenchDamage);
+            return actions;
+        }
+        Phase::MovingOpponentsEnergy { of, .. } => {
+            let in_play = state.player(of).in_play();
+            for from in &in_play {
+                for card in &state.pokemon(*from).attached {
+                    if !state.def_of(*card).is_energy() {
+                        continue;
+                    }
+                    for target in &in_play {
+                        if target != from {
+                            actions.push(Action::MoveOpponentsEnergy {
+                                card: *card,
+                                target: *target,
+                            });
+                        }
+                    }
+                }
+            }
             return actions;
         }
         Phase::SearchingDiscardForNamedToBench { player: whose, name, .. } => {
@@ -1024,6 +1047,11 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::AcceptShuffleEnergyForBenchDamage => "Shuffle Energy for bench damage".to_string(),
         Action::DeclineShuffleEnergyForBenchDamage => "Decline".to_string(),
+        Action::MoveOpponentsEnergy { card, target } => format!(
+            "Move {} to {}",
+            state.def_of(card).name(),
+            state.pokemon_def(target).name
+        ),
         Action::TakeNamedFromDiscardToBench { card } => {
             format!("Bench {} from discard", state.def_of(card).name())
         }

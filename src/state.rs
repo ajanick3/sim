@@ -326,6 +326,12 @@ pub enum Phase {
         count: u32,
         damage: u32,
     },
+    /// `chooser` moves one Energy between two of `of`'s own Pokémon,
+    /// choosing both ends at once — the same shape `MovingEnergy`
+    /// already takes on a player's own board, split into two fields
+    /// since here the chooser and the board's owner differ.
+    /// `Elgyem`'s `Slight Shift`.
+    MovingOpponentsEnergy { chooser: PlayerId, of: PlayerId },
     /// `player` used an attack that searches their own discard pile
     /// for up to `remaining` more copies of a named Pokémon to the
     /// Bench. `Duskull`'s `Come and Get You`.
