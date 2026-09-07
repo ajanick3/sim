@@ -229,6 +229,11 @@ pub enum TrainerEffect {
     /// takes damage away rather than adding it or moving it between
     /// Pokémon.
     HealActive(u32),
+    /// Heal this many points of damage from a Pokémon the player chooses,
+    /// Active or Benched, and clear every Special Condition from it.
+    /// `Pokémon Center Lady` is the first card to heal a target rather
+    /// than the fixed Active `Jumbo Ice Cream` reads.
+    HealChosen(u32),
 }
 
 /// What a card demands before it may be played at all.
