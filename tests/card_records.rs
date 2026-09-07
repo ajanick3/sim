@@ -120,5 +120,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // turn (before Weakness and Resistance), the mirror of
     // DefenderCannotRetreatNextTurn's own lifetime, admits Chikorita's
     // me02.5-008 print (Growl).
-    assert_eq!(admitted, 563, "coverage moves only on purpose");
+    // Buneary's Charm (the same shape, printed word for word) admits
+    // its me01-107 print too.
+    assert_eq!(admitted, 564, "coverage moves only on purpose");
 }
