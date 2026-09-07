@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Team Rocket's Factory | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (18/95 built)
+### Pokémon (21/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -248,13 +248,13 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Munkidori | ❌ |
 | N's Darmanitan | ❌ |
 | N's Darumaka | ✅ |
-| N's Reshiram | ❌ |
+| N's Reshiram | ✅ |
 | N's Zekrom | ❌ |
 | N's Zoroark ex | ❌ |
 | N's Zorua | ✅ |
 | Noctowl | ❌ |
-| Paldean Tauros | ❌ |
-| Passimian | ❌ |
+| Paldean Tauros | ✅ |
+| Passimian | ✅ |
 | Patrat | ❌ |
 | Pecharunt | ❌ |
 | Pecharunt ex | ❌ |
@@ -292,6 +292,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
   artifact holds, the modelling findings already banked, and what the data
   cannot express.
 - [The ADR directory](docs/adr/) — the decisions and their reasoning.
+
 
 
 
