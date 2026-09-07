@@ -429,6 +429,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     .expect("a cost is only ever paid for a Trainer")
                     .effect
                     .clone();
+                // The cost is paid; `Phase::Paying` has nothing left to
+                // say. Clear it before the effect runs, the same as
+                // `PlayTrainer` leaves `Main` behind it: an effect that
+                // opens its own phase overwrites this in the same step,
+                // and one that does not — `Morty's Conviction` is the
+                // first — would otherwise leave `Paying` stale forever.
+                state.phase = Phase::Main;
                 // No `settle` here, the same as playing the card itself:
                 // the effect either opened a phase of its own or finished,
                 // and both are settled where the phase ends.
@@ -831,6 +838,13 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::ChooseOneOf(..) => {
             state.phase = Phase::ChoosingOneOf { player, card };
+        }
+
+        TrainerEffect::DrawPerOpponentBenched => {
+            let count = state.player(player.opponent()).bench.len();
+            for _ in 0..count {
+                state.draw(player);
+            }
         }
 
         TrainerEffect::CoinFlipDiscardOpponentEnergy => {

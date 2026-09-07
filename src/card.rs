@@ -276,6 +276,10 @@ pub enum TrainerEffect {
     /// The player picks one of these two, and only the one picked runs.
     /// `Kieran` is the only card whose own text branches this way.
     ChooseOneOf(Box<TrainerEffect>, Box<TrainerEffect>),
+    /// Draw one card for each Pokémon on the opponent's Bench.
+    /// `Morty's Conviction` is the first draw counted from the board
+    /// rather than a fixed number.
+    DrawPerOpponentBenched,
 }
 
 /// What a card demands before it may be played at all.

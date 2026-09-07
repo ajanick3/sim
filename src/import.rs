@@ -704,6 +704,10 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 )),
             ),
         ),
+        "Morty's Conviction" => (
+            Some(Requirement::DiscardOtherCardsFromHand(1)),
+            TrainerEffect::DrawPerOpponentBenched,
+        ),
         _ => return None,
     })
 }
