@@ -1764,3 +1764,32 @@ fn wellspring_mask_ogerpon_ex_is_admitted_from_the_artifact() {
         "at least one Wellspring Mask Ogerpon ex print should play"
     );
 }
+
+// --- Beyond the spec: a bonus if the defender is a particular stage ---
+
+#[test]
+fn bonus_damage_only_when_the_defender_is_stage_1() {
+    let attack = Attack {
+        name: "Spirited Tackle",
+        cost: vec![Type::Colorless],
+        base_damage: 30,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfDefenderIsStage(Stage::Stage1, 90)),
+    };
+    let (mut state, _defender_ex) = game(attack.clone(), 3);
+    let player = state.current;
+    let defender = state.player(player.opponent()).active.unwrap();
+
+    pay_and_attack(&mut state);
+    assert_eq!(state.pokemon(defender).damage, 30, "no bonus against a Basic defender");
+}
+
+#[test]
+fn paldean_tauros_spirited_tackle_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv08-018").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Paldean Tauros's Spirited Tackle print should play");
+}

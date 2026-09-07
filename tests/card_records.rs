@@ -136,5 +136,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // which cards, since the Energy is interchangeable for this
     // effect — completes all 5 Wellspring Mask Ogerpon ex prints
     // (Sob was already read in ticket 05).
-    assert_eq!(admitted, 575, "coverage moves only on purpose");
+    // Paldean Tauros's Spirited Tackle (BonusDamageIfDefenderIsStage,
+    // the mirror of BonusDamageIfDefenderIsEx) admits its sv08-018
+    // print.
+    assert_eq!(admitted, 576, "coverage moves only on purpose");
 }
