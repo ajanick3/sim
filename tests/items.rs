@@ -372,3 +372,75 @@ fn energy_recycler_shuffles_up_to_five_from_discard_into_the_library() {
     assert!(state.player(player).library.contains(&e1));
     assert!(state.player(player).library.contains(&e2));
 }
+
+// --- Ticket 03: Team Rocket's Transceiver ---
+
+fn with_team_rockets_transceiver(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let petrel = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tr-petrel",
+        name: "Team Rocket's Petrel",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Nothing,
+    }));
+    let ordinary_supporter = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-ordinary-supporter",
+        name: "Ordinary Supporter",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Nothing,
+    }));
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tr-transceiver",
+        name: "Team Rocket's Transceiver",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::SupporterNameContains("Team Rocket"),
+                to: Destination::Zone(Zone::Hand),
+                limit: 1,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, card, petrel, ordinary_supporter)
+}
+
+#[test]
+fn team_rockets_transceiver_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Team Rocket's Transceiver")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Team Rocket's Transceiver should play");
+}
+
+#[test]
+fn team_rockets_transceiver_finds_only_a_team_rocket_supporter() {
+    let (set, card, petrel, ordinary) = with_team_rockets_transceiver(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    let petrel_card = deal_new_card(&mut state, player, petrel);
+    state.players[player.index()].library.push(petrel_card);
+    let ordinary_card = deal_new_card(&mut state, player, ordinary);
+    state.players[player.index()].library.push(ordinary_card);
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    let choices = offered(&state);
+    assert!(choices.contains(&petrel_card), "the Team Rocket name matches");
+    assert!(
+        !choices.contains(&ordinary_card),
+        "a Supporter without the name is not offered"
+    );
+}

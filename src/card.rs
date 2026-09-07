@@ -134,6 +134,10 @@ pub enum CardFilter {
     /// `Ciphermaniac's Codebreaking` names no kind: "search your deck for
     /// 2 cards" is the whole of its filter.
     AnyCard,
+    /// A Supporter whose printed name holds this substring. `Team Rocket's
+    /// Transceiver` wants "a Supporter card that has \"Team Rocket\" in its
+    /// name" — a family of cards named by a shared word, not by a kind.
+    SupporterNameContains(&'static str),
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
