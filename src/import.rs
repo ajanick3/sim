@@ -910,16 +910,16 @@ fn read_attack(pokemon_name: &str, attack: &Value) -> Result<Attack, Refusal> {
     let base_damage = match &attack["damage"] {
         Value::Number(damage) => damage.as_u64().ok_or(Refusal::DamageIsNotANumber)? as u32,
         Value::Null => 0,
-        // "40×": the printed damage is entirely a per-count multiplier,
-        // computed by `AttackEffect::DamagePerCount` before `damage_dealt`
-        // runs rather than added as a flat base. The digits here are read
-        // only to confirm the effect already matched carries the same
-        // number — `known_attack` is what actually supplies it.
-        Value::String(s) if effect.is_some() && s.ends_with('×') => {
-            s.trim_end_matches('×')
-                .parse::<u32>()
-                .map_err(|_| Refusal::DamageIsNotANumber)?
-        }
+        // "40×" (a per-count multiplier, `AttackEffect::DamagePerCount`)
+        // or "10+" (a conditional bonus on top of a printed base, such as
+        // `AttackEffect::CoinFlipBonusDamage`): either way the digits are
+        // read only to confirm the print agrees with what `known_attack`
+        // already matched, not as the source of truth for what the
+        // number means.
+        Value::String(s) if effect.is_some() && (s.ends_with('×') || s.ends_with('+')) => s
+            .trim_end_matches(['×', '+'])
+            .parse::<u32>()
+            .map_err(|_| Refusal::DamageIsNotANumber)?,
         _ => return Err(Refusal::DamageIsNotANumber),
     };
 
@@ -970,6 +970,16 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("N's Zekrom", "Shred") => AttackEffect::IgnoresDefendersEffects,
         ("Mega Lopunny ex", "Spiky Hopper") => AttackEffect::IgnoresDefendersEffects,
         ("Dudunsparce ex", "Destructive Drill") => AttackEffect::IgnoresDefendersEffects,
+        ("Brute Bonnet", "Poison Spray") => {
+            AttackEffect::InflictsCondition(crate::card::Condition::Poisoned)
+        }
+        ("Zeraora", "Shocking Knuckle") => {
+            AttackEffect::CoinFlipInflicts(crate::card::Condition::Paralyzed)
+        }
+        ("Dedenne", "Thunder Shock") => {
+            AttackEffect::CoinFlipInflicts(crate::card::Condition::Paralyzed)
+        }
+        ("Applin", "Tumbling Attack") => AttackEffect::CoinFlipBonusDamage(20),
         _ => return None,
     })
 }

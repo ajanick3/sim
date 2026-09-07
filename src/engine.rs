@@ -1486,6 +1486,13 @@ fn attack(state: &mut GameState, index: usize) {
         Some(crate::card::AttackEffect::DamagePerCount(count, per_unit)) => {
             count_for_attack(state, attacker, count) * per_unit
         }
+        Some(crate::card::AttackEffect::CoinFlipBonusDamage(bonus)) => {
+            if state.rng.flip() {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
         _ => attack.base_damage,
     };
     let ignore_defenders_effects =
@@ -1525,7 +1532,7 @@ fn attack(state: &mut GameState, index: usize) {
 fn resolve_attack_effect(
     state: &mut GameState,
     attacker: PokemonId,
-    _defender: PokemonId,
+    defender: PokemonId,
     effect: crate::card::AttackEffect,
 ) {
     match effect {
@@ -1539,6 +1546,21 @@ fn resolve_attack_effect(
         crate::card::AttackEffect::DamagePerCount(..) => {}
         // Already spent, before `damage_dealt_with` ran.
         crate::card::AttackEffect::IgnoresDefendersEffects => {}
+        crate::card::AttackEffect::InflictsCondition(condition) => {
+            state.inflict(defender, condition);
+            let name = state.pokemon_def(defender).name;
+            state.log.push(format!("{name} is now {condition:?}."));
+        }
+        crate::card::AttackEffect::CoinFlipInflicts(condition) => {
+            if state.rng.flip() {
+                state.inflict(defender, condition);
+                let name = state.pokemon_def(defender).name;
+                state.log.push(format!("{name} is now {condition:?}."));
+            }
+        }
+        // Already spent, before `damage_dealt_with` ran — see `attack`'s
+        // own `base` computation.
+        crate::card::AttackEffect::CoinFlipBonusDamage(_) => {}
     }
 }
 

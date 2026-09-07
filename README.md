@@ -318,3 +318,4 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 
 
 
+

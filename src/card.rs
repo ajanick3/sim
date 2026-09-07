@@ -558,6 +558,16 @@ pub enum AttackEffect {
     /// stays the public, unconditioned order every existing caller
     /// (including several tests) already depends on.
     IgnoresDefendersEffects,
+    /// The defender is given this Special Condition outright, no flip.
+    /// `Brute Bonnet`'s Poison.
+    InflictsCondition(Condition),
+    /// Flip a coin; on heads, the defender is given this Special
+    /// Condition. `Zeraora`, `Dedenne`.
+    CoinFlipInflicts(Condition),
+    /// Flip a coin; on heads, this many more damage. Read before
+    /// `damage_dealt`, the same as `DamagePerCount`, so Weakness and
+    /// Resistance still apply to the total. `Applin`.
+    CoinFlipBonusDamage(u32),
 }
 
 /// What `AttackEffect::DamagePerCount` counts.
