@@ -4,8 +4,8 @@
 use sim::action::{Action, legal_actions};
 use sim::card::{
     Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, PromoteFollowUp,
-    Requirement, Slot, Stage, TargetFilter, Trainer, TrainerEffect, TrainerKind, TurnBonusTarget,
-    Type, Zone,
+    Requirement, Slot, Stage, TargetFilter, Then, Trainer, TrainerEffect, TrainerKind,
+    TurnBonusTarget, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
@@ -465,4 +465,71 @@ fn end_turn_and_advance(state: &mut GameState) {
         let first = legal_actions(state)[0];
         apply(state, first).unwrap();
     }
+}
+
+// --- Ticket 04: Lumiose City ---
+
+fn with_lumiose_city(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-lumiose-city",
+        name: "Lumiose City",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn,
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn lumiose_city_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Lumiose City")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Lumiose City should play");
+}
+
+#[test]
+fn lumiose_city_search_ends_the_turn_when_a_basic_is_taken() {
+    let (set, card) = with_lumiose_city(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert!(legal_actions(&state).contains(&Action::UseLumioseCity));
+    apply(&mut state, Action::UseLumioseCity).unwrap();
+    assert!(matches!(state.phase, Phase::Deciding { .. }));
+
+    let bench_before = state.player(player).bench.len();
+    let choice = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: choice }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.player(player).bench.len(), bench_before + 1);
+    assert_ne!(state.current, player, "the turn ended because a Basic was taken");
+}
+
+#[test]
+fn lumiose_city_declining_does_not_end_the_turn() {
+    let (set, card) = with_lumiose_city(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    apply(&mut state, Action::UseLumioseCity).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.current, player, "declining does not end the turn");
+    assert!(
+        !legal_actions(&state).contains(&Action::UseLumioseCity),
+        "once a turn either way"
+    );
 }
