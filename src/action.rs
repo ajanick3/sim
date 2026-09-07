@@ -362,6 +362,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 Some(Requirement::KnockedOutDuringOpponentsLastTurn) => {
                     state.knocked_out_last_turn[player.index()]
                 }
+                Some(Requirement::ActiveHasAtLeastEnergy(least)) => side.active.is_some_and(|a| {
+                    state
+                        .pokemon(a)
+                        .attached
+                        .iter()
+                        .filter(|c| state.def_of(**c).is_energy())
+                        .count() as u32
+                        >= least
+                }),
             };
             // Rule 59: not a Stadium whose name is already in play.
             let name_is_free = trainer.kind != TrainerKind::Stadium
