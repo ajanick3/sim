@@ -124,7 +124,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 None
                 | Some(
                     Requirement::OpponentPrizesAtMost(_)
-                    | Requirement::KnockedOutDuringOpponentsLastTurn,
+                    | Requirement::KnockedOutDuringOpponentsLastTurn
+                    | Requirement::ActiveHasAtLeastEnergy(_),
                 ) => {
                     resolve_trainer(state, player, card, trainer.effect);
                 }
@@ -695,6 +696,15 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         // The card's own placement was the whole effect.
         TrainerEffect::Nothing => {}
+
+        TrainerEffect::HealActive(amount) => {
+            let active = state
+                .player(player)
+                .active
+                .expect("the requirement already confirmed an Active");
+            state.pokemon[active.index()].damage =
+                state.pokemon(active).damage.saturating_sub(amount);
+        }
 
         TrainerEffect::CoinFlipDiscardOpponentEnergy => {
             if state.rng.flip() {

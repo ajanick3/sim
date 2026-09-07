@@ -209,6 +209,11 @@ pub enum TrainerEffect {
     /// it: a real Stadium carries a continuous rule the engine cannot run,
     /// and ADR 0008 refuses a card it cannot run in full.
     Nothing,
+    /// Heal this many points of damage from the player's own Active,
+    /// floored at zero. `Jumbo Ice Cream` is the first card that ever
+    /// takes damage away rather than adding it or moving it between
+    /// Pokémon.
+    HealActive(u32),
 }
 
 /// What a card demands before it may be played at all.
@@ -229,6 +234,11 @@ pub enum Requirement {
     /// last turn. `Unfair Stamp` reads this; nothing else in the pool
     /// needed history rather than the board as it stands.
     KnockedOutDuringOpponentsLastTurn,
+    /// The player's own Active carries at least this many Energy, of any
+    /// kind. `Jumbo Ice Cream` is the only card that reads a specific
+    /// Pokémon's own attachments rather than the hand or the board at
+    /// large.
+    ActiveHasAtLeastEnergy(u32),
 }
 
 /// A Trainer as printed.
