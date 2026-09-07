@@ -1028,3 +1028,75 @@ fn kieran_is_admitted_from_the_artifact() {
         )
     );
 }
+
+// --- Ticket 09: Morty's Conviction ---
+
+fn with_mortys_conviction(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-mortys-conviction",
+        name: "Morty's Conviction",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::DiscardOtherCardsFromHand(1)),
+        effect: TrainerEffect::DrawPerOpponentBenched,
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn mortys_conviction_cannot_be_played_holding_nothing_else_to_discard() {
+    let (set, card) = with_mortys_conviction(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    state.players[player.index()].hand = vec![played];
+    assert!(!legal_actions(&state).contains(&Action::PlayTrainer { card: played }));
+}
+
+#[test]
+fn mortys_conviction_draws_one_per_opponent_benched_pokemon() {
+    let (set, card) = with_mortys_conviction(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let benched_count = state.player(opponent).bench.len();
+    assert!(benched_count > 0, "setup filled the opponent's Bench");
+
+    let played = ensure_in_hand(&mut state, player, card);
+    let discard = *state
+        .player(player)
+        .hand
+        .iter()
+        .find(|c| **c != played)
+        .expect("something else in hand to discard");
+    let hand_before = state.player(player).hand.len();
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    assert!(matches!(state.phase, Phase::Paying { .. }));
+    apply(&mut state, Action::PayWithCard { card: discard }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    // The card played and the card discarded both left the hand; drawing
+    // one per Benched Pokémon is what comes back.
+    assert_eq!(
+        state.player(player).hand.len(),
+        hand_before - 2 + benched_count
+    );
+}
+
+#[test]
+fn mortys_conviction_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let card = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Morty's Conviction")
+        .expect("Morty's Conviction plays");
+    assert_eq!(
+        card.requirement,
+        Some(Requirement::DiscardOtherCardsFromHand(1))
+    );
+    assert_eq!(card.effect, TrainerEffect::DrawPerOpponentBenched);
+}
