@@ -62,6 +62,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Timepiece, 1 of Transformation Tome, 3 of Air Balloon, 1 of
     // Hero's Cape, 2 of Brave Bangle, 2 of Binding Mochi, 1 of
     // Lillie's Pearl, 2 of Punk Helmet, 1 of Lucky Helmet, 1 of
-    // Handheld Fan, and 2 of Powerglass.
-    assert_eq!(admitted, 498, "coverage moves only on purpose");
+    // Handheld Fan, 2 of Powerglass, 2 of Gravity Mountain, and 1 of
+    // N's Castle.
+    assert_eq!(admitted, 501, "coverage moves only on purpose");
 }

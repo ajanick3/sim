@@ -1234,6 +1234,14 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             )
         }
 
+        // A Stadium's static effect, unlike a Tool's, does reach here —
+        // playing a Stadium is an ordinary PlayTrainer, since nothing
+        // skips it the way PlayTool skips a Tool. There is still nothing
+        // to do at play time: `state.stadium` already names the card,
+        // and every reader (`effective_hp`, `effective_retreat_cost`, …)
+        // reads the effect from there, not from this dispatch.
+        TrainerEffect::ReducesHpForStage(..) | TrainerEffect::RemovesRetreatCostForNamePrefix(_) => {}
+
         TrainerEffect::JaninesSecretArt => {
             state.phase = Phase::ChoosingJaninesTargets {
                 player,
