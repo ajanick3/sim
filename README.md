@@ -114,7 +114,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Wally's Compassion | ✅ |
 | Xerosic's Machinations | ✅ |
 
-### Items (14/28 built)
+### Items (17/28 built)
 
 | Card | Status |
 | --- | --- |
@@ -122,9 +122,9 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Bug Catching Set | ✅ |
 | Crushing Hammer | ✅ |
 | Dusk Ball | ❌ |
-| Energy Recycler | ❌ |
-| Energy Retrieval | ❌ |
-| Energy Search | ❌ |
+| Energy Recycler | ✅ |
+| Energy Retrieval | ✅ |
+| Energy Search | ✅ |
 | Energy Switch | ✅ |
 | Enhanced Hammer | ❌ |
 | Glass Trumpet | ❌ |
@@ -292,3 +292,4 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
   artifact holds, the modelling findings already banked, and what the data
   cannot express.
 - [The ADR directory](docs/adr/) — the decisions and their reasoning.
+
