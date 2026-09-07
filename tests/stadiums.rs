@@ -782,3 +782,87 @@ fn without_forest_of_vitality_the_usual_timing_rule_applies() {
         "no Stadium to bypass the timing rule"
     );
 }
+
+// --- Ticket 09: Festival Grounds ---
+
+fn with_festival_grounds(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-festival-grounds",
+        name: "Festival Grounds",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::EnergizedPokemonImmuneToSpecialConditions,
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn festival_grounds_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Festival Grounds")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Festival Grounds should play");
+}
+
+#[test]
+fn festival_grounds_blocks_a_new_condition_on_an_energized_pokemon() {
+    let (set, card) = with_festival_grounds(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let energy = deal_new_card(&mut state, player, set.energy);
+    state.pokemon[active.index()].attached.push(energy);
+
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    state.inflict(active, sim::card::Condition::Poisoned);
+    assert!(
+        !state.has_condition(active, sim::card::Condition::Poisoned),
+        "carries Energy, so it cannot be Poisoned"
+    );
+}
+
+#[test]
+fn festival_grounds_immediately_clears_an_existing_condition() {
+    let (set, card) = with_festival_grounds(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let energy = deal_new_card(&mut state, player, set.energy);
+    state.pokemon[active.index()].attached.push(energy);
+    state.pokemon[active.index()]
+        .conditions
+        .push(sim::card::Condition::Poisoned);
+
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert!(
+        !state.has_condition(active, sim::card::Condition::Poisoned),
+        "recovers the moment the Stadium enters play"
+    );
+}
+
+#[test]
+fn festival_grounds_does_not_protect_a_bare_pokemon() {
+    let (set, card) = with_festival_grounds(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    state.inflict(active, sim::card::Condition::Poisoned);
+    assert!(
+        state.has_condition(active, sim::card::Condition::Poisoned),
+        "no Energy attached, so no protection"
+    );
+}

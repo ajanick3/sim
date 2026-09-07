@@ -847,6 +847,18 @@ impl GameState {
         self.pokemon(id).conditions.contains(&condition)
     }
 
+    /// Whether `Festival Grounds` protects this Pokémon right now: the
+    /// Stadium is in play, and it carries any Energy.
+    pub fn immune_under_festival_grounds(&self, id: PokemonId) -> bool {
+        self.stadium_effect()
+            == Some(crate::card::TrainerEffect::EnergizedPokemonImmuneToSpecialConditions)
+            && self
+                .pokemon(id)
+                .attached
+                .iter()
+                .any(|c| self.def_of(*c).is_energy())
+    }
+
     /// Put a Special Condition on a Pokémon.
     ///
     /// Rule 55: Asleep, Confused, and Paralyzed all rotate the card, so the
@@ -854,6 +866,9 @@ impl GameState {
     /// Poisoned are independent of that and of each other. Rule 57: a second
     /// Burn or Poison replaces the first rather than stacking.
     pub fn inflict(&mut self, id: PokemonId, condition: Condition) {
+        if self.immune_under_festival_grounds(id) {
+            return;
+        }
         if rotates(condition) {
             self.pokemon[id.index()].conditions.retain(|c| !rotates(*c));
         } else {

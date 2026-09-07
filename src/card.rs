@@ -330,6 +330,13 @@ pub enum TrainerEffect {
     /// `EvolveSkippingOneStage`) alongside the check it relaxes.
     /// `Forest of Vitality`.
     GrassCanEvolveTheTurnItIsPlayed,
+    /// A Stadium's static effect: a Pokémon carrying any Energy, either
+    /// side, recovers from every Special Condition and cannot be given a
+    /// new one. Read at `inflict` (refuses to add one) and swept
+    /// immediately at the two moments a Pokémon can newly qualify:
+    /// playing this Stadium, and attaching Energy while it is already in
+    /// play. `Festival Grounds`.
+    EnergizedPokemonImmuneToSpecialConditions,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
