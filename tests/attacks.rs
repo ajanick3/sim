@@ -1600,3 +1600,49 @@ fn elgyem_hide_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv05-073").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Elgyem's Hide print should play");
 }
+
+// --- Beyond the spec: a restriction on playing Item cards ---
+
+#[test]
+fn opponent_cannot_play_items_during_their_own_next_turn_only() {
+    let attack = Attack {
+        name: "Itchy Pollen",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::OpponentCannotPlayItemsNextTurn),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+
+    let item_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-item",
+        name: "Test Item",
+        kind: sim::card::TrainerKind::Item,
+        requirement: None,
+        effect: sim::card::TrainerEffect::MoveAttachedEnergy,
+    }));
+    let item = deal_new_card(&mut state, opponent, item_def);
+    state.players[opponent.index()].hand.push(item);
+
+    pay_and_attack(&mut state);
+    assert_eq!(state.current, opponent, "the attack ended the attacker's turn");
+
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card: item }),
+        "no Item cards this turn"
+    );
+}
+
+#[test]
+fn budew_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Budew" && c.playable.is_some()),
+        "at least one Budew print should play"
+    );
+}

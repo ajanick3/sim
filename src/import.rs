@@ -1014,6 +1014,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Buneary", "Charm") => AttackEffect::DefenderDealsLessDamageNextTurn(20),
         ("Dunsparce", "Dig") => AttackEffect::CoinFlipSelfInvulnerableNextTurn,
         ("Elgyem", "Hide") => AttackEffect::CoinFlipSelfInvulnerableNextTurn,
+        ("Budew", "Itchy Pollen") => AttackEffect::OpponentCannotPlayItemsNextTurn,
         _ => return None,
     })
 }

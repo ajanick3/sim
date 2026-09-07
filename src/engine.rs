@@ -1758,6 +1758,11 @@ fn resolve_attack_effect(
             let name = state.pokemon_def(defender).name;
             state.log.push(format!("{name} cannot retreat next turn."));
         }
+        crate::card::AttackEffect::OpponentCannotPlayItemsNextTurn => {
+            state.opponent_next_turn_restriction = Some((defender, effect));
+            let owner = state.pokemon(defender).owner;
+            state.log.push(format!("{owner:?} cannot play Item cards next turn."));
+        }
         crate::card::AttackEffect::CoinFlipSelfInvulnerableNextTurn => {
             if state.rng.flip() {
                 state.opponent_next_turn_restriction = Some((attacker, effect));

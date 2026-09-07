@@ -127,5 +127,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // outright, a full short-circuit at the top of `attack` rather
     // than a `damage_dealt_with` read — admits Dunsparce's Dig prints
     // (2) and Elgyem's Hide print (1).
-    assert_eq!(admitted, 567, "coverage moves only on purpose");
+    // A restriction on the opponent's own Item plays, through their
+    // next turn only — the same opponent_next_turn_restriction
+    // lifetime, read at the Item-offering site instead of retreat's
+    // — completes all 3 Budew prints.
+    assert_eq!(admitted, 570, "coverage moves only on purpose");
 }

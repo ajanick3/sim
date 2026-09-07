@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (38/95 built)
+### Pokémon (39/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -192,7 +192,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Blaziken ex | ❌ |
 | Bloodmoon Ursaluna ex | ❌ |
 | Brute Bonnet | ❌ |
-| Budew | ❌ |
+| [Budew](src/import.rs#L1017) | ✅ |
 | [Buneary](src/import.rs#L1011) | ✅ |
 | [Carvanha](src/import.rs#L951) | ✅ |
 | [Celebi](src/import.rs#L1010) | ✅ |
