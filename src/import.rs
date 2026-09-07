@@ -781,6 +781,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Punk Helmet" => (free, TrainerEffect::DamagesAttackerWhenDefenderIsHit(40)),
         "Lucky Helmet" => (free, TrainerEffect::DrawsWhenDefenderIsHit(2)),
         "Handheld Fan" => (free, TrainerEffect::MovesEnergyFromAttackerToTheirBench),
+        "Powerglass" => (free, TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd),
         "Transformation Tome" => (
             Some(Requirement::SecondCopyOfThisInHand),
             TrainerEffect::SwapBasicWithDiscard,

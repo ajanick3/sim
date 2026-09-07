@@ -863,3 +863,86 @@ fn handheld_fan_does_nothing_with_no_bench_to_receive_it() {
         "no Bench to move the Energy to, so the trigger does nothing"
     );
 }
+
+// --- Ticket 08: Powerglass ---
+
+fn with_powerglass(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-powerglass",
+        name: "Powerglass",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd,
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn powerglass_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Powerglass")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Powerglass should play");
+}
+
+#[test]
+fn powerglass_offers_a_basic_energy_from_discard_at_turn_end() {
+    let (set, glass) = with_powerglass(build());
+    let mut state = game(&set, glass, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let card = ensure_in_hand(&mut state, player, glass);
+    apply(&mut state, Action::PlayTool { card, target: active }).unwrap();
+
+    let energy = deal_to_discard(&mut state, player, set.energy);
+
+    apply(&mut state, Action::EndTurn).unwrap();
+    assert!(matches!(
+        state.phase,
+        Phase::AttachingFromDiscardForPowerglass { .. }
+    ));
+    assert_eq!(sim::action::player_to_act(&state), Some(player));
+    assert!(legal_actions(&state).contains(&Action::AttachFromDiscardForPowerglass { card: energy }));
+    assert!(legal_actions(&state).contains(&Action::DeclinePowerglass));
+
+    apply(&mut state, Action::AttachFromDiscardForPowerglass { card: energy }).unwrap();
+    assert!(state.pokemon(active).attached.contains(&energy));
+    assert!(!state.player(player).discard.contains(&energy));
+    // Turn resolution kept going: it is now the opponent's turn.
+    assert_ne!(state.current, player);
+}
+
+#[test]
+fn powerglass_can_be_declined() {
+    let (set, glass) = with_powerglass(build());
+    let mut state = game(&set, glass, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let card = ensure_in_hand(&mut state, player, glass);
+    apply(&mut state, Action::PlayTool { card, target: active }).unwrap();
+    let energy = deal_to_discard(&mut state, player, set.energy);
+
+    apply(&mut state, Action::EndTurn).unwrap();
+    apply(&mut state, Action::DeclinePowerglass).unwrap();
+
+    assert!(state.player(player).discard.contains(&energy), "left in discard");
+    assert!(!state.pokemon(active).attached.contains(&energy));
+    assert_ne!(state.current, player);
+}
+
+#[test]
+fn without_powerglass_the_turn_ends_without_a_phase() {
+    let (set, glass) = with_powerglass(build());
+    let mut state = game(&set, glass, 3);
+    let player = state.current;
+
+    apply(&mut state, Action::EndTurn).unwrap();
+    assert_ne!(state.current, player, "the turn just ends, no Powerglass to ask about");
+}

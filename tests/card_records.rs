@@ -61,7 +61,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Secret Box, 1 of Dusk Ball, 2 of Prime Catcher, 1 of Strange
     // Timepiece, 1 of Transformation Tome, 3 of Air Balloon, 1 of
     // Hero's Cape, 2 of Brave Bangle, 2 of Binding Mochi, 1 of
-    // Lillie's Pearl, 2 of Punk Helmet, 1 of Lucky Helmet, and 1 of
-    // Handheld Fan.
-    assert_eq!(admitted, 496, "coverage moves only on purpose");
+    // Lillie's Pearl, 2 of Punk Helmet, 1 of Lucky Helmet, 1 of
+    // Handheld Fan, and 2 of Powerglass.
+    assert_eq!(admitted, 498, "coverage moves only on purpose");
 }
