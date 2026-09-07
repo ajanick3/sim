@@ -66,6 +66,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.players[player.index()].bench.push(pokemon);
             let name = state.def_of(card).name();
             state.log.push(format!("{player:?} benches {name}."));
+            apply_risky_ruins(state, pokemon);
         }
 
         Action::Evolve { card, target } => {
@@ -336,6 +337,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     let pokemon = state.put_into_play(chooser, card);
                     state.players[chooser.index()].bench.push(pokemon);
                     state.log.push(format!("{chooser:?} benches {name}."));
+                    apply_risky_ruins(state, pokemon);
                 }
                 // `legal_actions` never offers `TakeCard` for a slot bound
                 // to attach: that needs a target, which is `TakeCardOnto`.
@@ -1287,7 +1289,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::MayPutHandCardOnTopOfDeck
         | TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter
         | TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn
-        | TrainerEffect::ToolsHaveNoEffect => {}
+        | TrainerEffect::ToolsHaveNoEffect
+        | TrainerEffect::DamagesNonDarknessBasicBenched(_) => {}
 
         TrainerEffect::JaninesSecretArt => {
             state.phase = Phase::ChoosingJaninesTargets {
@@ -1696,6 +1699,23 @@ fn end_the_turn(state: &mut GameState) {
 /// The Active of the player whose turn is ending, if it carries
 /// `Powerglass` — the one Tool so far that triggers on the turn ending
 /// itself, rather than on being attacked.
+/// `Risky Ruins`: a Basic of any type but Darkness takes damage the
+/// moment it lands on a Bench, from either arrival site — `PlayBasic`
+/// and a search's own `Destination::Bench` alike.
+fn apply_risky_ruins(state: &mut GameState, pokemon: PokemonId) {
+    let Some(TrainerEffect::DamagesNonDarknessBasicBenched(amount)) = state.stadium_effect()
+    else {
+        return;
+    };
+    let def = state.pokemon_def(pokemon);
+    if def.stage != crate::card::Stage::Basic || def.kind == crate::card::Type::Darkness {
+        return;
+    }
+    state.pokemon[pokemon.index()].damage += amount;
+    let name = state.pokemon_def(pokemon).name;
+    state.log.push(format!("{name} takes {amount} (Risky Ruins)."));
+}
+
 fn powerglass_owner(state: &GameState) -> Option<PlayerId> {
     if state.tools_disabled() {
         return None;
