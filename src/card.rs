@@ -652,6 +652,12 @@ pub enum AttackEffect {
     /// `TrainerEffect::SwitchOpponentActive` already opens, read from
     /// an attack instead. `Bayleef`'s `Push Down`.
     SwitchOpponentActive,
+    /// The defending Pokémon deals this much less damage during the
+    /// opponent's very next turn, before Weakness and Resistance —
+    /// stored in `opponent_next_turn_restriction`, the same lifetime
+    /// `DefenderCannotRetreatNextTurn` already carries. `Buneary`'s
+    /// `Charm`, `Chikorita`'s `Growl`.
+    DefenderDealsLessDamageNextTurn(u32),
 }
 
 /// What `AttackEffect::DamagePerCount` counts.

@@ -116,5 +116,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // one more print with no new shape.
     // Bayleef's Push Down admits its one print with the
     // SwitchOpponentActive mirror of ticket 09's SwitchOwnActive.
-    assert_eq!(admitted, 562, "coverage moves only on purpose");
+    // A damage-reduction restriction through the opponent's next
+    // turn (before Weakness and Resistance), the mirror of
+    // DefenderCannotRetreatNextTurn's own lifetime, admits Chikorita's
+    // me02.5-008 print (Growl).
+    assert_eq!(admitted, 563, "coverage moves only on purpose");
 }

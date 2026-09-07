@@ -1489,3 +1489,43 @@ fn bayleef_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "me01-009").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Bayleef's Push Down print should play");
 }
+
+// --- Beyond the spec: a damage-reduction restriction through the opponent's next turn ---
+
+#[test]
+fn defender_deals_less_damage_only_during_its_own_next_turn() {
+    let attack = Attack {
+        name: "Growl",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DefenderDealsLessDamageNextTurn(20)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+    assert_eq!(
+        state.opponent_next_turn_restriction,
+        Some((defender, AttackEffect::DefenderDealsLessDamageNextTurn(20)))
+    );
+    // The attack itself already ended the attacker's turn.
+    assert_eq!(state.current, opponent, "now the restricted Pokemon's own turn");
+
+    let restricted_attacker = state.player(opponent).active.unwrap();
+    let its_target = state.player(player).active.unwrap();
+    let damage = sim::engine::damage_dealt(&state, restricted_attacker, its_target, 30);
+    assert_eq!(damage, 10, "20 less, before Weakness and Resistance");
+}
+
+#[test]
+fn chikorita_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me02.5-008").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Chikorita's Growl print should play");
+}
