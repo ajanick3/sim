@@ -1002,6 +1002,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Genesect ex", "Metallic Signal") => {
             AbilityEffect::OncePerTurnMaySearchEvolutionPokemonOfType(Type::Metal, 2)
         }
+        ("Blaziken ex", "Seething Spirit") => {
+            AbilityEffect::OncePerTurnMayAttachBasicEnergyFromDiscardToChosen
+        }
         _ => return None,
     })
 }
@@ -1095,6 +1098,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Elgyem", "Slight Shift") => AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon,
         ("Dusknoir", "Shadow Bind") => AttackEffect::DefenderCannotRetreatNextTurn,
         ("Genesect ex", "Protect Charge") => AttackEffect::SelfDamageReductionNextTurn(30),
+        ("Blaziken ex", "Smolder-sault") => AttackEffect::AttackerCannotAttackNextTurn,
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }

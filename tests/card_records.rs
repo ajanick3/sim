@@ -196,5 +196,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // opponent_next_turn_restriction clearing bug this uncovered — a
     // self-targeted restriction was cleared one turn too early,
     // inferred from the wrong owner (ADR 0077).
-    assert_eq!(admitted, 614, "coverage moves only on purpose");
+    // Blaziken ex's Seething Spirit (attaching Energy from the
+    // discard pile to a chosen own Pokemon) and its own attack,
+    // Smolder-sault (AttackerCannotAttackNextTurn, already built)
+    // admit its one print.
+    assert_eq!(admitted, 615, "coverage moves only on purpose");
 }

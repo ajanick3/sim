@@ -1142,6 +1142,11 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         remaining: limit,
                     };
                 }
+                crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyFromDiscardToChosen => {
+                    // Not spent here: opening the choice is not using it —
+                    // only actually attaching is.
+                    state.phase = Phase::DecidingToUseSeethingSpirit { player, pokemon };
+                }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
                 | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_) => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
@@ -1299,6 +1304,31 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             };
             let library = &mut state.players[player.index()].library;
             shuffle(state.rng.as_mut(), library);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::AttachEnergyForSeethingSpirit { card, target } => {
+            let (player, pokemon) = match state.phase {
+                Phase::DecidingToUseSeethingSpirit { player, pokemon } => (player, pokemon),
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.players[player.index()].discard.retain(|c| *c != card);
+            state.pokemon[target.index()].attached.push(card);
+            let name = state.def_of(card).name();
+            let target_name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} attaches to {target_name} (Seething Spirit)."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DeclineSeethingSpirit => {
+            match state.phase {
+                Phase::DecidingToUseSeethingSpirit { .. } => {}
+                _ => return Err(IllegalAction),
+            };
             state.phase = Phase::Main;
             settle(state);
         }

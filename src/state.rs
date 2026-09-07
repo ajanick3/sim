@@ -366,6 +366,10 @@ pub enum Phase {
         kind: crate::card::Type,
         remaining: u32,
     },
+    /// `player` opened `pokemon`'s own Ability that attaches a Basic
+    /// Energy from the discard pile to a Pokémon of the player's
+    /// choosing. `Blaziken ex`'s `Seething Spirit`.
+    DecidingToUseSeethingSpirit { player: PlayerId, pokemon: PokemonId },
     /// `player` used an attack that searches their own discard pile
     /// for up to `remaining` more copies of a named Pokémon to the
     /// Bench. `Duskull`'s `Come and Get You`.
