@@ -995,6 +995,12 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Hoothoot", "Silent Wing") => AttackEffect::RevealOpponentsHand,
         ("Mega Sharpedo ex", "Greedy Fang") => AttackEffect::DrawCards(2),
         ("Mega Sharpedo ex", "Hungry Jaws") => AttackEffect::BonusDamageIfOwnDamaged(150),
+        ("Dwebble", "Flail") => AttackEffect::DamagePerCount(Count::OwnDamageCounters, 10),
+        ("Slowking", "Wash the Slate Clean") => {
+            AttackEffect::MayReturnOpponentsActiveEnergyToHand(2)
+        }
+        ("Dedenne", "Electromagnetic Sonar") => AttackEffect::TakeTrainerFromDiscard,
+        ("Dwebble", "Ascension") => AttackEffect::SearchLibraryToEvolveSelf,
         _ => return None,
     })
 }

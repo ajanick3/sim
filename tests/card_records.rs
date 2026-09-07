@@ -93,6 +93,13 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // state the engine tracks separately — admits Hoothoot's sv05-126
     // print. A fixed draw, and a bonus read once from a boolean board
     // fact ("if this Pokémon has any damage counters on it"), complete
-    // Mega Sharpedo ex (3 prints).
-    assert_eq!(admitted, 546, "coverage moves only on purpose");
+    // Mega Sharpedo ex (3 prints). Ticket 13, the deferred-on-
+    // inspection cards: Dwebble's Flail (an existing damage-per-count
+    // shape) admits its sv10.5b prints (2); Slowking's Wash the Slate
+    // Clean (an optional move of the defender's own Energy to its
+    // owner's hand) admits sv08.5-019; Dedenne's Electromagnetic Sonar
+    // (a Trainer taken from the discard pile) admits sv08-087; and
+    // Dwebble's Ascension (a search straight to evolution, no hand
+    // step) admits sv10-011.
+    assert_eq!(admitted, 551, "coverage moves only on purpose");
 }

@@ -1013,3 +1013,220 @@ fn mega_sharpedo_ex_is_admitted_from_the_artifact() {
         "at least one Mega Sharpedo ex print should play"
     );
 }
+
+// --- Ticket 13: the deferred-on-inspection cards ---
+
+#[test]
+fn dwebble_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Dwebble" && c.playable.is_some()),
+        "at least one Dwebble print should play"
+    );
+}
+
+#[test]
+fn may_put_up_to_two_of_the_defenders_energy_into_their_hand() {
+    let attack = Attack {
+        name: "Wash the Slate Clean",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::MayReturnOpponentsActiveEnergyToHand(2)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    // Attach two Energy of the same kind the deck already carries.
+    let energy_card = {
+        let side = state.player(opponent);
+        side.library
+            .iter()
+            .chain(side.hand.iter())
+            .find(|c| state.def_of(**c).is_energy())
+            .copied()
+            .expect("the deck holds Energy")
+    };
+    let energy_def = state.cards[energy_card.index()].def;
+    let e1 = deal_new_card(&mut state, opponent, energy_def);
+    let e2 = deal_new_card(&mut state, opponent, energy_def);
+    state.pokemon[defender.index()].attached.push(e1);
+    state.pokemon[defender.index()].attached.push(e2);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::MovingOpponentsActiveEnergyToHand { .. }));
+    apply(&mut state, Action::MoveOpponentsActiveEnergyToHand { card: e1 }).unwrap();
+    apply(&mut state, Action::FinishMovingOpponentsActiveEnergyToHand).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(opponent).hand.contains(&e1));
+    assert!(state.pokemon(defender).attached.contains(&e2));
+}
+
+#[test]
+fn declining_wash_the_slate_clean_moves_nothing() {
+    let attack = Attack {
+        name: "Wash the Slate Clean",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::MayReturnOpponentsActiveEnergyToHand(2)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "the defender has no Energy to offer");
+}
+
+#[test]
+fn slowking_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Slowking" && c.playable.is_some()),
+        "at least one Slowking print should play"
+    );
+}
+
+#[test]
+fn takes_a_trainer_card_from_the_discard_pile() {
+    let attack = Attack {
+        name: "Electromagnetic Sonar",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::TakeTrainerFromDiscard),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+
+    let trainer_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-any-trainer",
+        name: "Test Trainer",
+        kind: sim::card::TrainerKind::Item,
+        requirement: None,
+        effect: sim::card::TrainerEffect::MoveAttachedEnergy,
+    }));
+    let trainer = deal_new_card(&mut state, player, trainer_def);
+    state.players[player.index()].discard.push(trainer);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::TakingTrainerFromDiscard { .. }));
+    apply(&mut state, Action::TakeTrainerFromDiscard { card: trainer }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&trainer));
+}
+
+#[test]
+fn no_trainer_in_discard_opens_no_phase() {
+    let attack = Attack {
+        name: "Electromagnetic Sonar",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::TakeTrainerFromDiscard),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no Trainer in the discard pile");
+}
+
+#[test]
+fn dedenne_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Dedenne" && c.playable.is_some()),
+        "at least one Dedenne print should play"
+    );
+}
+
+#[test]
+fn searches_the_library_to_evolve_itself() {
+    let attack = Attack {
+        name: "Ascension",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchLibraryToEvolveSelf),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let attacker_name = state.pokemon_def(attacker).name;
+
+    let evolution_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-evolution",
+        name: "Evolvemon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Stage1,
+        evolve_from: Some(attacker_name),
+        evolves_from_basic: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let evolution = deal_new_card(&mut state, player, evolution_def);
+    state.players[player.index()].library.push(evolution);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::SearchingLibraryToEvolveSelf { .. }));
+    apply(&mut state, Action::EvolveWithAscension { card: evolution }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon_def(attacker).name, "Evolvemon");
+    assert!(!state.player(player).library.contains(&evolution));
+}
+
+#[test]
+fn no_evolution_in_library_does_nothing() {
+    let attack = Attack {
+        name: "Ascension",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchLibraryToEvolveSelf),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(attacker).cards.len(), 1, "nothing to evolve into");
+}
+
+#[test]
+fn dwebble_ascension_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv10-011").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Dwebble's Ascension print should play");
+}

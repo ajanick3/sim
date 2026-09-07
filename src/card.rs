@@ -611,6 +611,23 @@ pub enum AttackEffect {
     /// `damage_dealt_with` runs, the same as `CoinFlipBonusDamage`.
     /// `Mega Sharpedo ex`'s `Hungry Jaws`.
     BonusDamageIfOwnDamaged(u32),
+    /// The player may put up to this many Energy attached to the
+    /// opponent's Active Pokémon into the opponent's hand, choosing
+    /// which — opens `Phase::MovingOpponentsActiveEnergyToHand`. No
+    /// Energy attached opens no phase. `Slowking`'s
+    /// `Wash the Slate Clean`.
+    MayReturnOpponentsActiveEnergyToHand(u32),
+    /// Put a Trainer card from the player's own discard pile into their
+    /// hand, choosing which if more than one qualifies — opens
+    /// `Phase::TakingTrainerFromDiscard`. No Trainer in the discard
+    /// pile opens no phase. `Dedenne`'s `Electromagnetic Sonar`.
+    TakeTrainerFromDiscard,
+    /// Search the library for a card that evolves from the attacker
+    /// itself and evolve it directly, then shuffle — the same
+    /// hand-skipping evolution `TrainerEffect::EvolveSkippingOneStage`
+    /// (Rare Candy) already runs, but pulled from the library instead
+    /// of the hand. `Dwebble`'s `Ascension`.
+    SearchLibraryToEvolveSelf,
 }
 
 /// What `AttackEffect::DamagePerCount` counts.
