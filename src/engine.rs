@@ -500,6 +500,35 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::ChooseOption { first } => {
+            let (player, played) = match state.phase {
+                Phase::ChoosingOneOf { player, card } => (player, card),
+                _ => return Err(IllegalAction),
+            };
+            let chosen = match state
+                .def_of(played)
+                .as_trainer()
+                .expect("a choice is only ever a Trainer's effect")
+                .effect
+                .clone()
+            {
+                TrainerEffect::ChooseOneOf(a, b) => {
+                    if first {
+                        *a
+                    } else {
+                        *b
+                    }
+                }
+                _ => unreachable!("Phase::ChoosingOneOf only ever names a ChooseOneOf card"),
+            };
+            // The phase clears before the chosen branch runs, the same
+            // as playing the card itself: a branch with no phase of its
+            // own leaves Main behind it, and one that opens a phase
+            // overwrites this in the same step.
+            state.phase = Phase::Main;
+            resolve_trainer(state, player, played, chosen);
+        }
+
         Action::EvolveSkippingOneStage { card, target } => {
             let player = match state.phase {
                 Phase::EvolvingWithRareCandy { player } => player,
@@ -798,6 +827,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::BonusDamageThisTurn(amount, target) => {
             state.turn_bonus = Some((amount, target));
+        }
+
+        TrainerEffect::ChooseOneOf(..) => {
+            state.phase = Phase::ChoosingOneOf { player, card };
         }
 
         TrainerEffect::CoinFlipDiscardOpponentEnergy => {

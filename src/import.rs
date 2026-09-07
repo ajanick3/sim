@@ -694,6 +694,16 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             Some(Requirement::HandSizeIs(1)),
             TrainerEffect::BonusDamageThisTurn(80, TurnBonusTarget::OpponentActiveWithoutRuleBox),
         ),
+        "Kieran" => (
+            free,
+            TrainerEffect::ChooseOneOf(
+                Box::new(TrainerEffect::SwitchOwnActive),
+                Box::new(TrainerEffect::BonusDamageThisTurn(
+                    30,
+                    TurnBonusTarget::OpponentActiveEx,
+                )),
+            ),
+        ),
         _ => return None,
     })
 }

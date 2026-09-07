@@ -199,6 +199,11 @@ pub enum Phase {
     /// name the card, and ADR 0012 gives the player their own choice to
     /// stop before `remaining` runs out.
     MovingEnergyFromBenchToActive { player: PlayerId, remaining: u32 },
+    /// `player` played a card whose own text branches into two named
+    /// effects, and picks one. `card` names the Trainer, the same
+    /// continuation `Deciding` and `Paying` already use, so the two
+    /// effects live only in the card's own definition, never copied here.
+    ChoosingOneOf { player: PlayerId, card: CardId },
     /// `player` played a card that heals a chosen Pokémon in play, and
     /// picks which one. `amount` is how much it heals — `Pokémon Center
     /// Lady` always names the same number, but the phase carries it so a
