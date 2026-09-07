@@ -1436,3 +1436,56 @@ fn buneary_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "me02-083").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Buneary's Run Around print should play");
 }
+
+#[test]
+fn switches_the_opponents_active() {
+    let attack = Attack {
+        name: "Push Down",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SwitchOpponentActive),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let old_defender = state.player(opponent).active.unwrap();
+    let bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::Promoting { .. }));
+    apply(&mut state, Action::Promote { pokemon: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(opponent).active, Some(bench_mon));
+    assert!(state.player(opponent).bench.contains(&old_defender));
+}
+
+#[test]
+fn switching_the_opponent_does_nothing_with_no_bench() {
+    let attack = Attack {
+        name: "Push Down",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SwitchOpponentActive),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no Bench to switch into");
+}
+
+#[test]
+fn bayleef_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me01-009").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Bayleef's Push Down print should play");
+}

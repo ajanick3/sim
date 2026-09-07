@@ -1792,6 +1792,17 @@ fn resolve_attack_effect(
                 };
             }
         }
+        crate::card::AttackEffect::SwitchOpponentActive => {
+            let owner = state.pokemon(attacker).owner;
+            let opponent = owner.opponent();
+            if !state.player(opponent).bench.is_empty() {
+                state.phase = Phase::Promoting {
+                    of: opponent,
+                    chooser: owner,
+                    then: None,
+                };
+            }
+        }
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::BonusDamageIfOwnDamaged(_) => {}

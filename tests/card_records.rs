@@ -114,5 +114,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Torchic's and Celebi's Collect (DrawCards, already built) and
     // Buneary's Run Around (SwitchOwnActive, already built) each admit
     // one more print with no new shape.
-    assert_eq!(admitted, 561, "coverage moves only on purpose");
+    // Bayleef's Push Down admits its one print with the
+    // SwitchOpponentActive mirror of ticket 09's SwitchOwnActive.
+    assert_eq!(admitted, 562, "coverage moves only on purpose");
 }

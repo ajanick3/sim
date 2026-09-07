@@ -187,7 +187,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Alakazam | ❌ |
 | Annihilape | ❌ |
 | [Applin](src/import.rs#L982) | ✅ |
-| [Bayleef](src/import.rs#L234) | ✅ |
+| [Bayleef](src/import.rs#L1012) | ✅ |
 | [Beldum](src/import.rs#L1004) | ✅ |
 | Blaziken ex | ❌ |
 | Bloodmoon Ursaluna ex | ❌ |

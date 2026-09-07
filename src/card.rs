@@ -647,6 +647,11 @@ pub enum AttackEffect {
     /// `Phase::SearchingDiscardForNamedToBench`. `Duskull`'s
     /// `Come and Get You`.
     SearchDiscardForNamedToBench(&'static str, u32),
+    /// Switch the opponent's Active Pokémon, their choice of which —
+    /// the same `Phase::Promoting` shape
+    /// `TrainerEffect::SwitchOpponentActive` already opens, read from
+    /// an attack instead. `Bayleef`'s `Push Down`.
+    SwitchOpponentActive,
 }
 
 /// What `AttackEffect::DamagePerCount` counts.
