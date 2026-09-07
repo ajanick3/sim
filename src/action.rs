@@ -206,6 +206,13 @@ pub enum Action {
     AttachEnergyForSeethingSpirit { card: CardId, target: PokemonId },
     /// Decline it.
     DeclineSeethingSpirit,
+    /// Move this attached Energy to hand, as part of
+    /// `Phase::ChoosingOwnEnergyToHand`.
+    MoveOwnAttachedEnergyToHand { card: CardId },
+    /// Accept `Phase::DecidingToUseSnowSink`'s discard.
+    AcceptSnowSink,
+    /// Decline it.
+    DeclineSnowSink,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -247,6 +254,8 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingCursedBlastTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => Some(player),
         Phase::DecidingToUseSeethingSpirit { player, .. } => Some(player),
+        Phase::ChoosingOwnEnergyToHand { player, .. } => Some(player),
+        Phase::DecidingToUseSnowSink { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -617,6 +626,19 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::DeclineSeethingSpirit);
+            return actions;
+        }
+        Phase::ChoosingOwnEnergyToHand { attacker, .. } => {
+            for card in &state.pokemon(attacker).attached {
+                if state.def_of(*card).is_energy() {
+                    actions.push(Action::MoveOwnAttachedEnergyToHand { card: *card });
+                }
+            }
+            return actions;
+        }
+        Phase::DecidingToUseSnowSink { .. } => {
+            actions.push(Action::AcceptSnowSink);
+            actions.push(Action::DeclineSnowSink);
             return actions;
         }
         Phase::MovingOpponentsEnergy { of, .. } => {
@@ -1037,6 +1059,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // Triggered the moment this Pokémon evolves from hand
             // (`trigger_psychic_draw`), never a standing choice.
             crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_) => false,
+            // Triggered the moment this Pokémon is played from hand
+            // (`trigger_snow_sink`), never a standing choice.
+            crate::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium => false,
         };
         if eligible {
             actions.push(Action::UseAbility { pokemon });
@@ -1276,5 +1301,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
             state.pokemon_def(target).name
         ),
         Action::DeclineSeethingSpirit => "Decline Seething Spirit".to_string(),
+        Action::MoveOwnAttachedEnergyToHand { card } => {
+            format!("Move {} to hand", state.def_of(card).name())
+        }
+        Action::AcceptSnowSink => "Discard the Stadium (Snow Sink)".to_string(),
+        Action::DeclineSnowSink => "Decline Snow Sink".to_string(),
     }
 }

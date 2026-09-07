@@ -2118,3 +2118,70 @@ fn genesect_ex_is_admitted_from_the_artifact() {
         "at least one Genesect ex print should play"
     );
 }
+
+// --- Beyond the spec: Chien-Pao's Strafe/Rising Blade print ---
+
+#[test]
+fn chien_pao_strafe_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me03-054").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Chien-Pao's Strafe/Rising Blade print should play");
+}
+
+// --- Beyond the spec: put an Energy attached to the attacker into hand ---
+
+#[test]
+fn puts_the_attackers_own_energy_into_hand() {
+    let attack = Attack {
+        name: "Icicle Loop",
+        cost: vec![Type::Colorless],
+        base_damage: 120,
+        inflicts: None,
+        effect: Some(AttackEffect::MoveOwnAttachedEnergyToHand),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingOwnEnergyToHand { .. }));
+    let card = state.pokemon(attacker).attached[0];
+    apply(&mut state, Action::MoveOwnAttachedEnergyToHand { card }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&card));
+    assert!(!state.pokemon(attacker).attached.contains(&card));
+}
+
+#[test]
+fn no_energy_attached_opens_no_phase_for_icicle_loop() {
+    let attack = Attack {
+        name: "Icicle Loop",
+        cost: vec![],
+        base_damage: 120,
+        inflicts: None,
+        effect: Some(AttackEffect::MoveOwnAttachedEnergyToHand),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let attack_action = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("a free attack can always be used");
+    apply(&mut state, attack_action).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "no Energy attached to move");
+}
+
+#[test]
+fn chien_pao_icicle_loop_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv08-056").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Chien-Pao's Icicle Loop print should play");
+}

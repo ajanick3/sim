@@ -370,6 +370,13 @@ pub enum Phase {
     /// Energy from the discard pile to a Pokémon of the player's
     /// choosing. `Blaziken ex`'s `Seething Spirit`.
     DecidingToUseSeethingSpirit { player: PlayerId, pokemon: PokemonId },
+    /// `player` used an attack that puts one of the attacker's own
+    /// attached Energy into their hand. `Chien-Pao`'s `Icicle Loop`.
+    ChoosingOwnEnergyToHand { player: PlayerId, attacker: PokemonId },
+    /// `player` just played `pokemon` from hand onto the Bench, and
+    /// its own Ability may discard whichever Stadium is in play.
+    /// `Chien-Pao`'s `Snow Sink`.
+    DecidingToUseSnowSink { player: PlayerId, pokemon: PokemonId },
     /// `player` used an attack that searches their own discard pile
     /// for up to `remaining` more copies of a named Pokémon to the
     /// Bench. `Duskull`'s `Come and Get You`.
