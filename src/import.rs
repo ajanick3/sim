@@ -358,7 +358,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
     let free = None;
     Some(match name {
         "Boss's Orders" => (free, TrainerEffect::SwitchOpponentActive),
-        "Judge" => (free, TrainerEffect::BothShuffleHandThenDraw { count: 4 }),
+        "Judge" => (free, TrainerEffect::BothShuffleHandThenDraw { you: 4, opponent: 4 }),
         "Lillie's Determination" => (
             free,
             TrainerEffect::ShuffleHandThenDraw {
@@ -629,6 +629,13 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                     peek: None,
                 }],
                 then: None,
+            },
+        ),
+        "Unfair Stamp" => (
+            Some(Requirement::KnockedOutDuringOpponentsLastTurn),
+            TrainerEffect::BothShuffleHandThenDraw {
+                you: 5,
+                opponent: 2,
             },
         ),
         _ => return None,

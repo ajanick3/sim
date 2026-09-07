@@ -2181,6 +2181,152 @@ fn codebreaking_is_admitted_from_the_artifact() {
     );
 }
 
+// --- Milestone 6, ticket 05: a requirement read from last turn ---
+
+fn with_unfair_stamp(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let unfair_stamp = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-unfair-stamp",
+        name: "Unfair Stamp",
+        kind: TrainerKind::Item,
+        requirement: Some(Requirement::KnockedOutDuringOpponentsLastTurn),
+        effect: TrainerEffect::BothShuffleHandThenDraw {
+            you: 5,
+            opponent: 2,
+        },
+    }));
+    (Set { db, ..set }, unfair_stamp)
+}
+
+#[test]
+fn unfair_stamp_cannot_be_played_with_no_knockout_to_point_to() {
+    let (set, unfair_stamp) = with_unfair_stamp(build());
+    let mut state = game(&set, unfair_stamp, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, unfair_stamp);
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "nothing was Knocked Out; the card has nothing to point to"
+    );
+}
+
+/// Run `EndTurn`, then every action `legal_actions` offers first until a
+/// Main phase is reached — the ordinary way this file already drives setup
+/// and Promoting through to a stopping point.
+fn end_turn_and_advance(state: &mut GameState) {
+    apply(state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(state)[0];
+        apply(state, first).unwrap();
+    }
+}
+
+/// Damage a Pokémon in play to exactly its own HP — not by an attack, but
+/// by the same fact `knock_out_the_dead` reads to decide a Knockout: how
+/// much damage it already carries. The next `settle` (any `EndTurn` runs
+/// one) finds it exactly the way a lethal attack would have left it.
+fn make_lethally_damaged(state: &mut GameState, pokemon: PokemonId) {
+    let hp = state.pokemon_def(pokemon).hp;
+    state.pokemon[pokemon.index()].damage = hp;
+}
+
+#[test]
+fn unfair_stamp_plays_once_the_opponent_knocked_something_out_last_turn() {
+    let (set, unfair_stamp) = with_unfair_stamp(build());
+    let mut state = game(&set, unfair_stamp, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+
+    // Into the opponent's turn, where the Knockout belongs.
+    end_turn_and_advance(&mut state);
+    assert_eq!(state.current, opponent);
+
+    let victim = state
+        .player(player)
+        .active
+        .expect("the player has an Active to lose");
+    make_lethally_damaged(&mut state, victim);
+
+    // The opponent's turn ends; `settle` finds the lethal damage and
+    // Knocks the Pokémon out, then the player promotes a new Active,
+    // then it becomes the player's turn — where the fact belongs.
+    end_turn_and_advance(&mut state);
+    assert_eq!(state.current, player, "back to the player who lost it");
+
+    let card = ensure_in_hand(&mut state, player, unfair_stamp);
+    assert!(
+        legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "the opponent's last turn Knocked this player's Pokémon out"
+    );
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "no choice is left in the card");
+    assert_eq!(
+        state.player(player).hand.len(),
+        5,
+        "the player who played it draws 5"
+    );
+    assert_eq!(
+        state.player(opponent).hand.len(),
+        2,
+        "the opponent draws only 2"
+    );
+}
+
+#[test]
+fn the_fact_does_not_survive_the_players_own_next_turn() {
+    let (set, unfair_stamp) = with_unfair_stamp(build());
+    let mut state = game(&set, unfair_stamp, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, unfair_stamp);
+
+    end_turn_and_advance(&mut state); // into the opponent's turn
+    let victim = state.player(player).active.unwrap();
+    make_lethally_damaged(&mut state, victim);
+    end_turn_and_advance(&mut state); // Knockout, promote, into the player's turn
+    assert_eq!(state.current, player);
+    assert!(
+        legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "true on the turn right after the Knockout"
+    );
+
+    // One full cycle further, with no new Knockout: the old one is now two
+    // turns stale and must not still count.
+    end_turn_and_advance(&mut state); // into the opponent's turn again
+    end_turn_and_advance(&mut state); // back to the player, no Knockout this time
+    assert_eq!(state.current, player, "back to the same player's turn");
+
+    let card = ensure_in_hand(&mut state, player, unfair_stamp);
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "the old Knockout is two turns stale and must not still count"
+    );
+}
+
+#[test]
+fn unfair_stamp_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let unfair_stamp = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Unfair Stamp")
+        .expect("Unfair Stamp plays");
+    assert_eq!(
+        unfair_stamp.requirement,
+        Some(Requirement::KnockedOutDuringOpponentsLastTurn)
+    );
+    assert_eq!(
+        unfair_stamp.effect,
+        TrainerEffect::BothShuffleHandThenDraw {
+            you: 5,
+            opponent: 2,
+        }
+    );
+}
+
 // --- The card data ---
 
 #[test]

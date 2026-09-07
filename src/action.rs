@@ -358,6 +358,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 Some(Requirement::OpponentPrizesAtMost(most)) => {
                     state.player(player.opponent()).prizes.len() <= most
                 }
+                Some(Requirement::KnockedOutDuringOpponentsLastTurn) => {
+                    state.knocked_out_last_turn[player.index()]
+                }
             };
             // Rule 59: not a Stadium whose name is already in play.
             let name_is_free = trainer.kind != TrainerKind::Stadium
