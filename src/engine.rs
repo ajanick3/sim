@@ -1746,6 +1746,13 @@ fn resolve_attack_effect(
             let name = state.pokemon_def(defender).name;
             state.log.push(format!("{name} cannot retreat next turn."));
         }
+        crate::card::AttackEffect::DefenderDealsLessDamageNextTurn(amount) => {
+            state.opponent_next_turn_restriction = Some((defender, effect));
+            let name = state.pokemon_def(defender).name;
+            state
+                .log
+                .push(format!("{name} deals {amount} less damage next turn."));
+        }
         crate::card::AttackEffect::AttackerCannotAttackNextTurn => {
             state.own_next_turn_restriction = Some((attacker, effect, false));
             let name = state.pokemon_def(attacker).name;
@@ -2042,6 +2049,16 @@ fn damage_dealt_with(
         if restricted_to_defender && opponent_active == Some(defender) {
             damage += bonus;
         }
+    }
+
+    // A restriction granted on a previous turn against this Pokémon,
+    // read only during the granting player's very next turn — the
+    // same lifetime `DefenderCannotRetreatNextTurn` already carries.
+    if let Some((target, crate::card::AttackEffect::DefenderDealsLessDamageNextTurn(amount))) =
+        state.opponent_next_turn_restriction
+        && target == attacker
+    {
+        damage = damage.saturating_sub(amount);
     }
 
     // Step 32b: a Tool attached to the attacker, unconditioned on whose

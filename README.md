@@ -198,7 +198,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Celebi](src/import.rs#L1010) | ✅ |
 | Chi-Yu | ❌ |
 | Chien-Pao | ❌ |
-| [Chikorita](src/import.rs#L234) | ✅ |
+| [Chikorita](src/import.rs#L1013) | ✅ |
 | Cofagrigus | ❌ |
 | [Combusken](src/import.rs#L234) | ✅ |
 | Crustle | ❌ |
