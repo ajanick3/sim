@@ -65,6 +65,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Handheld Fan, 2 of Powerglass, 2 of Gravity Mountain, 1 of
     // N's Castle, 1 of Academy at Night, 2 of Team Rocket's Factory,
     // 2 of Lumiose City, 3 of Jamming Tower, 1 of Risky Ruins, 3 of
-    // Forest of Vitality, and 2 of Festival Grounds.
-    assert_eq!(admitted, 515, "coverage moves only on purpose");
+    // Forest of Vitality, and 2 of Festival Grounds. Milestone 11
+    // (Pokémon attacks) starts here: 1 of Carvanha, 2 of Tapu Bulu, and
+    // 1 of Rellor (sv05-023), each a plain recoil attack.
+    assert_eq!(admitted, 519, "coverage moves only on purpose");
 }

@@ -1496,6 +1496,9 @@ fn attack(state: &mut GameState, index: usize) {
         let name = state.pokemon_def(defender).name;
         state.log.push(format!("{name} is now {condition:?}."));
     }
+    if let Some(effect) = attack.effect {
+        resolve_attack_effect(state, attacker, defender, effect);
+    }
 
     let attacker_name = state.pokemon_def(attacker).name;
     let defender_name = state.pokemon_def(defender).name;
@@ -1503,6 +1506,27 @@ fn attack(state: &mut GameState, index: usize) {
         "{attacker_name} uses {} on {defender_name} for {damage}.",
         attack.name
     ));
+}
+
+/// An attack's own printed effect, read once the attack's plain damage
+/// and `inflicts` have already landed. Milestone 11's dispatch, the
+/// counterpart to `resolve_trainer` — a separate function since an
+/// attack and a Trainer effect are read from different call sites,
+/// with different arguments (attacker and defender, not a player and a
+/// played card).
+fn resolve_attack_effect(
+    state: &mut GameState,
+    attacker: PokemonId,
+    _defender: PokemonId,
+    effect: crate::card::AttackEffect,
+) {
+    match effect {
+        crate::card::AttackEffect::Recoil(amount) => {
+            state.pokemon[attacker.index()].damage += amount;
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} also takes {amount} damage."));
+        }
+    }
 }
 
 /// A Tool on the Active that just took attack damage — Punk Helmet,
