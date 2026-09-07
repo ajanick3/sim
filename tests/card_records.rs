@@ -63,6 +63,6 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Hero's Cape, 2 of Brave Bangle, 2 of Binding Mochi, 1 of
     // Lillie's Pearl, 2 of Punk Helmet, 1 of Lucky Helmet, 1 of
     // Handheld Fan, 2 of Powerglass, 2 of Gravity Mountain, 1 of
-    // N's Castle, and 1 of Academy at Night.
-    assert_eq!(admitted, 502, "coverage moves only on purpose");
+    // N's Castle, 1 of Academy at Night, and 2 of Team Rocket's Factory.
+    assert_eq!(admitted, 504, "coverage moves only on purpose");
 }

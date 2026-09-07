@@ -373,3 +373,96 @@ fn academy_at_night_is_not_offered_without_the_stadium_in_play() {
             .any(|a| matches!(a, Action::PutOnTopOfDeckForAcademyAtNight { .. }))
     );
 }
+
+// --- Ticket 03: Team Rocket's Factory ---
+
+fn with_team_rockets_factory(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let petrel = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tr-petrel-2",
+        name: "Team Rocket's Petrel",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Nothing,
+    }));
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tr-factory",
+        name: "Team Rocket's Factory",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter,
+    }));
+    (Set { db, ..set }, card, petrel)
+}
+
+#[test]
+fn team_rockets_factory_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Team Rocket's Factory")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Team Rocket's Factory should play");
+}
+
+#[test]
+fn team_rockets_factory_offers_a_draw_only_after_a_team_rocket_supporter() {
+    let (set, card, petrel) = with_team_rockets_factory(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert!(
+        !legal_actions(&state).contains(&Action::DrawTwoForTeamRocketsFactory),
+        "no Team Rocket Supporter played yet this turn"
+    );
+
+    let petrel_card = deal_new_card(&mut state, player, petrel);
+    state.players[player.index()].hand.push(petrel_card);
+    apply(&mut state, Action::PlayTrainer { card: petrel_card }).unwrap();
+
+    assert!(legal_actions(&state).contains(&Action::DrawTwoForTeamRocketsFactory));
+    let hand_before = state.player(player).hand.len();
+    apply(&mut state, Action::DrawTwoForTeamRocketsFactory).unwrap();
+    assert_eq!(state.player(player).hand.len(), hand_before + 2);
+
+    assert!(
+        !legal_actions(&state).contains(&Action::DrawTwoForTeamRocketsFactory),
+        "once a turn"
+    );
+}
+
+#[test]
+fn team_rockets_factory_forgets_by_the_next_turn() {
+    let (set, card, petrel) = with_team_rockets_factory(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    let petrel_card = deal_new_card(&mut state, player, petrel);
+    state.players[player.index()].hand.push(petrel_card);
+    apply(&mut state, Action::PlayTrainer { card: petrel_card }).unwrap();
+
+    end_turn_and_advance(&mut state);
+    end_turn_and_advance(&mut state);
+    assert_eq!(state.current, player, "back to the same player's turn");
+
+    assert!(
+        !legal_actions(&state).contains(&Action::DrawTwoForTeamRocketsFactory),
+        "the fact does not survive past the turn it happened"
+    );
+}
+
+/// Apply `EndTurn`, then every legal action until Main or the game ends.
+fn end_turn_and_advance(state: &mut GameState) {
+    apply(state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(state)[0];
+        apply(state, first).unwrap();
+    }
+}

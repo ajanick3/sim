@@ -112,6 +112,8 @@ pub enum Action {
     /// `Academy at Night`'s once-a-turn action: put this card from hand
     /// on top of the Library.
     PutOnTopOfDeckForAcademyAtNight { card: CardId },
+    /// `Team Rocket's Factory`'s once-a-turn action.
+    DrawTwoForTeamRocketsFactory,
     /// Choose one of up to 2 targets for `Janine's Secret Art`.
     ChooseJaninesTarget { target: PokemonId },
     /// Stop choosing targets, whether 0, 1, or 2 have been picked.
@@ -501,6 +503,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::PutOnTopOfDeckForAcademyAtNight { card: *card });
         }
     }
+    if state.stadium_effect() == Some(crate::card::TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter)
+        && !state.is_spent(Limit::StadiumEffectUsed(player))
+        && state.played_a_team_rocket_supporter_this_turn[player.index()]
+    {
+        actions.push(Action::DrawTwoForTeamRocketsFactory);
+    }
 
     for card in &side.hand {
         let def = state.def_of(*card);
@@ -838,6 +846,7 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::PutOnTopOfDeckForAcademyAtNight { card } => {
             format!("Put {} on top of the deck", state.def_of(card).name())
         }
+        Action::DrawTwoForTeamRocketsFactory => "Draw 2 (Team Rocket's Factory)".to_string(),
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
         }

@@ -92,6 +92,10 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 TrainerKind::Supporter => {
                     state.spend(Limit::SupporterPlayed(player));
                     state.players[player.index()].discard.push(card);
+                    // `Team Rocket's Factory` reads this the same turn.
+                    if trainer.name.contains("Team Rocket") {
+                        state.played_a_team_rocket_supporter_this_turn[player.index()] = true;
+                    }
                 }
                 // Rule 58: a Stadium stays in play, and the one already
                 // there goes to its own owner's discard, not to this
@@ -789,6 +793,14 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.log.push(format!("{player:?} puts {name} on top of the deck."));
         }
 
+        Action::DrawTwoForTeamRocketsFactory => {
+            let player = state.current;
+            state.spend(Limit::StadiumEffectUsed(player));
+            state.draw(player);
+            state.draw(player);
+            state.log.push(format!("{player:?} draws 2 (Team Rocket's Factory)."));
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1251,7 +1263,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         // reads the effect from there, not from this dispatch.
         TrainerEffect::ReducesHpForStage(..)
         | TrainerEffect::RemovesRetreatCostForNamePrefix(_)
-        | TrainerEffect::MayPutHandCardOnTopOfDeck => {}
+        | TrainerEffect::MayPutHandCardOnTopOfDeck
+        | TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter => {}
 
         TrainerEffect::JaninesSecretArt => {
             state.phase = Phase::ChoosingJaninesTargets {
