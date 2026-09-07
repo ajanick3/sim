@@ -986,6 +986,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Dragapult ex", "Phantom Dive") => {
             AttackEffect::DamageCountersToOpponentBenchAnyWay(6)
         }
+        ("N's Darmanitan", "Flamebody Cannon") => {
+            AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenched(90)
+        }
         _ => return None,
     })
 }

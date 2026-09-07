@@ -81,5 +81,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // already read in ticket 03. Damage placed on the opponent's
     // Bench, in the player's own choice of split, admits Dragapult ex
     // (5 prints; its other attack, Jet Headbutt, has no printed text).
-    assert_eq!(admitted, 535, "coverage moves only on purpose");
+    // A cost paid in the attacker's own Energy — discarding it all,
+    // then damaging a chosen Benched Pokémon — completes N's
+    // Darmanitan (3 prints): its other attack (Back Draft) was
+    // already read in ticket 02.
+    assert_eq!(admitted, 538, "coverage moves only on purpose");
 }

@@ -294,6 +294,10 @@ pub enum Phase {
     /// runs out of room to matter (never happens; a counter can always
     /// stack). `Dragapult ex`'s `Phantom Dive`.
     DistributingDamageCounters { player: PlayerId, remaining: u32 },
+    /// `player` used an attack that discards its own Energy and then
+    /// deals flat damage to one Benched Pokémon of the opponent's
+    /// choosing which. `N's Darmanitan`'s `Flamebody Cannon`.
+    ChoosingBenchDamageTarget { player: PlayerId, damage: u32 },
     /// `player` played `Janine's Secret Art` and is choosing up to 2 of
     /// their own Darkness Pokémon, in `chosen`, before any search runs.
     ChoosingJaninesTargets {

@@ -579,6 +579,13 @@ pub enum AttackEffect {
     /// `Phase::DistributingDamageCounters`, since the first read of a
     /// Benched Pokémon taking damage at all. `Dragapult ex`.
     DamageCountersToOpponentBenchAnyWay(u32),
+    /// Discard every Energy attached to the attacker, then deal this
+    /// much flat damage (no Weakness or Resistance) to one Benched
+    /// Pokémon the player chooses. The discard is unconditional; the
+    /// damage opens `Phase::ChoosingBenchDamageTarget` only when the
+    /// opponent has a Bench to choose from. `N's Darmanitan`'s
+    /// `Flamebody Cannon`.
+    DiscardsOwnEnergyThenDamagesChosenBenched(u32),
 }
 
 /// What `AttackEffect::DamagePerCount` counts.
