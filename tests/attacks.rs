@@ -2185,3 +2185,62 @@ fn chien_pao_icicle_loop_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv08-056").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Chien-Pao's Icicle Loop print should play");
 }
+
+// --- Beyond the spec: an attack that fizzles with no Stadium in play ---
+
+#[test]
+fn fizzles_outright_with_no_stadium_in_play() {
+    let attack = Attack {
+        name: "Assault Landing",
+        cost: vec![Type::Colorless],
+        base_damage: 70,
+        inflicts: None,
+        effect: Some(AttackEffect::FizzlesWithNoStadiumInPlay),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let defender = state.player(player.opponent()).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 0, "no Stadium, no damage at all");
+}
+
+#[test]
+fn deals_damage_normally_with_a_stadium_in_play() {
+    let attack = Attack {
+        name: "Assault Landing",
+        cost: vec![Type::Colorless],
+        base_damage: 70,
+        inflicts: None,
+        effect: Some(AttackEffect::FizzlesWithNoStadiumInPlay),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let defender = state.player(player.opponent()).active.unwrap();
+    let stadium_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-stadium",
+        name: "Test Stadium",
+        kind: sim::card::TrainerKind::Stadium,
+        requirement: None,
+        effect: sim::card::TrainerEffect::MoveAttachedEnergy,
+    }));
+    let stadium = deal_new_card(&mut state, player, stadium_def);
+    state.stadium = Some((player, stadium));
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 70);
+}
+
+#[test]
+fn fan_rotom_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Fan Rotom" && c.playable.is_some()),
+        "at least one Fan Rotom print should play"
+    );
+}

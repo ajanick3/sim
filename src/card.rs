@@ -148,6 +148,11 @@ pub enum CardFilter {
     /// narrowed by type the way `PokemonOfTypeOrBasicEnergyOfType`
     /// narrows `PokemonOrBasicEnergy`.
     EvolutionPokemonOfType(Type),
+    /// A Pokémon of this type printed at this HP or less, any stage —
+    /// the same shape `BasicPokemonWithHpAtMost` already is, without
+    /// the Basic restriction, narrowed by type instead.
+    /// `Fan Rotom`'s `Fan Call`.
+    PokemonOfTypeWithHpAtMost(Type, u32),
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
@@ -730,6 +735,12 @@ pub enum AttackEffect {
     /// `Phase::ChoosingOwnEnergyToHand`. No Energy attached opens no
     /// phase. `Chien-Pao`'s `Icicle Loop`.
     MoveOwnAttachedEnergyToHand,
+    /// "If there is no Stadium in play, this attack does nothing" —
+    /// the whole attack fizzles outright, checked at the top of
+    /// `attack`, the same short-circuit shape
+    /// `CoinFlipSelfInvulnerableNextTurn` already takes. `Fan Rotom`'s
+    /// `Assault Landing`.
+    FizzlesWithNoStadiumInPlay,
     /// Move an Energy from one of the opponent's Pokémon to another —
     /// the attacker's own choice of both ends, but on the opponent's
     /// board, unlike `TrainerEffect::MoveAttachedEnergy`'s own board.
@@ -921,6 +932,11 @@ pub enum AbilityEffect {
     /// same reasoning ADR 0068 already gave for a fixed-count Energy
     /// cost. `Toxtricity`'s `Sinister Surge`.
     OncePerTurnMaySearchBasicEnergyOfTypeAttachToBenchedThenDamage(Type, u32),
+    /// Once during the player's own first turn only, the player may
+    /// search the library for up to `limit` Pokémon of this type
+    /// printed at this HP or less, and put them into hand. Opens
+    /// `Phase::SearchingForFanCall`. `Fan Rotom`'s `Fan Call`.
+    OnceDuringFirstTurnMaySearchPokemonOfTypeWithHpAtMost(Type, u32, u32),
 }
 
 /// A basic Energy card as printed.

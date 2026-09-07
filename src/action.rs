@@ -225,6 +225,11 @@ pub enum Action {
     /// Attach `Phase::SearchingForSinisterSurgeTarget`'s Energy to
     /// this Benched Pokémon, and deal it the damage.
     AttachSinisterSurgeEnergyTo { target: PokemonId },
+    /// Take this Pokémon card from the library into hand, as part of
+    /// `Phase::SearchingForFanCall`.
+    TakeCardForFanCall { card: CardId },
+    /// Stop that search before its limit is spent.
+    FinishFanCall,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -271,6 +276,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToSwitchInForRapidVernier { player, .. } => Some(player),
         Phase::MovingAnyEnergyForRapidVernier { player, .. } => Some(player),
         Phase::SearchingForSinisterSurgeTarget { player, .. } => Some(player),
+        Phase::SearchingForFanCall { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -681,6 +687,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     actions.push(Action::AttachSinisterSurgeEnergyTo { target: *target });
                 }
             }
+            return actions;
+        }
+        Phase::SearchingForFanCall { player: whose, kind, hp, .. } => {
+            for card in &state.player(whose).library {
+                if state.matches_filter(*card, crate::card::CardFilter::PokemonOfTypeWithHpAtMost(kind, hp)) {
+                    actions.push(Action::TakeCardForFanCall { card: *card });
+                }
+            }
+            actions.push(Action::FinishFanCall);
             return actions;
         }
         Phase::MovingOpponentsEnergy { of, .. } => {
@@ -1105,6 +1120,19 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 let has_target = side.bench.iter().any(|p| state.pokemon_def(*p).kind == kind);
                 has_energy && has_target
             }
+            crate::card::AbilityEffect::OnceDuringFirstTurnMaySearchPokemonOfTypeWithHpAtMost(
+                kind,
+                hp,
+                _,
+            ) => {
+                // "Your first turn": turn 0 for whoever goes first, turn 1
+                // for whoever goes second — each player's own first turn,
+                // not only the game's very first.
+                state.turn_number <= 1
+                    && side.library.iter().any(|c| {
+                        state.matches_filter(*c, crate::card::CardFilter::PokemonOfTypeWithHpAtMost(kind, hp))
+                    })
+            }
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_last_ditch_catch`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter => false,
@@ -1370,5 +1398,7 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::AttachSinisterSurgeEnergyTo { target } => {
             format!("Attach Energy to {} (Sinister Surge)", state.pokemon_def(target).name)
         }
+        Action::TakeCardForFanCall { card } => format!("Take {} (Fan Call)", state.def_of(card).name()),
+        Action::FinishFanCall => "Stop searching".to_string(),
     }
 }

@@ -1015,6 +1015,13 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
                 20,
             )
         }
+        ("Fan Rotom", "Fan Call") => {
+            AbilityEffect::OnceDuringFirstTurnMaySearchPokemonOfTypeWithHpAtMost(
+                Type::Colorless,
+                100,
+                3,
+            )
+        }
         _ => return None,
     })
 }
@@ -1113,6 +1120,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Chien-Pao", "Rising Blade") => AttackEffect::BonusDamageIfDefenderIsEx(80),
         ("Chien-Pao", "Icicle Loop") => AttackEffect::MoveOwnAttachedEnergyToHand,
         ("Iron Leaves ex", "Prism Edge") => AttackEffect::AttackerCannotAttackNextTurn,
+        ("Fan Rotom", "Assault Landing") => AttackEffect::FizzlesWithNoStadiumInPlay,
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }
