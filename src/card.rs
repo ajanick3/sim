@@ -910,6 +910,17 @@ pub enum AbilityEffect {
     /// `Phase::DecidingToSwitchInForRapidVernier`. `Iron Leaves ex`'s
     /// `Rapid Vernier`.
     WhenBenchedFromHandMaySwitchThenMoveAnyEnergy,
+    /// Once during the player's own turn, the player may search the
+    /// library for a Basic Energy of this type and attach it to a
+    /// Benched Pokémon of the same type, choosing which — opens
+    /// `Phase::SearchingForSinisterSurgeTarget`. If they do, that
+    /// Pokémon takes this much damage. No qualifying Energy in the
+    /// library, or no Benched Pokémon of the type to attach it to,
+    /// opens no phase. Which Energy card is found is not the player's
+    /// choice — every Basic Energy of a type is interchangeable, the
+    /// same reasoning ADR 0068 already gave for a fixed-count Energy
+    /// cost. `Toxtricity`'s `Sinister Surge`.
+    OncePerTurnMaySearchBasicEnergyOfTypeAttachToBenchedThenDamage(Type, u32),
 }
 
 /// A basic Energy card as printed.

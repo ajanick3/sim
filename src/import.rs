@@ -1009,6 +1009,12 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Iron Leaves ex", "Rapid Vernier") => {
             AbilityEffect::WhenBenchedFromHandMaySwitchThenMoveAnyEnergy
         }
+        ("Toxtricity", "Sinister Surge") => {
+            AbilityEffect::OncePerTurnMaySearchBasicEnergyOfTypeAttachToBenchedThenDamage(
+                Type::Darkness,
+                20,
+            )
+        }
         _ => return None,
     })
 }

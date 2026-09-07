@@ -1149,6 +1149,19 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     // only actually attaching is.
                     state.phase = Phase::DecidingToUseSeethingSpirit { player, pokemon };
                 }
+                crate::card::AbilityEffect::OncePerTurnMaySearchBasicEnergyOfTypeAttachToBenchedThenDamage(
+                    kind,
+                    damage,
+                ) => {
+                    // Not spent here: opening the choice is not using it —
+                    // only actually attaching is.
+                    state.phase = Phase::SearchingForSinisterSurgeTarget {
+                        player,
+                        pokemon,
+                        kind,
+                        damage,
+                    };
+                }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
                 | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_)
                 | crate::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium
@@ -1419,6 +1432,31 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 Phase::MovingAnyEnergyForRapidVernier { .. } => {}
                 _ => return Err(IllegalAction),
             };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::AttachSinisterSurgeEnergyTo { target } => {
+            let (player, pokemon, kind, damage) = match state.phase {
+                Phase::SearchingForSinisterSurgeTarget { player, pokemon, kind, damage } => {
+                    (player, pokemon, kind, damage)
+                }
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            let energy = *state.players[player.index()]
+                .library
+                .iter()
+                .find(|c| state.matches_filter(**c, crate::card::CardFilter::BasicEnergyOfType(kind)))
+                .expect("legal_actions offers this only with a qualifying Energy in the library");
+            state.players[player.index()].library.retain(|c| *c != energy);
+            state.pokemon[target.index()].attached.push(energy);
+            state.pokemon[target.index()].damage += damage;
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} takes an Energy and {damage} (Sinister Surge)."));
+            let library = &mut state.players[player.index()].library;
+            shuffle(state.rng.as_mut(), library);
             state.phase = Phase::Main;
             settle(state);
         }

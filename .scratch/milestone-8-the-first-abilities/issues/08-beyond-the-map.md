@@ -54,7 +54,14 @@ same way Milestone 11 continued past its own spec:
   own attack reuses `AttackerCannotAttackNextTurn`. Completes all 6
   prints.
 
-Coverage: 604 -> 624 across these six PRs.
+- **Toxtricity**'s `Sinister Surge`
+  (`OncePerTurnMaySearchBasicEnergyOfTypeAttachToBenchedThenDamage`) —
+  search for a Basic Energy of a type, attach it to a Benched Pokémon
+  of the same type (the player's only real choice — which Energy card
+  is found is not, the same reasoning ADR 0068 gave for a fixed-count
+  cost), then damage it. Completes all 3 prints.
+
+Coverage: 604 -> 627 across these seven PRs.
 
 ## What is left
 

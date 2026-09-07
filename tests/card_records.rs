@@ -211,5 +211,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // the switched-in one) and its own attack, Prism Edge
     // (AttackerCannotAttackNextTurn, already built) complete all 6
     // Iron Leaves ex prints.
-    assert_eq!(admitted, 624, "coverage moves only on purpose");
+    // Toxtricity's Sinister Surge (search for a Basic Energy of a
+    // type, attach it to a Benched Pokemon of the same type, then
+    // damage it) admits all 3 prints (Gentle Slap has no printed
+    // text).
+    assert_eq!(admitted, 627, "coverage moves only on purpose");
 }
