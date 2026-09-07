@@ -1561,6 +1561,11 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::CoinFlipBonusDamage(_) => {}
+        crate::card::AttackEffect::DefenderCannotRetreatNextTurn => {
+            state.opponent_next_turn_restriction = Some((defender, effect));
+            let name = state.pokemon_def(defender).name;
+            state.log.push(format!("{name} cannot retreat next turn."));
+        }
     }
 }
 

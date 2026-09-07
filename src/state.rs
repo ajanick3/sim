@@ -364,6 +364,13 @@ pub struct GameState {
     /// same "this turn" lifetime `turn_bonus` already carries.
     /// `Team Rocket's Factory` is the only reader.
     pub played_a_team_rocket_supporter_this_turn: [bool; 2],
+    /// A restriction an attack granted "during your opponent's next
+    /// turn" — a lifetime that outlives one `begin_turn`, unlike
+    /// `turn_bonus`: it must survive the boundary into the target's own
+    /// next turn, then clear at the one after that. Cleared in
+    /// `begin_turn`, but only once it is the *granting* player's turn
+    /// again — see the check there for why.
+    pub opponent_next_turn_restriction: Option<(PokemonId, crate::card::AttackEffect)>,
     /// A bonus this turn's attacks carry, set by a card such as `Black
     /// Belt's Training`. Cleared at `begin_turn`, the same as `spent` —
     /// "this turn" ends there regardless of whose turn is starting.
@@ -427,6 +434,7 @@ impl GameState {
             spent: Vec::new(),
             knocked_out_last_turn: [false, false],
             played_a_team_rocket_supporter_this_turn: [false, false],
+            opponent_next_turn_restriction: None,
             turn_bonus: None,
             attacking_defender: None,
             rng,
@@ -827,6 +835,15 @@ impl GameState {
         self.played_a_team_rocket_supporter_this_turn = [false, false];
         for pokemon in &mut self.pokemon {
             pokemon.cannot_evolve_this_turn = false;
+        }
+        // A restriction granted "during your opponent's next turn" is
+        // cleared here only once it is the granting player's own turn
+        // again — the target's owner's turn just ended, so the one turn
+        // the restriction covered already happened.
+        if let Some((target, _)) = self.opponent_next_turn_restriction
+            && self.pokemon[target.index()].owner != self.current
+        {
+            self.opponent_next_turn_restriction = None;
         }
     }
 

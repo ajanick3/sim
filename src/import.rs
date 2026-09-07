@@ -980,6 +980,8 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::CoinFlipInflicts(crate::card::Condition::Paralyzed)
         }
         ("Applin", "Tumbling Attack") => AttackEffect::CoinFlipBonusDamage(20),
+        ("Yveltal", "Clutch") => AttackEffect::DefenderCannotRetreatNextTurn,
+        ("Wellspring Mask Ogerpon ex", "Sob") => AttackEffect::DefenderCannotRetreatNextTurn,
         _ => return None,
     })
 }

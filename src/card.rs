@@ -568,6 +568,9 @@ pub enum AttackEffect {
     /// `damage_dealt`, the same as `DamagePerCount`, so Weakness and
     /// Resistance still apply to the total. `Applin`.
     CoinFlipBonusDamage(u32),
+    /// The defending Pokémon cannot retreat during the opponent's very
+    /// next turn. `Yveltal`, `Wellspring Mask Ogerpon ex`.
+    DefenderCannotRetreatNextTurn,
 }
 
 /// What `AttackEffect::DamagePerCount` counts.

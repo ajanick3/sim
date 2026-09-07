@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Team Rocket's Factory | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (22/95 built)
+### Pokémon (23/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -276,7 +276,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Toxel | ❌ |
 | Toxtricity | ❌ |
 | Wellspring Mask Ogerpon ex | ❌ |
-| Yveltal | ❌ |
+| Yveltal | ✅ |
 | Zeraora | ❌ |
 
 ## The documents
@@ -292,6 +292,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
   artifact holds, the modelling findings already banked, and what the data
   cannot express.
 - [The ADR directory](docs/adr/) — the decisions and their reasoning.
+
 
 
 

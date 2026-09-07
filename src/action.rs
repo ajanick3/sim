@@ -710,8 +710,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
     // with somewhere to retreat to.
     if let Some(active) = side.active {
         let cost = state.effective_retreat_cost(active);
+        let cannot_retreat = matches!(
+            state.opponent_next_turn_restriction,
+            Some((target, crate::card::AttackEffect::DefenderCannotRetreatNextTurn))
+                if target == active
+        );
         if !state.is_spent(Limit::Retreated(player))
             && !held(active)
+            && !cannot_retreat
             && state.energy_attached(active) as u32 >= cost
         {
             for pokemon in &side.bench {

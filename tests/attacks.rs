@@ -521,3 +521,70 @@ fn applin_is_admitted_from_the_artifact() {
         "at least one Applin print should play"
     );
 }
+
+// --- Ticket 05: a restriction through the opponent's next turn ---
+
+#[test]
+fn cannot_retreat_blocks_retreat_during_the_opponents_next_turn_only() {
+    let attack = Attack {
+        name: "Clutch",
+        cost: vec![Type::Colorless],
+        base_damage: 20,
+        inflicts: None,
+        effect: Some(AttackEffect::DefenderCannotRetreatNextTurn),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    // The defender needs Energy attached and somewhere to retreat to,
+    // or retreating is illegal regardless of the restriction under test.
+    let defender = state.player(opponent).active.unwrap();
+    let energy_card = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.pokemon[defender.index()].attached.push(energy_card);
+    let bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+    assert_eq!(state.current, opponent, "the attack ended the attacker's turn");
+
+    // No retreat offered at all, even with Energy attached and a Bench
+    // to retreat to.
+    assert!(
+        !legal_actions(&state).into_iter().any(|a| matches!(a, Action::Retreat { .. })),
+        "the Defending Pokémon cannot retreat during this turn"
+    );
+
+    // Once the opponent's turn ends, the restriction has had its one
+    // turn and is gone -- read directly, since the fixture's own Bench
+    // rules (not this restriction) govern whether Retreat is offered
+    // several turns on.
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    assert_eq!(state.current, player);
+    assert!(
+        state.opponent_next_turn_restriction.is_none(),
+        "the restriction does not survive past the one turn it applied to"
+    );
+}
+
+#[test]
+fn yveltal_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Yveltal" && c.playable.is_some()),
+        "at least one Yveltal print should play"
+    );
+}
