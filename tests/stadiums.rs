@@ -686,3 +686,99 @@ fn risky_ruins_applies_on_the_opponents_side_too() {
 
     assert_eq!(state.pokemon(benched).damage, 20, "both sides alike");
 }
+
+// --- Ticket 08: Forest of Vitality ---
+
+fn with_forest_of_vitality(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let grass_basic = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-grass-basic-fov",
+        name: "Leafmon",
+        hp: 90,
+        kind: Type::Grass,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        attacks: vec![],
+    }));
+    let grass_stage1 = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-grass-stage1-fov",
+        name: "Vinemon",
+        hp: 120,
+        kind: Type::Grass,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Stage1,
+        evolve_from: Some("Leafmon"),
+        evolves_from_basic: None,
+        attacks: vec![],
+    }));
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-forest-of-vitality",
+        name: "Forest of Vitality",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::GrassCanEvolveTheTurnItIsPlayed,
+    }));
+    (Set { db, ..set }, card, grass_basic, grass_stage1)
+}
+
+#[test]
+fn forest_of_vitality_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Forest of Vitality")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Forest of Vitality should play");
+}
+
+#[test]
+fn forest_of_vitality_lets_a_grass_evolution_play_the_same_turn() {
+    let (set, card, grass_basic, grass_stage1) = with_forest_of_vitality(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    let basic_card = deal_new_card(&mut state, player, grass_basic);
+    state.players[player.index()].hand.push(basic_card);
+    apply(&mut state, Action::PlayBasic { card: basic_card }).unwrap();
+    let target = *state.player(player).bench.last().unwrap();
+
+    let evo_card = deal_new_card(&mut state, player, grass_stage1);
+    state.players[player.index()].hand.push(evo_card);
+    assert!(
+        legal_actions(&state).contains(&Action::Evolve { card: evo_card, target }),
+        "Grass into Grass, same turn, bypasses the usual timing rule"
+    );
+}
+
+#[test]
+fn without_forest_of_vitality_the_usual_timing_rule_applies() {
+    let (set, _, grass_basic, grass_stage1) = with_forest_of_vitality(build());
+    let mut state = game(&set, set.mon, 3);
+    let player = state.current;
+
+    let basic_card = deal_new_card(&mut state, player, grass_basic);
+    state.players[player.index()].hand.push(basic_card);
+    apply(&mut state, Action::PlayBasic { card: basic_card }).unwrap();
+    let target = *state.player(player).bench.last().unwrap();
+
+    let evo_card = deal_new_card(&mut state, player, grass_stage1);
+    state.players[player.index()].hand.push(evo_card);
+    assert!(
+        !legal_actions(&state).contains(&Action::Evolve { card: evo_card, target }),
+        "no Stadium to bypass the timing rule"
+    );
+}

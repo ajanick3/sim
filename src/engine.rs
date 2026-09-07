@@ -1290,7 +1290,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter
         | TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn
         | TrainerEffect::ToolsHaveNoEffect
-        | TrainerEffect::DamagesNonDarknessBasicBenched(_) => {}
+        | TrainerEffect::DamagesNonDarknessBasicBenched(_)
+        | TrainerEffect::GrassCanEvolveTheTurnItIsPlayed => {}
 
         TrainerEffect::JaninesSecretArt => {
             state.phase = Phase::ChoosingJaninesTargets {

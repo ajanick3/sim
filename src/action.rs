@@ -559,8 +559,10 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             && !state.is_first_turn_of_game()
         {
             for target in side.in_play() {
+                let evolution = def.as_pokemon().expect("this arm only runs for a Pokémon card");
                 let eligible = state.pokemon_def(target).name == from
-                    && state.pokemon(target).played_on_turn < state.turn_number
+                    && (state.pokemon(target).played_on_turn < state.turn_number
+                        || state.forest_of_vitality_applies(target, evolution))
                     && !state.is_spent(Limit::Evolved(target))
                     && !state.pokemon(target).cannot_evolve_this_turn;
                 if eligible {
@@ -751,8 +753,13 @@ fn rare_candy_pairs(state: &GameState, player: PlayerId) -> Vec<(CardId, Pokemon
             continue;
         };
         for target in side.in_play() {
+            let evolution = state
+                .def_of(*card)
+                .as_pokemon()
+                .expect("this arm only runs for a Pokémon card");
             let eligible = state.pokemon_def(target).name == from
-                && state.pokemon(target).played_on_turn < state.turn_number
+                && (state.pokemon(target).played_on_turn < state.turn_number
+                    || state.forest_of_vitality_applies(target, evolution))
                 && !state.is_spent(Limit::Evolved(target))
                 && !state.pokemon(target).cannot_evolve_this_turn;
             if eligible {
