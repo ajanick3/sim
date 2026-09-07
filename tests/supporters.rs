@@ -5,7 +5,8 @@
 use sim::action::{Action, legal_actions};
 use sim::card::{
     Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, PromoteFollowUp,
-    Requirement, Slot, Stage, TargetFilter, Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    Requirement, Slot, Stage, TargetFilter, Trainer, TrainerEffect, TrainerKind, TurnBonusTarget,
+    Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
@@ -776,5 +777,183 @@ fn surfer_is_admitted_from_the_artifact() {
     assert_eq!(
         surfer.effect,
         TrainerEffect::SwitchOwnActiveWithFollowUp(PromoteFollowUp::DrawUpTo(5))
+    );
+}
+
+// --- Ticket 07: Black Belt's Training and Gladion's Final Battle ---
+
+fn with_black_belts_training(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-black-belts-training",
+        name: "Black Belt's Training",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::BonusDamageThisTurn(40, TurnBonusTarget::OpponentActiveEx),
+    }));
+    (Set { db, ..set }, card)
+}
+
+fn with_gladions_final_battle(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-gladions-final-battle",
+        name: "Gladion's Final Battle",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::HandSizeIs(1)),
+        effect: TrainerEffect::BonusDamageThisTurn(80, TurnBonusTarget::OpponentActiveWithoutRuleBox),
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn black_belts_training_adds_forty_only_against_an_ex() {
+    let (set, card) = with_black_belts_training(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let attacker = state.player(player).active.unwrap();
+    let ex_defender = state.player(opponent).active.unwrap();
+    let stage1 = state.player(opponent).bench[0]; // an ordinary, non-ex Pokémon
+
+    // Force the opponent's Active to actually be an ex — setup chose
+    // whatever Basic came up first, not necessarily this one.
+    let ex_card = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.cards[c.index()].def == set.mon_ex)
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != ex_card);
+    state.pokemon[ex_defender.index()].cards = vec![ex_card];
+
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert_eq!(
+        sim::engine::damage_dealt(&state, attacker, ex_defender, 100),
+        140,
+        "the ex on the Active takes the bonus"
+    );
+    assert_eq!(
+        sim::engine::damage_dealt(&state, attacker, stage1, 100),
+        100,
+        "an ordinary Pokémon does not"
+    );
+}
+
+#[test]
+fn the_bonus_expires_once_the_turn_ends() {
+    let (set, card) = with_black_belts_training(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let attacker = state.player(player).active.unwrap();
+    let defender = state.player(opponent).active.unwrap();
+    let ex_card = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.cards[c.index()].def == set.mon_ex)
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != ex_card);
+    state.pokemon[defender.index()].cards = vec![ex_card];
+
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    assert_eq!(sim::engine::damage_dealt(&state, attacker, defender, 100), 140);
+
+    end_turn_and_advance(&mut state);
+    end_turn_and_advance(&mut state);
+    assert_eq!(state.current, player, "back to the same player's turn");
+    assert_eq!(
+        sim::engine::damage_dealt(&state, attacker, defender, 100),
+        100,
+        "the bonus does not survive past the turn it was played"
+    );
+}
+
+#[test]
+fn gladions_final_battle_cannot_be_played_holding_any_other_card() {
+    let (set, card) = with_gladions_final_battle(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card: played }),
+        "the hand holds more than this card"
+    );
+
+    state.players[player.index()].hand = vec![played];
+    assert!(legal_actions(&state).contains(&Action::PlayTrainer { card: played }));
+}
+
+#[test]
+fn gladions_final_battle_adds_eighty_only_without_a_rule_box() {
+    let (set, card) = with_gladions_final_battle(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let attacker = state.player(player).active.unwrap();
+    let ordinary_defender = state.player(opponent).active.unwrap();
+    // Give the opponent's Active a Rule Box (an ex) directly.
+    let ex_card = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.cards[c.index()].def == set.mon_ex)
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != ex_card);
+    state.pokemon[ordinary_defender.index()].cards = vec![ex_card];
+
+    let played = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.cards[c.index()].def == card)
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != played);
+    state.players[player.index()].hand = vec![played];
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    assert_eq!(
+        sim::engine::damage_dealt(&state, attacker, ordinary_defender, 100),
+        100,
+        "the Active now carries a Rule Box, so no bonus"
+    );
+}
+
+#[test]
+fn black_belts_training_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let card = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Black Belt's Training")
+        .expect("Black Belt's Training plays");
+    assert_eq!(
+        card.effect,
+        TrainerEffect::BonusDamageThisTurn(40, TurnBonusTarget::OpponentActiveEx)
+    );
+}
+
+#[test]
+fn gladions_final_battle_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let card = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Gladion's Final Battle")
+        .expect("Gladion's Final Battle plays");
+    assert_eq!(card.requirement, Some(Requirement::HandSizeIs(1)));
+    assert_eq!(
+        card.effect,
+        TrainerEffect::BonusDamageThisTurn(80, TurnBonusTarget::OpponentActiveWithoutRuleBox)
     );
 }
