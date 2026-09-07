@@ -244,6 +244,10 @@ pub enum TrainerEffect {
     /// evolution cards, into their hand; the Pokémon cannot evolve again
     /// this turn. `Strange Timepiece`.
     DevolveChosen,
+    /// Swap a Basic Pokémon in play for one in the discard, keeping the
+    /// same damage, attachments, Special Conditions, and time in play.
+    /// `Transformation Tome`.
+    SwapBasicWithDiscard,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
@@ -372,6 +376,11 @@ pub enum Requirement {
     /// them. `Gladion's Final Battle` reads "only when it is the last card
     /// in your hand" — checked before the card leaves it.
     HandSizeIs(u32),
+    /// A second copy of this exact card sits in hand too, and is
+    /// consumed alongside it. `Transformation Tome` prints "You must
+    /// play 2 Transformation Tome cards at once" — a cost paid in a
+    /// second physical copy of itself, not in cards the player chooses.
+    SecondCopyOfThisInHand,
 }
 
 /// A Trainer as printed.

@@ -131,6 +131,20 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 ) => {
                     resolve_trainer(state, player, card, trainer.effect);
                 }
+                // The cost is a second physical copy of this same card,
+                // not a choice among other cards — `legal_actions` already
+                // confirmed one sits in hand, so there is nothing to ask.
+                Some(Requirement::SecondCopyOfThisInHand) => {
+                    let def = state.cards[card.index()].def;
+                    let second = *state.players[player.index()]
+                        .hand
+                        .iter()
+                        .find(|c| state.cards[c.index()].def == def)
+                        .expect("legal_actions confirmed a second copy");
+                    state.players[player.index()].hand.retain(|c| *c != second);
+                    state.players[player.index()].discard.push(second);
+                    resolve_trainer(state, player, card, trainer.effect);
+                }
             }
         }
 
@@ -674,6 +688,31 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::ChooseIdentitySwapTarget { target } => {
+            let player = match state.phase {
+                Phase::SwappingIdentity { player, target: None } => player,
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::SwappingIdentity { player, target: Some(target) };
+        }
+
+        Action::SwapIdentityWithDiscarded { card } => {
+            let (player, target) = match state.phase {
+                Phase::SwappingIdentity { player, target: Some(target) } => (player, target),
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].discard.retain(|c| *c != card);
+            // The Pokémon in play keeps its damage, attachments,
+            // conditions, and played_on_turn — only which card it is
+            // changes. Its old card takes the discarded one's place.
+            let old = std::mem::replace(&mut state.pokemon[target.index()].cards, vec![card]);
+            state.players[player.index()].discard.extend(old);
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} takes the place of what was there."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1107,6 +1146,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::DevolveChosen => {
             state.phase = Phase::Devolving { player, target: None };
+        }
+
+        TrainerEffect::SwapBasicWithDiscard => {
+            state.phase = Phase::SwappingIdentity { player, target: None };
         }
 
         TrainerEffect::JaninesSecretArt => {

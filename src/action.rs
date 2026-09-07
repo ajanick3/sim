@@ -92,6 +92,12 @@ pub enum Action {
     /// Stop devolving. Legal any time a target is already chosen, even
     /// having removed nothing yet, since "any number" includes zero.
     FinishDevolving,
+    /// Choose which Basic Pokémon in play `Phase::SwappingIdentity`
+    /// swaps out.
+    ChooseIdentitySwapTarget { target: PokemonId },
+    /// Finish the swap `Phase::SwappingIdentity` names, using this Basic
+    /// from the discard.
+    SwapIdentityWithDiscarded { card: CardId },
     /// Choose one of up to 2 targets for `Janine's Secret Art`.
     ChooseJaninesTarget { target: PokemonId },
     /// Stop choosing targets, whether 0, 1, or 2 have been picked.
@@ -128,6 +134,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::HealingMegaEx { player } => Some(player),
         Phase::LookingAtBottomOfLibrary { player, .. } => Some(player),
         Phase::Devolving { player, .. } => Some(player),
+        Phase::SwappingIdentity { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
@@ -371,6 +378,25 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::FinishDevolving);
             return actions;
         }
+        Phase::SwappingIdentity { player: whose, target: None } => {
+            for pokemon in state.player(whose).in_play() {
+                if state.pokemon_def(pokemon).stage == crate::card::Stage::Basic {
+                    actions.push(Action::ChooseIdentitySwapTarget { target: pokemon });
+                }
+            }
+            return actions;
+        }
+        Phase::SwappingIdentity { player: whose, target: Some(_) } => {
+            for card in &state.player(whose).discard {
+                if state.matches_filter(
+                    *card,
+                    crate::card::CardFilter::PokemonOfStage(crate::card::Stage::Basic),
+                ) {
+                    actions.push(Action::SwapIdentityWithDiscarded { card: *card });
+                }
+            }
+            return actions;
+        }
         Phase::ChoosingJaninesTargets { player: whose, remaining, chosen } => {
             if remaining > 0 {
                 for target in state.player(whose).in_play() {
@@ -487,6 +513,19 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     .in_play()
                     .iter()
                     .any(|p| state.pokemon_def(*p).stage != crate::card::Stage::Basic),
+                // A Basic in play to swap out, and a Basic in discard to
+                // swap in.
+                TrainerEffect::SwapBasicWithDiscard => {
+                    side.in_play()
+                        .iter()
+                        .any(|p| state.pokemon_def(*p).stage == crate::card::Stage::Basic)
+                        && side.discard.iter().any(|c| {
+                            state.matches_filter(
+                                *c,
+                                crate::card::CardFilter::PokemonOfStage(crate::card::Stage::Basic),
+                            )
+                        })
+                }
                 // An Energy to move, and a second Pokémon to move it to.
                 TrainerEffect::MoveAttachedEnergy => {
                     let in_play = side.in_play();
@@ -549,6 +588,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     side.prizes.len() > state.player(player.opponent()).prizes.len()
                 }
                 Some(Requirement::HandSizeIs(count)) => side.hand.len() as u32 == count,
+                Some(Requirement::SecondCopyOfThisInHand) => {
+                    let def = state.cards[card.index()].def;
+                    side.hand
+                        .iter()
+                        .filter(|c| state.cards[c.index()].def == def)
+                        .count()
+                        > 1
+                }
             };
             // Rule 59: not a Stadium whose name is already in play.
             let name_is_free = trainer.kind != TrainerKind::Stadium
@@ -696,6 +743,12 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::RemoveOneEvolutionCard => "Remove one evolution card".to_string(),
         Action::FinishDevolving => "Stop devolving".to_string(),
+        Action::ChooseIdentitySwapTarget { target } => {
+            format!("Swap out {}", state.pokemon_def(target).name)
+        }
+        Action::SwapIdentityWithDiscarded { card } => {
+            format!("Swap in {}", state.def_of(card).name())
+        }
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
         }
