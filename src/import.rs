@@ -784,6 +784,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Powerglass" => (free, TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd),
         "Gravity Mountain" => (free, TrainerEffect::ReducesHpForStage(Stage::Stage2, 30)),
         "N's Castle" => (free, TrainerEffect::RemovesRetreatCostForNamePrefix("N's")),
+        "Academy at Night" => (free, TrainerEffect::MayPutHandCardOnTopOfDeck),
         "Transformation Tome" => (
             Some(Requirement::SecondCopyOfThisInHand),
             TrainerEffect::SwapBasicWithDiscard,

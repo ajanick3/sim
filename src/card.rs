@@ -290,6 +290,10 @@ pub enum TrainerEffect {
     /// A Stadium's static effect: every Pokémon in play whose name starts
     /// with this has no Retreat Cost, both sides alike. `N's Castle`.
     RemovesRetreatCostForNamePrefix(&'static str),
+    /// A Stadium's own once-a-turn action, offered directly in the acting
+    /// player's Main phase rather than dispatched at play time: put a
+    /// card from hand on top of the Library. `Academy at Night`.
+    MayPutHandCardOnTopOfDeck,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },

@@ -76,6 +76,10 @@ pub enum Limit {
     SupporterPlayed(PlayerId),
     StadiumPlayed(PlayerId),
     Evolved(PokemonId),
+    /// A Stadium's own once-a-turn action — `Academy at Night`,
+    /// `Team Rocket's Factory`, `Lumiose City`. Only one Stadium is ever in
+    /// play, so one variant covers whichever it is.
+    StadiumEffectUsed(PlayerId),
 }
 
 /// One player's zones.

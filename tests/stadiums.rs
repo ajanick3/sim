@@ -302,3 +302,74 @@ fn ns_castle_removes_retreat_cost_for_ns_pokemon_both_sides() {
         "an ordinary Pokémon keeps its printed cost"
     );
 }
+
+// --- Ticket 02: Academy at Night ---
+
+fn with_academy_at_night(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-academy-at-night",
+        name: "Academy at Night",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::MayPutHandCardOnTopOfDeck,
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn academy_at_night_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Academy at Night")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Academy at Night should play");
+}
+
+#[test]
+fn academy_at_night_puts_a_hand_card_on_top_once_a_turn() {
+    let (set, card) = with_academy_at_night(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    let to_put = *state.player(player).hand.first().unwrap();
+    let library_before = state.player(player).library.len();
+    assert!(legal_actions(&state).contains(&Action::PutOnTopOfDeckForAcademyAtNight {
+        card: to_put,
+    }));
+    apply(
+        &mut state,
+        Action::PutOnTopOfDeckForAcademyAtNight { card: to_put },
+    )
+    .unwrap();
+
+    assert!(!state.player(player).hand.contains(&to_put));
+    assert_eq!(*state.player(player).library.last().unwrap(), to_put);
+    assert_eq!(state.player(player).library.len(), library_before + 1);
+
+    // Spent for the turn: no longer offered, even with cards left in hand.
+    assert!(
+        !legal_actions(&state)
+            .into_iter()
+            .any(|a| matches!(a, Action::PutOnTopOfDeckForAcademyAtNight { .. })),
+        "once a turn, not once a card"
+    );
+}
+
+#[test]
+fn academy_at_night_is_not_offered_without_the_stadium_in_play() {
+    let (set, _) = with_academy_at_night(build());
+    let state = game(&set, set.mon, 3);
+    assert!(
+        !legal_actions(&state)
+            .into_iter()
+            .any(|a| matches!(a, Action::PutOnTopOfDeckForAcademyAtNight { .. }))
+    );
+}

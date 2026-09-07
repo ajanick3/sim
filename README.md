@@ -161,11 +161,11 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Powerglass | ✅ |
 | Punk Helmet | ✅ |
 
-### Stadiums (2/13 built)
+### Stadiums (3/13 built)
 
 | Card | Status |
 | --- | --- |
-| Academy at Night | ❌ |
+| Academy at Night | ✅ |
 | Area Zero Underdepths | ❌ |
 | Battle Cage | ❌ |
 | Festival Grounds | ❌ |
@@ -292,6 +292,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
   artifact holds, the modelling findings already banked, and what the data
   cannot express.
 - [The ADR directory](docs/adr/) — the decisions and their reasoning.
+
 
 
 
