@@ -180,6 +180,12 @@ pub enum PromoteFollowUp {
     HealDisplacedIfEx(u32),
     /// Draw until the player holds this many cards in hand. `Surfer`.
     DrawUpTo(u32),
+    /// The player who chose this switch also switches their own Active
+    /// with one of their own Benched Pokémon — opening a second
+    /// `Phase::Promoting`, on their own side. Silently skipped if their
+    /// Bench is empty; the outer switch already happened either way.
+    /// `Prime Catcher`.
+    AlsoSwitchOwnActive,
 }
 
 /// What runs once a `DiscardingFromHand` ends. `Hand Trimmer`'s only use
@@ -228,6 +234,12 @@ pub enum TrainerEffect {
     /// actually did once `Action::Promote` completes it. `AZ's
     /// Tranquility` and `Surfer` are why this exists.
     SwitchOwnActiveWithFollowUp(PromoteFollowUp),
+    /// Switch in one of the opponent's Benched Pokémon, chosen by the
+    /// player; if that switch happens, the player also switches their own
+    /// Active with one of their own Benched Pokémon. `Prime Catcher` is a
+    /// `SwitchOpponentActive` with `PromoteFollowUp::AlsoSwitchOwnActive`
+    /// chained onto it, not a new shape of switch.
+    SwitchOpponentActiveThenOwn,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },

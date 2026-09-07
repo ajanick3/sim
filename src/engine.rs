@@ -234,6 +234,20 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         }
                     }
                 }
+                Some(crate::card::PromoteFollowUp::AlsoSwitchOwnActive) => {
+                    if !state.player(chooser).bench.is_empty() {
+                        state.phase = Phase::Promoting {
+                            of: chooser,
+                            chooser,
+                            then: None,
+                        };
+                        // `settle` resets an unclaimed phase back to Main,
+                        // the same trap ADR 0030 fixed for a paid cost's
+                        // effect — skip it here, the same way, so the
+                        // follow-up switch this just opened survives.
+                        return Ok(());
+                    }
+                }
                 None => {}
             }
             settle(state);
@@ -929,6 +943,14 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                 of: player,
                 chooser: player,
                 then: Some(follow_up),
+            };
+        }
+
+        TrainerEffect::SwitchOpponentActiveThenOwn => {
+            state.phase = Phase::Promoting {
+                of: player.opponent(),
+                chooser: player,
+                then: Some(crate::card::PromoteFollowUp::AlsoSwitchOwnActive),
             };
         }
 

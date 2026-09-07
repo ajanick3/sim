@@ -765,3 +765,88 @@ fn dusk_ball_takes_the_pokemon_and_shuffles_the_rest_back() {
     assert!(state.player(player).hand.contains(&bottom_mon));
     assert_eq!(state.player(player).library.len(), library_before - 1);
 }
+
+// --- Ticket 09: Prime Catcher ---
+
+fn with_prime_catcher(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-prime-catcher",
+        name: "Prime Catcher",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::SwitchOpponentActiveThenOwn,
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn prime_catcher_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Prime Catcher")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Prime Catcher should play");
+}
+
+#[test]
+fn prime_catcher_switches_both_sides_and_displaces_neither() {
+    let (set, card) = with_prime_catcher(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let played = ensure_in_hand(&mut state, player, card);
+    let opponent_active_before = state.player(opponent).active.unwrap();
+    let opponent_bench_target = state.player(opponent).bench[0];
+    let player_active_before = state.player(player).active.unwrap();
+    let player_bench_target = state.player(player).bench[0];
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    assert_eq!(
+        sim::action::player_to_act(&state),
+        Some(player),
+        "the player chooses the opponent's new Active"
+    );
+    apply(&mut state, Action::Promote { pokemon: opponent_bench_target }).unwrap();
+    assert_eq!(state.player(opponent).active, Some(opponent_bench_target));
+    assert!(
+        state.player(opponent).bench.contains(&opponent_active_before),
+        "the opponent's old Active is displaced, not lost"
+    );
+
+    // The follow-up: the player's own switch.
+    assert!(matches!(state.phase, Phase::Promoting { .. }));
+    apply(&mut state, Action::Promote { pokemon: player_bench_target }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).active, Some(player_bench_target));
+    assert!(
+        state.player(player).bench.contains(&player_active_before),
+        "the player's own old Active is displaced, not lost"
+    );
+}
+
+#[test]
+fn prime_catcher_skips_its_own_switch_with_an_empty_bench() {
+    let (set, card) = with_prime_catcher(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let played = ensure_in_hand(&mut state, player, card);
+    let opponent_bench_target = state.player(opponent).bench[0];
+    state.players[player.index()].bench.clear();
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    apply(&mut state, Action::Promote { pokemon: opponent_bench_target }).unwrap();
+
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "no Bench to switch to, so the follow-up does nothing"
+    );
+}

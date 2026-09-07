@@ -58,6 +58,6 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Brock's Scouting, 3 of Wally's Compassion, 4 of Janine's Secret
     // Art, 1 of Energy Search, 2 of Energy Retrieval, 2 of Energy
     // Recycler, 3 of Team Rocket's Transceiver, 1 of Hand Trimmer, 1 of
-    // Secret Box, and 1 of Dusk Ball.
-    assert_eq!(admitted, 479, "coverage moves only on purpose");
+    // Secret Box, 1 of Dusk Ball, and 2 of Prime Catcher.
+    assert_eq!(admitted, 481, "coverage moves only on purpose");
 }
