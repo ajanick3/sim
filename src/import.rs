@@ -793,6 +793,10 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Jamming Tower" => (free, TrainerEffect::ToolsHaveNoEffect),
         "Risky Ruins" => (free, TrainerEffect::DamagesNonDarknessBasicBenched(20)),
         "Forest of Vitality" => (free, TrainerEffect::GrassCanEvolveTheTurnItIsPlayed),
+        "Festival Grounds" => (
+            free,
+            TrainerEffect::EnergizedPokemonImmuneToSpecialConditions,
+        ),
         "Transformation Tome" => (
             Some(Requirement::SecondCopyOfThisInHand),
             TrainerEffect::SwapBasicWithDiscard,

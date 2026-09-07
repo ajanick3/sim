@@ -166,6 +166,9 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state
                 .log
                 .push(format!("{player:?} attaches {energy} to {name}."));
+            if state.immune_under_festival_grounds(target) {
+                state.clear_conditions(target);
+            }
         }
 
         Action::PlayTool { card, target } => {
@@ -1292,6 +1295,18 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::ToolsHaveNoEffect
         | TrainerEffect::DamagesNonDarknessBasicBenched(_)
         | TrainerEffect::GrassCanEvolveTheTurnItIsPlayed => {}
+
+        // "Recovers from all Special Conditions" reads as an immediate
+        // sweep at the moment this becomes true for a Pokémon — playing
+        // the Stadium is the first such moment (`AttachEnergy`'s own
+        // handler is the other).
+        TrainerEffect::EnergizedPokemonImmuneToSpecialConditions => {
+            for pokemon_id in (0..state.pokemon.len()).map(|i| PokemonId(i as u32)) {
+                if state.immune_under_festival_grounds(pokemon_id) {
+                    state.clear_conditions(pokemon_id);
+                }
+            }
+        }
 
         TrainerEffect::JaninesSecretArt => {
             state.phase = Phase::ChoosingJaninesTargets {
