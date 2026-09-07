@@ -641,3 +641,123 @@ fn without_lillies_pearl_the_knockout_takes_its_usual_prize() {
     let (_, taken) = lillies_pearl_game(false);
     assert_eq!(taken, 1);
 }
+
+// --- Ticket 06: Punk Helmet & Lucky Helmet ---
+
+fn with_punk_helmet(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-punk-helmet",
+        name: "Punk Helmet",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::DamagesAttackerWhenDefenderIsHit(40),
+    }));
+    (Set { db, ..set }, card)
+}
+
+fn with_lucky_helmet(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-lucky-helmet",
+        name: "Lucky Helmet",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::DrawsWhenDefenderIsHit(2),
+    }));
+    (Set { db, ..set }, card)
+}
+
+/// Pay for and use the Active's first attack.
+fn pay_and_attack(state: &mut GameState, player: sim::ids::PlayerId) {
+    let active = state.player(player).active.unwrap();
+    let side = state.player(player);
+    let card = side
+        .hand
+        .iter()
+        .chain(side.library.iter())
+        .find(|c| state.def_of(**c).is_energy())
+        .copied()
+        .expect("the deck holds Energy");
+    state.remove_from_hand(player, card);
+    state.players[player.index()].library.retain(|c| *c != card);
+    state.pokemon[active.index()].attached.push(card);
+    let attack = legal_actions(state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("a paid-for Active can attack");
+    apply(state, attack).unwrap();
+}
+
+#[test]
+fn punk_helmet_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Punk Helmet")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Punk Helmet should play");
+}
+
+#[test]
+fn punk_helmet_damages_the_attacker_back() {
+    let (set, helmet) = with_punk_helmet(build());
+    let mut state = game(&set, helmet, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+    let attacker = state.player(attacker_player).active.unwrap();
+    let defender = state.player(defender_player).active.unwrap();
+
+    let card = deal_new_card(&mut state, defender_player, helmet);
+    state.pokemon[defender.index()].attached.push(card);
+
+    pay_and_attack(&mut state, attacker_player);
+
+    assert_eq!(state.pokemon(attacker).damage, 40);
+}
+
+#[test]
+fn lucky_helmet_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Lucky Helmet")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Lucky Helmet should play");
+}
+
+#[test]
+fn lucky_helmet_draws_two_for_its_owner() {
+    // The Active's turn ends with this attack, so the defender's own
+    // turn — and its ordinary turn-start draw — starts in the same
+    // `settle` call. Comparing against an identical game with no Lucky
+    // Helmet attached isolates the card's own +2 from that draw, which
+    // both games make identically off the same seed.
+    let (set, helmet) = with_lucky_helmet(build());
+    let without = {
+        let mut state = game(&set, helmet, 3);
+        let attacker_player = state.current;
+        let defender_player = attacker_player.opponent();
+        pay_and_attack(&mut state, attacker_player);
+        state.player(defender_player).hand.len()
+    };
+    let with = {
+        let mut state = game(&set, helmet, 3);
+        let attacker_player = state.current;
+        let defender_player = attacker_player.opponent();
+        let defender = state.player(defender_player).active.unwrap();
+        let card = deal_new_card(&mut state, defender_player, helmet);
+        state.pokemon[defender.index()].attached.push(card);
+        pay_and_attack(&mut state, attacker_player);
+        state.player(defender_player).hand.len()
+    };
+    assert_eq!(with, without + 2, "Lucky Helmet draws 2 on top of the ordinary turn draw");
+}

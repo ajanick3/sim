@@ -1176,7 +1176,9 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::IncreasesHp(_)
         | TrainerEffect::BonusDamageWithoutRuleBoxVsEx(_)
         | TrainerEffect::BonusDamageIfPoisonedVsActive(_)
-        | TrainerEffect::FewerPrizeIfLilliesKnockedOutByAttack => {
+        | TrainerEffect::FewerPrizeIfLilliesKnockedOutByAttack
+        | TrainerEffect::DamagesAttackerWhenDefenderIsHit(_)
+        | TrainerEffect::DrawsWhenDefenderIsHit(_) => {
             unreachable!(
                 "a static effect is read wherever it applies, never dispatched \
                  at play time — a Tool never reaches resolve_trainer at all"
@@ -1363,6 +1365,9 @@ fn attack(state: &mut GameState, index: usize) {
     // `Lillie's Pearl` tells this knockout apart from one a checkup
     // causes; `settle`'s knockout check consumes this, every call.
     state.attacking_defender = Some(defender);
+    if damage > 0 {
+        trigger_defenders_tool(state, attacker, defender);
+    }
     if let Some(condition) = attack.inflicts {
         state.inflict(defender, condition);
         let name = state.pokemon_def(defender).name;
@@ -1375,6 +1380,46 @@ fn attack(state: &mut GameState, index: usize) {
         "{attacker_name} uses {} on {defender_name} for {damage}.",
         attack.name
     ));
+}
+
+/// A Tool on the Active that just took attack damage — Punk Helmet,
+/// Handheld Fan, Lucky Helmet. "Even if Knocked Out" means this runs
+/// before `settle` decides that; nothing here reads whether the
+/// defender survives.
+fn trigger_defenders_tool(state: &mut GameState, attacker: PokemonId, defender: PokemonId) {
+    let tools: Vec<CardId> = state
+        .pokemon(defender)
+        .attached
+        .iter()
+        .copied()
+        .filter(|c| {
+            state
+                .def_of(*c)
+                .as_trainer()
+                .is_some_and(|t| t.kind == TrainerKind::Tool)
+        })
+        .collect();
+    for tool in tools {
+        let Some(effect) = state.def_of(tool).as_trainer().map(|t| t.effect.clone()) else {
+            continue;
+        };
+        match effect {
+            TrainerEffect::DamagesAttackerWhenDefenderIsHit(amount) => {
+                state.pokemon[attacker.index()].damage += amount;
+                let name = state.pokemon_def(attacker).name;
+                state
+                    .log
+                    .push(format!("{name} takes {amount} in return."));
+            }
+            TrainerEffect::DrawsWhenDefenderIsHit(count) => {
+                let owner = state.pokemon(defender).owner;
+                for _ in 0..count {
+                    state.draw(owner);
+                }
+            }
+            _ => {}
+        }
+    }
 }
 
 /// Step 31 to 35 of the damage order. Milestone 1 has no effects that change

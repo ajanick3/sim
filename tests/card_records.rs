@@ -60,7 +60,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Recycler, 3 of Team Rocket's Transceiver, 1 of Hand Trimmer, 1 of
     // Secret Box, 1 of Dusk Ball, 2 of Prime Catcher, 1 of Strange
     // Timepiece, 1 of Transformation Tome, 3 of Air Balloon, 1 of
-    // Hero's Cape, 2 of Brave Bangle, 2 of Binding Mochi, and 1 of
-    // Lillie's Pearl.
-    assert_eq!(admitted, 492, "coverage moves only on purpose");
+    // Hero's Cape, 2 of Brave Bangle, 2 of Binding Mochi, 1 of
+    // Lillie's Pearl, 2 of Punk Helmet, and 1 of Lucky Helmet.
+    assert_eq!(admitted, 495, "coverage moves only on purpose");
 }
