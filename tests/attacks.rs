@@ -1230,3 +1230,25 @@ fn dwebble_ascension_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv10-011").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Dwebble's Ascension print should play");
 }
+
+// --- Beyond the spec: more attack-text names blockers still shows ---
+
+#[test]
+fn beldum_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv05-113").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Beldum's Iron Tackle print should play");
+}
+
+#[test]
+fn dunsparce_trading_places_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv09-120").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Dunsparce's Trading Places print should play");
+}

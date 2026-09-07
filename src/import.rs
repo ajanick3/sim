@@ -1001,6 +1001,8 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         }
         ("Dedenne", "Electromagnetic Sonar") => AttackEffect::TakeTrainerFromDiscard,
         ("Dwebble", "Ascension") => AttackEffect::SearchLibraryToEvolveSelf,
+        ("Beldum", "Iron Tackle") => AttackEffect::Recoil(10),
+        ("Dunsparce", "Trading Places") => AttackEffect::SwitchOwnActive,
         _ => return None,
     })
 }
