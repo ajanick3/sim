@@ -287,6 +287,13 @@ pub enum TrainerEffect {
     /// opponent's hand, their own choice of which. `Eri`'s filter is an
     /// Item card; nothing before it read a zone the opponent controls.
     DiscardFromOpponentsHand { filter: CardFilter, limit: u32 },
+    /// Heal every point of damage from a chosen Mega Evolution ex the
+    /// player controls, and if any damage was actually healed, move
+    /// every card attached to it into the player's hand. `Wally's
+    /// Compassion` is the only card that heals to full rather than a
+    /// fixed amount, and the only one whose follow-up reads whether the
+    /// heal did anything at all.
+    HealMegaExAndTakeEnergyIfHealed,
 }
 
 /// What a card demands before it may be played at all.

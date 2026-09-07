@@ -234,6 +234,11 @@ pub enum Phase {
         filter: crate::card::CardFilter,
         remaining: u32,
     },
+    /// `player` played `Wally's Compassion` and picks a Mega Evolution ex
+    /// they control to heal fully. A prize value of 3 is what a Mega
+    /// Evolution ex is, per ADR 0010 — the same fact `TurnBonusTarget`
+    /// already reads for a plain ex, one prize lower.
+    HealingMegaEx { player: PlayerId },
     /// The game is decided.
     Over,
 }
