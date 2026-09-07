@@ -1671,6 +1671,11 @@ fn resolve_attack_effect(
                 };
             }
         }
+        crate::card::AttackEffect::RevealOpponentsHand => {
+            let opponent = state.pokemon(attacker).owner.opponent();
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} reveals {opponent:?}'s hand."));
+        }
         crate::card::AttackEffect::SearchLibraryForBasicPokemonToBench(count) => {
             let owner = state.pokemon(attacker).owner;
             let any_basic = state.player(owner).library.iter().any(|c| {

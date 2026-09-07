@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (28/95 built)
+### Pokémon (29/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -224,7 +224,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Genesect ex | ❌ |
 | [Goldeen](src/import.rs#L234) | ✅ |
 | [Grookey](src/import.rs#L234) | ✅ |
-| Hoothoot | ❌ |
+| [Hoothoot](src/import.rs#L995) | ✅ |
 | Hydrapple ex | ❌ |
 | Iron Crown ex | ❌ |
 | Iron Leaves ex | ❌ |
