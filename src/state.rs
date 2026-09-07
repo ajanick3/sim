@@ -187,6 +187,12 @@ pub enum Phase {
     /// a half-made move that no rule can read; the pair is small enough to
     /// enumerate, so the action carries both.
     MovingEnergy { player: PlayerId },
+    /// `player` played `N's Plan` and moves up to `remaining` Energy from
+    /// their Bench onto their Active, one at a time. The target is fixed —
+    /// always the Active — so unlike `MovingEnergy` the action need only
+    /// name the card, and ADR 0012 gives the player their own choice to
+    /// stop before `remaining` runs out.
+    MovingEnergyFromBenchToActive { player: PlayerId, remaining: u32 },
     /// `player` played `Rare Candy` and chooses both the Stage 2 from hand
     /// and the Basic in play it evolves, skipping the Stage 1 between them.
     /// A card and a target are chosen together, the same reason

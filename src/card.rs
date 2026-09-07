@@ -200,6 +200,11 @@ pub enum TrainerEffect {
     /// zones, so this is neither a move between zones nor an attachment from
     /// one.
     MoveAttachedEnergy,
+    /// Move up to `limit` Energy from the player's Benched Pokémon onto
+    /// their Active, one at a time, never the other way — `N's Plan`'s
+    /// direction, where `MoveAttachedEnergy` moves exactly one, between
+    /// any two Pokémon the player controls.
+    MoveEnergyFromBenchToActive { limit: u32 },
     /// Evolve a Basic Pokémon in play straight into a Stage 2 from hand,
     /// skipping the Stage 1 between them. `Rare Candy` is the only card that
     /// needs this: rule 19's ordinary evolution matches a card's
