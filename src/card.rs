@@ -56,6 +56,11 @@ pub enum Destination {
     /// this exists at all: the second Energy it finds goes onto a Pokémon
     /// rather than into a zone. `TargetFilter::AnyInPlay` is what it needed.
     Attach(TargetFilter),
+    /// On top of the Library, in the order the cards were taken — not
+    /// shuffled in. `Ciphermaniac's Codebreaking` shuffles what is left of
+    /// the deck *before* placing these, so the two land known, on top of an
+    /// otherwise-scrambled deck.
+    TopOfLibraryInOrder,
 }
 
 /// What Pokémon `Destination::Attach` may target, beyond "the chooser
@@ -115,6 +120,10 @@ pub enum CardFilter {
     /// card" — one filter admitting two kinds of card, the same shape
     /// `PokemonOrBasicEnergy` already is, narrowed to one type.
     PokemonOfTypeOrBasicEnergyOfType(Type),
+    /// Any card at all — a Pokémon, an Energy, or a Trainer alike.
+    /// `Ciphermaniac's Codebreaking` names no kind: "search your deck for
+    /// 2 cards" is the whole of its filter.
+    AnyCard,
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
