@@ -955,6 +955,38 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::TakeNamedFromDiscardToBench { card } => {
+            let (player, name, remaining) = match state.phase {
+                Phase::SearchingDiscardForNamedToBench { player, name, remaining } => {
+                    (player, name, remaining)
+                }
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].discard.retain(|c| *c != card);
+            let pokemon = state.put_into_play(player, card);
+            state.players[player.index()].bench.push(pokemon);
+            state.log.push(format!("{name} joins the Bench from discard."));
+            if remaining <= 1 {
+                state.phase = Phase::Main;
+                settle(state);
+            } else {
+                state.phase = Phase::SearchingDiscardForNamedToBench {
+                    player,
+                    name,
+                    remaining: remaining - 1,
+                };
+            }
+        }
+
+        Action::FinishSearchingDiscardForNamedToBench => {
+            match state.phase {
+                Phase::SearchingDiscardForNamedToBench { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1804,6 +1836,21 @@ fn resolve_attack_effect(
                 state.phase = Phase::SearchingLibraryToEvolveSelf {
                     player: owner,
                     target: attacker,
+                };
+            }
+        }
+        crate::card::AttackEffect::SearchDiscardForNamedToBench(name, count) => {
+            let owner = state.pokemon(attacker).owner;
+            let any_named = state
+                .player(owner)
+                .discard
+                .iter()
+                .any(|c| state.matches_filter(*c, crate::card::CardFilter::PokemonNamed(name)));
+            if any_named {
+                state.phase = Phase::SearchingDiscardForNamedToBench {
+                    player: owner,
+                    name,
+                    remaining: count,
                 };
             }
         }

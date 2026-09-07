@@ -317,6 +317,10 @@ pub enum Phase {
     /// `player` used an attack that puts a Pokémon card from their own
     /// discard pile into their hand. `Slowpoke`'s `Dangle Tail`.
     TakingPokemonFromDiscard { player: PlayerId },
+    /// `player` used an attack that searches their own discard pile
+    /// for up to `remaining` more copies of a named Pokémon to the
+    /// Bench. `Duskull`'s `Come and Get You`.
+    SearchingDiscardForNamedToBench { player: PlayerId, name: &'static str, remaining: u32 },
     /// `player` played `Janine's Secret Art` and is choosing up to 2 of
     /// their own Darkness Pokémon, in `chosen`, before any search runs.
     ChoosingJaninesTargets {
@@ -777,6 +781,9 @@ impl GameState {
                 .def_of(card)
                 .as_trainer()
                 .is_some_and(|t| t.kind == crate::card::TrainerKind::Supporter && t.name.contains(word)),
+            CardFilter::PokemonNamed(name) => {
+                self.def_of(card).as_pokemon().is_some_and(|p| p.name == name)
+            }
         }
     }
 
