@@ -159,6 +159,15 @@ fn ensure_in_hand(state: &mut GameState, player: PlayerId, def: CardDefId) -> Ca
     card
 }
 
+/// A physical card of `def`, for a definition that was never part of the
+/// sixty-card decklist. Placed nowhere; the caller pushes it to whatever
+/// zone the test needs.
+fn deal_new_card(state: &mut GameState, player: PlayerId, def: CardDefId) -> CardId {
+    let card = CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def, owner: player });
+    card
+}
+
 /// Every card the current `Deciding` phase offers.
 fn offered(state: &GameState) -> Vec<CardId> {
     legal_actions(state)
@@ -1099,4 +1108,149 @@ fn mortys_conviction_is_admitted_from_the_artifact() {
         Some(Requirement::DiscardOtherCardsFromHand(1))
     );
     assert_eq!(card.effect, TrainerEffect::DrawPerOpponentBenched);
+}
+
+// --- Ticket 10: Xerosic's Machinations and Eri ---
+
+fn with_xerosics_machinations(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-xerosics-machinations",
+        name: "Xerosic's Machinations",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::OpponentDiscardsDownTo(3),
+    }));
+    (Set { db, ..set }, card)
+}
+
+fn with_eri(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let item = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-some-item",
+        name: "Test Item",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Nothing,
+    }));
+    let eri = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-eri",
+        name: "Eri",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::DiscardFromOpponentsHand {
+            filter: CardFilter::TrainerOfKind(TrainerKind::Item),
+            limit: 2,
+        },
+    }));
+    (Set { db, ..set }, eri, item)
+}
+
+#[test]
+fn xerosics_machinations_discards_the_opponents_own_hand_to_their_own_choice() {
+    let (set, card) = with_xerosics_machinations(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let played = ensure_in_hand(&mut state, player, card);
+    let opponent_hand_before = state.player(opponent).hand.len();
+    assert!(opponent_hand_before > 3, "the fixture deals a full hand");
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    assert!(
+        matches!(state.phase, Phase::DiscardingFromHand { chooser, of, .. }
+            if chooser == opponent && of == opponent),
+        "the opponent discards from their own hand: {:?}",
+        state.phase
+    );
+
+    while state.player(opponent).hand.len() > 3 {
+        let discard = match legal_actions(&state).into_iter().find(|a| {
+            matches!(a, Action::DiscardFromHand { .. })
+        }) {
+            Some(Action::DiscardFromHand { card }) => card,
+            _ => panic!("expected something left to discard"),
+        };
+        apply(&mut state, Action::DiscardFromHand { card: discard }).unwrap();
+    }
+    apply(&mut state, Action::FinishDiscardingFromHand).unwrap();
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(opponent).hand.len(), 3);
+}
+
+#[test]
+fn eri_lets_the_player_discard_only_the_opponents_items() {
+    let (set, eri, item_def) = with_eri(build());
+    let mut state = game(&set, eri, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let played = ensure_in_hand(&mut state, player, eri);
+
+    // Deal the opponent an Item and note a non-Item already in their hand.
+    let item_card = deal_new_card(&mut state, opponent, item_def);
+    state.players[opponent.index()].hand.push(item_card);
+    let non_item = *state
+        .player(opponent)
+        .hand
+        .iter()
+        .find(|c| **c != item_card)
+        .unwrap();
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    let offered: Vec<CardId> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::DiscardFromHand { card } => Some(card),
+            _ => None,
+        })
+        .collect();
+    assert!(offered.contains(&item_card), "the opponent's Item is offered");
+    assert!(
+        !offered.contains(&non_item),
+        "a non-Item in the opponent's hand is not"
+    );
+
+    apply(&mut state, Action::DiscardFromHand { card: item_card }).unwrap();
+    assert!(
+        legal_actions(&state).contains(&Action::FinishDiscardingFromHand),
+        "up to 2 — stopping early is legal"
+    );
+    apply(&mut state, Action::FinishDiscardingFromHand).unwrap();
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(opponent).discard.contains(&item_card));
+    assert!(!state.player(opponent).hand.contains(&item_card));
+}
+
+#[test]
+fn xerosics_machinations_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let card = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Xerosic's Machinations")
+        .expect("Xerosic's Machinations plays");
+    assert_eq!(card.effect, TrainerEffect::OpponentDiscardsDownTo(3));
+}
+
+#[test]
+fn eri_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let card = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Eri")
+        .expect("Eri plays");
+    assert_eq!(
+        card.effect,
+        TrainerEffect::DiscardFromOpponentsHand {
+            filter: CardFilter::TrainerOfKind(TrainerKind::Item),
+            limit: 2,
+        }
+    );
 }

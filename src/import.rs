@@ -708,6 +708,14 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             Some(Requirement::DiscardOtherCardsFromHand(1)),
             TrainerEffect::DrawPerOpponentBenched,
         ),
+        "Xerosic's Machinations" => (free, TrainerEffect::OpponentDiscardsDownTo(3)),
+        "Eri" => (
+            free,
+            TrainerEffect::DiscardFromOpponentsHand {
+                filter: CardFilter::TrainerOfKind(TrainerKind::Item),
+                limit: 2,
+            },
+        ),
         _ => return None,
     })
 }
