@@ -46,6 +46,10 @@ pub struct PokemonInPlay {
     /// The Special Conditions on this Pokémon. Only the Active carries any.
     pub conditions: Vec<Condition>,
     pub knocked_out: bool,
+    /// Set when this Pokémon was devolved this turn (`Strange Timepiece`).
+    /// Cleared in `begin_turn`, the same "this turn" lifetime `turn_bonus`
+    /// already carries.
+    pub cannot_evolve_this_turn: bool,
 }
 
 impl PokemonInPlay {
@@ -251,6 +255,14 @@ pub enum Phase {
     /// storing anything here — the Library itself is the source of
     /// truth, not a copy of it a `Copy` `Phase` could not hold anyway.
     LookingAtBottomOfLibrary { player: PlayerId, count: u32 },
+    /// `player` played `Strange Timepiece` and is devolving one of their
+    /// own evolved Pokémon. `target` is `None` until chosen; once fixed,
+    /// the player removes evolution cards one at a time — "any number" —
+    /// until they stop or the Pokémon is back to its Basic.
+    Devolving {
+        player: PlayerId,
+        target: Option<PokemonId>,
+    },
     /// `player` played `Janine's Secret Art` and is choosing up to 2 of
     /// their own Darkness Pokémon, in `chosen`, before any search runs.
     ChoosingJaninesTargets {
@@ -453,6 +465,7 @@ impl GameState {
             played_on_turn: self.turn_number,
             conditions: Vec::new(),
             knocked_out: false,
+            cannot_evolve_this_turn: false,
         });
         id
     }
@@ -686,6 +699,9 @@ impl GameState {
         self.spent.clear();
         // "This turn" ends here too, whoever set the bonus.
         self.turn_bonus = None;
+        for pokemon in &mut self.pokemon {
+            pokemon.cannot_evolve_this_turn = false;
+        }
     }
 
     /// Whether a once-per-turn limit has been spent.

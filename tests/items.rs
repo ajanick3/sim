@@ -850,3 +850,75 @@ fn prime_catcher_skips_its_own_switch_with_an_empty_bench() {
         "no Bench to switch to, so the follow-up does nothing"
     );
 }
+
+// --- Ticket 10: Strange Timepiece ---
+
+fn with_strange_timepiece(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-strange-timepiece",
+        name: "Strange Timepiece",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::DevolveChosen,
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn strange_timepiece_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Strange Timepiece")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Strange Timepiece should play");
+}
+
+#[test]
+fn strange_timepiece_cannot_be_played_with_nothing_evolved() {
+    let (set, card) = with_strange_timepiece(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    // Nothing in play is evolved in this fixture by default.
+
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card: played }),
+        "no evolved Pokémon to devolve"
+    );
+}
+
+#[test]
+fn strange_timepiece_devolves_one_layer_and_blocks_evolving_this_turn() {
+    let (set, card) = with_strange_timepiece(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    let stage1 = state.player(player).bench[0];
+    let evolution_card = deal_new_card(&mut state, player, set.stage1);
+    let basic_underneath = state.pokemon(stage1).cards[0];
+    state.pokemon[stage1.index()].cards = vec![basic_underneath, evolution_card];
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    apply(&mut state, Action::ChooseDevolveTarget { target: stage1 }).unwrap();
+    assert!(
+        legal_actions(&state).contains(&Action::RemoveOneEvolutionCard),
+        "one evolution card sits on top"
+    );
+    apply(&mut state, Action::RemoveOneEvolutionCard).unwrap();
+    assert!(
+        !legal_actions(&state).contains(&Action::RemoveOneEvolutionCard),
+        "back to the Basic, nothing left to remove"
+    );
+    apply(&mut state, Action::FinishDevolving).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(stage1).cards, vec![basic_underneath]);
+    assert!(state.player(player).hand.contains(&evolution_card));
+    assert!(state.pokemon(stage1).cannot_evolve_this_turn);
+}

@@ -83,6 +83,15 @@ pub enum Action {
     /// Decline every Pokémon `Phase::LookingAtBottomOfLibrary` found; the
     /// Library still shuffles.
     DeclineBottomOfLibrary,
+    /// Choose which of the player's own evolved Pokémon `Phase::Devolving`
+    /// devolves.
+    ChooseDevolveTarget { target: PokemonId },
+    /// Remove one evolution card from the Pokémon `Phase::Devolving`
+    /// named, into hand.
+    RemoveOneEvolutionCard,
+    /// Stop devolving. Legal any time a target is already chosen, even
+    /// having removed nothing yet, since "any number" includes zero.
+    FinishDevolving,
     /// Choose one of up to 2 targets for `Janine's Secret Art`.
     ChooseJaninesTarget { target: PokemonId },
     /// Stop choosing targets, whether 0, 1, or 2 have been picked.
@@ -118,6 +127,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DiscardingFromHand { chooser, .. } => Some(chooser),
         Phase::HealingMegaEx { player } => Some(player),
         Phase::LookingAtBottomOfLibrary { player, .. } => Some(player),
+        Phase::Devolving { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
@@ -346,6 +356,21 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::DeclineBottomOfLibrary);
             return actions;
         }
+        Phase::Devolving { player: whose, target: None } => {
+            for pokemon in state.player(whose).in_play() {
+                if state.pokemon_def(pokemon).stage != crate::card::Stage::Basic {
+                    actions.push(Action::ChooseDevolveTarget { target: pokemon });
+                }
+            }
+            return actions;
+        }
+        Phase::Devolving { target: Some(target), .. } => {
+            if state.pokemon(target).cards.len() > 1 {
+                actions.push(Action::RemoveOneEvolutionCard);
+            }
+            actions.push(Action::FinishDevolving);
+            return actions;
+        }
         Phase::ChoosingJaninesTargets { player: whose, remaining, chosen } => {
             if remaining > 0 {
                 for target in state.player(whose).in_play() {
@@ -422,7 +447,8 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             for target in side.in_play() {
                 let eligible = state.pokemon_def(target).name == from
                     && state.pokemon(target).played_on_turn < state.turn_number
-                    && !state.is_spent(Limit::Evolved(target));
+                    && !state.is_spent(Limit::Evolved(target))
+                    && !state.pokemon(target).cannot_evolve_this_turn;
                 if eligible {
                     actions.push(Action::Evolve {
                         card: *card,
@@ -456,6 +482,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 TrainerEffect::SwitchOpponentActiveThenOwn => {
                     !state.player(player.opponent()).bench.is_empty()
                 }
+                // A Pokémon that has actually evolved, to devolve.
+                TrainerEffect::DevolveChosen => side
+                    .in_play()
+                    .iter()
+                    .any(|p| state.pokemon_def(*p).stage != crate::card::Stage::Basic),
                 // An Energy to move, and a second Pokémon to move it to.
                 TrainerEffect::MoveAttachedEnergy => {
                     let in_play = side.in_play();
@@ -586,7 +617,8 @@ fn rare_candy_pairs(state: &GameState, player: PlayerId) -> Vec<(CardId, Pokemon
         for target in side.in_play() {
             let eligible = state.pokemon_def(target).name == from
                 && state.pokemon(target).played_on_turn < state.turn_number
-                && !state.is_spent(Limit::Evolved(target));
+                && !state.is_spent(Limit::Evolved(target))
+                && !state.pokemon(target).cannot_evolve_this_turn;
             if eligible {
                 pairs.push((*card, target));
             }
@@ -659,6 +691,11 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Take {} from the bottom of the library", state.def_of(card).name())
         }
         Action::DeclineBottomOfLibrary => "Decline the bottom of the library".to_string(),
+        Action::ChooseDevolveTarget { target } => {
+            format!("Devolve {}", state.pokemon_def(target).name)
+        }
+        Action::RemoveOneEvolutionCard => "Remove one evolution card".to_string(),
+        Action::FinishDevolving => "Stop devolving".to_string(),
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
         }
