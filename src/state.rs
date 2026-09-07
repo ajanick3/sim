@@ -555,6 +555,14 @@ impl GameState {
         self.def_of(card).as_trainer().map(|t| t.effect.clone())
     }
 
+    /// Whether `Jamming Tower` (or any Stadium with the same effect) is
+    /// in play — every Tool read site checks this before reading what a
+    /// Tool would otherwise say, rather than the Tool or its attachment
+    /// being removed.
+    pub fn tools_disabled(&self) -> bool {
+        self.stadium_effect() == Some(crate::card::TrainerEffect::ToolsHaveNoEffect)
+    }
+
     /// The HP this Pokémon actually has: the printed value, plus whatever
     /// an attached Tool like `Hero's Cape` adds, less whatever a Stadium
     /// like `Gravity Mountain` takes off, floored at zero.
@@ -564,16 +572,19 @@ impl GameState {
     /// splits from the printed Retreat Cost.
     pub fn effective_hp(&self, id: PokemonId) -> u32 {
         let printed = self.pokemon_def(id).hp;
-        let bonus: u32 = self
-            .pokemon(id)
-            .attached
-            .iter()
-            .filter_map(|c| self.def_of(*c).as_trainer())
-            .map(|t| match t.effect {
-                crate::card::TrainerEffect::IncreasesHp(amount) => amount,
-                _ => 0,
-            })
-            .sum();
+        let bonus: u32 = if self.tools_disabled() {
+            0
+        } else {
+            self.pokemon(id)
+                .attached
+                .iter()
+                .filter_map(|c| self.def_of(*c).as_trainer())
+                .map(|t| match t.effect {
+                    crate::card::TrainerEffect::IncreasesHp(amount) => amount,
+                    _ => 0,
+                })
+                .sum()
+        };
         let stadium_reduction = match self.stadium_effect() {
             Some(crate::card::TrainerEffect::ReducesHpForStage(stage, amount))
                 if self.pokemon_def(id).stage == stage =>
@@ -609,16 +620,19 @@ impl GameState {
             return 0;
         }
         let printed = self.pokemon_def(id).retreat_cost as u32;
-        let reduction: u32 = self
-            .pokemon(id)
-            .attached
-            .iter()
-            .filter_map(|c| self.def_of(*c).as_trainer())
-            .map(|t| match t.effect {
-                crate::card::TrainerEffect::ReducesRetreatCost(amount) => amount,
-                _ => 0,
-            })
-            .sum();
+        let reduction: u32 = if self.tools_disabled() {
+            0
+        } else {
+            self.pokemon(id)
+                .attached
+                .iter()
+                .filter_map(|c| self.def_of(*c).as_trainer())
+                .map(|t| match t.effect {
+                    crate::card::TrainerEffect::ReducesRetreatCost(amount) => amount,
+                    _ => 0,
+                })
+                .sum()
+        };
         printed.saturating_sub(reduction)
     }
 

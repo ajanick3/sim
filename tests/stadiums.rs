@@ -533,3 +533,60 @@ fn lumiose_city_declining_does_not_end_the_turn() {
         "once a turn either way"
     );
 }
+
+// --- Ticket 06: Jamming Tower ---
+
+fn with_jamming_tower(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let cape = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-heros-cape-jt",
+        name: "Hero's Cape",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::IncreasesHp(100),
+    }));
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-jamming-tower",
+        name: "Jamming Tower",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::ToolsHaveNoEffect,
+    }));
+    (Set { db, ..set }, card, cape)
+}
+
+#[test]
+fn jamming_tower_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Jamming Tower")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Jamming Tower should play");
+}
+
+#[test]
+fn jamming_tower_turns_off_an_attached_tools_effect() {
+    let (set, card, cape) = with_jamming_tower(build());
+    let mut state = game(&set, cape, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let cape_card = ensure_in_hand(&mut state, player, cape);
+    apply(&mut state, Action::PlayTool { card: cape_card, target: active }).unwrap();
+    assert_eq!(state.effective_hp(active), state.pokemon_def(active).hp + 100);
+
+    let played = deal_new_card(&mut state, player, card);
+    state.players[player.index()].hand.push(played);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert_eq!(
+        state.effective_hp(active),
+        state.pokemon_def(active).hp,
+        "the Tool is still attached, but does nothing"
+    );
+    assert!(state.pokemon(active).attached.contains(&cape_card));
+}

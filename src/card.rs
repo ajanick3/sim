@@ -311,6 +311,12 @@ pub enum TrainerEffect {
     /// `enter_slot` a played card's own `Decide` uses.
     /// `Lumiose City`.
     MaySearchBasicToBenchThenMaybeEndTurn,
+    /// A Stadium's static effect: every attached Tool, both sides alike,
+    /// has no effect. Read wherever a Tool's own effect would be —
+    /// `effective_hp`, `effective_retreat_cost`, `damage_dealt`'s and
+    /// `attack`'s own Tool loops, `powerglass_owner` — rather than
+    /// removing the Tool or its attachment. `Jamming Tower`.
+    ToolsHaveNoEffect,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
