@@ -1404,3 +1404,35 @@ fn duskull_is_admitted_from_the_artifact() {
         "at least one Duskull print should play"
     );
 }
+
+// --- Beyond the spec: more easy admits from existing shapes ---
+
+#[test]
+fn torchic_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv10-040").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Torchic's Collect print should play");
+}
+
+#[test]
+fn celebi_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv07-004").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Celebi's Collect print should play");
+}
+
+#[test]
+fn buneary_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me02-083").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Buneary's Run Around print should play");
+}

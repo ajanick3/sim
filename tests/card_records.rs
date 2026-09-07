@@ -111,5 +111,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // the mirror of TakeTrainerFromDiscard) admits its sv07-057 print.
     // Duskull's Come and Get You (a named search from the player's own
     // discard pile, CardFilter::PokemonNamed) completes all 3 prints.
-    assert_eq!(admitted, 558, "coverage moves only on purpose");
+    // Torchic's and Celebi's Collect (DrawCards, already built) and
+    // Buneary's Run Around (SwitchOwnActive, already built) each admit
+    // one more print with no new shape.
+    assert_eq!(admitted, 561, "coverage moves only on purpose");
 }

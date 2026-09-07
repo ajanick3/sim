@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (36/95 built)
+### Pokémon (37/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -193,9 +193,9 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Bloodmoon Ursaluna ex | ❌ |
 | Brute Bonnet | ❌ |
 | Budew | ❌ |
-| [Buneary](src/import.rs#L234) | ✅ |
+| [Buneary](src/import.rs#L1011) | ✅ |
 | [Carvanha](src/import.rs#L951) | ✅ |
-| Celebi | ❌ |
+| [Celebi](src/import.rs#L1010) | ✅ |
 | Chi-Yu | ❌ |
 | Chien-Pao | ❌ |
 | [Chikorita](src/import.rs#L234) | ✅ |
@@ -272,7 +272,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Tatsugiri | ❌ |
 | Teal Mask Ogerpon ex | ❌ |
 | Thwackey | ❌ |
-| [Torchic](src/import.rs#L234) | ✅ |
+| [Torchic](src/import.rs#L1009) | ✅ |
 | [Toxel](src/import.rs#L994) | ✅ |
 | Toxtricity | ❌ |
 | Wellspring Mask Ogerpon ex | ❌ |
