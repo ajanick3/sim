@@ -105,14 +105,14 @@ fn main() {
         );
     }
 
-    for label in ["Ability", "Trainer, not yet built"] {
+    for label in ["Ability", "Trainer, not yet built", "Attack text"] {
         let Some(names) = by_name.get(label) else {
             continue;
         };
         let mut named: Vec<_> = names.iter().collect();
         named.sort_by_key(|(_, count)| std::cmp::Reverse(**count));
         println!("\nTop {label} by slot count:");
-        for (name, count) in named.iter().take(15) {
+        for (name, count) in named.iter().take(40) {
             println!("  {count:>4}  {name}");
         }
         println!("({} distinct names)", named.len());
