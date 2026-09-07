@@ -179,7 +179,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (27/95 built)
+### Pokémon (28/95 built)
 
 | Card | Status |
 | --- | --- |
@@ -207,7 +207,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Dragapult ex](src/import.rs#L986) | ✅ |
 | Drakloak | ❌ |
 | [Dreepy](src/import.rs#L234) | ✅ |
-| [Drilbur](src/import.rs#L234) | ✅ |
+| [Drilbur](src/import.rs#L993) | ✅ |
 | Dudunsparce | ❌ |
 | [Dudunsparce ex](src/import.rs#L964) | ✅ |
 | Dunsparce | ❌ |
@@ -273,7 +273,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Teal Mask Ogerpon ex | ❌ |
 | Thwackey | ❌ |
 | [Torchic](src/import.rs#L234) | ✅ |
-| Toxel | ❌ |
+| [Toxel](src/import.rs#L994) | ✅ |
 | Toxtricity | ❌ |
 | Wellspring Mask Ogerpon ex | ❌ |
 | [Yveltal](src/import.rs#L983) | ✅ |

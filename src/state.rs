@@ -298,6 +298,11 @@ pub enum Phase {
     /// deals flat damage to one Benched Pokémon of the opponent's
     /// choosing which. `N's Darmanitan`'s `Flamebody Cannon`.
     ChoosingBenchDamageTarget { player: PlayerId, damage: u32 },
+    /// `player` used an attack that searches the library for up to
+    /// `remaining` more Basic Pokémon to the Bench — a search read
+    /// from an attack, not a Trainer's `Decide`, so it names no card
+    /// to read slots back from. `Drilbur`/`Toxel`'s `Call for Family`.
+    SearchingLibraryForBasics { player: PlayerId, remaining: u32 },
     /// `player` played `Janine's Secret Art` and is choosing up to 2 of
     /// their own Darkness Pokémon, in `chosen`, before any search runs.
     ChoosingJaninesTargets {

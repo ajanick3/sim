@@ -86,6 +86,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Darmanitan (3 prints): its other attack (Back Draft) was
     // already read in ticket 02. A switch, reusing SwitchOwnActive
     // outright, admits Abra's me01-054 print (its other print's only
-    // attack has no printed text).
-    assert_eq!(admitted, 539, "coverage moves only on purpose");
+    // attack has no printed text). A search, reusing the Decide-to-
+    // Bench shape from an attack, admits Drilbur's me05-046 print and
+    // both Toxel prints (their other attacks have no printed text).
+    assert_eq!(admitted, 542, "coverage moves only on purpose");
 }

@@ -136,6 +136,12 @@ pub enum Action {
     /// Deal `Phase::ChoosingBenchDamageTarget`'s flat damage to this
     /// Benched Pokémon.
     DamageBenchedPokemon { target: PokemonId },
+    /// Take this Basic Pokémon from the library onto the Bench, as part
+    /// of `Phase::SearchingLibraryForBasics`.
+    TakeBasicPokemonForCallForFamily { card: CardId },
+    /// Stop `Phase::SearchingLibraryForBasics` before its limit is
+    /// spent.
+    FinishCallForFamily,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -164,6 +170,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::AttachingFromDiscardForPowerglass { player } => Some(player),
         Phase::DistributingDamageCounters { player, .. } => Some(player),
         Phase::ChoosingBenchDamageTarget { player, .. } => Some(player),
+        Phase::SearchingLibraryForBasics { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
@@ -428,6 +435,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             for pokemon in &state.player(opponent).bench {
                 actions.push(Action::DamageBenchedPokemon { target: *pokemon });
             }
+            return actions;
+        }
+        Phase::SearchingLibraryForBasics { player: whose, .. } => {
+            for card in &state.player(whose).library {
+                if state.matches_filter(*card, crate::card::CardFilter::PokemonOfStage(crate::card::Stage::Basic)) {
+                    actions.push(Action::TakeBasicPokemonForCallForFamily { card: *card });
+                }
+            }
+            actions.push(Action::FinishCallForFamily);
             return actions;
         }
         Phase::MovingEnergyForHandheldFan { attacker, .. } => {
@@ -903,6 +919,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DamageBenchedPokemon { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
         }
+        Action::TakeBasicPokemonForCallForFamily { card } => {
+            format!("Bench {}", state.def_of(card).name())
+        }
+        Action::FinishCallForFamily => "Stop searching".to_string(),
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
         }
