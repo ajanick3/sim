@@ -1,23 +1,30 @@
 # A cost paid to use an Ability
 
 Type: task
-Status: ready-for-agent
+Status: resolved
 
 `N's Zoroark ex`'s Ability, "Trade": *"You must discard a card from your
 hand in order to use this Ability. Once during your turn, you may draw 2
 cards."* 36 slots.
 
-ADR 0017 drew the line for a Trainer: a requirement gates whether the card
-may be played at all, and a cost paid to meet it is a phase, not the first
-step of the effect. An Ability's cost is the same shape, but the thing it
-gates is `legal_actions` offering the Ability, not `PlayTrainer` — and the
-phase it opens, once paid, must resolve an Ability's effect rather than a
-Trainer's, which lives on a `PokemonInPlay`, not a `CardId` in a zone.
+## Decision: refused, and deferred
 
-- [ ] An Ability that demands a cost is not offered where the cost cannot be
-      paid
-- [ ] The cost is paid as a phase, the way `Phase::Paying` already does for
-      a Trainer's requirement — reused, or given its own shape if an
-      Ability's effect will not fit what `Phase::Paying` reads back
-- [ ] `N's Zoroark ex` plays, and cannot be used while the hand holds
-      nothing to discard
+`N's Zoroark ex`'s only printed attack, `Night Joker` ("Choose 1 of
+your Benched N's Pokémon's attacks and use it as this attack"), needs
+the same attack-copying mechanism `Slowking`'s `Seek Inspiration` was
+already refused for — structurally outside `AttackEffect`'s fixed-value
+shape, regardless of what this ticket builds for its Ability. **`N's
+Zoroark ex` is refused outright.** See [ADR 0070](../../../docs/adr/0070-ns-zoroark-ex-is-refused-for-its-own-attack.md).
+
+No other card in the sample decks pairs a cost-gated Ability with a
+buildable attack (checked: `Iono's Kilowattrel`, `Quaquaval`,
+`Meowstic`, `Team Rocket's Porygon-Z`, `Volcarona` — none is in
+`decks/`). Building the cost-gated-Ability primitive now would be
+speculative work with no current payoff, against the project's own
+`prioritize-cards-in-sample-decks` discipline. **Deferred** until a
+sample-deck card needs it.
+
+## Resolution
+
+No code built. Two decisions recorded (refuse, defer) rather than a
+silent skip. Coverage unchanged. Ticket order continues at 03.
