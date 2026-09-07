@@ -657,6 +657,10 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             },
         ),
+        "Rust Syndicate Grunt" => (
+            Some(Requirement::KnockedOutDuringOpponentsLastTurn),
+            TrainerEffect::DiscardOpponentEnergy,
+        ),
         _ => return None,
     })
 }

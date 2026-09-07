@@ -209,6 +209,11 @@ pub enum TrainerEffect {
     /// Flip a coin; on heads, discard one Energy attached to a Pokémon the
     /// opponent controls, the player's choice of which.
     CoinFlipDiscardOpponentEnergy,
+    /// Discard one Energy attached to a Pokémon the opponent controls, the
+    /// player's choice of which — the same phase
+    /// `CoinFlipDiscardOpponentEnergy` opens on heads, entered outright,
+    /// with no flip in front of it.
+    DiscardOpponentEnergy,
     /// Nothing beyond where the card itself goes. A Stadium that stays in
     /// play and does no more is this. `known_trainer_effect` never produces
     /// it: a real Stadium carries a continuous rule the engine cannot run,

@@ -4,11 +4,11 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Slot, Stage, Trainer,
-    TrainerEffect, TrainerKind, Type, Zone,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
+    Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
-use sim::ids::{CardDefId, CardId, PlayerId};
+use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
 use sim::rng::SeededRng;
 use sim::state::GameState;
 use sim::state::Phase;
@@ -276,4 +276,95 @@ fn lanas_aid_is_admitted_from_the_artifact() {
             then: None,
         }
     );
+}
+
+// --- Ticket 02: Rust Syndicate Grunt ---
+
+fn with_rust_syndicate_grunt(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let grunt = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-rust-syndicate-grunt",
+        name: "Rust Syndicate Grunt",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::KnockedOutDuringOpponentsLastTurn),
+        effect: TrainerEffect::DiscardOpponentEnergy,
+    }));
+    (Set { db, ..set }, grunt)
+}
+
+fn end_turn_and_advance(state: &mut GameState) {
+    apply(state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(state)[0];
+        apply(state, first).unwrap();
+    }
+}
+
+fn make_lethally_damaged(state: &mut GameState, pokemon: PokemonId) {
+    let hp = state.pokemon_def(pokemon).hp;
+    state.pokemon[pokemon.index()].damage = hp;
+}
+
+#[test]
+fn rust_syndicate_grunt_cannot_be_played_with_no_knockout_to_point_to() {
+    let (set, grunt) = with_rust_syndicate_grunt(build());
+    let mut state = game(&set, grunt, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, grunt);
+    assert!(!legal_actions(&state).contains(&Action::PlayTrainer { card }));
+}
+
+#[test]
+fn rust_syndicate_grunt_discards_an_energy_with_no_coin_flip() {
+    let (set, grunt) = with_rust_syndicate_grunt(build());
+    let mut state = game(&set, grunt, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+
+    end_turn_and_advance(&mut state); // into the opponent's turn
+    let victim = state.player(player).active.unwrap();
+    make_lethally_damaged(&mut state, victim);
+    end_turn_and_advance(&mut state); // Knockout, promote, into the player's turn
+    assert_eq!(state.current, player);
+
+    let card = ensure_in_hand(&mut state, player, grunt);
+    assert!(legal_actions(&state).contains(&Action::PlayTrainer { card }));
+
+    // Give the opponent's Active an Energy to lose.
+    let their_active = state.player(opponent).active.unwrap();
+    let energy = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != energy);
+    state.pokemon[their_active.index()].attached.push(energy);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert!(
+        matches!(state.phase, Phase::DiscardingOpponentEnergy { .. }),
+        "no coin flip: the phase opens outright"
+    );
+    apply(&mut state, Action::DiscardOpponentEnergy { card: energy }).unwrap();
+    assert_eq!(state.phase, Phase::Main);
+    assert!(!state.pokemon(their_active).attached.contains(&energy));
+}
+
+#[test]
+fn rust_syndicate_grunt_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let grunt = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Rust Syndicate Grunt")
+        .expect("Rust Syndicate Grunt plays");
+    assert_eq!(
+        grunt.requirement,
+        Some(Requirement::KnockedOutDuringOpponentsLastTurn)
+    );
+    assert_eq!(grunt.effect, TrainerEffect::DiscardOpponentEnergy);
 }
