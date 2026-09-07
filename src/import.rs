@@ -1024,6 +1024,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Paldean Tauros", "Spirited Tackle") => {
             AttackEffect::BonusDamageIfDefenderIsStage(Stage::Stage1, 90)
         }
+        ("Combusken", "Double Kick") => {
+            AttackEffect::DamagePerCoinFlipHeads { flips: 2, per_head: 40 }
+        }
         _ => return None,
     })
 }

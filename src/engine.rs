@@ -1705,6 +1705,10 @@ fn attack(state: &mut GameState, index: usize) {
         Some(crate::card::AttackEffect::DamagePerCount(count, per_unit)) => {
             count_for_attack(state, attacker, count) * per_unit
         }
+        Some(crate::card::AttackEffect::DamagePerCoinFlipHeads { flips, per_head }) => {
+            let heads = (0..flips).filter(|_| state.rng.flip()).count() as u32;
+            heads * per_head
+        }
         Some(crate::card::AttackEffect::CoinFlipBonusDamage(bonus)) => {
             if state.rng.flip() {
                 attack.base_damage + bonus
@@ -1784,6 +1788,7 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt` ran — see `attack`'s own
         // `base` computation.
         crate::card::AttackEffect::DamagePerCount(..) => {}
+        crate::card::AttackEffect::DamagePerCoinFlipHeads { .. } => {}
         // Already spent, before `damage_dealt_with` ran.
         crate::card::AttackEffect::IgnoresDefendersEffects => {}
         crate::card::AttackEffect::InflictsCondition(condition) => {

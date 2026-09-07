@@ -1793,3 +1793,37 @@ fn paldean_tauros_spirited_tackle_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv08-018").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Paldean Tauros's Spirited Tackle print should play");
 }
+
+// --- Beyond the spec: damage per heads across several coin flips ---
+
+#[test]
+fn damage_scales_with_heads_across_two_flips() {
+    let attack = Attack {
+        name: "Double Kick",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DamagePerCoinFlipHeads { flips: 2, per_head: 40 }),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let opponent = state.current.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    let damage = state.pokemon(defender).damage;
+    assert!(
+        damage == 0 || damage == 40 || damage == 80,
+        "0, 1, or 2 heads times 40: got {damage}"
+    );
+}
+
+#[test]
+fn combusken_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv10-041").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Combusken's Double Kick print should play");
+}
