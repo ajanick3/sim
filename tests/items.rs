@@ -686,3 +686,82 @@ fn secret_box_pays_its_cost_then_finds_one_of_each_kind() {
         );
     }
 }
+
+// --- Ticket 08: Dusk Ball ---
+
+fn with_dusk_ball(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-dusk-ball",
+        name: "Dusk Ball",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::LookAtBottomOfLibrary { count: 7 },
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn dusk_ball_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .cards
+        .iter()
+        .find(|c| c.name == "Dusk Ball")
+        .expect("the artifact holds this card");
+    assert!(card.playable.is_some(), "Dusk Ball should play");
+}
+
+#[test]
+fn dusk_ball_offers_only_a_pokemon_from_the_bottom_seven() {
+    let (set, card) = with_dusk_ball(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    // Put a known Pokémon at the very bottom (index 0) of the library.
+    let bottom_mon = deal_new_card(&mut state, player, set.mon);
+    state.players[player.index()].library.insert(0, bottom_mon);
+    // And a known Pokémon far from the bottom, outside the 7-card window.
+    let deep_mon = deal_new_card(&mut state, player, set.mon);
+    let deep_index = state.player(player).library.len() / 2;
+    state.players[player.index()].library.insert(deep_index, deep_mon);
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    let choices: Vec<CardId> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::TakeFromBottomOfLibrary { card } => Some(card),
+            _ => None,
+        })
+        .collect();
+    assert!(choices.contains(&bottom_mon), "the bottom card is in range");
+    assert!(
+        !choices.contains(&deep_mon),
+        "a card outside the bottom 7 is not offered"
+    );
+    assert!(
+        legal_actions(&state).contains(&Action::DeclineBottomOfLibrary),
+        "declining is always offered"
+    );
+}
+
+#[test]
+fn dusk_ball_takes_the_pokemon_and_shuffles_the_rest_back() {
+    let (set, card) = with_dusk_ball(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    let bottom_mon = deal_new_card(&mut state, player, set.mon);
+    state.players[player.index()].library.insert(0, bottom_mon);
+    let library_before = state.player(player).library.len();
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    apply(&mut state, Action::TakeFromBottomOfLibrary { card: bottom_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&bottom_mon));
+    assert_eq!(state.player(player).library.len(), library_before - 1);
+}

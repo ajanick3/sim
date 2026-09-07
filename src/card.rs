@@ -300,6 +300,11 @@ pub enum TrainerEffect {
     /// cards — the opponent first. `Hand Trimmer` is `OpponentDiscardsDownTo`
     /// with a `DiscardFollowUp` chained onto it, not a new shape.
     BothDiscardDownTo(u32),
+    /// Look at the bottom `n` cards of the Library; the player may take a
+    /// Pokémon found there, then the rest shuffle back in. `Dusk Ball`
+    /// reads the opposite end from every peeked search built so far,
+    /// which all read the top — the end `draw` pops from.
+    LookAtBottomOfLibrary { count: u32 },
     /// The player discards up to `limit` cards matching `filter` from the
     /// opponent's hand, their own choice of which. `Eri`'s filter is an
     /// Item card; nothing before it read a zone the opponent controls.

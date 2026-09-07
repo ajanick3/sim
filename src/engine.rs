@@ -600,6 +600,32 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::TakeFromBottomOfLibrary { card } => {
+            let player = match state.phase {
+                Phase::LookingAtBottomOfLibrary { player, .. } => player,
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{player:?} takes {name} from the bottom of the library."));
+            let library = &mut state.players[player.index()].library;
+            shuffle(state.rng.as_mut(), library);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DeclineBottomOfLibrary => {
+            let player = match state.phase {
+                Phase::LookingAtBottomOfLibrary { player, .. } => player,
+                _ => return Err(IllegalAction),
+            };
+            let library = &mut state.players[player.index()].library;
+            shuffle(state.rng.as_mut(), library);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1017,6 +1043,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::HealMegaExAndTakeEnergyIfHealed => {
             state.phase = Phase::HealingMegaEx { player };
+        }
+
+        TrainerEffect::LookAtBottomOfLibrary { count } => {
+            state.phase = Phase::LookingAtBottomOfLibrary { player, count };
         }
 
         TrainerEffect::JaninesSecretArt => {

@@ -77,6 +77,12 @@ pub enum Action {
     /// Heal every point of damage from a chosen Mega Evolution ex, and
     /// move its attachments to hand if the heal did anything.
     HealMegaEx { target: PokemonId },
+    /// Take this Pokémon found at the bottom of the Library.
+    /// `Phase::LookingAtBottomOfLibrary` names the search it ends.
+    TakeFromBottomOfLibrary { card: CardId },
+    /// Decline every Pokémon `Phase::LookingAtBottomOfLibrary` found; the
+    /// Library still shuffles.
+    DeclineBottomOfLibrary,
     /// Choose one of up to 2 targets for `Janine's Secret Art`.
     ChooseJaninesTarget { target: PokemonId },
     /// Stop choosing targets, whether 0, 1, or 2 have been picked.
@@ -111,6 +117,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingOneOf { player, .. } => Some(player),
         Phase::DiscardingFromHand { chooser, .. } => Some(chooser),
         Phase::HealingMegaEx { player } => Some(player),
+        Phase::LookingAtBottomOfLibrary { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
@@ -327,6 +334,16 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     actions.push(Action::HealMegaEx { target });
                 }
             }
+            return actions;
+        }
+        Phase::LookingAtBottomOfLibrary { player: whose, count } => {
+            let library = &state.player(whose).library;
+            for card in library.iter().take(count as usize) {
+                if state.matches_filter(*card, crate::card::CardFilter::AnyPokemon) {
+                    actions.push(Action::TakeFromBottomOfLibrary { card: *card });
+                }
+            }
+            actions.push(Action::DeclineBottomOfLibrary);
             return actions;
         }
         Phase::ChoosingJaninesTargets { player: whose, remaining, chosen } => {
@@ -635,6 +652,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::FinishDiscardingFromHand => "Stop discarding from that hand".to_string(),
         Action::HealMegaEx { target } => format!("Heal {} fully", state.pokemon_def(target).name),
+        Action::TakeFromBottomOfLibrary { card } => {
+            format!("Take {} from the bottom of the library", state.def_of(card).name())
+        }
+        Action::DeclineBottomOfLibrary => "Decline the bottom of the library".to_string(),
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
         }
