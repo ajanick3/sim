@@ -2327,6 +2327,150 @@ fn unfair_stamp_is_admitted_from_the_artifact() {
     );
 }
 
+// --- Milestone 6, ticket 06: the player's own Active switched by choice ---
+
+fn with_switch(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let switch = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-switch",
+        name: "Switch",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::SwitchOwnActive,
+    }));
+    (Set { db, ..set }, switch)
+}
+
+#[test]
+fn switch_opens_promoting_for_the_players_own_bench() {
+    let (set, switch) = with_switch(build());
+    let mut state = game(&set, switch, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, switch);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert_eq!(
+        state.phase,
+        Phase::Promoting {
+            of: player,
+            chooser: player,
+        }
+    );
+}
+
+#[test]
+fn switch_puts_the_old_active_onto_the_bench_rather_than_losing_it() {
+    let (set, switch) = with_switch(build());
+    let mut state = game(&set, switch, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, switch);
+    let old_active = state.player(player).active.expect("an Active is in play");
+    let bench_target = state.player(player).bench[0];
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(
+        &mut state,
+        Action::Promote {
+            pokemon: bench_target,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(state.player(player).active, Some(bench_target));
+    assert!(
+        state.player(player).bench.contains(&old_active),
+        "the old Active is not lost from play; it goes to the Bench"
+    );
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn switch_is_not_playable_with_no_bench_to_switch_into() {
+    let (set, switch) = with_switch(build());
+    let mut state = game(&set, switch, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, switch);
+    state.players[player.index()].bench.clear();
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "there is nothing on the Bench to switch into"
+    );
+}
+
+#[test]
+fn a_live_switch_of_the_opponents_active_also_keeps_the_old_one_in_play() {
+    // A regression, found while building Switch: Phase::Promoting already
+    // served Boss's Orders, and its handler never returned the displaced
+    // Active to the Bench — invisible until a live switch (not a
+    // knockout) needed the old Pokémon to still exist afterward.
+    let mut set2_db = CardDb::new();
+    let mon = basic(&mut set2_db, "test-mon2", "Testmon2", 100, 1, None);
+    let boss = set2_db.add(CardDef::Trainer(Trainer {
+        print_id: "test-boss2",
+        name: "Test Boss",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::SwitchOpponentActive,
+    }));
+    let mut decklist = vec![mon; 20];
+    decklist.push(boss);
+    while decklist.len() < 60 {
+        decklist.push(mon);
+    }
+    let mut state = GameState::new(
+        set2_db,
+        [decklist.clone(), decklist],
+        Box::new(SeededRng::new(3)),
+    );
+    for _ in 0..2 {
+        while state.phase != Phase::Main && !state.is_over() {
+            let first = legal_actions(&state)[0];
+            apply(&mut state, first).unwrap();
+        }
+        if state.turn_number > 1 {
+            break;
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
+    }
+    let player = state.current;
+    let opponent = player.opponent();
+    let card = ensure_in_hand(&mut state, player, boss);
+    let old_active = state
+        .player(opponent)
+        .active
+        .expect("the opponent has an Active");
+    let bench_target = state.player(opponent).bench[0];
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(
+        &mut state,
+        Action::Promote {
+            pokemon: bench_target,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(state.player(opponent).active, Some(bench_target));
+    assert!(
+        state.player(opponent).bench.contains(&old_active),
+        "the opponent's old Active is not lost from play"
+    );
+}
+
+#[test]
+fn switch_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let switch = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Switch")
+        .expect("Switch plays");
+    assert_eq!(switch.effect, TrainerEffect::SwitchOwnActive);
+}
+
 // --- The card data ---
 
 #[test]
