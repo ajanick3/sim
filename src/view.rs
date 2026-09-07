@@ -111,7 +111,7 @@ fn pokemon_view(state: &GameState, id: PokemonId) -> PokemonView {
     PokemonView {
         id,
         name: def.name,
-        hp: def.hp,
+        hp: state.effective_hp(id),
         damage: in_play.damage,
         remaining_hp: state.remaining_hp(id),
         conditions: in_play.conditions.clone(),

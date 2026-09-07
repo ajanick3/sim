@@ -774,6 +774,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Prime Catcher" => (free, TrainerEffect::SwitchOpponentActiveThenOwn),
         "Strange Timepiece" => (free, TrainerEffect::DevolveChosen),
         "Air Balloon" => (free, TrainerEffect::ReducesRetreatCost(2)),
+        "Hero's Cape" => (free, TrainerEffect::IncreasesHp(100)),
         "Transformation Tome" => (
             Some(Requirement::SecondCopyOfThisInHand),
             TrainerEffect::SwapBasicWithDiscard,

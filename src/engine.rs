@@ -1172,7 +1172,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             state.phase = Phase::SwappingIdentity { player, target: None };
         }
 
-        TrainerEffect::ReducesRetreatCost(_) => {
+        TrainerEffect::ReducesRetreatCost(_) | TrainerEffect::IncreasesHp(_) => {
             unreachable!(
                 "a static effect is read wherever it applies, never dispatched \
                  at play time — a Tool never reaches resolve_trainer at all"

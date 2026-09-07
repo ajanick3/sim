@@ -77,7 +77,7 @@ fn print_board(state: &GameState) {
                 state.pokemon_def(pokemon).name,
                 state.pokemon_def(pokemon).print_id,
                 state.remaining_hp(pokemon),
-                state.pokemon_def(pokemon).hp
+                state.effective_hp(pokemon)
             ),
             None => "none".to_string(),
         };
@@ -90,7 +90,7 @@ fn print_board(state: &GameState) {
                     state.pokemon_def(*p).name,
                     state.pokemon_def(*p).print_id,
                     state.remaining_hp(*p),
-                    state.pokemon_def(*p).hp
+                    state.effective_hp(*p)
                 )
             })
             .collect();
