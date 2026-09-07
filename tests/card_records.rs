@@ -170,5 +170,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // requirement already reads) and its own attack, Cruel Arrow (flat
     // damage to any chosen opponent Pokemon, Active or Benched) admit
     // all 5 prints.
-    assert_eq!(admitted, 594, "coverage moves only on purpose");
+    // Teal Mask Ogerpon ex's Teal Dance (an Ability that attaches
+    // Energy from hand as the effect itself, then may draw) and its
+    // own attack, Myriad Leaf Shower (damage per Energy on both
+    // Active Pokemon combined) admit all 8 prints.
+    assert_eq!(admitted, 602, "coverage moves only on purpose");
 }

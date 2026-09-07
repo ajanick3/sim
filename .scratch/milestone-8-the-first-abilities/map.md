@@ -55,6 +55,10 @@ one new thing to it.
 - Ticket 05: a fact read from last turn reuses `knocked_out_last_turn`
   unchanged — the same field `Unfair Stamp`'s own `Requirement`
   already reads (ADR 0024). No new state. See ADR 0073.
+- Ticket 06: an Ability that attaches Energy as its own effect opens a
+  phase rather than resolving in one action — the first Ability with
+  a further choice. Its once-per-turn limit spends on the attach, not
+  on opening the choice. See ADR 0074.
 
 ## Fog
 

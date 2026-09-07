@@ -401,3 +401,86 @@ fn fezandipiti_ex_is_admitted_from_the_artifact() {
         "at least one Fezandipiti ex print should play"
     );
 }
+
+// --- Ticket 06: attaching Energy from hand as the effect itself ---
+
+#[test]
+fn attaches_energy_from_hand_and_draws() {
+    let ability = Ability {
+        name: "Teal Dance",
+        effect: sim::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeThenDraw(Type::Grass),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let carrier = state.player(player).active.unwrap();
+
+    let grass_energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-grass-energy",
+        name: "Grass Energy",
+        kind: Type::Grass,
+    }));
+    let energy = deal_new_card(&mut state, player, grass_energy_def);
+    state.players[player.index()].hand.push(energy);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::UseAbility { pokemon: carrier }).unwrap();
+
+    assert!(matches!(state.phase, Phase::DecidingToUseTealDance { .. }));
+    apply(&mut state, Action::AttachEnergyForTealDance { card: energy }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(carrier).attached.contains(&energy));
+    // The Energy left the hand; the draw adds 1 back.
+    assert_eq!(state.player(player).hand.len(), before - 1 + 1);
+}
+
+#[test]
+fn declining_teal_dance_draws_nothing() {
+    let ability = Ability {
+        name: "Teal Dance",
+        effect: sim::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeThenDraw(Type::Grass),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let carrier = state.player(player).active.unwrap();
+    let grass_energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-grass-energy",
+        name: "Grass Energy",
+        kind: Type::Grass,
+    }));
+    let energy = deal_new_card(&mut state, player, grass_energy_def);
+    state.players[player.index()].hand.push(energy);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::UseAbility { pokemon: carrier }).unwrap();
+    apply(&mut state, Action::DeclineTealDance).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).hand.len(), before, "no attach, no draw");
+}
+
+#[test]
+fn teal_dance_is_not_offered_with_no_grass_energy_in_hand() {
+    let ability = Ability {
+        name: "Teal Dance",
+        effect: sim::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeThenDraw(Type::Grass),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let carrier = state.player(player).active.unwrap();
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: carrier });
+    assert!(result.is_err(), "no Basic Grass Energy in hand to attach");
+}
+
+#[test]
+fn teal_mask_ogerpon_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Teal Mask Ogerpon ex" && c.playable.is_some()),
+        "at least one Teal Mask Ogerpon ex print should play"
+    );
+}

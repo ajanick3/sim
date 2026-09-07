@@ -1052,25 +1052,33 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 .pokemon_def(pokemon)
                 .ability
                 .expect("legal_actions offers UseAbility only for a Pokemon carrying one");
-            state.spend(Limit::AbilityUsed(player, ability.name));
             match ability.effect {
                 crate::card::AbilityEffect::OncePerTurnWhileActiveMayDrawCards(count) => {
+                    state.spend(Limit::AbilityUsed(player, ability.name));
                     for _ in 0..count {
                         state.draw(player);
                     }
+                    let name = state.pokemon_def(pokemon).name;
+                    state.log.push(format!("{player:?} uses {name}'s {}.", ability.name));
                 }
                 crate::card::AbilityEffect::OncePerTurnIfKnockedOutLastTurnMayDrawCards(count) => {
+                    state.spend(Limit::AbilityUsed(player, ability.name));
                     for _ in 0..count {
                         state.draw(player);
                     }
+                    let name = state.pokemon_def(pokemon).name;
+                    state.log.push(format!("{player:?} uses {name}'s {}.", ability.name));
+                }
+                crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeThenDraw(_) => {
+                    // Not spent here: opening the choice is not using it —
+                    // only actually attaching (`Action::AttachEnergyForTealDance`) is.
+                    state.phase = Phase::DecidingToUseTealDance { player, pokemon };
                 }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
                 | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_) => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
                 }
             }
-            let name = state.pokemon_def(pokemon).name;
-            state.log.push(format!("{player:?} uses {name}'s {}.", ability.name));
         }
 
         Action::TakeSupporterForLastDitchCatch { card } => {
@@ -1129,6 +1137,31 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.pokemon[target.index()].damage += damage;
             let name = state.pokemon_def(target).name;
             state.log.push(format!("{name} takes {damage}."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::AttachEnergyForTealDance { card } => {
+            let (player, pokemon) = match state.phase {
+                Phase::DecidingToUseTealDance { player, pokemon } => (player, pokemon),
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.remove_from_hand(player, card);
+            state.pokemon[pokemon.index()].attached.push(card);
+            state.draw(player);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} attaches (Teal Dance), and a card is drawn."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DeclineTealDance => {
+            match state.phase {
+                Phase::DecidingToUseTealDance { .. } => {}
+                _ => return Err(IllegalAction),
+            };
             state.phase = Phase::Main;
             settle(state);
         }
@@ -1808,7 +1841,7 @@ fn attack(state: &mut GameState, index: usize) {
     let attack = state.pokemon_def(attacker).attacks[index].clone();
     let base = match attack.effect {
         Some(crate::card::AttackEffect::DamagePerCount(count, per_unit)) => {
-            count_for_attack(state, attacker, count) * per_unit
+            count_for_attack(state, attacker, defender, count) * per_unit
         }
         Some(crate::card::AttackEffect::DamagePerCoinFlipHeads { flips, per_head }) => {
             let heads = (0..flips).filter(|_| state.rng.flip()).count() as u32;
@@ -2164,7 +2197,12 @@ fn finish_searching_library_for_basics(state: &mut GameState, player: PlayerId) 
 
 /// What `AttackEffect::DamagePerCount` reads for this attack, counted
 /// fresh from the board.
-fn count_for_attack(state: &GameState, attacker: PokemonId, count: crate::card::Count) -> u32 {
+fn count_for_attack(
+    state: &GameState,
+    attacker: PokemonId,
+    defender: PokemonId,
+    count: crate::card::Count,
+) -> u32 {
     let owner = state.pokemon(attacker).owner;
     let opponent = owner.opponent();
     match count {
@@ -2195,6 +2233,9 @@ fn count_for_attack(state: &GameState, attacker: PokemonId, count: crate::card::
             .count() as u32,
         crate::card::Count::OpponentBenchedPokemonCount => {
             state.player(opponent).bench.len() as u32
+        }
+        crate::card::Count::EnergyOnBothActivesCount => {
+            state.energy_attached(attacker) as u32 + state.energy_attached(defender) as u32
         }
     }
 }
