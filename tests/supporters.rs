@@ -1466,3 +1466,133 @@ fn wallys_compassion_is_admitted_from_the_artifact() {
         .expect("Wally's Compassion plays");
     assert_eq!(card.effect, TrainerEffect::HealMegaExAndTakeEnergyIfHealed);
 }
+
+// --- Ticket 13: Janine's Secret Art ---
+
+fn with_janines_secret_art(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let dark_mon = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-dark-mon",
+        name: "Darkmon",
+        hp: 90,
+        kind: Type::Darkness,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        attacks: Vec::new(),
+    }));
+    let dark_energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-dark-energy",
+        name: "Darkness Energy",
+        kind: Type::Darkness,
+    }));
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-janines-secret-art",
+        name: "Janine's Secret Art",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::JaninesSecretArt,
+    }));
+    (Set { db, ..set }, card, dark_mon, dark_energy)
+}
+
+#[test]
+fn janines_secret_art_attaches_to_each_chosen_target_and_poisons_the_active() {
+    let (set, card, dark_mon, dark_energy) = with_janines_secret_art(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+
+    // Replace the Active with a Darkness Pokémon, and give a Benched one
+    // too — both Darkness, so both are legal choices.
+    let active = state.player(player).active.unwrap();
+    let active_dark_card = deal_new_card(&mut state, player, dark_mon);
+    state.pokemon[active.index()].cards = vec![active_dark_card];
+    let bench_dark = state.player(player).bench[0];
+    let bench_dark_card = deal_new_card(&mut state, player, dark_mon);
+    state.pokemon[bench_dark.index()].cards = vec![bench_dark_card];
+
+    // Two Darkness Energy sit in the deck for the two searches.
+    let e1 = deal_new_card(&mut state, player, dark_energy);
+    let e2 = deal_new_card(&mut state, player, dark_energy);
+    state.players[player.index()].library.push(e1);
+    state.players[player.index()].library.push(e2);
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    let targets: Vec<PokemonId> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::ChooseJaninesTarget { target } => Some(target),
+            _ => None,
+        })
+        .collect();
+    assert!(targets.contains(&active) && targets.contains(&bench_dark));
+
+    apply(&mut state, Action::ChooseJaninesTarget { target: active }).unwrap();
+    apply(&mut state, Action::ChooseJaninesTarget { target: bench_dark }).unwrap();
+    apply(&mut state, Action::FinishChoosingJaninesTargets).unwrap();
+
+    // The first target's search.
+    let take = match legal_actions(&state).into_iter().find(|a| {
+        matches!(a, Action::TakeEnergyForJanine { .. })
+    }) {
+        Some(Action::TakeEnergyForJanine { card }) => card,
+        other => panic!("expected an Energy to take: {other:?}"),
+    };
+    apply(&mut state, Action::TakeEnergyForJanine { card: take }).unwrap();
+    // The second target's search.
+    let take = match legal_actions(&state).into_iter().find(|a| {
+        matches!(a, Action::TakeEnergyForJanine { .. })
+    }) {
+        Some(Action::TakeEnergyForJanine { card }) => card,
+        other => panic!("expected an Energy to take: {other:?}"),
+    };
+    apply(&mut state, Action::TakeEnergyForJanine { card: take }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(active).attached.len(), 1);
+    assert_eq!(state.pokemon(bench_dark).attached.len(), 1);
+    assert!(
+        state.has_condition(active, sim::card::Condition::Poisoned),
+        "the Active got an Energy this way, so it is Poisoned"
+    );
+    assert!(
+        !state.has_condition(bench_dark, sim::card::Condition::Poisoned),
+        "a Benched Pokémon is never Poisoned by this"
+    );
+}
+
+#[test]
+fn janines_secret_art_may_choose_fewer_than_two_or_none() {
+    let (set, card, ..) = with_janines_secret_art(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    assert!(legal_actions(&state).contains(&Action::FinishChoosingJaninesTargets));
+    apply(&mut state, Action::FinishChoosingJaninesTargets).unwrap();
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "choosing none ends the card with nothing to search"
+    );
+}
+
+#[test]
+fn janines_secret_art_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let card = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Janine's Secret Art")
+        .expect("Janine's Secret Art plays");
+    assert_eq!(card.effect, TrainerEffect::JaninesSecretArt);
+}

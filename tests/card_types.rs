@@ -78,9 +78,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Switch, Jumbo Ice Cream, Lana's Aid, Rust Syndicate Grunt, N's Plan,
     // Pokémon Center Lady, Rosa's Encouragement, AZ's Tranquility, Surfer,
     // Black Belt's Training, Gladion's Final Battle, Kieran, Morty's
-    // Conviction, Xerosic's Machinations, Eri, Brock's Scouting, and
-    // Wally's Compassion.
-    assert_eq!(trainers, 327, "the Trainers still refused, by kind");
+    // Conviction, Xerosic's Machinations, Eri, Brock's Scouting, Wally's
+    // Compassion, and Janine's Secret Art.
+    assert_eq!(trainers, 323, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
