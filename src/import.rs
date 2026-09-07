@@ -989,6 +989,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("N's Darmanitan", "Flamebody Cannon") => {
             AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenched(90)
         }
+        ("Abra", "Teleportation Attack") => AttackEffect::SwitchOwnActive,
         _ => return None,
     })
 }

@@ -782,3 +782,59 @@ fn ns_darmanitan_is_admitted_from_the_artifact() {
         "at least one N's Darmanitan print should play"
     );
 }
+
+// --- Ticket 09: a switch ---
+
+#[test]
+fn switches_the_attacker_with_a_benched_pokemon() {
+    let attack = Attack {
+        name: "Teleportation Attack",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SwitchOwnActive),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker_before = state.player(player).active.unwrap();
+    let bench_card = deal_new_card(&mut state, player, defender_ex);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::Promoting { .. }));
+    apply(&mut state, Action::Promote { pokemon: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).active, Some(bench_mon));
+    assert!(state.player(player).bench.contains(&attacker_before));
+}
+
+#[test]
+fn switching_the_attacker_does_nothing_with_no_bench() {
+    let attack = Attack {
+        name: "Teleportation Attack",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SwitchOwnActive),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no Bench to switch into");
+}
+
+#[test]
+fn abra_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Abra" && c.playable.is_some()),
+        "at least one Abra print should play"
+    );
+}

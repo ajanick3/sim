@@ -586,6 +586,11 @@ pub enum AttackEffect {
     /// opponent has a Bench to choose from. `N's Darmanitan`'s
     /// `Flamebody Cannon`.
     DiscardsOwnEnergyThenDamagesChosenBenched(u32),
+    /// Switch the attacker with one of its own Benched Pokémon, the
+    /// player's choice — the same `Phase::Promoting` shape
+    /// `TrainerEffect::SwitchOwnActive` already opens, read from an
+    /// attack instead. `Abra`'s `Teleportation Attack`.
+    SwitchOwnActive,
 }
 
 /// What `AttackEffect::DamagePerCount` counts.

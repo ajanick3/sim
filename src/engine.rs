@@ -1633,6 +1633,16 @@ fn resolve_attack_effect(
                 };
             }
         }
+        crate::card::AttackEffect::SwitchOwnActive => {
+            let owner = state.pokemon(attacker).owner;
+            if !state.player(owner).bench.is_empty() {
+                state.phase = Phase::Promoting {
+                    of: owner,
+                    chooser: owner,
+                    then: None,
+                };
+            }
+        }
     }
 }
 

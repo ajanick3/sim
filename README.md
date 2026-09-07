@@ -179,11 +179,11 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (26/95 built)
+### Pokémon (27/95 built)
 
 | Card | Status |
 | --- | --- |
-| Abra | ❌ |
+| [Abra](src/import.rs#L992) | ✅ |
 | Alakazam | ❌ |
 | Annihilape | ❌ |
 | [Applin](src/import.rs#L982) | ✅ |

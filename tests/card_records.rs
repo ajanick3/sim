@@ -84,6 +84,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // A cost paid in the attacker's own Energy — discarding it all,
     // then damaging a chosen Benched Pokémon — completes N's
     // Darmanitan (3 prints): its other attack (Back Draft) was
-    // already read in ticket 02.
-    assert_eq!(admitted, 538, "coverage moves only on purpose");
+    // already read in ticket 02. A switch, reusing SwitchOwnActive
+    // outright, admits Abra's me01-054 print (its other print's only
+    // attack has no printed text).
+    assert_eq!(admitted, 539, "coverage moves only on purpose");
 }
