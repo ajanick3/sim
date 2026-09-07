@@ -769,6 +769,20 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             },
         ),
+        "Team Rocket's Transceiver" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::SupporterNameContains("Team Rocket"),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         "Energy Recycler" => (
             free,
             TrainerEffect::Decide {

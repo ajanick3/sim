@@ -577,6 +577,10 @@ impl GameState {
                 let def = self.def_of(card);
                 def.as_pokemon().is_some_and(|p| p.prizes == 1) || def.is_energy()
             }
+            CardFilter::SupporterNameContains(word) => self
+                .def_of(card)
+                .as_trainer()
+                .is_some_and(|t| t.kind == crate::card::TrainerKind::Supporter && t.name.contains(word)),
         }
     }
 
