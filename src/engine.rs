@@ -852,6 +852,34 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::TakeBasicPokemonForCallForFamily { card } => {
+            let (player, remaining) = match state.phase {
+                Phase::SearchingLibraryForBasics { player, remaining } => (player, remaining),
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].library.retain(|c| *c != card);
+            let pokemon = state.put_into_play(player, card);
+            state.players[player.index()].bench.push(pokemon);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} joins the Bench."));
+            if remaining <= 1 {
+                finish_searching_library_for_basics(state, player);
+            } else {
+                state.phase = Phase::SearchingLibraryForBasics {
+                    player,
+                    remaining: remaining - 1,
+                };
+            }
+        }
+
+        Action::FinishCallForFamily => {
+            let player = match state.phase {
+                Phase::SearchingLibraryForBasics { player, .. } => player,
+                _ => return Err(IllegalAction),
+            };
+            finish_searching_library_for_basics(state, player);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -1643,7 +1671,29 @@ fn resolve_attack_effect(
                 };
             }
         }
+        crate::card::AttackEffect::SearchLibraryForBasicPokemonToBench(count) => {
+            let owner = state.pokemon(attacker).owner;
+            let any_basic = state.player(owner).library.iter().any(|c| {
+                state.matches_filter(*c, crate::card::CardFilter::PokemonOfStage(crate::card::Stage::Basic))
+            });
+            if any_basic {
+                state.phase = Phase::SearchingLibraryForBasics {
+                    player: owner,
+                    remaining: count,
+                };
+            }
+        }
     }
+}
+
+/// `Phase::SearchingLibraryForBasics` ends either on its own limit or an
+/// early decline — both shuffle the library, the same as any other
+/// search that looked through it.
+fn finish_searching_library_for_basics(state: &mut GameState, player: PlayerId) {
+    let library = &mut state.players[player.index()].library;
+    shuffle(state.rng.as_mut(), library);
+    state.phase = Phase::Main;
+    settle(state);
 }
 
 /// What `AttackEffect::DamagePerCount` reads for this attack, counted

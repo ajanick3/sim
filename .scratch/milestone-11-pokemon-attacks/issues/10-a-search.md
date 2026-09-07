@@ -1,0 +1,31 @@
+# A search
+
+Type: task
+Status: resolved
+
+*"Search your deck for up to 2 Basic Pokémon and put them onto your
+Bench. Then, shuffle your deck."* — `Drilbur` and `Toxel`'s
+`Call for Family`.
+
+- [x] `AttackEffect::SearchLibraryForBasicPokemonToBench(u32)`
+- [x] New `Phase::SearchingLibraryForBasics { player, remaining }`, an
+      attack-driven search that names no card to read slots back from
+- [x] `Action::TakeBasicPokemonForCallForFamily` and
+      `Action::FinishCallForFamily` (an "up to N" search can stop
+      early, unlike ticket 07's mandatory placement)
+
+Recorded in [ADR 0063](../../../docs/adr/0063-an-attack-search-gets-its-own-phase-not-deciding.md).
+
+## Resolution
+
+One new `AttackEffect` variant, one new `Phase` variant, two new
+`Action` variants.
+
+`Drilbur`'s me05-046 print and both `Toxel` prints are admitted; their
+other attacks have no printed text.
+
+`Duskull`'s `Come and Get You` (search the discard for up to 3 copies
+of its own name) is deferred: it needs a name-matching `CardFilter`
+this pool has not needed yet. See ADR 0063.
+
+Coverage: `admitted` 539 -> 542 (3 prints).

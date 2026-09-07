@@ -838,3 +838,78 @@ fn abra_is_admitted_from_the_artifact() {
         "at least one Abra print should play"
     );
 }
+
+// --- Ticket 10: a search ---
+
+#[test]
+fn searches_the_library_for_up_to_two_basics_onto_the_bench() {
+    let attack = Attack {
+        name: "Call for Family",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchLibraryForBasicPokemonToBench(2)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::SearchingLibraryForBasics { .. }));
+    let first = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::TakeBasicPokemonForCallForFamily { .. }))
+        .expect("the library holds a Basic Pokemon");
+    apply(&mut state, first).unwrap();
+    assert!(matches!(state.phase, Phase::SearchingLibraryForBasics { .. }));
+    let second = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::TakeBasicPokemonForCallForFamily { .. }))
+        .expect("the library still holds a Basic Pokemon");
+    apply(&mut state, second).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "the limit of 2 ends the search on its own");
+    assert_eq!(state.player(player).bench.len(), 2);
+}
+
+#[test]
+fn the_search_can_be_declined_early() {
+    let attack = Attack {
+        name: "Call for Family",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchLibraryForBasicPokemonToBench(2)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::SearchingLibraryForBasics { .. }));
+    apply(&mut state, Action::FinishCallForFamily).unwrap();
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn drilbur_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Drilbur" && c.playable.is_some()),
+        "at least one Drilbur print should play"
+    );
+}
+
+#[test]
+fn toxel_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Toxel" && c.playable.is_some()),
+        "at least one Toxel print should play"
+    );
+}

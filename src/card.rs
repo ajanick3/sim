@@ -591,6 +591,12 @@ pub enum AttackEffect {
     /// `TrainerEffect::SwitchOwnActive` already opens, read from an
     /// attack instead. `Abra`'s `Teleportation Attack`.
     SwitchOwnActive,
+    /// Search the library for up to this many Basic Pokémon and put them
+    /// onto the Bench, then shuffle — opens
+    /// `Phase::SearchingLibraryForBasics`, a search read from an attack
+    /// rather than a Trainer's `Decide`. `Drilbur` and `Toxel`'s
+    /// `Call for Family`.
+    SearchLibraryForBasicPokemonToBench(u32),
 }
 
 /// What `AttackEffect::DamagePerCount` counts.

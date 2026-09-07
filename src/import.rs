@@ -990,6 +990,8 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenched(90)
         }
         ("Abra", "Teleportation Attack") => AttackEffect::SwitchOwnActive,
+        ("Drilbur", "Call for Family") => AttackEffect::SearchLibraryForBasicPokemonToBench(2),
+        ("Toxel", "Call for Family") => AttackEffect::SearchLibraryForBasicPokemonToBench(2),
         _ => return None,
     })
 }
