@@ -103,7 +103,10 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     }
                     state.stadium = Some((player, card));
                 }
-                TrainerKind::Item | TrainerKind::Tool => {
+                TrainerKind::Tool => {
+                    unreachable!("legal_actions offers a Tool only through PlayTool")
+                }
+                TrainerKind::Item => {
                     state.players[player.index()].discard.push(card);
                 }
             }
@@ -158,6 +161,17 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state
                 .log
                 .push(format!("{player:?} attaches {energy} to {name}."));
+        }
+
+        Action::PlayTool { card, target } => {
+            let player = state.current;
+            state.remove_from_hand(player, card);
+            state.pokemon[target.index()].attached.push(card);
+            let tool = state.def_of(card).name();
+            let name = state.pokemon_def(target).name;
+            state
+                .log
+                .push(format!("{player:?} attaches {tool} to {name}."));
         }
 
         Action::Retreat { to } => retreat(state, to),
@@ -619,8 +633,14 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             let healed = state.pokemon(target).damage > 0;
             state.pokemon[target.index()].damage = 0;
             if healed {
-                let attached = std::mem::take(&mut state.pokemon[target.index()].attached);
-                state.players[player.index()].hand.extend(attached);
+                // "All Energy attached to it" — not a Tool sitting in the
+                // same `attached` list. `std::mem::take` cannot pick and
+                // choose, so partition instead of clearing outright.
+                let taken = std::mem::take(&mut state.pokemon[target.index()].attached);
+                let (energy, kept): (Vec<_>, Vec<_>) =
+                    taken.into_iter().partition(|c| state.def_of(*c).is_energy());
+                state.pokemon[target.index()].attached = kept;
+                state.players[player.index()].hand.extend(energy);
             }
             let name = state.pokemon_def(target).name;
             state.log.push(format!("{name} is healed fully."));

@@ -30,6 +30,9 @@ pub enum Action {
     Evolve { card: CardId, target: PokemonId },
     /// Attach an Energy from hand. Once per turn.
     AttachEnergy { card: CardId, target: PokemonId },
+    /// Attach a Tool to a Pokémon in play. Immediate, like `AttachEnergy`
+    /// — a Tool always names its target at play time, unlike an Item.
+    PlayTool { card: CardId, target: PokemonId },
     /// Retreat the Active, promoting a Benched Pokémon. Once per turn.
     Retreat { to: PokemonId },
     /// Discard one attached Energy toward a Retreat Cost.
@@ -456,6 +459,26 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         if def.is_basic_pokemon() && side.bench.len() < BENCH_LIMIT {
             actions.push(Action::PlayBasic { card: *card });
         }
+        // A Tool attaches like Energy does — immediately, with a target —
+        // not through PlayTrainer, which never names one. Unlike Energy,
+        // a Pokémon carries at most one: rule text every Tool print
+        // shares, not read from any one card's own effect.
+        if def.as_trainer().is_some_and(|t| t.kind == TrainerKind::Tool) {
+            for target in side.in_play() {
+                let carries_a_tool = state.pokemon(target).attached.iter().any(|c| {
+                    state
+                        .def_of(*c)
+                        .as_trainer()
+                        .is_some_and(|t| t.kind == TrainerKind::Tool)
+                });
+                if !carries_a_tool {
+                    actions.push(Action::PlayTool {
+                        card: *card,
+                        target,
+                    });
+                }
+            }
+        }
         if def.is_energy() && !state.is_spent(Limit::EnergyAttached(player)) {
             for target in side.in_play() {
                 actions.push(Action::AttachEnergy {
@@ -484,11 +507,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
         }
         // Rule 13: an Item any number of times; a Supporter or a Stadium
-        // once a turn. None of the built cards is a Stadium, but the gate is
-        // written for the kind, not the card, so one arriving costs nothing.
-        if let Some(trainer) = def.as_trainer() {
+        // once a turn. A Tool is handled above, by `PlayTool` — it always
+        // names a target, which `PlayTrainer` never does.
+        if let Some(trainer) = def.as_trainer().filter(|t| t.kind != TrainerKind::Tool) {
             let timing = match trainer.kind {
-                TrainerKind::Item | TrainerKind::Tool => true,
+                TrainerKind::Item => true,
+                TrainerKind::Tool => unreachable!("filtered out above"),
                 TrainerKind::Supporter => {
                     !state.is_spent(Limit::SupporterPlayed(player))
                         && !state.is_first_turn_of_game()
@@ -686,6 +710,11 @@ pub fn describe(state: &GameState, action: Action) -> String {
             state.def_of(card).name()
         ),
         Action::AttachEnergy { card, target } => format!(
+            "Attach {} to {}",
+            state.def_of(card).name(),
+            state.pokemon_def(target).name
+        ),
+        Action::PlayTool { card, target } => format!(
             "Attach {} to {}",
             state.def_of(card).name(),
             state.pokemon_def(target).name

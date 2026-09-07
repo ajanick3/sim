@@ -1454,6 +1454,46 @@ fn wallys_compassion_moves_nothing_when_there_was_no_damage_to_heal() {
 }
 
 #[test]
+fn wallys_compassion_leaves_an_attached_tool_in_place() {
+    // A regression test: "all Energy attached to it" moves Energy only,
+    // not a Tool sharing the same `attached` list. Nothing built a Tool
+    // yet when Wally's Compassion first shipped, so this went unchecked
+    // until the Tools milestone's own audit found it.
+    let (set, card, mega_ex) = with_wallys_compassion(build());
+    let mut db = set.db.clone();
+    let tool = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-a-tool",
+        name: "A Tool",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::Nothing,
+    }));
+    let set = Set { db, ..set };
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+
+    let mega_card = deal_new_card(&mut state, player, mega_ex);
+    let mega = state.put_into_play(player, mega_card);
+    state.players[player.index()].bench.push(mega);
+    let energy = deal_new_card(&mut state, player, set.energy);
+    let tool_card = deal_new_card(&mut state, player, tool);
+    state.pokemon[mega.index()].attached.push(energy);
+    state.pokemon[mega.index()].attached.push(tool_card);
+    state.pokemon[mega.index()].damage = 120;
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    apply(&mut state, Action::HealMegaEx { target: mega }).unwrap();
+
+    assert!(state.player(player).hand.contains(&energy), "the Energy moved");
+    assert!(
+        state.pokemon(mega).attached.contains(&tool_card),
+        "the Tool stays attached"
+    );
+    assert!(!state.player(player).hand.contains(&tool_card));
+}
+
+#[test]
 fn wallys_compassion_is_admitted_from_the_artifact() {
     let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
     let import = sim::import::load(&json).unwrap();
