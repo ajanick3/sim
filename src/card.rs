@@ -273,6 +273,9 @@ pub enum TrainerEffect {
     /// effect, which lasts as long as the card stays in play regardless of
     /// whose turn it is.
     BonusDamageThisTurn(u32, TurnBonusTarget),
+    /// The player picks one of these two, and only the one picked runs.
+    /// `Kieran` is the only card whose own text branches this way.
+    ChooseOneOf(Box<TrainerEffect>, Box<TrainerEffect>),
 }
 
 /// What a card demands before it may be played at all.
