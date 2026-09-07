@@ -322,6 +322,14 @@ pub enum TrainerEffect {
     /// Pokémon newly arrives on a Bench (`PlayBasic`, a search's own
     /// `Destination::Bench`), both sides alike. `Risky Ruins`.
     DamagesNonDarknessBasicBenched(u32),
+    /// A Stadium's static effect: a Grass Pokémon evolving into a Grass
+    /// Pokémon may do so the same turn it was played — bypassing rules
+    /// 18-20's "in play since the start of the turn" — except the first
+    /// turn of the game, which nothing built ever offers an evolve on
+    /// anyway. Read at both evolution eligibility sites (`Evolve`,
+    /// `EvolveSkippingOneStage`) alongside the check it relaxes.
+    /// `Forest of Vitality`.
+    GrassCanEvolveTheTurnItIsPlayed,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },

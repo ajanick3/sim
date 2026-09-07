@@ -64,6 +64,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Lillie's Pearl, 2 of Punk Helmet, 1 of Lucky Helmet, 1 of
     // Handheld Fan, 2 of Powerglass, 2 of Gravity Mountain, 1 of
     // N's Castle, 1 of Academy at Night, 2 of Team Rocket's Factory,
-    // 2 of Lumiose City, 3 of Jamming Tower, and 1 of Risky Ruins.
-    assert_eq!(admitted, 510, "coverage moves only on purpose");
+    // 2 of Lumiose City, 3 of Jamming Tower, 1 of Risky Ruins, and 3 of
+    // Forest of Vitality.
+    assert_eq!(admitted, 513, "coverage moves only on purpose");
 }

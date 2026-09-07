@@ -85,9 +85,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Tome, Air Balloon, Hero's Cape, Brave Bangle, Binding Mochi,
     // Lillie's Pearl, Punk Helmet, Lucky Helmet, Handheld Fan,
     // Powerglass, Gravity Mountain, N's Castle, Academy at Night,
-    // Team Rocket's Factory, Lumiose City, Jamming Tower, and Risky
-    // Ruins.
-    assert_eq!(trainers, 281, "the Trainers still refused, by kind");
+    // Team Rocket's Factory, Lumiose City, Jamming Tower, Risky Ruins,
+    // and Forest of Vitality.
+    assert_eq!(trainers, 278, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),

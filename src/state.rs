@@ -555,6 +555,15 @@ impl GameState {
         self.def_of(card).as_trainer().map(|t| t.effect.clone())
     }
 
+    /// Whether `Forest of Vitality` lets this evolution skip rule 18-20's
+    /// "in play since the start of the turn" check — both the target and
+    /// the evolution card must print Grass.
+    pub fn forest_of_vitality_applies(&self, target: PokemonId, evolution: &crate::card::Pokemon) -> bool {
+        self.stadium_effect() == Some(crate::card::TrainerEffect::GrassCanEvolveTheTurnItIsPlayed)
+            && self.pokemon_def(target).kind == crate::card::Type::Grass
+            && evolution.kind == crate::card::Type::Grass
+    }
+
     /// Whether `Jamming Tower` (or any Stadium with the same effect) is
     /// in play — every Tool read site checks this before reading what a
     /// Tool would otherwise say, rather than the Tool or its attachment

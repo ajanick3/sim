@@ -161,7 +161,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Powerglass | ✅ |
 | Punk Helmet | ✅ |
 
-### Stadiums (7/13 built)
+### Stadiums (8/13 built)
 
 | Card | Status |
 | --- | --- |
@@ -169,7 +169,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
 | Area Zero Underdepths | ❌ |
 | Battle Cage | ❌ |
 | Festival Grounds | ❌ |
-| Forest of Vitality | ❌ |
+| Forest of Vitality | ✅ |
 | Gravity Mountain | ✅ |
 | Jamming Tower | ✅ |
 | Lumiose City | ✅ |
@@ -292,6 +292,7 @@ Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
   artifact holds, the modelling findings already banked, and what the data
   cannot express.
 - [The ADR directory](docs/adr/) — the decisions and their reasoning.
+
 
 
 
