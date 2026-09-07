@@ -1021,6 +1021,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
                 damage: 120,
             }
         }
+        ("Paldean Tauros", "Spirited Tackle") => {
+            AttackEffect::BonusDamageIfDefenderIsStage(Stage::Stage1, 90)
+        }
         _ => return None,
     })
 }

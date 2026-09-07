@@ -683,6 +683,11 @@ pub enum AttackEffect {
     /// effect, so the engine takes the first `count` it finds.
     /// `Wellspring Mask Ogerpon ex`'s `Torrential Pump`.
     MayShuffleFixedEnergyThenDamageChosenBenched { count: u32, damage: u32 },
+    /// This much more damage, but only if the opponent's Active
+    /// Pokémon is printed at exactly this Stage — the mirror of
+    /// `BonusDamageIfDefenderIsEx`, read against `Stage` instead of
+    /// prize value. `Paldean Tauros`'s `Spirited Tackle`.
+    BonusDamageIfDefenderIsStage(Stage, u32),
 }
 
 /// What `AttackEffect::DamagePerCount` counts.
