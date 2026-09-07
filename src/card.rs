@@ -267,6 +267,14 @@ pub enum TrainerEffect {
     /// Pokémon this is attached to is Knocked Out by an attack — not a
     /// checkup — the opponent takes 1 fewer Prize. `Lillie's Pearl`.
     FewerPrizeIfLilliesKnockedOutByAttack,
+    /// A triggered effect, read in `attack`: when the Pokémon this is
+    /// attached to is damaged by an opponent's attack — even if Knocked
+    /// Out by it — this many damage counters go on the attacker.
+    /// `Punk Helmet`.
+    DamagesAttackerWhenDefenderIsHit(u32),
+    /// The same trigger as `DamagesAttackerWhenDefenderIsHit`: the
+    /// Pokémon's owner draws this many cards. `Lucky Helmet`.
+    DrawsWhenDefenderIsHit(u32),
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },

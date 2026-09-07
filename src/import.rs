@@ -778,6 +778,8 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Brave Bangle" => (free, TrainerEffect::BonusDamageWithoutRuleBoxVsEx(30)),
         "Binding Mochi" => (free, TrainerEffect::BonusDamageIfPoisonedVsActive(40)),
         "Lillie's Pearl" => (free, TrainerEffect::FewerPrizeIfLilliesKnockedOutByAttack),
+        "Punk Helmet" => (free, TrainerEffect::DamagesAttackerWhenDefenderIsHit(40)),
+        "Lucky Helmet" => (free, TrainerEffect::DrawsWhenDefenderIsHit(2)),
         "Transformation Tome" => (
             Some(Requirement::SecondCopyOfThisInHand),
             TrainerEffect::SwapBasicWithDiscard,
