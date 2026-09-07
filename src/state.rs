@@ -193,6 +193,11 @@ pub enum Phase {
     /// name the card, and ADR 0012 gives the player their own choice to
     /// stop before `remaining` runs out.
     MovingEnergyFromBenchToActive { player: PlayerId, remaining: u32 },
+    /// `player` played a card that heals a chosen Pokémon in play, and
+    /// picks which one. `amount` is how much it heals — `Pokémon Center
+    /// Lady` always names the same number, but the phase carries it so a
+    /// second card healing a different amount needs no new phase.
+    HealingChosen { player: PlayerId, amount: u32 },
     /// `player` played `Rare Candy` and chooses both the Stage 2 from hand
     /// and the Basic in play it evolves, skipping the Stage 1 between them.
     /// A card and a target are chosen together, the same reason

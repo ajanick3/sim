@@ -75,9 +75,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Ultra Ball, Special Red Card, Energy Switch, Hilda, Dawn, Crispin,
     // Rare Candy, Team Rocket's Petrel, N's PP Up, Wondrous Patch, Pokégear
     // 3.0, Bug Catching Set, Ciphermaniac's Codebreaking, Unfair Stamp,
-    // Switch, Jumbo Ice Cream, Lana's Aid, Rust Syndicate Grunt, and N's
-    // Plan.
-    assert_eq!(trainers, 370, "the Trainers still refused, by kind");
+    // Switch, Jumbo Ice Cream, Lana's Aid, Rust Syndicate Grunt, N's Plan,
+    // and Pokémon Center Lady.
+    assert_eq!(trainers, 369, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
