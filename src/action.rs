@@ -157,6 +157,12 @@ pub enum Action {
     /// Take this Pokémon card from the discard pile into hand, as part
     /// of `Phase::TakingPokemonFromDiscard`.
     TakePokemonFromDiscard { card: CardId },
+    /// Bench this named Pokémon from the discard pile, as part of
+    /// `Phase::SearchingDiscardForNamedToBench`.
+    TakeNamedFromDiscardToBench { card: CardId },
+    /// Stop `Phase::SearchingDiscardForNamedToBench` before its limit
+    /// is spent.
+    FinishSearchingDiscardForNamedToBench,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -190,6 +196,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::TakingTrainerFromDiscard { player } => Some(player),
         Phase::SearchingLibraryToEvolveSelf { player, .. } => Some(player),
         Phase::TakingPokemonFromDiscard { player } => Some(player),
+        Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
@@ -490,6 +497,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     actions.push(Action::TakePokemonFromDiscard { card: *card });
                 }
             }
+            return actions;
+        }
+        Phase::SearchingDiscardForNamedToBench { player: whose, name, .. } => {
+            for card in &state.player(whose).discard {
+                if state.matches_filter(*card, crate::card::CardFilter::PokemonNamed(name)) {
+                    actions.push(Action::TakeNamedFromDiscardToBench { card: *card });
+                }
+            }
+            actions.push(Action::FinishSearchingDiscardForNamedToBench);
             return actions;
         }
         Phase::SearchingLibraryToEvolveSelf { player: whose, target } => {
@@ -991,6 +1007,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::TakePokemonFromDiscard { card } => {
             format!("Take {} from discard", state.def_of(card).name())
         }
+        Action::TakeNamedFromDiscardToBench { card } => {
+            format!("Bench {} from discard", state.def_of(card).name())
+        }
+        Action::FinishSearchingDiscardForNamedToBench => "Stop searching".to_string(),
         Action::ChooseJaninesTarget { target } => {
             format!("Choose {}", state.pokemon_def(target).name)
         }

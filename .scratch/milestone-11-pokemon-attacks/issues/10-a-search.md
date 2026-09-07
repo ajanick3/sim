@@ -25,7 +25,10 @@ One new `AttackEffect` variant, one new `Phase` variant, two new
 other attacks have no printed text.
 
 `Duskull`'s `Come and Get You` (search the discard for up to 3 copies
-of its own name) is deferred: it needs a name-matching `CardFilter`
-this pool has not needed yet. See ADR 0063.
+of its own name) was deferred here: it needs a name-matching
+`CardFilter` this pool had not needed yet. See ADR 0063. Built later,
+beyond the spec's own ticket order, once `blockers` showed it was
+still real weight: `CardFilter::PokemonNamed` and
+`AttackEffect::SearchDiscardForNamedToBench` admit all 3 prints.
 
 Coverage: `admitted` 539 -> 542 (3 prints).

@@ -109,5 +109,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // its one print.
     // Slowpoke's Dangle Tail (a Pokemon taken from the discard pile,
     // the mirror of TakeTrainerFromDiscard) admits its sv07-057 print.
-    assert_eq!(admitted, 555, "coverage moves only on purpose");
+    // Duskull's Come and Get You (a named search from the player's own
+    // discard pile, CardFilter::PokemonNamed) completes all 3 prints.
+    assert_eq!(admitted, 558, "coverage moves only on purpose");
 }

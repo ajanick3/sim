@@ -1345,3 +1345,62 @@ fn slowpoke_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv07-057").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Slowpoke's Dangle Tail print should play");
 }
+
+// --- Beyond the spec: Duskull's Come and Get You ---
+
+#[test]
+fn searches_the_discard_pile_for_up_to_three_copies_of_its_own_name() {
+    let attack = Attack {
+        name: "Come and Get You",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchDiscardForNamedToBench("Attackmon", 3)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker_card = state.pokemon(state.player(player).active.unwrap()).top_card();
+    let attacker_def_id = state.cards[attacker_card.index()].def;
+
+    let copy1 = deal_new_card(&mut state, player, attacker_def_id);
+    let copy2 = deal_new_card(&mut state, player, attacker_def_id);
+    state.players[player.index()].discard.push(copy1);
+    state.players[player.index()].discard.push(copy2);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::SearchingDiscardForNamedToBench { .. }));
+    apply(&mut state, Action::TakeNamedFromDiscardToBench { card: copy1 }).unwrap();
+    apply(&mut state, Action::FinishSearchingDiscardForNamedToBench).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).bench.iter().any(|p| state.pokemon(*p).cards.contains(&copy1)));
+}
+
+#[test]
+fn no_matching_name_in_discard_opens_no_phase() {
+    let attack = Attack {
+        name: "Come and Get You",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchDiscardForNamedToBench("Attackmon", 3)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no matching name in the discard pile");
+}
+
+#[test]
+fn duskull_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Duskull" && c.playable.is_some()),
+        "at least one Duskull print should play"
+    );
+}

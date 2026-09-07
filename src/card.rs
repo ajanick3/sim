@@ -138,6 +138,10 @@ pub enum CardFilter {
     /// Transceiver` wants "a Supporter card that has \"Team Rocket\" in its
     /// name" — a family of cards named by a shared word, not by a kind.
     SupporterNameContains(&'static str),
+    /// A Pokémon whose printed name matches exactly. `Duskull`'s
+    /// `Come and Get You` searches its own discard pile for copies of
+    /// itself, unlike `SupporterNameContains`'s substring match.
+    PokemonNamed(&'static str),
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
@@ -638,6 +642,11 @@ pub enum AttackEffect {
     /// `Phase::TakingPokemonFromDiscard`. No Pokémon in the discard
     /// pile opens no phase. `Slowpoke`'s `Dangle Tail`.
     TakePokemonFromDiscard,
+    /// Put up to this many copies of the named Pokémon from the
+    /// player's own discard pile onto the Bench — opens
+    /// `Phase::SearchingDiscardForNamedToBench`. `Duskull`'s
+    /// `Come and Get You`.
+    SearchDiscardForNamedToBench(&'static str, u32),
 }
 
 /// What `AttackEffect::DamagePerCount` counts.
