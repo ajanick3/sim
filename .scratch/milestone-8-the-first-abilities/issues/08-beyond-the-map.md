@@ -46,7 +46,15 @@ same way Milestone 11 continued past its own spec:
   Ability sharing `trigger_last_ditch_catch`'s trigger site).
   Completes all 3 prints.
 
-Coverage: 604 -> 618 across these five PRs.
+- **Iron Leaves ex**'s `Rapid Vernier`
+  (`WhenBenchedFromHandMaySwitchThenMoveAnyEnergy`) — a play-triggered
+  switch (the newly-benched Pokémon may switch in for the Active),
+  then moving any amount of Energy from the player's other Pokémon to
+  the switched-in one, one card at a time until the player stops. Its
+  own attack reuses `AttackerCannotAttackNextTurn`. Completes all 6
+  prints.
+
+Coverage: 604 -> 624 across these six PRs.
 
 ## What is left
 

@@ -377,6 +377,13 @@ pub enum Phase {
     /// its own Ability may discard whichever Stadium is in play.
     /// `Chien-Pao`'s `Snow Sink`.
     DecidingToUseSnowSink { player: PlayerId, pokemon: PokemonId },
+    /// `player` just played `pokemon` from hand onto the Bench, and
+    /// its own Ability may switch it in for the Active.
+    /// `Iron Leaves ex`'s `Rapid Vernier`.
+    DecidingToSwitchInForRapidVernier { player: PlayerId, pokemon: PokemonId },
+    /// `player` switched `pokemon` in and may now move any amount of
+    /// Energy from their other Pokémon to it, one card at a time.
+    MovingAnyEnergyForRapidVernier { player: PlayerId, pokemon: PokemonId },
     /// `player` used an attack that searches their own discard pile
     /// for up to `remaining` more copies of a named Pokémon to the
     /// Bench. `Duskull`'s `Come and Get You`.
