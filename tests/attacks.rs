@@ -1529,3 +1529,13 @@ fn chikorita_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "me02.5-008").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Chikorita's Growl print should play");
 }
+
+#[test]
+fn buneary_charm_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me01-107").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Buneary's Charm print should play");
+}
