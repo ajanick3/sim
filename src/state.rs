@@ -877,6 +877,33 @@ impl GameState {
             && self.pokemon_def(id).kind == crate::card::Type::Colorless
     }
 
+    /// The Weakness type `id` actually has: the printed value, unless
+    /// an opponent's in-play Pokémon carries
+    /// `AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(from, to)`
+    /// and `id`'s own printed Weakness is `from` — then it reads `to`
+    /// instead. `pokemon_def(id).weakness` stays the printed value;
+    /// only the in-play damage-calculation site reads this split, the
+    /// same way `effective_retreat_cost` splits from the printed
+    /// Retreat Cost. `Lillie's Clefairy ex`'s `Fairy Zone`.
+    pub fn effective_weakness(&self, id: PokemonId) -> Option<crate::card::Type> {
+        let printed = self.pokemon_def(id).weakness;
+        let owner = self.pokemon(id).owner;
+        let overridden = self.player(owner.opponent()).in_play().iter().find_map(|p| {
+            if self.abilities_disabled_for(*p) {
+                return None;
+            }
+            match self.pokemon_def(*p).ability.map(|a| a.effect) {
+                Some(crate::card::AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(from, to))
+                    if printed == Some(from) =>
+                {
+                    Some(to)
+                }
+                _ => None,
+            }
+        });
+        overridden.or(printed)
+    }
+
     /// The Retreat Cost this Pokémon actually pays: the printed cost, less
     /// whatever an attached Tool like `Air Balloon` takes off, or zero
     /// outright under a Stadium like `N's Castle`. `pokemon_def(id).retreat_cost`
