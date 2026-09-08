@@ -17,6 +17,7 @@ struct Set {
 fn build() -> Set {
     let mut db = CardDb::new();
     let basic = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-seedling",
         name: "Seedling",
         hp: 60,
@@ -37,6 +38,7 @@ fn build() -> Set {
         }],
     }));
     let stage1 = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-bloomling",
         name: "Bloomling",
         hp: 90,

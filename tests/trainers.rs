@@ -20,6 +20,7 @@ struct Set {
 fn build() -> Set {
     let mut db = CardDb::new();
     let mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-mon",
         name: "Testmon",
         hp: 60,
@@ -216,6 +217,7 @@ fn build2() -> Set2 {
     use sim::card::{CardFilter, Destination, Slot, Then, Zone};
     let mut db = CardDb::new();
     let mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-mon",
         name: "Testmon",
         hp: 60,
@@ -236,6 +238,7 @@ fn build2() -> Set2 {
         }],
     }));
     let mon_ex = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-mon-ex",
         name: "Testmon ex",
         hp: 150,

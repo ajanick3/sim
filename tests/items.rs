@@ -34,6 +34,7 @@ fn basic(
     evolve_from: Option<&'static str>,
 ) -> CardDefId {
     db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id,
         name,
         hp,
@@ -64,6 +65,7 @@ fn build() -> Set {
     let mon_ex = basic(&mut db, "test-mon-ex", "Testmon ex", 200, 2, None);
     let stage1 = basic(&mut db, "test-stage1", "Bigmon", 120, 1, Some("Smallmon"));
     let stage2 = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-stage2",
         name: "Hugemon",
         hp: 180,
@@ -1098,5 +1100,93 @@ fn tool_scrapper_is_admitted_from_the_artifact() {
     assert!(
         import.cards.iter().any(|c| c.name == "Tool Scrapper" && c.playable.is_some()),
         "Tool Scrapper should play"
+    );
+}
+
+// --- Beyond the map: search the library for a Tera Pokemon ---
+
+#[test]
+fn tera_orb_finds_a_tera_pokemon_but_not_a_plain_one() {
+    let set = build();
+    let mut db = set.db.clone();
+    let tera_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: vec![sim::card::Marker::Ex, sim::card::Marker::Tera],
+        print_id: "test-tera-mon",
+        name: "Testmon ex Tera",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let tera_orb_def = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tera-orb",
+        name: "Tera Orb",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::TeraPokemon,
+                to: Destination::Zone(Zone::Hand),
+                limit: 1,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    let set = Set { db, ..set };
+
+    let mut state = game(&set, tera_orb_def, 3);
+    let player = state.current;
+    let tera_card = deal_new_card(&mut state, player, tera_mon);
+    state.players[player.index()].library.push(tera_card);
+    let card = ensure_in_hand(&mut state, player, tera_orb_def);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert!(matches!(state.phase, Phase::Deciding { .. }));
+
+    let plain_card = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.cards[c.index()].def == set.mon)
+        .expect("the deck holds a plain Testmon");
+    let actions = legal_actions(&state);
+    assert!(actions.contains(&Action::TakeCard { card: tera_card }));
+    assert!(
+        !actions.contains(&Action::TakeCard { card: plain_card }),
+        "a plain (non-Tera) Pokemon in the library is not offered"
+    );
+
+    apply(&mut state, Action::TakeCard { card: tera_card }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&tera_card));
+}
+
+#[test]
+fn tera_orb_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Tera Orb" && c.playable.is_some()),
+        "Tera Orb should play"
     );
 }

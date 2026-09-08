@@ -35,6 +35,7 @@ pub fn milestone1() -> Milestone1 {
         evolve_from: None,
         evolves_from_basic: None,
         ability: None,
+        markers: Vec::new(),
         attacks: vec![
             Attack {
                 name: "Nibble",
@@ -66,6 +67,7 @@ pub fn milestone1() -> Milestone1 {
         evolve_from: None,
         evolves_from_basic: None,
         ability: None,
+        markers: Vec::new(),
         attacks: vec![Attack {
             name: "Ember",
             cost: vec![Type::Fire, Type::Fire],
@@ -89,6 +91,7 @@ pub fn milestone1() -> Milestone1 {
         evolve_from: None,
         evolves_from_basic: None,
         ability: None,
+        markers: Vec::new(),
         attacks: vec![Attack {
             name: "Bubblebeam",
             cost: vec![Type::Water, Type::Colorless],

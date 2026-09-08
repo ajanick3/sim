@@ -164,6 +164,7 @@ fn a_free_retreat_asks_nothing() {
     // so this test builds one.
     let mut db = CardDb::new();
     let drifter = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-drifter",
         name: "Drifter",
         hp: 60,

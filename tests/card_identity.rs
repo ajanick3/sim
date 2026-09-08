@@ -17,6 +17,7 @@ fn bulbasaur() -> Pokemon {
         evolve_from: None,
         evolves_from_basic: None,
         ability: None,
+        markers: Vec::new(),
         attacks: vec![],
     }
 }

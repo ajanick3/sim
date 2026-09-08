@@ -20,6 +20,7 @@ struct Set {
 fn build() -> Set {
     let mut db = CardDb::new();
     let mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-mon",
         name: "Testmon",
         hp: 60,

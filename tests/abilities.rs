@@ -13,6 +13,7 @@ use sim::state::{GameState, Phase};
 fn game(ability: Ability, seed: u64) -> (GameState, sim::ids::CardDefId) {
     let mut db = CardDb::new();
     let carrier = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-carrier",
         name: "Abilitymon",
         hp: 200,
@@ -34,6 +35,7 @@ fn game(ability: Ability, seed: u64) -> (GameState, sim::ids::CardDefId) {
         }],
     }));
     let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-defender",
         name: "Defendmon",
         hp: 200,
@@ -324,6 +326,7 @@ fn evolving_offers_the_draw() {
     let basic_name = state.pokemon_def(basic).name;
 
     let evolution_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-evolution",
         name: "Evolvemon",
         hp: 200,
@@ -562,6 +565,7 @@ fn shuffles_itself_into_the_deck_while_active_no_draw() {
     let player = state.current;
     let active = state.player(player).active.unwrap();
     let bench_card_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-bench-filler",
         name: "Fillermon",
         hp: 100,
@@ -687,6 +691,7 @@ fn searches_for_up_to_two_evolution_pokemon_of_a_type() {
     let active = state.player(player).active.unwrap();
 
     let evolution_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-metal-evolution",
         name: "Metalmon",
         hp: 120,
@@ -950,6 +955,7 @@ fn searches_energy_attaches_to_benched_of_type_then_damages_it() {
     let active = state.player(player).active.unwrap();
 
     let dark_bench_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-dark-bench",
         name: "Darkmon",
         hp: 200,
@@ -1043,6 +1049,7 @@ fn searches_on_the_first_turn_for_colorless_low_hp_pokemon() {
     let active = state.player(player).active.unwrap();
 
     let target_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-low-hp-colorless",
         name: "Smallmon",
         hp: 80,
@@ -1134,6 +1141,7 @@ fn switches_a_benched_dark_pokemon_in_and_poisons_it() {
     let old_active = state.player(player).active.unwrap();
 
     let dark_bench_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-dark-bench",
         name: "Darkmon",
         hp: 200,
@@ -1250,6 +1258,7 @@ fn skyliner_does_not_touch_a_stage_1_or_the_opponents_pokemon() {
         evolve_from: None,
         evolves_from_basic: None,
         ability: None,
+        markers: Vec::new(),
         attacks: vec![Attack {
             name: "Tackle",
             cost: vec![Type::Colorless],
@@ -1516,6 +1525,7 @@ fn takes_no_damage_from_an_ex_attacker() {
     let carrier = state.player(player).active.unwrap();
 
     let ex_attacker_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-ex-attacker",
         name: "Attackmon ex",
         hp: 200,
@@ -1718,6 +1728,7 @@ fn watchful_eye_blocks_damage_counter_movement_even_from_the_opponents_side() {
     state.pokemon[active.index()].damage = 50;
 
     let watcher_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-watcher",
         name: "Watchmon",
         hp: 100,
@@ -1775,6 +1786,7 @@ fn damp_disables_a_self_knockout_ability_even_from_the_opponents_side() {
     let active = state.player(player).active.unwrap();
 
     let damp_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-damp",
         name: "Psyduck",
         hp: 60,

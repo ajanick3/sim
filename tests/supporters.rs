@@ -35,6 +35,7 @@ fn basic(
     evolve_from: Option<&'static str>,
 ) -> CardDefId {
     db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id,
         name,
         hp,
@@ -65,6 +66,7 @@ fn build() -> Set {
     let mon_ex = basic(&mut db, "test-mon-ex", "Testmon ex", 200, 2, None);
     let stage1 = basic(&mut db, "test-stage1", "Bigmon", 120, 1, Some("Smallmon"));
     let stage2 = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-stage2",
         name: "Hugemon",
         hp: 180,
@@ -1366,6 +1368,7 @@ fn brocks_scouting_is_admitted_from_the_artifact() {
 fn with_wallys_compassion(set: Set) -> (Set, CardDefId, CardDefId) {
     let mut db = set.db.clone();
     let mega_ex = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-mega-ex",
         name: "Mega Testmon ex",
         hp: 300,
@@ -1516,6 +1519,7 @@ fn wallys_compassion_is_admitted_from_the_artifact() {
 fn with_janines_secret_art(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
     let mut db = set.db.clone();
     let dark_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-dark-mon",
         name: "Darkmon",
         hp: 90,

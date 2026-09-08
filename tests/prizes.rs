@@ -11,6 +11,7 @@ use sim::state::{GameState, Phase};
 fn game(prizes: u32) -> (GameState, u32) {
     let mut db = CardDb::new();
     let victim = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-target",
         name: "Target",
         hp: 30,

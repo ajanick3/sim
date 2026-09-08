@@ -91,7 +91,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Forest of Vitality, and Festival Grounds. Tool Scrapper, built
     // this session (`TrainerEffect::MayDiscardUpToTwoToolsAnywhere`),
     // takes it down to 273.
-    assert_eq!(trainers, 273, "the Trainers still refused, by kind");
+    // Tera Orb, built with the new `Marker::Tera`, takes it to 272.
+    assert_eq!(trainers, 272, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and
@@ -106,6 +107,53 @@ fn the_kinds_add_up_to_the_pool() {
         import.admitted.len() + import.refused.len(),
         3051,
         "and nothing is lost"
+    );
+}
+
+#[test]
+fn markers_read_ex_mega_and_tera_by_print_not_species() {
+    use sim::card::Marker;
+    use sim::import::markers_for;
+
+    // Dragapult ex, sv06-130 — a confirmed Tera print, also ex.
+    assert_eq!(markers_for("sv06-130", "Dragapult ex"), vec![Marker::Ex, Marker::Tera]);
+    // Meowth ex, me03-062 — an ordinary ex, never Tera.
+    assert_eq!(markers_for("me03-062", "Meowth ex"), vec![Marker::Ex]);
+    // Mega Chandelure ex, me05-038 — worth Ex and Mega together.
+    assert_eq!(
+        markers_for("me05-038", "Mega Chandelure ex"),
+        vec![Marker::Ex, Marker::Mega]
+    );
+    // A plain Basic carries no markers at all.
+    assert_eq!(markers_for("sv06.5-032", "Zoroark"), Vec::<Marker>::new());
+}
+
+#[test]
+fn hydreigon_ex_has_both_a_tera_print_and_a_plain_one() {
+    use sim::card::Marker;
+    use sim::import::markers_for;
+
+    // The same name, sv08 (Surging Sparks) is Tera and sv10.5w is not —
+    // the reason Tera cannot be read from the name alone.
+    assert_eq!(markers_for("sv08-119", "Hydreigon ex"), vec![Marker::Ex, Marker::Tera]);
+    assert_eq!(markers_for("sv10.5w-067", "Hydreigon ex"), vec![Marker::Ex]);
+}
+
+#[test]
+fn prizes_is_computed_from_markers_not_the_name_directly() {
+    use sim::import::{markers_for, prizes_for};
+
+    assert_eq!(prizes_for(&markers_for("sv06.5-032", "Zoroark")), 1, "no markers");
+    assert_eq!(prizes_for(&markers_for("me03-062", "Meowth ex")), 2, "Marker::Ex");
+    assert_eq!(
+        prizes_for(&markers_for("sv06-130", "Dragapult ex")),
+        2,
+        "Ex and Tera together, still worth 2"
+    );
+    assert_eq!(
+        prizes_for(&markers_for("me05-038", "Mega Chandelure ex")),
+        3,
+        "Ex and Mega together, worth 3"
     );
 }
 

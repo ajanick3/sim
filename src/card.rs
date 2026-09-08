@@ -103,9 +103,9 @@ pub enum CardFilter {
     /// A basic Energy card. Every admitted Energy is basic, since a special
     /// Energy carries rules text and is refused.
     BasicEnergy,
-    /// A Pokémon ex, which is a Pokémon worth more than 1 Prize. The prize
-    /// value is read from the name (ADR 0010), so in this pool a card worth
-    /// more than 1 is exactly a card printed `ex`.
+    /// A Pokémon ex, which is a Pokémon worth more than 1 Prize —
+    /// `prizes > 1`, computed from `Marker::Ex`/`Marker::Mega` (ADR
+    /// 0010).
     PokemonEx,
     /// A Basic Pokémon whose printed HP is at most this much. Both halves are
     /// printed on the card that reads them: `Buddy-Buddy Poffin` wants a
@@ -155,6 +155,8 @@ pub enum CardFilter {
     PokemonOfTypeWithHpAtMost(Type, u32),
     /// A Basic Pokémon of this type. `Telepathic Psychic Energy`.
     BasicPokemonOfType(Type),
+    /// A Pokémon carrying `Marker::Tera`. `Tera Orb`.
+    TeraPokemon,
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
@@ -879,6 +881,28 @@ pub struct Pokemon {
     /// Every real card prints at most one. `None` for the pool's plain
     /// majority; `Some` only once the engine can run what it says.
     pub ability: Option<Ability>,
+    /// What this print carries beyond its species name — `ex`, `Mega`,
+    /// `Tera` — any number at once. Read from real-world knowledge of
+    /// the print, the same discipline `known_attack`/`known_ability`
+    /// know a print by: `ex` and `Mega` are read straight from the
+    /// printed name (`markers_for` in `src/import.rs`); `Tera` is not
+    /// — the artifact carries no field for it, and two prints can
+    /// share an identical name where only one is Tera, so it is read
+    /// from a fixed print-id table instead. `prizes` is computed
+    /// from this, not the other way around.
+    pub markers: Vec<Marker>,
+}
+
+/// What a Pokémon print carries beyond its species name. See
+/// [`Pokemon::markers`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Marker {
+    Ex,
+    Mega,
+    /// Pokémon TCG stopped printing new Tera cards after the sets this
+    /// project's own artifact already carries — this is a closed,
+    /// permanent list, not one to revisit as later sets import.
+    Tera,
 }
 
 /// An Ability as printed. Milestone 8's own vocabulary, parallel to

@@ -13,6 +13,7 @@ use sim::state::{GameState, Phase};
 fn game(attacker_attack: Attack, seed: u64) -> (GameState, sim::ids::CardDefId) {
     let mut db = CardDb::new();
     let attacker_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-attacker",
         name: "Attackmon",
         hp: 200,
@@ -28,6 +29,7 @@ fn game(attacker_attack: Attack, seed: u64) -> (GameState, sim::ids::CardDefId) 
         attacks: vec![attacker_attack],
     }));
     let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-defender",
         name: "Defendmon",
         hp: 200,
@@ -49,6 +51,7 @@ fn game(attacker_attack: Attack, seed: u64) -> (GameState, sim::ids::CardDefId) 
         }],
     }));
     let defender_ex = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-defender-ex",
         name: "Defendmon ex",
         hp: 200,
@@ -319,6 +322,7 @@ fn paldean_tauros_is_admitted_from_the_artifact() {
 fn game_with_weak_defender(attacker_attack: Attack, seed: u64) -> GameState {
     let mut db = CardDb::new();
     let attacker_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-attacker-w",
         name: "Attackmon",
         hp: 200,
@@ -334,6 +338,7 @@ fn game_with_weak_defender(attacker_attack: Attack, seed: u64) -> GameState {
         attacks: vec![attacker_attack],
     }));
     let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-defender-w",
         name: "Defendmon",
         hp: 200,
@@ -1177,6 +1182,7 @@ fn searches_the_library_to_evolve_itself() {
     let attacker_name = state.pokemon_def(attacker).name;
 
     let evolution_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-evolution",
         name: "Evolvemon",
         hp: 200,
@@ -2436,6 +2442,7 @@ fn searches_an_energy_and_attaches_it_to_a_chosen_benched_pokemon_of_type() {
     let player = state.current;
 
     let grass_bench_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-grass-bench",
         name: "Grassmon",
         hp: 200,

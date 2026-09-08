@@ -34,6 +34,7 @@ fn basic(
     evolve_from: Option<&'static str>,
 ) -> CardDefId {
     db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id,
         name,
         hp,
@@ -64,6 +65,7 @@ fn build() -> Set {
     let mon_ex = basic(&mut db, "test-mon-ex", "Testmon ex", 200, 2, None);
     let stage1 = basic(&mut db, "test-stage1", "Bigmon", 120, 1, Some("Smallmon"));
     let stage2 = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-stage2",
         name: "Hugemon",
         hp: 180,
@@ -599,6 +601,7 @@ fn jamming_tower_turns_off_an_attached_tools_effect() {
 fn with_risky_ruins(set: Set) -> (Set, CardDefId, CardDefId) {
     let mut db = set.db.clone();
     let darkness_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-darkness-mon-rr",
         name: "Duskmon",
         hp: 90,
@@ -696,6 +699,7 @@ fn risky_ruins_applies_on_the_opponents_side_too() {
 fn with_forest_of_vitality(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
     let mut db = set.db.clone();
     let grass_basic = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-grass-basic-fov",
         name: "Leafmon",
         hp: 90,
@@ -711,6 +715,7 @@ fn with_forest_of_vitality(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
         attacks: vec![],
     }));
     let grass_stage1 = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-grass-stage1-fov",
         name: "Vinemon",
         hp: 120,

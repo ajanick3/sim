@@ -1028,6 +1028,10 @@ impl GameState {
                 .def_of(card)
                 .as_pokemon()
                 .is_some_and(|p| p.stage == crate::card::Stage::Basic && p.kind == kind),
+            CardFilter::TeraPokemon => self
+                .def_of(card)
+                .as_pokemon()
+                .is_some_and(|p| p.markers.contains(&crate::card::Marker::Tera)),
         }
     }
 
