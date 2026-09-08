@@ -748,6 +748,11 @@ pub enum AttackEffect {
     /// `Phase::ChoosingBenchedExDamageTarget`. No Benched Pokémon ex
     /// opens no phase. `Shaymin`'s `Pinpoint Dive`.
     DamageChosenOpponentBenchedEx(u32),
+    /// Search the deck for an Energy card and attach it to one of the
+    /// player's own Benched Pokémon of this type, then shuffle the
+    /// deck. No qualifying Energy or no qualifying Bench target opens
+    /// no phase. `Shaymin`'s `Send Flowers`.
+    SearchEnergyAttachToBenchedOfType(Type),
     /// The attacker takes this much less damage from attacks during
     /// the opponent's very next turn, after Weakness and Resistance —
     /// the mirror of `DefenderDealsLessDamageNextTurn`'s own lifetime

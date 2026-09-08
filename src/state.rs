@@ -353,6 +353,10 @@ pub enum Phase {
     /// offering only the opponent's Benched Pokémon ex. `Shaymin`'s
     /// `Pinpoint Dive`.
     ChoosingBenchedExDamageTarget { player: PlayerId, damage: u32 },
+    /// `player` used an attack that searches the deck for an Energy
+    /// card to attach to a chosen own Benched Pokémon of this type.
+    /// `Shaymin`'s `Send Flowers`.
+    SearchingForEnergyToAttachToBenchedOfType { player: PlayerId, kind: crate::card::Type },
     /// `player` opened `pokemon`'s own Ability that attaches Energy
     /// from hand as the effect itself. `Teal Mask Ogerpon ex`'s
     /// `Teal Dance`.
