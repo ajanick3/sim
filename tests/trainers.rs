@@ -615,3 +615,94 @@ fn crushing_hammer_discards_opponent_energy_on_heads() {
     assert!(!state.pokemon(opp_active).attached.contains(&energy));
     assert!(state.player(player.opponent()).discard.contains(&energy));
 }
+
+// --- Beyond the map: discard only a Special Energy from the opponent ---
+
+#[test]
+fn enhanced_hammer_discards_only_a_special_energy() {
+    let set = build2();
+    let mut db = set.db.clone();
+    let enhanced_hammer = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-enhanced-hammer",
+        name: "Enhanced Hammer",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::DiscardOpponentSpecialEnergy,
+    }));
+    let special_energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-special-energy",
+        name: "Growing Grass Energy",
+        kind: Type::Grass,
+        effect: Some(sim::card::EnergyEffect::IncreasesCarrierHp(20)),
+    }));
+    let set = Set2 { db, ..set };
+    let mut state = game2(&set, enhanced_hammer, 3);
+
+    let player = state.current;
+    let opponent = player.opponent();
+    let opp_active = state.player(opponent).active.unwrap();
+    let special_card = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: special_energy, owner: opponent });
+    state.pokemon[opp_active.index()].attached.push(special_card);
+    let plain_energy = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .expect("the opponent's deck holds Energy");
+    state.players[opponent.index()].library.retain(|c| *c != plain_energy);
+    state.pokemon[opp_active.index()].attached.push(plain_energy);
+
+    let card = ensure_in_hand2(&mut state, player, enhanced_hammer);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert_eq!(
+        state.phase,
+        Phase::DiscardingOpponentSpecialEnergy { chooser: player, of: opponent }
+    );
+
+    let actions = legal_actions(&state);
+    assert!(actions.contains(&Action::DiscardOpponentSpecialEnergy { card: special_card }));
+    assert!(
+        !actions.contains(&Action::DiscardOpponentSpecialEnergy { card: plain_energy }),
+        "a plain Basic Energy is not offered"
+    );
+
+    apply(&mut state, Action::DiscardOpponentSpecialEnergy { card: special_card }).unwrap();
+
+    assert!(!state.pokemon(opp_active).attached.contains(&special_card));
+    assert!(state.player(opponent).discard.contains(&special_card));
+    assert!(state.pokemon(opp_active).attached.contains(&plain_energy), "the Basic Energy stays");
+}
+
+#[test]
+fn enhanced_hammer_not_offered_with_no_special_energy_on_the_opponents_board() {
+    let set = build2();
+    let mut db = set.db.clone();
+    let enhanced_hammer = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-enhanced-hammer-none",
+        name: "Enhanced Hammer",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::DiscardOpponentSpecialEnergy,
+    }));
+    let set = Set2 { db, ..set };
+    let mut state = game2(&set, enhanced_hammer, 3);
+    let player = state.current;
+
+    let card = ensure_in_hand2(&mut state, player, enhanced_hammer);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "no Special Energy anywhere on the opponent's board");
+}
+
+#[test]
+fn enhanced_hammer_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Enhanced Hammer" && c.playable.is_some()),
+        "Enhanced Hammer should play"
+    );
+}

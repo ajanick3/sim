@@ -23,13 +23,10 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
         Some(Refusal::IsATrainer(TrainerKind::Supporter)),
         "a Supporter is refused as a Supporter"
     );
-    // Enhanced Hammer discards a Special Energy — refused outright,
-    // needing a discard-any-Special-Energy shape Milestone 12 has
-    // not built yet, even though a Special Energy can now exist.
     assert_eq!(
-        reason_for("sv06-148"),
+        reason_for("me01-116"),
         Some(Refusal::IsATrainer(TrainerKind::Item)),
-        "Enhanced Hammer is an Item"
+        "Fighting Gong is an Item"
     );
     assert_eq!(
         reason_for("sv10-180"),
@@ -91,8 +88,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Forest of Vitality, and Festival Grounds. Tool Scrapper, built
     // this session (`TrainerEffect::MayDiscardUpToTwoToolsAnywhere`),
     // takes it down to 273.
-    // Tera Orb took it to 272; Briar (four prints) takes it to 268.
-    assert_eq!(trainers, 268, "the Trainers still refused, by kind");
+    // Tera Orb took it to 272; Briar (four prints) took it to 268;
+    // Enhanced Hammer (two prints) takes it to 266.
+    assert_eq!(trainers, 266, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

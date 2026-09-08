@@ -1975,6 +1975,23 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.phase = Phase::Main;
             settle(state);
         }
+
+        Action::DiscardOpponentSpecialEnergy { card } => {
+            let of = match state.phase {
+                Phase::DiscardingOpponentSpecialEnergy { of, .. } => of,
+                _ => return Err(IllegalAction),
+            };
+            for pokemon in state.player(of).in_play() {
+                state.pokemon[pokemon.index()]
+                    .attached
+                    .retain(|c| *c != card);
+            }
+            state.players[of.index()].discard.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} is discarded."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
     }
 
     // Recorded here, at the end: an arm that refused part-way through
@@ -2387,6 +2404,20 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                 chooser: player,
                 of: player.opponent(),
             };
+        }
+
+        TrainerEffect::DiscardOpponentSpecialEnergy => {
+            let opponent = player.opponent();
+            let any_special = state.player(opponent).in_play().iter().any(|p| {
+                state
+                    .pokemon(*p)
+                    .attached
+                    .iter()
+                    .any(|c| state.def_of(*c).as_energy().is_some_and(|e| e.effect.is_some()))
+            });
+            if any_special {
+                state.phase = Phase::DiscardingOpponentSpecialEnergy { chooser: player, of: opponent };
+            }
         }
     }
 }
