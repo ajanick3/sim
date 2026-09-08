@@ -364,6 +364,143 @@ fn evolving_offers_the_draw() {
     assert_eq!(state.player(player).hand.len(), before - 1 + 2);
 }
 
+// --- Beyond the map: the same trigger, gated on an own Tera Pokemon, searching Trainers ---
+
+#[test]
+fn jewel_seeker_offers_the_search_only_with_an_own_tera_pokemon_in_play() {
+    let ability = Ability {
+        name: "Jewel Seeker",
+        effect: sim::card::AbilityEffect::WhenEvolvedFromHandMaySearchTrainersIfOwnTeraInPlay(2),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let basic = state.player(player).active.unwrap();
+    let basic_name = state.pokemon_def(basic).name;
+
+    let evolution_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-jewel-seeker-evolution",
+        name: "Noctowl",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Stage1,
+        evolve_from: Some(basic_name),
+        evolves_from_basic: None,
+        ability: Some(ability),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let evolution = deal_new_card(&mut state, player, evolution_def);
+    state.players[player.index()].hand.push(evolution);
+
+    apply(&mut state, Action::Evolve { card: evolution, target: basic }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "no Tera Pokemon in play, so Jewel Seeker offers nothing");
+}
+
+#[test]
+fn jewel_seeker_searches_up_to_two_trainer_cards_with_a_tera_pokemon_in_play() {
+    let ability = Ability {
+        name: "Jewel Seeker",
+        effect: sim::card::AbilityEffect::WhenEvolvedFromHandMaySearchTrainersIfOwnTeraInPlay(2),
+    };
+    let (mut state, tera_def) = game(ability, 3);
+    let player = state.current;
+    let basic = state.player(player).active.unwrap();
+    let basic_name = state.pokemon_def(basic).name;
+
+    // A Tera Pokemon already in play, on the Bench.
+    let _ = tera_def;
+    let tera_mon = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: vec![sim::card::Marker::Tera],
+        print_id: "test-jewel-seeker-tera",
+        name: "Testmon Tera",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let tera_card = deal_new_card(&mut state, player, tera_mon);
+    let tera_bench = state.put_into_play(player, tera_card);
+    state.players[player.index()].bench.push(tera_bench);
+
+    let evolution_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-jewel-seeker-evolution-2",
+        name: "Noctowl",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Stage1,
+        evolve_from: Some(basic_name),
+        evolves_from_basic: None,
+        ability: Some(ability),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let evolution = deal_new_card(&mut state, player, evolution_def);
+    state.players[player.index()].hand.push(evolution);
+
+    let stadium_def = state.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-jewel-seeker-stadium",
+        name: "Test Stadium",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::MayDiscardUpToTwoToolsAnywhere,
+    }));
+    let stadium_card = deal_new_card(&mut state, player, stadium_def);
+    state.players[player.index()].library.push(stadium_card);
+
+    apply(&mut state, Action::Evolve { card: evolution, target: basic }).unwrap();
+
+    assert!(matches!(state.phase, Phase::DecidingToUseJewelSeeker { .. }));
+    apply(&mut state, Action::AcceptJewelSeeker).unwrap();
+
+    assert!(matches!(state.phase, Phase::SearchingLibraryForTrainerCards { remaining: 2, .. }));
+    apply(&mut state, Action::TakeTrainerCardFromLibrary { card: stadium_card }).unwrap();
+    assert!(matches!(state.phase, Phase::SearchingLibraryForTrainerCards { remaining: 1, .. }));
+    apply(&mut state, Action::FinishSearchingTrainerCards).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&stadium_card));
+}
+
+#[test]
+fn noctowl_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Noctowl" && c.playable.is_some()),
+        "at least one Noctowl print should play"
+    );
+}
+
 #[test]
 fn kadabra_is_admitted_from_the_artifact() {
     let import = sim::import::load(

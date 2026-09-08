@@ -1098,6 +1098,12 @@ pub enum AbilityEffect {
     /// already keyed by species, so no print-override table is
     /// needed the way `known_trainer_by_print` is).
     WhenEvolvedFromHandMayDrawCards(u32),
+    /// The same "evolved from hand" trigger `WhenEvolvedFromHandMay-
+    /// DrawCards` reads, but gated on the player having any
+    /// `Marker::Tera` Pokémon in play, and searching up to this many
+    /// Trainer cards of any kind rather than drawing. `Noctowl`'s
+    /// `Jewel Seeker`.
+    WhenEvolvedFromHandMaySearchTrainersIfOwnTeraInPlay(u32),
     /// Once during the player's own turn, only if any of the
     /// player's own Pokémon were Knocked Out during the opponent's
     /// last turn, the player may draw this many cards — the same

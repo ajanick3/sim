@@ -1307,6 +1307,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         }
         ("Meowth ex", "Last-Ditch Catch") => AbilityEffect::WhenBenchedFromHandMaySearchSupporter,
         ("Kadabra", "Psychic Draw") => AbilityEffect::WhenEvolvedFromHandMayDrawCards(2),
+        ("Noctowl", "Jewel Seeker") => {
+            AbilityEffect::WhenEvolvedFromHandMaySearchTrainersIfOwnTeraInPlay(2)
+        }
         ("Alakazam", "Psychic Draw") => AbilityEffect::WhenEvolvedFromHandMayDrawCards(3),
         ("Fezandipiti ex", "Flip the Script") => {
             AbilityEffect::OncePerTurnIfKnockedOutLastTurnMayDrawCards(3)

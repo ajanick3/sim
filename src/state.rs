@@ -416,6 +416,16 @@ pub enum Phase {
     /// Ability may draw `count` cards. `Kadabra`'s and `Alakazam`'s
     /// `Psychic Draw`.
     DecidingToUsePsychicDraw { player: PlayerId, name: &'static str, count: u32 },
+    /// The same "evolved from hand" moment `DecidingToUsePsychicDraw`
+    /// opens from, but accepting moves to
+    /// `SearchingLibraryForTrainerCards` rather than drawing outright.
+    /// `Noctowl`'s `Jewel Seeker`.
+    DecidingToUseJewelSeeker { player: PlayerId, name: &'static str, count: u32 },
+    /// `player` may take up to `remaining` more Trainer cards of any
+    /// kind from their own library, revealing them, then shuffles —
+    /// the narrower mirror of `SearchingLibraryForAnyCards`, offering
+    /// only Trainer cards. `Noctowl`'s `Jewel Seeker`.
+    SearchingLibraryForTrainerCards { player: PlayerId, remaining: u32 },
     /// `player` used an attack that deals flat damage to one of the
     /// opponent's Pokémon of their choosing, Active or Benched alike.
     /// `Fezandipiti ex`'s `Cruel Arrow`.

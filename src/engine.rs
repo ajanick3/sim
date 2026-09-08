@@ -83,6 +83,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             let name = state.pokemon_def(target).name;
             state.log.push(format!("{player:?} evolves into {name}."));
             trigger_psychic_draw(state, player, target);
+            trigger_jewel_seeker(state, player, target);
         }
 
         Action::PlayTrainer { card } => {
@@ -1293,6 +1294,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 }
                 crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter
                 | crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_)
+                | crate::card::AbilityEffect::WhenEvolvedFromHandMaySearchTrainersIfOwnTeraInPlay(_)
                 | crate::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium
                 | crate::card::AbilityEffect::WhenBenchedFromHandMaySwitchThenMoveAnyEnergy => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
@@ -1395,6 +1397,48 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             };
             state.phase = Phase::Main;
             settle(state);
+        }
+
+        Action::AcceptJewelSeeker => {
+            let (player, name, count) = match state.phase {
+                Phase::DecidingToUseJewelSeeker { player, name, count } => (player, name, count),
+                _ => return Err(IllegalAction),
+            };
+            state.spend(Limit::AbilityUsed(player, name));
+            state.phase = Phase::SearchingLibraryForTrainerCards { player, remaining: count };
+        }
+
+        Action::DeclineJewelSeeker => {
+            match state.phase {
+                Phase::DecidingToUseJewelSeeker { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::TakeTrainerCardFromLibrary { card } => {
+            let (player, remaining) = match state.phase {
+                Phase::SearchingLibraryForTrainerCards { player, remaining } => (player, remaining),
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} joins the hand."));
+            if remaining <= 1 {
+                finish_searching_library_for_trainer_cards(state, player);
+            } else {
+                state.phase = Phase::SearchingLibraryForTrainerCards { player, remaining: remaining - 1 };
+            }
+        }
+
+        Action::FinishSearchingTrainerCards => {
+            let player = match state.phase {
+                Phase::SearchingLibraryForTrainerCards { player, .. } => player,
+                _ => return Err(IllegalAction),
+            };
+            finish_searching_library_for_trainer_cards(state, player);
         }
 
         Action::DamageChosenOpponentPokemon { target } => {
@@ -3477,6 +3521,13 @@ fn finish_searching_library_for_any_cards(state: &mut GameState, player: PlayerI
     settle(state);
 }
 
+fn finish_searching_library_for_trainer_cards(state: &mut GameState, player: PlayerId) {
+    let library = &mut state.players[player.index()].library;
+    shuffle(state.rng.as_mut(), library);
+    state.phase = Phase::Main;
+    settle(state);
+}
+
 /// What `AttackEffect::DamagePerCount` reads for this attack, counted
 /// fresh from the board.
 fn count_for_attack(
@@ -3949,6 +4000,30 @@ fn trigger_psychic_draw(state: &mut GameState, player: PlayerId, target: Pokemon
         return;
     }
     state.phase = Phase::DecidingToUsePsychicDraw { player, name: ability.name, count };
+}
+
+/// `Noctowl`'s `Jewel Seeker`, the same "evolved from hand" trigger
+/// `trigger_psychic_draw` reads, but gated on the player's own Tera
+/// Pokémon in play, and opening a search instead of a draw.
+fn trigger_jewel_seeker(state: &mut GameState, player: PlayerId, target: PokemonId) {
+    if state.abilities_disabled_for(target) {
+        return;
+    }
+    let Some(ability) = state.pokemon_def(target).ability else {
+        return;
+    };
+    let crate::card::AbilityEffect::WhenEvolvedFromHandMaySearchTrainersIfOwnTeraInPlay(count) =
+        ability.effect
+    else {
+        return;
+    };
+    if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
+        return;
+    }
+    if !state.has_tera_in_play(player) {
+        return;
+    }
+    state.phase = Phase::DecidingToUseJewelSeeker { player, name: ability.name, count };
 }
 
 fn powerglass_owner(state: &GameState) -> Option<PlayerId> {
