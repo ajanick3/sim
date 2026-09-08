@@ -884,6 +884,21 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             finish_searching_library_for_basics(state, player);
         }
 
+        Action::TakeItemFromLibrary { card } => {
+            let player = match state.phase {
+                Phase::SearchingLibraryForItem { player } => player,
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} joins the hand."));
+            let library = &mut state.players[player.index()].library;
+            shuffle(state.rng.as_mut(), library);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::MoveOpponentsActiveEnergyToHand { card } => {
             let (player, remaining) = match state.phase {
                 Phase::MovingOpponentsActiveEnergyToHand { player, remaining } => (player, remaining),
@@ -1190,7 +1205,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
                 }
                 crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost
-                | crate::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx => {
+                | crate::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx
+                | crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
@@ -2853,6 +2869,15 @@ fn resolve_attack_effect(
                     player: owner,
                     remaining: count,
                 };
+            }
+        }
+        crate::card::AttackEffect::SearchLibraryForItemCardToHand => {
+            let owner = state.pokemon(attacker).owner;
+            let any_item = state.player(owner).library.iter().any(|c| {
+                state.matches_filter(*c, crate::card::CardFilter::TrainerOfKind(TrainerKind::Item))
+            });
+            if any_item {
+                state.phase = Phase::SearchingLibraryForItem { player: owner };
             }
         }
     }

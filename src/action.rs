@@ -139,6 +139,9 @@ pub enum Action {
     /// Take this Basic Pokémon from the library onto the Bench, as part
     /// of `Phase::SearchingLibraryForBasics`.
     TakeBasicPokemonForCallForFamily { card: CardId },
+    /// Take this Item, found by searching the whole library, as part
+    /// of `Phase::SearchingLibraryForItem`.
+    TakeItemFromLibrary { card: CardId },
     /// Stop `Phase::SearchingLibraryForBasics` before its limit is
     /// spent.
     FinishCallForFamily,
@@ -297,6 +300,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DistributingDamageCounters { player, .. } => Some(player),
         Phase::ChoosingBenchDamageTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForBasics { player, .. } => Some(player),
+        Phase::SearchingLibraryForItem { player } => Some(player),
         Phase::MovingOpponentsActiveEnergyToHand { player, .. } => Some(player),
         Phase::TakingTrainerFromDiscard { player } => Some(player),
         Phase::SearchingLibraryToEvolveSelf { player, .. } => Some(player),
@@ -599,6 +603,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::FinishCallForFamily);
+            return actions;
+        }
+        Phase::SearchingLibraryForItem { player: whose } => {
+            for card in &state.player(whose).library {
+                if state.matches_filter(*card, crate::card::CardFilter::TrainerOfKind(TrainerKind::Item)) {
+                    actions.push(Action::TakeItemFromLibrary { card: *card });
+                }
+            }
             return actions;
         }
         Phase::MovingOpponentsActiveEnergyToHand { player: whose, .. } => {
@@ -1308,15 +1320,17 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // never a standing choice.
             crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost => false,
             crate::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx => false,
+            crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
                 _,
             ) => {
-                state
-                    .pokemon(pokemon)
-                    .attached
-                    .iter()
-                    .any(|c| state.matches_filter(*c, crate::card::CardFilter::BasicEnergyOfType(kind)))
+                !state.damage_counter_movement_blocked()
+                    && state
+                        .pokemon(pokemon)
+                        .attached
+                        .iter()
+                        .any(|c| state.matches_filter(*c, crate::card::CardFilter::BasicEnergyOfType(kind)))
                     && side.in_play().iter().any(|p| state.pokemon(*p).damage > 0)
             }
             crate::card::AbilityEffect::OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(_) => {
@@ -1485,6 +1499,7 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Bench {}", state.def_of(card).name())
         }
         Action::FinishCallForFamily => "Stop searching".to_string(),
+        Action::TakeItemFromLibrary { card } => format!("Take {}", state.def_of(card).name()),
         Action::MoveOpponentsActiveEnergyToHand { card } => {
             format!("Move {} to their hand", state.def_of(card).name())
         }

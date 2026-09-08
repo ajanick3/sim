@@ -616,6 +616,11 @@ pub enum AttackEffect {
     /// rather than a Trainer's `Decide`. `Drilbur` and `Toxel`'s
     /// `Call for Family`.
     SearchLibraryForBasicPokemonToBench(u32),
+    /// Search the entire library for an Item card and put it into
+    /// hand, then shuffle — opens `Phase::SearchingLibraryForItem`.
+    /// No Item card in the library opens no phase. `Patrat`'s
+    /// `Procurement`.
+    SearchLibraryForItemCardToHand,
     /// The opponent reveals their hand. The engine already tracks every
     /// zone in full (`view::PlayerView` hides a zone only at render
     /// time, and nothing in `legal_actions` ever gates a choice on
@@ -1034,6 +1039,14 @@ pub enum AbilityEffect {
     /// Opens `Phase::LookingAtTopCardsForSupporter`. No Supporter in
     /// the peek opens no phase. `Tatsugiri`'s `Attract Customers`.
     OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(u32),
+    /// A standing effect, not a choice: while this Pokémon is in
+    /// play, no damage counters on any Pokémon — either player's —
+    /// can be moved to another Pokémon. Never offered as
+    /// `Action::UseAbility`; read directly by the eligibility check
+    /// for any effect that moves damage counters, such as
+    /// `OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent`.
+    /// `Patrat`'s `Watchful Eye`.
+    PassiveBlocksDamageCounterMovement,
 }
 
 /// A basic Energy card as printed.
