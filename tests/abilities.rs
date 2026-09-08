@@ -2925,3 +2925,125 @@ fn annihilape_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv10-092").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Annihilape's Lose Cool print should play");
 }
+
+// --- Beyond the map: Ability disabled for the opponent's Active alone, self-exempt ---
+
+fn midnight_fluttering_carrier(print_id: &'static str, ability_name: &'static str) -> Pokemon {
+    Pokemon {
+        markers: Vec::new(),
+        print_id,
+        name: "Flutter Mane",
+        hp: 90,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: ability_name,
+            effect: sim::card::AbilityEffect::PassiveDisablesOpponentActiveAbilityExceptSelf,
+        }),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }
+}
+
+/// A game where the second player's Active carries `Draw Power` (an
+/// ordinary Ability), so Midnight Fluttering's effect on it is
+/// observable directly through `abilities_disabled_for`.
+fn midnight_fluttering_game() -> (GameState, sim::ids::CardDefId) {
+    let ability = Ability {
+        name: "Draw Power",
+        effect: sim::card::AbilityEffect::OncePerTurnWhileActiveMayDrawCards(1),
+    };
+    // `game()` gives the FIRST player's Active this Ability, but
+    // Midnight Fluttering needs to sit on the OTHER side to disable
+    // it — so swap which side is "current" here rather than reusing
+    // `game()`'s own player/opponent framing.
+    let (state, carrier_def) = game(ability, 3);
+    (state, carrier_def)
+}
+
+#[test]
+fn midnight_fluttering_disables_the_opponents_active_ability() {
+    let (mut state, _ability_carrier_def) = midnight_fluttering_game();
+    let carrier_side = state.current;
+    let carrier_active = state.player(carrier_side).active.unwrap();
+    let ability_side = carrier_side.opponent();
+
+    let flutter_mane = state.db.add(CardDef::Pokemon(midnight_fluttering_carrier(
+        "test-flutter-mane-disables",
+        "Midnight Fluttering",
+    )));
+    let card = deal_new_card(&mut state, ability_side, flutter_mane);
+    let flutter_mane_active = state.put_into_play(ability_side, card);
+    state.players[ability_side.index()].active = Some(flutter_mane_active);
+
+    assert!(
+        state.abilities_disabled_for(carrier_active),
+        "Midnight Fluttering disables the opponent's Active Ability"
+    );
+}
+
+#[test]
+fn midnight_fluttering_does_nothing_while_benched_not_active() {
+    let (mut state, _ability_carrier_def) = midnight_fluttering_game();
+    let carrier_side = state.current;
+    let carrier_active = state.player(carrier_side).active.unwrap();
+    let ability_side = carrier_side.opponent();
+
+    // The Flutter Mane sits on the Bench, not the Active Spot — its
+    // own text names only "in the Active Spot".
+    let flutter_mane = state.db.add(CardDef::Pokemon(midnight_fluttering_carrier(
+        "test-flutter-mane-benched",
+        "Midnight Fluttering",
+    )));
+    let card = deal_new_card(&mut state, ability_side, flutter_mane);
+    let benched = state.put_into_play(ability_side, card);
+    state.players[ability_side.index()].bench.push(benched);
+
+    assert!(!state.abilities_disabled_for(carrier_active), "a Benched Flutter Mane disables nothing");
+}
+
+#[test]
+fn midnight_fluttering_exempts_a_mirrored_copy_of_itself() {
+    let (mut state, _ability_carrier_def) = midnight_fluttering_game();
+    let carrier_side = state.current;
+    let ability_side = carrier_side.opponent();
+
+    let flutter_mane = state.db.add(CardDef::Pokemon(midnight_fluttering_carrier(
+        "test-flutter-mane-attacker",
+        "Midnight Fluttering",
+    )));
+    let card = deal_new_card(&mut state, ability_side, flutter_mane);
+    let flutter_mane_active = state.put_into_play(ability_side, card);
+    state.players[ability_side.index()].active = Some(flutter_mane_active);
+
+    let mirror = state.db.add(CardDef::Pokemon(midnight_fluttering_carrier(
+        "test-flutter-mane-mirror",
+        "Midnight Fluttering",
+    )));
+    let mirror_card = deal_new_card(&mut state, carrier_side, mirror);
+    let mirror_active = state.put_into_play(carrier_side, mirror_card);
+    state.players[carrier_side.index()].active = Some(mirror_active);
+
+    assert!(!state.abilities_disabled_for(mirror_active), "a mirrored Midnight Fluttering is self-exempt");
+}
+
+#[test]
+fn flutter_mane_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv05-078").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Flutter Mane's sv05-078 print should play");
+}
