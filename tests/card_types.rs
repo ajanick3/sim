@@ -89,8 +89,9 @@ fn the_kinds_add_up_to_the_pool() {
     // this session (`TrainerEffect::MayDiscardUpToTwoToolsAnywhere`),
     // takes it down to 273.
     // Tera Orb took it to 272; Briar (four prints) took it to 268;
-    // Enhanced Hammer (two prints) takes it to 266.
-    assert_eq!(trainers, 266, "the Trainers still refused, by kind");
+    // Enhanced Hammer (two prints) took it to 266; Glass Trumpet
+    // (four prints) takes it to 262.
+    assert_eq!(trainers, 262, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

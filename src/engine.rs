@@ -140,7 +140,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     | Requirement::ActiveHasAtLeastEnergy(_)
                     | Requirement::MorePrizesThanOpponent
                     | Requirement::HandSizeIs(_)
-                    | Requirement::OpponentPrizesExactly(_),
+                    | Requirement::OpponentPrizesExactly(_)
+                    | Requirement::OwnTeraPokemonInPlay,
                 ) => {
                     resolve_trainer(state, player, card, trainer.effect);
                 }

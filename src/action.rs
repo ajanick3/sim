@@ -1222,6 +1222,10 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 Some(Requirement::OpponentPrizesExactly(exactly)) => {
                     state.player(player.opponent()).prizes.len() == exactly
                 }
+                Some(Requirement::OwnTeraPokemonInPlay) => side
+                    .in_play()
+                    .iter()
+                    .any(|p| state.pokemon_def(*p).markers.contains(&crate::card::Marker::Tera)),
                 Some(Requirement::SecondCopyOfThisInHand) => {
                     let def = state.cards[card.index()].def;
                     side.hand
