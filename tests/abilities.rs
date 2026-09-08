@@ -3184,3 +3184,157 @@ fn flutter_mane_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv05-078").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Flutter Mane's sv05-078 print should play");
 }
+
+// --- Beyond the map: a named attack's own cost reduced per opponent Prize taken ---
+
+fn seasoned_skill_game(taken: usize) -> (GameState, sim::ids::PokemonId) {
+    let mut db = CardDb::new();
+    let carrier = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-seasoned-skill-carrier",
+        name: "Bloodmoon Ursaluna ex",
+        hp: 240,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Seasoned Skill",
+            effect: sim::card::AbilityEffect::PassiveNamedAttackCostsLessPerOpponentPrizeTaken(
+                "Blood Moon",
+            ),
+        }),
+        attacks: vec![Attack {
+            name: "Blood Moon",
+            cost: vec![Type::Colorless, Type::Colorless, Type::Colorless],
+            base_damage: 240,
+            inflicts: None,
+            effect: Some(sim::card::AttackEffect::AttackerCannotAttackNextTurn),
+        }],
+    }));
+    let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-seasoned-skill-defender",
+        name: "Defendmon",
+        hp: 300,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-seasoned-skill-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let mut carrier_deck = vec![carrier; 4];
+    while carrier_deck.len() < 60 {
+        carrier_deck.push(energy);
+    }
+    let mut defender_deck = vec![defender_mon; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(energy);
+    }
+    let mut state =
+        GameState::new(db, [carrier_deck, defender_deck], Box::new(SeededRng::new(3)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    let player = state.current;
+    let opponent = player.opponent();
+    for _ in 0..taken {
+        state.players[opponent.index()].prizes.pop();
+    }
+    let active = state.player(player).active.unwrap();
+    (state, active)
+}
+
+#[test]
+fn seasoned_skill_reduces_blood_moons_cost_per_opponent_prize_taken() {
+    let (state, active) = seasoned_skill_game(2);
+    let player = state.current;
+    // Attach only 1 Colorless — 2 short of the printed 3, but exactly
+    // enough once 2 Prizes taken discount 2 of it away.
+    let mut state = state;
+    let energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != energy);
+    state.pokemon[active.index()].attached.push(energy);
+
+    assert!(
+        legal_actions(&state).iter().any(|a| matches!(a, Action::Attack { .. })),
+        "2 Prizes taken discounts 2 of the 3 Colorless, leaving only 1 to pay"
+    );
+}
+
+#[test]
+fn seasoned_skill_grants_no_discount_with_no_prizes_taken() {
+    let (state, active) = seasoned_skill_game(0);
+    let player = state.current;
+    let mut state = state;
+    let energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != energy);
+    state.pokemon[active.index()].attached.push(energy);
+
+    assert!(
+        !legal_actions(&state).iter().any(|a| matches!(a, Action::Attack { .. })),
+        "no Prizes taken, so the full cost of 3 still applies"
+    );
+}
+
+#[test]
+fn seasoned_skill_never_discounts_past_the_full_cost() {
+    // 5 Prizes taken would discount 5, but the cost only has 3
+    // Colorless to remove — never negative, never touching anything
+    // that isn't there.
+    let (state, active) = seasoned_skill_game(5);
+    assert_eq!(state.pokemon_def(active).attacks[0].cost.len(), 3, "the printed cost itself never changes");
+    assert!(
+        legal_actions(&state).iter().any(|a| matches!(a, Action::Attack { .. })),
+        "fully discounted, so no Energy at all is required"
+    );
+}
+
+#[test]
+fn bloodmoon_ursaluna_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Bloodmoon Ursaluna ex" && c.playable.is_some()),
+        "at least one Bloodmoon Ursaluna ex print should play"
+    );
+}

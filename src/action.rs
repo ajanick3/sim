@@ -1418,6 +1418,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 Some((target, _, true)) if target == active
             )
             .then(|| state.locked_attack_next_turn.unwrap().1);
+            let discount = state.pokemon_def(active).ability.and_then(|a| match a.effect {
+                crate::card::AbilityEffect::PassiveNamedAttackCostsLessPerOpponentPrizeTaken(name) => {
+                    Some((name, 6 - state.player(player.opponent()).prizes.len()))
+                }
+                _ => None,
+            });
             for (index, attack) in state.pokemon_def(active).attacks.iter().enumerate() {
                 if Some(attack.name) == locked_attack_name {
                     continue;
@@ -1425,6 +1431,17 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 let mut cost = attack.cost.clone();
                 if tera_surcharge {
                     cost.push(crate::card::Type::Colorless);
+                }
+                if let Some((discounted_name, prizes_taken)) = discount
+                    && attack.name == discounted_name
+                {
+                    for _ in 0..prizes_taken {
+                        if let Some(pos) = cost.iter().rposition(|t| *t == crate::card::Type::Colorless) {
+                            cost.remove(pos);
+                        } else {
+                            break;
+                        }
+                    }
                 }
                 if state.pays_cost(active, &cost) {
                     actions.push(Action::Attack { index });
@@ -1534,6 +1551,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassiveBonusDamageToActiveIfSelfDamaged(_) => false,
             crate::card::AbilityEffect::PassiveImmuneToAsleep => false,
             crate::card::AbilityEffect::PassiveDisablesOpponentActiveAbilityExceptSelf => false,
+            crate::card::AbilityEffect::PassiveNamedAttackCostsLessPerOpponentPrizeTaken(_) => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
                 _,

@@ -1309,7 +1309,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 | crate::card::AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(_)
                 | crate::card::AbilityEffect::PassiveBonusDamageToActiveIfSelfDamaged(_)
                 | crate::card::AbilityEffect::PassiveImmuneToAsleep
-                | crate::card::AbilityEffect::PassiveDisablesOpponentActiveAbilityExceptSelf => {
+                | crate::card::AbilityEffect::PassiveDisablesOpponentActiveAbilityExceptSelf
+                | crate::card::AbilityEffect::PassiveNamedAttackCostsLessPerOpponentPrizeTaken(_) => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(

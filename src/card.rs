@@ -1328,6 +1328,15 @@ pub enum AbilityEffect {
     /// Folded into `GameState::abilities_disabled_for` rather than
     /// read at its own sites. `Flutter Mane`'s `Midnight Fluttering`.
     PassiveDisablesOpponentActiveAbilityExceptSelf,
+    /// A standing effect, not a choice: the named attack costs one
+    /// less `{C}` for each Prize card the opponent has already
+    /// taken — a reduction, unlike every other cost modifier built
+    /// so far (`Nighttime Mine`'s surcharge among them), which only
+    /// ever adds. Read directly in `legal_actions`' own attack-cost
+    /// loop, capped at removing every `{C}` the cost has and never
+    /// touching a non-Colorless requirement. `Bloodmoon Ursaluna
+    /// ex`'s `Seasoned Skill`, on `Blood Moon`.
+    PassiveNamedAttackCostsLessPerOpponentPrizeTaken(&'static str),
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for
