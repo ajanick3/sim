@@ -590,6 +590,11 @@ pub struct GameState {
     /// is the one restricted turn; the field clears at the `begin_turn`
     /// after that one ends.
     pub own_next_turn_restriction: Option<(PokemonId, crate::card::AttackEffect, bool)>,
+    /// The narrower mirror of `own_next_turn_restriction`: this one
+    /// attack, by name, rather than every attack this Pokémon has —
+    /// `Koraidon ex`'s and `Annihilape`'s own `Impact Blow`. Armed
+    /// and cleared the same way `own_next_turn_restriction` is.
+    pub locked_attack_next_turn: Option<(PokemonId, &'static str, bool)>,
     /// A bonus this turn's attacks carry, set by a card such as `Black
     /// Belt's Training`. Cleared at `begin_turn`, the same as `spent` —
     /// "this turn" ends there regardless of whose turn is starting.
@@ -661,6 +666,7 @@ impl GameState {
             played_a_team_rocket_supporter_this_turn: [false, false],
             opponent_next_turn_restriction: None,
             own_next_turn_restriction: None,
+            locked_attack_next_turn: None,
             turn_bonus: None,
             bonus_prize_if_own_tera_attacker_knocks_out: None,
             attacking_defender: None,
@@ -1317,6 +1323,14 @@ impl GameState {
                 self.own_next_turn_restriction = None;
             } else if !armed && !is_targets_turn {
                 self.own_next_turn_restriction = Some((target, effect, true));
+            }
+        }
+        if let Some((target, name, armed)) = self.locked_attack_next_turn {
+            let is_targets_turn = self.pokemon[target.index()].owner == self.current;
+            if armed && !is_targets_turn {
+                self.locked_attack_next_turn = None;
+            } else if !armed && !is_targets_turn {
+                self.locked_attack_next_turn = Some((target, name, true));
             }
         }
     }

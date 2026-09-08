@@ -1304,7 +1304,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 | crate::card::AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(..)
                 | crate::card::AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench
                 | crate::card::AbilityEffect::PassivePreventsAttackEffectsOnBench
-                | crate::card::AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(_) => {
+                | crate::card::AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(_)
+                | crate::card::AbilityEffect::PassiveBonusDamageToActiveIfSelfDamaged(_) => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
@@ -2740,6 +2741,26 @@ fn attack(state: &mut GameState, index: usize) {
                 attack.base_damage
             }
         }
+        Some(crate::card::AttackEffect::BonusDamagePerCount(count, per_unit)) => {
+            attack.base_damage + count_for_attack(state, attacker, defender, count) * per_unit
+        }
+        Some(crate::card::AttackEffect::BonusDamageIfOwnKnockedOutLastTurn(bonus)) => {
+            let owner = state.pokemon(attacker).owner;
+            if state.knocked_out_last_turn[owner.index()] {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
+        Some(crate::card::AttackEffect::BonusDamageIfOwnBenchDamaged(bonus)) => {
+            let owner = state.pokemon(attacker).owner;
+            let any_damaged = state.player(owner).bench.iter().any(|p| state.pokemon(*p).damage > 0);
+            if any_damaged {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
         _ => attack.base_damage,
     };
     let ignore_defenders_effects =
@@ -2775,7 +2796,7 @@ fn attack(state: &mut GameState, index: usize) {
     let attacker_name = state.pokemon_def(attacker).name;
     let defender_name = state.pokemon_def(defender).name;
     if let Some(effect) = attack.effect {
-        resolve_attack_effect(state, attacker, defender, effect);
+        resolve_attack_effect(state, attacker, defender, effect, attack.name);
     }
 
     state.log.push(format!(
@@ -2795,6 +2816,7 @@ fn resolve_attack_effect(
     attacker: PokemonId,
     defender: PokemonId,
     effect: crate::card::AttackEffect,
+    attack_name: &'static str,
 ) {
     match effect {
         crate::card::AttackEffect::Recoil(amount) => {
@@ -2891,6 +2913,11 @@ fn resolve_attack_effect(
             let name = state.pokemon_def(attacker).name;
             state.log.push(format!("{name} cannot attack next turn."));
         }
+        crate::card::AttackEffect::CannotUseThisAttackNextTurn => {
+            state.locked_attack_next_turn = Some((attacker, attack_name, false));
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} cannot use {attack_name} next turn."));
+        }
         crate::card::AttackEffect::DamageCountersToOpponentBenchAnyWay(count) => {
             let owner = state.pokemon(attacker).owner;
             let any_target = state.player(owner.opponent()).bench.iter().any(|p| {
@@ -2972,6 +2999,15 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::BonusDamageIfOwnLibraryAtMost(..) => {}
+        // Already spent, before `damage_dealt_with` ran — see `attack`'s
+        // own `base` computation.
+        crate::card::AttackEffect::BonusDamagePerCount(..) => {}
+        // Already spent, before `damage_dealt_with` ran — see `attack`'s
+        // own `base` computation.
+        crate::card::AttackEffect::BonusDamageIfOwnKnockedOutLastTurn(_) => {}
+        // Already spent, before `damage_dealt_with` ran — see `attack`'s
+        // own `base` computation.
+        crate::card::AttackEffect::BonusDamageIfOwnBenchDamaged(_) => {}
         crate::card::AttackEffect::DrawCards(count) => {
             let owner = state.pokemon(attacker).owner;
             for _ in 0..count {
@@ -3414,6 +3450,15 @@ fn damage_dealt_with(
         if let Some(bonus) = cobalt_command_bonus {
             damage += bonus;
         }
+    }
+
+    // Step 32d: `Lose Cool` — self-scoped, unlike `Cobalt Command`:
+    // only the carrier's own attacks, only the carrier's own damage.
+    if state.pokemon(attacker).damage >= 20
+        && let Some(crate::card::AbilityEffect::PassiveBonusDamageToActiveIfSelfDamaged(bonus)) =
+            state.pokemon_def(attacker).ability.map(|a| a.effect)
+    {
+        damage += bonus;
     }
 
     // Step 33: Weakness, then Resistance. Both read the attacker's type.

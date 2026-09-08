@@ -2876,3 +2876,52 @@ fn iron_crown_ex_is_admitted_from_the_artifact() {
         "at least one Iron Crown ex print should play"
     );
 }
+
+// --- Beyond the map: bonus damage only while the carrier itself is hurt ---
+
+#[test]
+fn lose_cool_boosts_the_carriers_own_attack_once_it_carries_damage() {
+    let ability = Ability {
+        name: "Lose Cool",
+        effect: sim::card::AbilityEffect::PassiveBonusDamageToActiveIfSelfDamaged(120),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    state.pokemon[active.index()].damage = 20; // 2 counters
+
+    // Pay for and use the carrier's own "Tackle" (10 base damage).
+    let cost_len = state.pokemon_def(active).attacks[0].cost.len();
+    for _ in 0..cost_len {
+        let energy_card = state
+            .player(player)
+            .hand
+            .iter()
+            .chain(state.player(player).library.iter())
+            .find(|c| state.def_of(**c).is_energy())
+            .copied()
+            .expect("the deck holds Energy");
+        state.remove_from_hand(player, energy_card);
+        state.players[player.index()].library.retain(|c| *c != energy_card);
+        state.pokemon[active.index()].attached.push(energy_card);
+    }
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the carrier is paid for");
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(state.pokemon(defender).damage, 130, "10 base plus the 120 bonus");
+}
+
+#[test]
+fn annihilape_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv10-092").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Annihilape's Lose Cool print should play");
+}

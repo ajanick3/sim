@@ -655,6 +655,13 @@ pub enum AttackEffect {
     /// The attacker cannot use any attack during their own very next
     /// turn. `N's Zekrom`'s `Rampaging Thunder`.
     AttackerCannotAttackNextTurn,
+    /// The narrower mirror of `AttackerCannotAttackNextTurn`: only
+    /// this one named attack is locked out during the attacker's own
+    /// very next turn, read by name off `GameState::locked_attack_next_turn`
+    /// rather than this variant itself (which carries no name of its
+    /// own — the attack that used it is read at the moment it fires).
+    /// `Koraidon ex`'s and `Annihilape`'s own `Impact Blow`.
+    CannotUseThisAttackNextTurn,
     /// Put this many damage counters (10 damage each) on the opponent's
     /// Benched Pokémon, in any combination the player chooses — opens
     /// `Phase::DistributingDamageCounters`, since the first read of a
@@ -779,6 +786,22 @@ pub enum AttackEffect {
     /// has this many cards or fewer left in their library. `Rabsca`'s
     /// `Counterturn`.
     BonusDamageIfOwnLibraryAtMost(usize, u32),
+    /// This attack's own printed base damage, plus this much more for
+    /// each unit of `Count` — the additive mirror of `DamagePerCount`,
+    /// which replaces the base entirely rather than adding to it.
+    /// `Koraidon ex`'s `Retribution Strike` ("20+ ... 10 more for
+    /// each damage counter" — a floor, not a pure multiply).
+    BonusDamagePerCount(Count, u32),
+    /// This much more damage, but only if any of the attacker's own
+    /// Pokémon were Knocked Out by attack damage during the
+    /// opponent's last turn — the same `knocked_out_last_turn` flag
+    /// `AbilityEffect::OncePerTurnIfKnockedOutLastTurnMayDrawCards`
+    /// already reads. `Koraidon ex`'s `Orichalcum Fang`.
+    BonusDamageIfOwnKnockedOutLastTurn(u32),
+    /// This much more damage, but only if any of the attacker's own
+    /// Benched Pokémon carry damage. `Koraidon ex`'s `Revenge
+    /// Buster`.
+    BonusDamageIfOwnBenchDamaged(u32),
     /// Flip this many coins; this much damage for each heads. Read
     /// once, the same pre-`damage_dealt_with` slot `DamagePerCount`
     /// already occupies, but counted from flips rather than a board
@@ -1225,6 +1248,14 @@ pub enum AbilityEffect {
     /// opponent's Active by construction (the single-Active format).
     /// `Iron Crown ex`'s `Cobalt Command`.
     PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(u32),
+    /// A standing effect, not a choice: while this Pokémon carries at
+    /// least 2 damage counters, its own attacks do this much more
+    /// damage to the opponent's Active Pokémon, before Weakness and
+    /// Resistance — narrower than `Cobalt Command`'s own shape,
+    /// since this reads only its own carrier's damage and only its
+    /// own carrier's attacks, not a whole side. `Annihilape`'s `Lose
+    /// Cool`.
+    PassiveBonusDamageToActiveIfSelfDamaged(u32),
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for
