@@ -1150,9 +1150,14 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Pecharunt ex", "Irritated Outburst") => {
             AttackEffect::DamagePerCount(Count::OpponentPrizesTakenCount, 60)
         }
-        ("Genesect", "Bug's Cannon") => {
-            AttackEffect::DamagePerCountToChosenOpponentPokemon(Count::OwnGrassEnergyAttachedCount, 20)
-        }
+        ("Genesect", "Bug's Cannon") => AttackEffect::DamagePerCountToChosenOpponentPokemon(
+            Count::OwnEnergyOfTypeAttachedCount(Type::Grass),
+            20,
+        ),
+        ("Seaking", "Hydro Jet") => AttackEffect::DamagePerCountToChosenOpponentPokemon(
+            Count::OwnEnergyOfTypeAttachedCount(Type::Water),
+            30,
+        ),
         ("Alakazam", "Powerful Hand") => {
             AttackEffect::PlaceDamageCountersOnDefenderPerCount(Count::OwnHandSizeCount, 2)
         }

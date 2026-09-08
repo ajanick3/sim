@@ -172,12 +172,12 @@ than guessed at, so the placement numbers have three gaps.
 | [Team Rocket's Factory](src/import.rs#L790) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (66/95 built)
+### Pokémon (67/95 built)
 
 | Card | Attacks | Ability |
 | --- | --- | --- |
 | Abra | [✅](src/import.rs#L1103) | [✅](src/import.rs#L1019) |
-| Alakazam | [✅](src/import.rs#L1156) | [✅](src/import.rs#L1009) |
+| Alakazam | [✅](src/import.rs#L1161) | [✅](src/import.rs#L1009) |
 | Annihilape | ❌ | ❌ |
 | Applin | [✅](src/import.rs#L1093) | — |
 | Bayleef | [✅](src/import.rs#L1123) | — |
@@ -194,7 +194,7 @@ than guessed at, so the placement numbers have three gaps.
 | Chikorita | [✅](src/import.rs#L1124) | — |
 | Cofagrigus | ❌ | — |
 | Combusken | [✅](src/import.rs#L1138) | — |
-| Crustle | [✅](src/import.rs#L1165) | [✅](src/import.rs#L989) |
+| Crustle | [✅](src/import.rs#L1170) | [✅](src/import.rs#L989) |
 | Dedenne | [✅](src/import.rs#L1090) | — |
 | Dipplin | ❌ | ❌ |
 | Dragapult ex | [✅](src/import.rs#L1097) | — |
@@ -211,7 +211,7 @@ than guessed at, so the placement numbers have three gaps.
 | Elgyem | [✅](src/import.rs#L1127) | — |
 | Enamorus | ❌ | — |
 | Fan Rotom | [✅](src/import.rs#L1149) | [✅](src/import.rs#L1038) |
-| Fezandipiti ex | [✅](src/import.rs#L1173) | [✅](src/import.rs#L1010) |
+| Fezandipiti ex | [✅](src/import.rs#L1178) | [✅](src/import.rs#L1010) |
 | Flutter Mane | ❌ | ❌ |
 | Genesect | [✅](src/import.rs#L1153) | ❌ |
 | Genesect ex | [✅](src/import.rs#L1143) | [✅](src/import.rs#L1022) |
@@ -224,21 +224,21 @@ than guessed at, so the placement numbers have three gaps.
 | Kadabra | [✅](src/import.rs#L234) | [✅](src/import.rs#L1008) |
 | Koraidon ex | ❌ | — |
 | Kyurem | ❌ | ❌ |
-| Latias ex | [✅](src/import.rs#L1162) | [✅](src/import.rs#L988) |
+| Latias ex | [✅](src/import.rs#L1167) | [✅](src/import.rs#L988) |
 | Lillie's Clefairy ex | ❌ | ❌ |
 | Mega Absol ex | ❌ | — |
 | Mega Excadrill ex | ❌ | — |
-| Mega Kangaskhan ex | [✅](src/import.rs#L1169) | [✅](src/import.rs#L985) |
+| Mega Kangaskhan ex | [✅](src/import.rs#L1174) | [✅](src/import.rs#L985) |
 | Mega Lopunny ex | ❌ | — |
 | Mega Sharpedo ex | [✅](src/import.rs#L1107) | — |
 | Mega Skarmory ex | ❌ | — |
 | Mega Slowbro ex | ❌ | — |
 | Meganium | [✅](src/import.rs#L234) | ❌ |
-| Meowth ex | [✅](src/import.rs#L1172) | [✅](src/import.rs#L1007) |
+| Meowth ex | [✅](src/import.rs#L1177) | [✅](src/import.rs#L1007) |
 | Metagross | ❌ | — |
-| Metang | [✅](src/import.rs#L1163) | [✅](src/import.rs#L998) |
+| Metang | [✅](src/import.rs#L1168) | [✅](src/import.rs#L998) |
 | Moltres | [✅](src/import.rs#L1117) | — |
-| Munkidori | [✅](src/import.rs#L1166) | [✅](src/import.rs#L1001) |
+| Munkidori | [✅](src/import.rs#L1171) | [✅](src/import.rs#L1001) |
 | N's Darmanitan | [✅](src/import.rs#L1072) | — |
 | N's Darumaka | [✅](src/import.rs#L234) | — |
 | N's Reshiram | [✅](src/import.rs#L1069) | — |
@@ -248,22 +248,22 @@ than guessed at, so the placement numbers have three gaps.
 | Noctowl | [✅](src/import.rs#L234) | ❌ |
 | Paldean Tauros | [✅](src/import.rs#L1065) | — |
 | Passimian | [✅](src/import.rs#L1078) | — |
-| Patrat | [✅](src/import.rs#L1164) | [✅](src/import.rs#L990) |
+| Patrat | [✅](src/import.rs#L1169) | [✅](src/import.rs#L990) |
 | Pecharunt | ❌ | ❌ |
 | Pecharunt ex | [✅](src/import.rs#L1150) | [✅](src/import.rs#L1045) |
 | Psyduck | [✅](src/import.rs#L234) | [✅](src/import.rs#L991) |
 | Rabsca | ❌ | ❌ |
 | Raging Bolt ex | ❌ | — |
 | Rellor | [✅](src/import.rs#L1063) | — |
-| Seaking | ❌ | ❌ |
-| Shaymin | [✅](src/import.rs#L1159) | ❌ |
+| Seaking | [✅](src/import.rs#L1157) | ❌ |
+| Shaymin | [✅](src/import.rs#L1164) | ❌ |
 | Slowking | [✅](src/import.rs#L1110) | — |
 | Slowpoke | [✅](src/import.rs#L1118) | ❌ |
 | Smoochum | ❌ | — |
 | Stunfisk | ❌ | — |
 | Tapu Bulu | [✅](src/import.rs#L1064) | — |
 | Tatsugiri | [✅](src/import.rs#L234) | [✅](src/import.rs#L992) |
-| Teal Mask Ogerpon ex | [✅](src/import.rs#L1174) | [✅](src/import.rs#L1013) |
+| Teal Mask Ogerpon ex | [✅](src/import.rs#L1179) | [✅](src/import.rs#L1013) |
 | Thwackey | [✅](src/import.rs#L234) | ❌ |
 | Torchic | [✅](src/import.rs#L1120) | — |
 | Toxel | [✅](src/import.rs#L1105) | — |

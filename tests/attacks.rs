@@ -2631,3 +2631,49 @@ fn patrat_procurement_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv10.5w-072").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Patrat's Procurement print should play");
 }
+
+#[test]
+fn seaking_hydro_jet_deals_damage_per_water_energy_to_a_chosen_pokemon() {
+    let attack = Attack {
+        name: "Hydro Jet",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DamagePerCountToChosenOpponentPokemon(
+            sim::card::Count::OwnEnergyOfTypeAttachedCount(Type::Water),
+            30,
+        )),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let water_energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-water-energy",
+        name: "Water Energy",
+        kind: Type::Water,
+    }));
+    let water_energy = deal_new_card(&mut state, player, water_energy_def);
+    state.pokemon[active.index()].attached.push(water_energy);
+
+    pay_and_attack(&mut state);
+
+    let opponent = player.opponent();
+    let opponent_active = state.player(opponent).active.unwrap();
+    assert!(matches!(state.phase, Phase::ChoosingAnyOpponentPokemonDamageTarget { .. }));
+    apply(&mut state, Action::DamageChosenOpponentPokemon { target: opponent_active }).unwrap();
+
+    assert_eq!(state.pokemon(opponent_active).damage, 30, "one Water Energy attached");
+}
+
+#[test]
+fn seaking_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Seaking" && c.playable.is_some()),
+        "at least one Seaking print should play"
+    );
+}
