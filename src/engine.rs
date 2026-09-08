@@ -2361,7 +2361,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn
         | TrainerEffect::ToolsHaveNoEffect
         | TrainerEffect::DamagesNonDarknessBasicBenched(_)
-        | TrainerEffect::GrassCanEvolveTheTurnItIsPlayed => {}
+        | TrainerEffect::GrassCanEvolveTheTurnItIsPlayed
+        | TrainerEffect::TeraAttacksCostMore => {}
 
         // "Recovers from all Special Conditions" reads as an immediate
         // sweep at the moment this becomes true for a Pokémon — playing

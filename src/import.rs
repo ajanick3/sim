@@ -396,6 +396,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             },
         ),
+        "Nighttime Mine" => (free, TrainerEffect::TeraAttacksCostMore),
         "Judge" => (free, TrainerEffect::BothShuffleHandThenDraw { you: 4, opponent: 4 }),
         "Lillie's Determination" => (
             free,
