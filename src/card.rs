@@ -461,6 +461,12 @@ pub enum TrainerEffect {
     /// player's own Tera Pokémon, they take one more Prize. Read in
     /// `knock_out_the_dead`. `Briar`.
     GrantsBonusPrizeIfOwnTeraAttackerKnocksOutThisTurn,
+    /// Discard a Special Energy from one of the opponent's Pokémon,
+    /// choosing which — opens
+    /// `Phase::DiscardingOpponentSpecialEnergy`. No Special Energy
+    /// anywhere on the opponent's board opens no phase. `Enhanced
+    /// Hammer`.
+    DiscardOpponentSpecialEnergy,
 }
 
 /// What a card demands before it may be played at all.

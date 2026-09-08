@@ -60,6 +60,9 @@ pub enum Action {
     FinishDeciding,
     /// Discard one Energy attached to a Pokémon the opponent controls.
     DiscardOpponentEnergy { card: CardId },
+    /// Discard one Special Energy attached to a Pokémon the opponent
+    /// controls, as part of `Phase::DiscardingOpponentSpecialEnergy`.
+    DiscardOpponentSpecialEnergy { card: CardId },
     /// Discard one card from hand toward what a card demanded to be played.
     PayWithCard { card: CardId },
     /// Move one attached Energy onto another Pokémon you control.
@@ -348,6 +351,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
+        Phase::DiscardingOpponentSpecialEnergy { chooser, .. } => Some(chooser),
         Phase::Checkup { player } => Some(player),
         Phase::Over => None,
     }
@@ -1001,6 +1005,16 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
+        Phase::DiscardingOpponentSpecialEnergy { of, .. } => {
+            for pokemon in state.player(of).in_play() {
+                for card in &state.pokemon(pokemon).attached {
+                    if state.def_of(*card).as_energy().is_some_and(|e| e.effect.is_some()) {
+                        actions.push(Action::DiscardOpponentSpecialEnergy { card: *card });
+                    }
+                }
+            }
+            return actions;
+        }
         Phase::EvolvingWithRareCandy { player: whose } => {
             for (card, target) in rare_candy_pairs(state, whose) {
                 actions.push(Action::EvolveSkippingOneStage { card, target });
@@ -1580,6 +1594,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
             state.def_of(card).name()
         ),
         Action::DiscardOpponentEnergy { card } => {
+            format!("Discard the opponent's {}", state.def_of(card).name())
+        }
+        Action::DiscardOpponentSpecialEnergy { card } => {
             format!("Discard the opponent's {}", state.def_of(card).name())
         }
         Action::ChooseWhoGoesFirst { first } => format!("{first:?} takes the first turn"),

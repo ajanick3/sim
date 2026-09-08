@@ -81,209 +81,209 @@ than guessed at, so the placement numbers have three gaps.
 
 | Card | Status |
 | --- | --- |
-| [AZ's Tranquility](src/import.rs#L717) | ✅ |
-| [Black Belt's Training](src/import.rs#L725) | ✅ |
+| [AZ's Tranquility](src/import.rs#L718) | ✅ |
+| [Black Belt's Training](src/import.rs#L726) | ✅ |
 | [Boss's Orders](src/import.rs#L378) | ✅ |
 | [Briar](src/import.rs#L380) | ✅ |
-| [Brock's Scouting](src/import.rs#L755) | ✅ |
-| [Ciphermaniac's Codebreaking](src/import.rs#L657) | ✅ |
-| [Crispin](src/import.rs#L563) | ✅ |
-| [Cyrano](src/import.rs#L435) | ✅ |
-| [Dawn](src/import.rs#L529) | ✅ |
-| [Eri](src/import.rs#L748) | ✅ |
-| [Gladion's Final Battle](src/import.rs#L729) | ✅ |
-| [Gwynn](src/import.rs#L449) | ✅ |
-| [Hilda](src/import.rs#L506) | ✅ |
-| [Janine's Secret Art](src/import.rs#L779) | ✅ |
-| [Judge](src/import.rs#L384) | ✅ |
-| [Kieran](src/import.rs#L733) | ✅ |
-| [Lana's Aid](src/import.rs#L683) | ✅ |
-| [Lillie's Determination](src/import.rs#L385) | ✅ |
-| [Morty's Conviction](src/import.rs#L743) | ✅ |
-| [N's Plan](src/import.rs#L701) | ✅ |
-| [Rosa's Encouragement](src/import.rs#L703) | ✅ |
-| [Rust Syndicate Grunt](src/import.rs#L697) | ✅ |
-| [Surfer](src/import.rs#L721) | ✅ |
-| [Team Rocket's Petrel](src/import.rs#L587) | ✅ |
-| [Wally's Compassion](src/import.rs#L778) | ✅ |
-| [Xerosic's Machinations](src/import.rs#L747) | ✅ |
+| [Brock's Scouting](src/import.rs#L756) | ✅ |
+| [Ciphermaniac's Codebreaking](src/import.rs#L658) | ✅ |
+| [Crispin](src/import.rs#L564) | ✅ |
+| [Cyrano](src/import.rs#L436) | ✅ |
+| [Dawn](src/import.rs#L530) | ✅ |
+| [Eri](src/import.rs#L749) | ✅ |
+| [Gladion's Final Battle](src/import.rs#L730) | ✅ |
+| [Gwynn](src/import.rs#L450) | ✅ |
+| [Hilda](src/import.rs#L507) | ✅ |
+| [Janine's Secret Art](src/import.rs#L780) | ✅ |
+| [Judge](src/import.rs#L385) | ✅ |
+| [Kieran](src/import.rs#L734) | ✅ |
+| [Lana's Aid](src/import.rs#L684) | ✅ |
+| [Lillie's Determination](src/import.rs#L386) | ✅ |
+| [Morty's Conviction](src/import.rs#L744) | ✅ |
+| [N's Plan](src/import.rs#L702) | ✅ |
+| [Rosa's Encouragement](src/import.rs#L704) | ✅ |
+| [Rust Syndicate Grunt](src/import.rs#L698) | ✅ |
+| [Surfer](src/import.rs#L722) | ✅ |
+| [Team Rocket's Petrel](src/import.rs#L588) | ✅ |
+| [Wally's Compassion](src/import.rs#L779) | ✅ |
+| [Xerosic's Machinations](src/import.rs#L748) | ✅ |
 
-### Items (26/28 built)
+### Items (27/28 built)
 
 | Card | Status |
 | --- | --- |
-| [Buddy-Buddy Poffin](src/import.rs#L421) | ✅ |
-| [Bug Catching Set](src/import.rs#L643) | ✅ |
-| [Crushing Hammer](src/import.rs#L420) | ✅ |
-| [Dusk Ball](src/import.rs#L809) | ✅ |
-| [Energy Recycler](src/import.rs#L891) | ✅ |
-| [Energy Retrieval](src/import.rs#L794) | ✅ |
-| [Energy Search](src/import.rs#L780) | ✅ |
-| [Energy Switch](src/import.rs#L491) | ✅ |
-| Enhanced Hammer | ❌ |
+| [Buddy-Buddy Poffin](src/import.rs#L422) | ✅ |
+| [Bug Catching Set](src/import.rs#L644) | ✅ |
+| [Crushing Hammer](src/import.rs#L421) | ✅ |
+| [Dusk Ball](src/import.rs#L810) | ✅ |
+| [Energy Recycler](src/import.rs#L892) | ✅ |
+| [Energy Retrieval](src/import.rs#L795) | ✅ |
+| [Energy Search](src/import.rs#L781) | ✅ |
+| [Energy Switch](src/import.rs#L492) | ✅ |
+| [Enhanced Hammer](src/import.rs#L384) | ✅ |
 | Glass Trumpet | ❌ |
-| [Hand Trimmer](src/import.rs#L808) | ✅ |
-| [Jumbo Ice Cream](src/import.rs#L679) | ✅ |
-| [N's PP Up](src/import.rs#L601) | ✅ |
-| [Night Stretcher](src/import.rs#L392) | ✅ |
-| [Prime Catcher](src/import.rs#L810) | ✅ |
-| [Rare Candy](src/import.rs#L586) | ✅ |
-| [Sacred Ash](src/import.rs#L463) | ✅ |
-| [Secret Box](src/import.rs#L840) | ✅ |
-| [Special Red Card](src/import.rs#L559) | ✅ |
-| [Strange Timepiece](src/import.rs#L811) | ✅ |
-| [Switch](src/import.rs#L678) | ✅ |
-| [Team Rocket's Transceiver](src/import.rs#L877) | ✅ |
-| [Tera Orb](src/import.rs#L492) | ✅ |
+| [Hand Trimmer](src/import.rs#L809) | ✅ |
+| [Jumbo Ice Cream](src/import.rs#L680) | ✅ |
+| [N's PP Up](src/import.rs#L602) | ✅ |
+| [Night Stretcher](src/import.rs#L393) | ✅ |
+| [Prime Catcher](src/import.rs#L811) | ✅ |
+| [Rare Candy](src/import.rs#L587) | ✅ |
+| [Sacred Ash](src/import.rs#L464) | ✅ |
+| [Secret Box](src/import.rs#L841) | ✅ |
+| [Special Red Card](src/import.rs#L560) | ✅ |
+| [Strange Timepiece](src/import.rs#L812) | ✅ |
+| [Switch](src/import.rs#L679) | ✅ |
+| [Team Rocket's Transceiver](src/import.rs#L878) | ✅ |
+| [Tera Orb](src/import.rs#L493) | ✅ |
 | [Tool Scrapper](src/import.rs#L379) | ✅ |
-| [Transformation Tome](src/import.rs#L836) | ✅ |
-| [Ultra Ball](src/import.rs#L477) | ✅ |
-| [Unfair Stamp](src/import.rs#L671) | ✅ |
-| [Wondrous Patch](src/import.rs#L615) | ✅ |
+| [Transformation Tome](src/import.rs#L837) | ✅ |
+| [Ultra Ball](src/import.rs#L478) | ✅ |
+| [Unfair Stamp](src/import.rs#L672) | ✅ |
+| [Wondrous Patch](src/import.rs#L616) | ✅ |
 
 ### Tools (9/9 built)
 
 | Card | Status |
 | --- | --- |
-| [Air Balloon](src/import.rs#L812) | ✅ |
-| [Binding Mochi](src/import.rs#L815) | ✅ |
-| [Brave Bangle](src/import.rs#L814) | ✅ |
-| [Handheld Fan](src/import.rs#L819) | ✅ |
-| [Hero's Cape](src/import.rs#L813) | ✅ |
-| [Lillie's Pearl](src/import.rs#L816) | ✅ |
-| [Lucky Helmet](src/import.rs#L818) | ✅ |
-| [Powerglass](src/import.rs#L820) | ✅ |
-| [Punk Helmet](src/import.rs#L817) | ✅ |
+| [Air Balloon](src/import.rs#L813) | ✅ |
+| [Binding Mochi](src/import.rs#L816) | ✅ |
+| [Brave Bangle](src/import.rs#L815) | ✅ |
+| [Handheld Fan](src/import.rs#L820) | ✅ |
+| [Hero's Cape](src/import.rs#L814) | ✅ |
+| [Lillie's Pearl](src/import.rs#L817) | ✅ |
+| [Lucky Helmet](src/import.rs#L819) | ✅ |
+| [Powerglass](src/import.rs#L821) | ✅ |
+| [Punk Helmet](src/import.rs#L818) | ✅ |
 
 ### Stadiums (9/13 built)
 
 | Card | Status |
 | --- | --- |
-| [Academy at Night](src/import.rs#L823) | ✅ |
+| [Academy at Night](src/import.rs#L824) | ✅ |
 | Area Zero Underdepths | ❌ |
 | Battle Cage | ❌ |
-| [Festival Grounds](src/import.rs#L832) | ✅ |
-| [Forest of Vitality](src/import.rs#L831) | ✅ |
-| [Gravity Mountain](src/import.rs#L821) | ✅ |
-| [Jamming Tower](src/import.rs#L829) | ✅ |
-| [Lumiose City](src/import.rs#L828) | ✅ |
-| [N's Castle](src/import.rs#L822) | ✅ |
+| [Festival Grounds](src/import.rs#L833) | ✅ |
+| [Forest of Vitality](src/import.rs#L832) | ✅ |
+| [Gravity Mountain](src/import.rs#L822) | ✅ |
+| [Jamming Tower](src/import.rs#L830) | ✅ |
+| [Lumiose City](src/import.rs#L829) | ✅ |
+| [N's Castle](src/import.rs#L823) | ✅ |
 | Nighttime Mine | ❌ |
-| [Risky Ruins](src/import.rs#L830) | ✅ |
-| [Team Rocket's Factory](src/import.rs#L824) | ✅ |
+| [Risky Ruins](src/import.rs#L831) | ✅ |
+| [Team Rocket's Factory](src/import.rs#L825) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
 ### Special Energy (7/7 built)
 
 | Card | Status |
 | --- | --- |
-| [Boomerang Energy](src/import.rs#L1184) | ✅ |
-| [Enriching Energy](src/import.rs#L1167) | ✅ |
-| [Growing Grass Energy](src/import.rs#L1166) | ✅ |
-| [Mist Energy](src/import.rs#L1181) | ✅ |
-| [Prism Energy](src/import.rs#L1187) | ✅ |
-| [Spiky Energy](src/import.rs#L1178) | ✅ |
-| [Telepathic Psychic Energy](src/import.rs#L1170) | ✅ |
+| [Boomerang Energy](src/import.rs#L1185) | ✅ |
+| [Enriching Energy](src/import.rs#L1168) | ✅ |
+| [Growing Grass Energy](src/import.rs#L1167) | ✅ |
+| [Mist Energy](src/import.rs#L1182) | ✅ |
+| [Prism Energy](src/import.rs#L1188) | ✅ |
+| [Spiky Energy](src/import.rs#L1179) | ✅ |
+| [Telepathic Psychic Energy](src/import.rs#L1171) | ✅ |
 
 ### Pokémon (69/95 built)
 
 | Card | Attacks | Ability |
 | --- | --- | --- |
-| Abra | [✅](src/import.rs#L1314) | [✅](src/import.rs#L1230) |
-| Alakazam | [✅](src/import.rs#L1372) | [✅](src/import.rs#L1220) |
+| Abra | [✅](src/import.rs#L1315) | [✅](src/import.rs#L1231) |
+| Alakazam | [✅](src/import.rs#L1373) | [✅](src/import.rs#L1221) |
 | Annihilape | ❌ | ❌ |
-| Applin | [✅](src/import.rs#L1304) | — |
-| Bayleef | [✅](src/import.rs#L1334) | — |
-| Beldum | [✅](src/import.rs#L1326) | — |
-| Blaziken ex | [✅](src/import.rs#L1355) | [✅](src/import.rs#L1236) |
+| Applin | [✅](src/import.rs#L1305) | — |
+| Bayleef | [✅](src/import.rs#L1335) | — |
+| Beldum | [✅](src/import.rs#L1327) | — |
+| Blaziken ex | [✅](src/import.rs#L1356) | [✅](src/import.rs#L1237) |
 | Bloodmoon Ursaluna ex | ❌ | ❌ |
 | Brute Bonnet | ❌ | — |
-| Budew | [✅](src/import.rs#L1339) | — |
-| Buneary | [✅](src/import.rs#L1333) | — |
-| Carvanha | [✅](src/import.rs#L1273) | — |
-| Celebi | [✅](src/import.rs#L1332) | — |
+| Budew | [✅](src/import.rs#L1340) | — |
+| Buneary | [✅](src/import.rs#L1334) | — |
+| Carvanha | [✅](src/import.rs#L1274) | — |
+| Celebi | [✅](src/import.rs#L1333) | — |
 | Chi-Yu | ❌ | — |
-| Chien-Pao | [✅](src/import.rs#L1356) | [✅](src/import.rs#L1239) |
-| Chikorita | [✅](src/import.rs#L1335) | — |
+| Chien-Pao | [✅](src/import.rs#L1357) | [✅](src/import.rs#L1240) |
+| Chikorita | [✅](src/import.rs#L1336) | — |
 | Cofagrigus | ❌ | — |
-| Combusken | [✅](src/import.rs#L1349) | — |
-| Crustle | [✅](src/import.rs#L1384) | [✅](src/import.rs#L1200) |
-| Dedenne | [✅](src/import.rs#L1301) | — |
-| Dipplin | [✅](src/import.rs#L1382) | ❌ |
-| Dragapult ex | [✅](src/import.rs#L1308) | — |
-| Drakloak | [✅](src/import.rs#L234) | [✅](src/import.rs#L1206) |
+| Combusken | [✅](src/import.rs#L1350) | — |
+| Crustle | [✅](src/import.rs#L1385) | [✅](src/import.rs#L1201) |
+| Dedenne | [✅](src/import.rs#L1302) | — |
+| Dipplin | [✅](src/import.rs#L1383) | ❌ |
+| Dragapult ex | [✅](src/import.rs#L1309) | — |
+| Drakloak | [✅](src/import.rs#L234) | [✅](src/import.rs#L1207) |
 | Dreepy | [✅](src/import.rs#L234) | — |
-| Drilbur | [✅](src/import.rs#L1315) | ❌ |
-| Dudunsparce | [✅](src/import.rs#L234) | [✅](src/import.rs#L1227) |
-| Dudunsparce ex | [✅](src/import.rs#L1286) | — |
-| Dunsparce | [✅](src/import.rs#L1327) | — |
-| Dusclops | [✅](src/import.rs#L234) | [✅](src/import.rs#L1231) |
-| Dusknoir | [✅](src/import.rs#L1353) | [✅](src/import.rs#L1232) |
-| Duskull | [✅](src/import.rs#L1330) | — |
-| Dwebble | [✅](src/import.rs#L1320) | — |
-| Elgyem | [✅](src/import.rs#L1338) | — |
+| Drilbur | [✅](src/import.rs#L1316) | ❌ |
+| Dudunsparce | [✅](src/import.rs#L234) | [✅](src/import.rs#L1228) |
+| Dudunsparce ex | [✅](src/import.rs#L1287) | — |
+| Dunsparce | [✅](src/import.rs#L1328) | — |
+| Dusclops | [✅](src/import.rs#L234) | [✅](src/import.rs#L1232) |
+| Dusknoir | [✅](src/import.rs#L1354) | [✅](src/import.rs#L1233) |
+| Duskull | [✅](src/import.rs#L1331) | — |
+| Dwebble | [✅](src/import.rs#L1321) | — |
+| Elgyem | [✅](src/import.rs#L1339) | — |
 | Enamorus | ❌ | — |
-| Fan Rotom | [✅](src/import.rs#L1360) | [✅](src/import.rs#L1249) |
-| Fezandipiti ex | [✅](src/import.rs#L1392) | [✅](src/import.rs#L1221) |
+| Fan Rotom | [✅](src/import.rs#L1361) | [✅](src/import.rs#L1250) |
+| Fezandipiti ex | [✅](src/import.rs#L1393) | [✅](src/import.rs#L1222) |
 | Flutter Mane | ❌ | ❌ |
-| Genesect | [✅](src/import.rs#L1364) | ❌ |
-| Genesect ex | [✅](src/import.rs#L1354) | [✅](src/import.rs#L1233) |
+| Genesect | [✅](src/import.rs#L1365) | ❌ |
+| Genesect ex | [✅](src/import.rs#L1355) | [✅](src/import.rs#L1234) |
 | Goldeen | [✅](src/import.rs#L234) | ❌ |
 | Grookey | [✅](src/import.rs#L234) | — |
-| Hoothoot | [✅](src/import.rs#L1317) | ❌ |
+| Hoothoot | [✅](src/import.rs#L1318) | ❌ |
 | Hydrapple ex | ❌ | ❌ |
 | Iron Crown ex | ❌ | ❌ |
-| Iron Leaves ex | [✅](src/import.rs#L1359) | [✅](src/import.rs#L1240) |
-| Kadabra | [✅](src/import.rs#L234) | [✅](src/import.rs#L1219) |
+| Iron Leaves ex | [✅](src/import.rs#L1360) | [✅](src/import.rs#L1241) |
+| Kadabra | [✅](src/import.rs#L234) | [✅](src/import.rs#L1220) |
 | Koraidon ex | ❌ | — |
 | Kyurem | ❌ | ❌ |
-| Latias ex | [✅](src/import.rs#L1378) | [✅](src/import.rs#L1199) |
+| Latias ex | [✅](src/import.rs#L1379) | [✅](src/import.rs#L1200) |
 | Lillie's Clefairy ex | ❌ | ❌ |
 | Mega Absol ex | ❌ | — |
 | Mega Excadrill ex | ❌ | — |
-| Mega Kangaskhan ex | [✅](src/import.rs#L1388) | [✅](src/import.rs#L1196) |
+| Mega Kangaskhan ex | [✅](src/import.rs#L1389) | [✅](src/import.rs#L1197) |
 | Mega Lopunny ex | ❌ | — |
-| Mega Sharpedo ex | [✅](src/import.rs#L1318) | — |
+| Mega Sharpedo ex | [✅](src/import.rs#L1319) | — |
 | Mega Skarmory ex | ❌ | — |
 | Mega Slowbro ex | ❌ | — |
 | Meganium | [✅](src/import.rs#L234) | ❌ |
-| Meowth ex | [✅](src/import.rs#L1391) | [✅](src/import.rs#L1218) |
+| Meowth ex | [✅](src/import.rs#L1392) | [✅](src/import.rs#L1219) |
 | Metagross | ❌ | — |
-| Metang | [✅](src/import.rs#L1379) | [✅](src/import.rs#L1209) |
-| Moltres | [✅](src/import.rs#L1328) | — |
-| Munkidori | [✅](src/import.rs#L1385) | [✅](src/import.rs#L1212) |
-| N's Darmanitan | [✅](src/import.rs#L1283) | — |
+| Metang | [✅](src/import.rs#L1380) | [✅](src/import.rs#L1210) |
+| Moltres | [✅](src/import.rs#L1329) | — |
+| Munkidori | [✅](src/import.rs#L1386) | [✅](src/import.rs#L1213) |
+| N's Darmanitan | [✅](src/import.rs#L1284) | — |
 | N's Darumaka | [✅](src/import.rs#L234) | — |
-| N's Reshiram | [✅](src/import.rs#L1280) | — |
-| N's Zekrom | [✅](src/import.rs#L1292) | — |
+| N's Reshiram | [✅](src/import.rs#L1281) | — |
+| N's Zekrom | [✅](src/import.rs#L1293) | — |
 | N's Zoroark ex | ❌ | ❌ |
 | N's Zorua | [✅](src/import.rs#L234) | — |
-| Noctowl | [✅](src/import.rs#L1381) | ❌ |
-| Paldean Tauros | [✅](src/import.rs#L1276) | — |
-| Passimian | [✅](src/import.rs#L1289) | — |
-| Patrat | [✅](src/import.rs#L1380) | [✅](src/import.rs#L1201) |
+| Noctowl | [✅](src/import.rs#L1382) | ❌ |
+| Paldean Tauros | [✅](src/import.rs#L1277) | — |
+| Passimian | [✅](src/import.rs#L1290) | — |
+| Patrat | [✅](src/import.rs#L1381) | [✅](src/import.rs#L1202) |
 | Pecharunt | ❌ | ❌ |
-| Pecharunt ex | [✅](src/import.rs#L1361) | [✅](src/import.rs#L1256) |
-| Psyduck | [✅](src/import.rs#L234) | [✅](src/import.rs#L1202) |
+| Pecharunt ex | [✅](src/import.rs#L1362) | [✅](src/import.rs#L1257) |
+| Psyduck | [✅](src/import.rs#L234) | [✅](src/import.rs#L1203) |
 | Rabsca | ❌ | ❌ |
 | Raging Bolt ex | ❌ | — |
-| Rellor | [✅](src/import.rs#L1274) | — |
-| Seaking | [✅](src/import.rs#L1368) | ❌ |
-| Shaymin | [✅](src/import.rs#L1375) | ❌ |
-| Slowking | [✅](src/import.rs#L1321) | — |
-| Slowpoke | [✅](src/import.rs#L1329) | ❌ |
+| Rellor | [✅](src/import.rs#L1275) | — |
+| Seaking | [✅](src/import.rs#L1369) | ❌ |
+| Shaymin | [✅](src/import.rs#L1376) | ❌ |
+| Slowking | [✅](src/import.rs#L1322) | — |
+| Slowpoke | [✅](src/import.rs#L1330) | ❌ |
 | Smoochum | ❌ | — |
 | Stunfisk | ❌ | — |
-| Tapu Bulu | [✅](src/import.rs#L1275) | — |
-| Tatsugiri | [✅](src/import.rs#L234) | [✅](src/import.rs#L1203) |
-| Teal Mask Ogerpon ex | [✅](src/import.rs#L1393) | [✅](src/import.rs#L1224) |
+| Tapu Bulu | [✅](src/import.rs#L1276) | — |
+| Tatsugiri | [✅](src/import.rs#L234) | [✅](src/import.rs#L1204) |
+| Teal Mask Ogerpon ex | [✅](src/import.rs#L1394) | [✅](src/import.rs#L1225) |
 | Thwackey | [✅](src/import.rs#L234) | ❌ |
-| Torchic | [✅](src/import.rs#L1331) | — |
-| Toxel | [✅](src/import.rs#L1316) | — |
-| Toxtricity | [✅](src/import.rs#L234) | [✅](src/import.rs#L1243) |
-| Wellspring Mask Ogerpon ex | [✅](src/import.rs#L1306) | — |
-| Yveltal | [✅](src/import.rs#L1305) | — |
-| Zeraora | [✅](src/import.rs#L1298) | — |
+| Torchic | [✅](src/import.rs#L1332) | — |
+| Toxel | [✅](src/import.rs#L1317) | — |
+| Toxtricity | [✅](src/import.rs#L234) | [✅](src/import.rs#L1244) |
+| Wellspring Mask Ogerpon ex | [✅](src/import.rs#L1307) | — |
+| Yveltal | [✅](src/import.rs#L1306) | — |
+| Zeraora | [✅](src/import.rs#L1299) | — |
 
 ## The documents
 

@@ -381,6 +381,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             Some(Requirement::OpponentPrizesExactly(2)),
             TrainerEffect::GrantsBonusPrizeIfOwnTeraAttackerKnocksOutThisTurn,
         ),
+        "Enhanced Hammer" => (free, TrainerEffect::DiscardOpponentSpecialEnergy),
         "Judge" => (free, TrainerEffect::BothShuffleHandThenDraw { you: 4, opponent: 4 }),
         "Lillie's Determination" => (
             free,

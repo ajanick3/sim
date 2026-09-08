@@ -235,6 +235,10 @@ pub enum Phase {
     /// needs this; a Pokémon's attachments are not a `Zone`, so `Deciding`
     /// cannot express it.
     DiscardingOpponentEnergy { chooser: PlayerId, of: PlayerId },
+    /// The narrower mirror of `DiscardingOpponentEnergy`, offering
+    /// only a Special Energy — one carrying an effect. `Enhanced
+    /// Hammer`.
+    DiscardingOpponentSpecialEnergy { chooser: PlayerId, of: PlayerId },
     /// `chooser` discards up to `remaining` cards matching `filter` from
     /// `of`'s hand — the same shape as `DiscardingOpponentEnergy`, over a
     /// hand instead of a Pokémon's attachments. `chooser == of` is
