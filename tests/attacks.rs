@@ -2677,3 +2677,79 @@ fn seaking_is_admitted_from_the_artifact() {
         "at least one Seaking print should play"
     );
 }
+
+// --- Beyond the spec: search the whole library for up to N cards of any kind ---
+
+#[test]
+fn takes_up_to_the_limit_of_any_cards_from_the_library() {
+    let attack = Attack {
+        name: "Talon Hunt",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchLibraryForUpToCardsOfAnyKindToHand(2)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::SearchingLibraryForAnyCards { .. }));
+    let first = state.player(player).library.last().copied().unwrap();
+    apply(&mut state, Action::TakeAnyCardFromLibrary { card: first }).unwrap();
+    assert!(matches!(state.phase, Phase::SearchingLibraryForAnyCards { .. }), "one more to take");
+
+    let second = state.player(player).library.last().copied().unwrap();
+    apply(&mut state, Action::TakeAnyCardFromLibrary { card: second }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&first));
+    assert!(state.player(player).hand.contains(&second));
+}
+
+#[test]
+fn can_stop_searching_any_cards_before_the_limit() {
+    let attack = Attack {
+        name: "Talon Hunt",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchLibraryForUpToCardsOfAnyKindToHand(2)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+    apply(&mut state, Action::FinishSearchingAnyCards).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn no_library_opens_no_phase_for_talon_hunt() {
+    let attack = Attack {
+        name: "Talon Hunt",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchLibraryForUpToCardsOfAnyKindToHand(2)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    state.players[player.index()].library.clear();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "an empty library has nothing to search");
+}
+
+#[test]
+fn noctowl_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Noctowl" && c.playable.is_some()),
+        "at least one Noctowl print should play"
+    );
+}

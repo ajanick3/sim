@@ -311,6 +311,10 @@ pub enum Phase {
     /// `player` used an attack that searches the entire library for
     /// an Item card to take into hand. `Patrat`'s `Procurement`.
     SearchingLibraryForItem { player: PlayerId },
+    /// `player` used an attack that searches the entire library for
+    /// up to `remaining` cards of any kind to take into hand.
+    /// `Noctowl`'s `Talon Hunt`.
+    SearchingLibraryForAnyCards { player: PlayerId, remaining: u32 },
     /// `player` used an attack that may move Energy off the opponent's
     /// Active into the opponent's hand, up to `remaining` more.
     /// `Slowking`'s `Wash the Slate Clean`.

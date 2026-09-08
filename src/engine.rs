@@ -899,6 +899,30 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::TakeAnyCardFromLibrary { card } => {
+            let (player, remaining) = match state.phase {
+                Phase::SearchingLibraryForAnyCards { player, remaining } => (player, remaining),
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} joins the hand."));
+            if remaining <= 1 {
+                finish_searching_library_for_any_cards(state, player);
+            } else {
+                state.phase = Phase::SearchingLibraryForAnyCards { player, remaining: remaining - 1 };
+            }
+        }
+
+        Action::FinishSearchingAnyCards => {
+            let player = match state.phase {
+                Phase::SearchingLibraryForAnyCards { player, .. } => player,
+                _ => return Err(IllegalAction),
+            };
+            finish_searching_library_for_any_cards(state, player);
+        }
+
         Action::MoveOpponentsActiveEnergyToHand { card } => {
             let (player, remaining) = match state.phase {
                 Phase::MovingOpponentsActiveEnergyToHand { player, remaining } => (player, remaining),
@@ -2881,6 +2905,12 @@ fn resolve_attack_effect(
                 state.phase = Phase::SearchingLibraryForItem { player: owner };
             }
         }
+        crate::card::AttackEffect::SearchLibraryForUpToCardsOfAnyKindToHand(count) => {
+            let owner = state.pokemon(attacker).owner;
+            if !state.player(owner).library.is_empty() {
+                state.phase = Phase::SearchingLibraryForAnyCards { player: owner, remaining: count };
+            }
+        }
     }
 }
 
@@ -2888,6 +2918,16 @@ fn resolve_attack_effect(
 /// early decline — both shuffle the library, the same as any other
 /// search that looked through it.
 fn finish_searching_library_for_basics(state: &mut GameState, player: PlayerId) {
+    let library = &mut state.players[player.index()].library;
+    shuffle(state.rng.as_mut(), library);
+    state.phase = Phase::Main;
+    settle(state);
+}
+
+/// `Phase::SearchingLibraryForAnyCards` ends either on its own limit or an
+/// early decline — both shuffle the library, the same as any other search
+/// that looked through it. `Noctowl`'s `Talon Hunt`.
+fn finish_searching_library_for_any_cards(state: &mut GameState, player: PlayerId) {
     let library = &mut state.players[player.index()].library;
     shuffle(state.rng.as_mut(), library);
     state.phase = Phase::Main;
