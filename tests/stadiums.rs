@@ -877,3 +877,103 @@ fn festival_grounds_does_not_protect_a_bare_pokemon() {
         "no Energy attached, so no protection"
     );
 }
+
+// --- Beyond the map: a Stadium that surcharges Tera attacks on both sides ---
+
+fn with_nighttime_mine(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-nighttime-mine",
+        name: "Nighttime Mine",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::TeraAttacksCostMore,
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn nighttime_mine_surcharges_a_tera_attacker_own_or_opponents() {
+    let (set, card) = with_nighttime_mine(build());
+    let mut db = set.db.clone();
+    let tera_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: vec![sim::card::Marker::Ex, sim::card::Marker::Tera],
+        print_id: "test-tera-attacker-mine",
+        name: "Testmon ex Tera",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let set = Set { db, ..set };
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+
+    // Swap both players' Actives for the Tera attacker.
+    for who in [player, opponent] {
+        let attacker_card = deal_new_card(&mut state, who, tera_mon);
+        let attacker = state.put_into_play(who, attacker_card);
+        state.players[who.index()].active = Some(attacker);
+    }
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    let active = state.player(player).active.unwrap();
+    assert!(
+        !legal_actions(&state).contains(&Action::Attack { index: 0 }),
+        "1 Colorless is not enough once Nighttime Mine surcharges a Tera attacker"
+    );
+
+    for _ in 0..2 {
+        let energy = deal_new_card(&mut state, player, set.energy);
+        state.pokemon[active.index()].attached.push(energy);
+    }
+    assert!(
+        legal_actions(&state).contains(&Action::Attack { index: 0 }),
+        "2 Colorless pays the surcharged cost"
+    );
+}
+
+#[test]
+fn nighttime_mine_does_not_surcharge_a_plain_attacker() {
+    let (set, card) = with_nighttime_mine(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let energy = deal_new_card(&mut state, player, set.energy);
+    state.pokemon[active.index()].attached.push(energy);
+
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert!(
+        legal_actions(&state).contains(&Action::Attack { index: 0 }),
+        "a plain (non-Tera) attacker pays only its printed cost"
+    );
+}
+
+#[test]
+fn nighttime_mine_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Nighttime Mine" && c.playable.is_some()),
+        "Nighttime Mine should play"
+    );
+}

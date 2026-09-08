@@ -467,6 +467,14 @@ pub enum TrainerEffect {
     /// anywhere on the opponent's board opens no phase. `Enhanced
     /// Hammer`.
     DiscardOpponentSpecialEnergy,
+    /// A standing effect, not a resolved-once one: while this Stadium
+    /// is in play, an attack used by a Pokémon carrying `Marker::Tera`
+    /// — either player's — costs one more Colorless Energy. Read
+    /// directly by `legal_actions`, the one site that ever checks
+    /// whether an attack is paid for; nothing else needs the cost
+    /// once an attack is legal to use, so no other site reads this.
+    /// `Nighttime Mine`.
+    TeraAttacksCostMore,
 }
 
 /// What a card demands before it may be played at all.

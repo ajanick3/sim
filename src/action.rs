@@ -1279,8 +1279,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 if target == active
         );
         if !state.is_first_turn_of_game() && !held(active) && !cannot_attack_at_all {
+            let tera_surcharge = state.pokemon_def(active).markers.contains(&crate::card::Marker::Tera)
+                && state.stadium_effect() == Some(crate::card::TrainerEffect::TeraAttacksCostMore);
             for (index, attack) in state.pokemon_def(active).attacks.iter().enumerate() {
-                if state.pays_cost(active, &attack.cost) {
+                let mut cost = attack.cost.clone();
+                if tera_surcharge {
+                    cost.push(crate::card::Type::Colorless);
+                }
+                if state.pays_cost(active, &cost) {
                     actions.push(Action::Attack { index });
                 }
             }
