@@ -817,6 +817,32 @@ pub enum AttackEffect {
     /// if the defender carries any, no discard otherwise.
     /// `Stunfisk`'s `Paralyzing Crackle`.
     CoinFlipInflictsAndDiscardsDefenderEnergy(Condition),
+    /// Discard exactly this many Energy cards attached to the
+    /// attacker, the player's choice of which — the attack's own
+    /// listed cost already guarantees at least this many are
+    /// attached. Opens `Phase::ChoosingOwnEnergyToDiscardForAttack`.
+    /// `Zeraora`'s `Strong Volt`, `Metagross`'s `Luster Blast`.
+    DiscardsFixedOwnEnergyChosen(u32),
+    /// The player may discard, one at a time up to this many, Energy
+    /// of this type attached to the attacker — discarding none at
+    /// all is a legal choice. If they discard at least one, this
+    /// attack does this much more damage regardless of how many were
+    /// actually discarded (the ruling on this exact card: choosing
+    /// the bonus with zero qualifying Energy attached still grants
+    /// it). Opens `Phase::DecidingToDiscardOwnEnergyForBonusDamage`.
+    /// `Metagross`'s `Metallic Hammer`.
+    MayDiscardUpToOwnEnergyOfTypeForFlatBonusDamage(Type, u32, u32),
+    /// The player may discard any number of Basic Energy cards from
+    /// anywhere among their own Pokémon, not only the attacker — this
+    /// attack does this much damage for each card discarded that way.
+    /// Opens `Phase::DiscardingAnyBasicEnergyForDamagePerCard`.
+    /// `Raging Bolt ex`'s `Bellowing Thunder`.
+    MayDiscardAnyOwnBasicEnergyForDamagePerCard(u32),
+    /// Discard the whole hand, then draw this many cards outright —
+    /// unlike `TrainerEffect::ShuffleHandThenDraw`, the discarded
+    /// hand goes to the discard pile, not back into the deck.
+    /// `Raging Bolt ex`'s `Burst Roar`.
+    DiscardsHandThenDrawsCards(u32),
     /// Flip this many coins; this much damage for each heads. Read
     /// once, the same pre-`damage_dealt_with` slot `DamagePerCount`
     /// already occupies, but counted from flips rather than a board

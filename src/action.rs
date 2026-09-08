@@ -66,6 +66,25 @@ pub enum Action {
     /// Discard one Energy attached to `Phase::DiscardingDefenderEnergyForAttack`'s
     /// own target Pokémon.
     DiscardDefenderEnergyForAttack { card: CardId },
+    /// Discard one Energy attached to `Phase::ChoosingOwnEnergyToDiscardForAttack`'s
+    /// own attacker.
+    DiscardOwnEnergyForAttack { card: CardId },
+    /// Accept `Phase::DecidingToDiscardOwnEnergyForBonusDamage`'s
+    /// bonus — grants it outright, moves to actually discarding.
+    AcceptDiscardOwnEnergyForBonusDamage,
+    /// Decline it — no bonus, no discard.
+    DeclineDiscardOwnEnergyForBonusDamage,
+    /// Discard one Energy as part of
+    /// `Phase::ChoosingOwnEnergyToDiscardForBonusDamage`.
+    DiscardOwnEnergyForBonusDamage { card: CardId },
+    /// Stop discarding early, as part of the same phase.
+    FinishDiscardingOwnEnergyForBonusDamage,
+    /// Discard one Basic Energy from any of the player's own Pokémon,
+    /// as part of `Phase::DiscardingAnyBasicEnergyForDamagePerCard`.
+    DiscardBasicEnergyForDamagePerCard { card: CardId },
+    /// Stop discarding, applying whatever damage the cards discarded
+    /// so far earned.
+    FinishDiscardingBasicEnergyForDamagePerCard,
     /// Discard this own Benched Pokémon, as part of
     /// `Phase::DiscardingBenchDownTo`. Not a Knockout: no Prize, no
     /// `knocked_out` flag.
@@ -365,6 +384,10 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::DiscardingOpponentSpecialEnergy { chooser, .. } => Some(chooser),
         Phase::DiscardingDefenderEnergyForAttack { chooser, .. } => Some(chooser),
+        Phase::ChoosingOwnEnergyToDiscardForAttack { player, .. } => Some(player),
+        Phase::DecidingToDiscardOwnEnergyForBonusDamage { player, .. } => Some(player),
+        Phase::ChoosingOwnEnergyToDiscardForBonusDamage { player, .. } => Some(player),
+        Phase::DiscardingAnyBasicEnergyForDamagePerCard { player, .. } => Some(player),
         Phase::DiscardingBenchDownTo { player, .. } => Some(player),
         Phase::Checkup { player } => Some(player),
         Phase::Over => None,
@@ -1059,6 +1082,39 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
+        Phase::ChoosingOwnEnergyToDiscardForAttack { attacker, .. } => {
+            for card in &state.pokemon(attacker).attached {
+                if state.def_of(*card).is_energy() {
+                    actions.push(Action::DiscardOwnEnergyForAttack { card: *card });
+                }
+            }
+            return actions;
+        }
+        Phase::DecidingToDiscardOwnEnergyForBonusDamage { .. } => {
+            actions.push(Action::AcceptDiscardOwnEnergyForBonusDamage);
+            actions.push(Action::DeclineDiscardOwnEnergyForBonusDamage);
+            return actions;
+        }
+        Phase::ChoosingOwnEnergyToDiscardForBonusDamage { attacker, kind, .. } => {
+            for card in &state.pokemon(attacker).attached {
+                if state.matches_filter(*card, crate::card::CardFilter::BasicEnergyOfType(kind)) {
+                    actions.push(Action::DiscardOwnEnergyForBonusDamage { card: *card });
+                }
+            }
+            actions.push(Action::FinishDiscardingOwnEnergyForBonusDamage);
+            return actions;
+        }
+        Phase::DiscardingAnyBasicEnergyForDamagePerCard { player: whose, .. } => {
+            for pokemon in state.player(whose).in_play() {
+                for card in &state.pokemon(pokemon).attached {
+                    if state.matches_filter(*card, crate::card::CardFilter::BasicEnergy) {
+                        actions.push(Action::DiscardBasicEnergyForDamagePerCard { card: *card });
+                    }
+                }
+            }
+            actions.push(Action::FinishDiscardingBasicEnergyForDamagePerCard);
+            return actions;
+        }
         Phase::DiscardingBenchDownTo { player: whose, .. } => {
             for pokemon in &state.player(whose).bench {
                 actions.push(Action::DiscardBenchedPokemon { pokemon: *pokemon });
@@ -1682,6 +1738,19 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DiscardDefenderEnergyForAttack { card } => {
             format!("Discard the defender's {}", state.def_of(card).name())
         }
+        Action::DiscardOwnEnergyForAttack { card } => {
+            format!("Discard {}", state.def_of(card).name())
+        }
+        Action::AcceptDiscardOwnEnergyForBonusDamage => "Discard Energy for bonus damage".to_string(),
+        Action::DeclineDiscardOwnEnergyForBonusDamage => "Decline the bonus damage".to_string(),
+        Action::DiscardOwnEnergyForBonusDamage { card } => {
+            format!("Discard {}", state.def_of(card).name())
+        }
+        Action::FinishDiscardingOwnEnergyForBonusDamage => "Stop discarding".to_string(),
+        Action::DiscardBasicEnergyForDamagePerCard { card } => {
+            format!("Discard {}", state.def_of(card).name())
+        }
+        Action::FinishDiscardingBasicEnergyForDamagePerCard => "Stop discarding".to_string(),
         Action::DiscardBenchedPokemon { pokemon } => {
             format!("Discard {} from the Bench", state.pokemon_def(pokemon).name)
         }

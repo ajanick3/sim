@@ -243,6 +243,50 @@ pub enum Phase {
     /// specific Pokémon, not a whole side) to discard.
     /// `Stunfisk`'s `Paralyzing Crackle`.
     DiscardingDefenderEnergyForAttack { chooser: PlayerId, target: PokemonId },
+    /// `player` must discard `remaining` more Energy cards attached
+    /// to `attacker`, their own choice of which. `Zeraora`'s `Strong
+    /// Volt`, `Metagross`'s `Luster Blast`.
+    ChoosingOwnEnergyToDiscardForAttack { player: PlayerId, attacker: PokemonId, remaining: u32 },
+    /// `player` may choose to attempt the bonus at all — declining
+    /// grants nothing; accepting grants `bonus` outright (per the
+    /// ruling on this exact card: choosing it with zero qualifying
+    /// Energy attached still grants it) and moves to
+    /// `ChoosingOwnEnergyToDiscardForBonusDamage` to actually discard
+    /// up to `max`. `Metagross`'s `Metallic Hammer`.
+    DecidingToDiscardOwnEnergyForBonusDamage {
+        player: PlayerId,
+        attacker: PokemonId,
+        defender: PokemonId,
+        kind: crate::card::Type,
+        max: u32,
+        bonus: u32,
+    },
+    /// `player` already took `bonus` damage's worth of `Metallic
+    /// Hammer`-shaped commitment; now discarding up to `remaining`
+    /// Energy of `kind` attached to `attacker`, their own choice of
+    /// which and free to stop early.
+    ChoosingOwnEnergyToDiscardForBonusDamage {
+        player: PlayerId,
+        attacker: PokemonId,
+        kind: crate::card::Type,
+        remaining: u32,
+    },
+    /// `player` may discard any number of Basic Energy cards from
+    /// anywhere among their own Pokémon; `attacker`, `defender`, and
+    /// `per_card` carry what the eventual damage needs once the
+    /// player stops — Weakness and Resistance apply to that damage
+    /// the same way they would to any other, but no other bonus
+    /// (a Tool, a turn bonus, `Cobalt Command`) reaches it, since it
+    /// is computed after the ordinary attack-damage pipeline has
+    /// already run and returned. `Raging Bolt ex`'s `Bellowing
+    /// Thunder`.
+    DiscardingAnyBasicEnergyForDamagePerCard {
+        player: PlayerId,
+        attacker: PokemonId,
+        defender: PokemonId,
+        per_card: u32,
+        discarded_so_far: u32,
+    },
     /// `player`'s own Bench holds more than `BENCH_LIMIT` and must
     /// shrink to it — `Area Zero Underdepths`, either because
     /// `player`'s last Tera Pokémon just left play, or because the
