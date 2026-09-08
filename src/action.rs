@@ -63,6 +63,9 @@ pub enum Action {
     /// Discard one Special Energy attached to a Pokémon the opponent
     /// controls, as part of `Phase::DiscardingOpponentSpecialEnergy`.
     DiscardOpponentSpecialEnergy { card: CardId },
+    /// Discard one Energy attached to `Phase::DiscardingDefenderEnergyForAttack`'s
+    /// own target Pokémon.
+    DiscardDefenderEnergyForAttack { card: CardId },
     /// Discard this own Benched Pokémon, as part of
     /// `Phase::DiscardingBenchDownTo`. Not a Knockout: no Prize, no
     /// `knocked_out` flag.
@@ -361,6 +364,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::EvolvingWithRareCandy { player } => Some(player),
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::DiscardingOpponentSpecialEnergy { chooser, .. } => Some(chooser),
+        Phase::DiscardingDefenderEnergyForAttack { chooser, .. } => Some(chooser),
         Phase::DiscardingBenchDownTo { player, .. } => Some(player),
         Phase::Checkup { player } => Some(player),
         Phase::Over => None,
@@ -1047,6 +1051,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
+        Phase::DiscardingDefenderEnergyForAttack { target, .. } => {
+            for card in &state.pokemon(target).attached {
+                if state.def_of(*card).is_energy() {
+                    actions.push(Action::DiscardDefenderEnergyForAttack { card: *card });
+                }
+            }
+            return actions;
+        }
         Phase::DiscardingBenchDownTo { player: whose, .. } => {
             for pokemon in &state.player(whose).bench {
                 actions.push(Action::DiscardBenchedPokemon { pokemon: *pokemon });
@@ -1665,6 +1677,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::DiscardOpponentSpecialEnergy { card } => {
             format!("Discard the opponent's {}", state.def_of(card).name())
+        }
+        Action::DiscardDefenderEnergyForAttack { card } => {
+            format!("Discard the defender's {}", state.def_of(card).name())
         }
         Action::DiscardBenchedPokemon { pokemon } => {
             format!("Discard {} from the Bench", state.pokemon_def(pokemon).name)

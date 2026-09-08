@@ -802,6 +802,21 @@ pub enum AttackEffect {
     /// Benched Pokémon carry damage. `Koraidon ex`'s `Revenge
     /// Buster`.
     BonusDamageIfOwnBenchDamaged(u32),
+    /// This much more damage, but only if any of the attacker's own
+    /// Pokémon in play share a type with any of the opponent's
+    /// Pokémon in play. `Enamorus`'s `Love Resonance`.
+    BonusDamageIfSharedTypeInPlay(u32),
+    /// This much more damage, but only if the attacker has any
+    /// Energy of this type attached — a threshold check, unlike
+    /// `Count::OwnEnergyOfTypeAttachedCount`'s own per-unit
+    /// multiplier. `Stunfisk`'s `Muddy Bolt`.
+    BonusDamageIfOwnEnergyOfTypeAttached(Type, u32),
+    /// Flip a coin. If heads, the defender is inflicted with this
+    /// condition, and the player picks one Energy attached to the
+    /// defender to discard — opens `Phase::DiscardingDefenderEnergyForAttack`
+    /// if the defender carries any, no discard otherwise.
+    /// `Stunfisk`'s `Paralyzing Crackle`.
+    CoinFlipInflictsAndDiscardsDefenderEnergy(Condition),
     /// Flip this many coins; this much damage for each heads. Read
     /// once, the same pre-`damage_dealt_with` slot `DamagePerCount`
     /// already occupies, but counted from flips rather than a board
@@ -931,6 +946,9 @@ pub enum Count {
     BothBenchedPokemonCount,
     /// Energy attached to the defender alone. `Rabsca`'s `Psychic`.
     DefenderEnergyAttachedCount,
+    /// Damage counters already on the defender. `Brute Bonnet`'s
+    /// `Relentless Punches`.
+    DefenderDamageCounters,
 }
 
 /// How far along its evolution line a Pokémon card is printed. The artifact

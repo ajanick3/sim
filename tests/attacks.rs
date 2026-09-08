@@ -3268,3 +3268,195 @@ fn annihilapes_impact_blow_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv10-092").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Annihilape's Impact Blow print should play");
 }
+
+// --- Beyond the spec: bonus damage per the defender's own damage counters ---
+
+#[test]
+fn bonus_damage_per_defender_damage_counters() {
+    let attack = Attack {
+        name: "Relentless Punches",
+        cost: vec![Type::Colorless],
+        base_damage: 50,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamagePerCount(sim::card::Count::DefenderDamageCounters, 50)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    state.pokemon[defender.index()].damage = 20; // 2 counters
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 20 + 50 + 100, "50 base plus 2 counters times 50");
+}
+
+#[test]
+fn brute_bonnets_relentless_punches_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv06-118").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Brute Bonnet's Relentless Punches print should play");
+}
+
+// --- Beyond the spec: bonus damage only sharing a type with the opponent's side ---
+
+#[test]
+fn bonus_damage_if_a_shared_type_is_in_play() {
+    let attack = Attack {
+        name: "Love Resonance",
+        cost: vec![Type::Colorless],
+        base_damage: 80,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfSharedTypeInPlay(120)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 200, "both sides are Colorless in this fixture");
+}
+
+#[test]
+fn enamorus_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Enamorus" && c.playable.is_some()),
+        "at least one Enamorus print should play"
+    );
+}
+
+// --- Beyond the spec: bonus damage only with the right Energy type attached ---
+
+#[test]
+fn bonus_damage_if_own_energy_of_type_attached() {
+    let attack = Attack {
+        name: "Muddy Bolt",
+        cost: vec![Type::Colorless],
+        base_damage: 20,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfOwnEnergyOfTypeAttached(Type::Fighting, 20)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let fighting_energy = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-fighting-energy",
+        name: "Fighting Energy",
+        kind: Type::Fighting,
+        effect: None,
+    }));
+    let card = deal_new_card(&mut state, player, fighting_energy);
+    state.pokemon[attacker.index()].attached.push(card);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 40, "20 base plus the 20 bonus");
+}
+
+#[test]
+fn no_bonus_damage_without_the_right_energy_type() {
+    let attack = Attack {
+        name: "Muddy Bolt",
+        cost: vec![Type::Colorless],
+        base_damage: 20,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfOwnEnergyOfTypeAttached(Type::Fighting, 20)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 20, "only Colorless Energy attached, no bonus");
+}
+
+#[test]
+fn stunfisks_muddy_bolt_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv10.5w-035").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Stunfisk's Muddy Bolt print should play");
+}
+
+// --- Beyond the spec: coin-flip condition, plus a discard from the defender ---
+
+#[test]
+fn paralyzing_crackle_offers_a_discard_only_when_it_paralyzes() {
+    let attack = Attack {
+        name: "Paralyzing Crackle",
+        cost: vec![Type::Colorless],
+        base_damage: 50,
+        inflicts: None,
+        effect: Some(AttackEffect::CoinFlipInflictsAndDiscardsDefenderEnergy(
+            sim::card::Condition::Paralyzed,
+        )),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let energy_card = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.pokemon[defender.index()].attached.push(energy_card);
+
+    pay_and_attack(&mut state);
+
+    if state.has_condition(defender, sim::card::Condition::Paralyzed) {
+        assert!(matches!(state.phase, Phase::DiscardingDefenderEnergyForAttack { .. }), "heads: offers the discard");
+        apply(&mut state, Action::DiscardDefenderEnergyForAttack { card: energy_card }).unwrap();
+        assert_eq!(state.phase, Phase::Main);
+        assert!(!state.pokemon(defender).attached.contains(&energy_card));
+        assert!(state.player(opponent).discard.contains(&energy_card));
+    } else {
+        assert_eq!(state.phase, Phase::Main, "tails: neither the condition nor the discard happens");
+        assert!(state.pokemon(defender).attached.contains(&energy_card), "tails: nothing is discarded");
+    }
+}
+
+#[test]
+fn paralyzing_crackle_opens_no_discard_with_no_energy_attached() {
+    let attack = Attack {
+        name: "Paralyzing Crackle",
+        cost: vec![Type::Colorless],
+        base_damage: 50,
+        inflicts: None,
+        effect: Some(AttackEffect::CoinFlipInflictsAndDiscardsDefenderEnergy(
+            sim::card::Condition::Paralyzed,
+        )),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "nothing attached on the defender, so no discard phase opens");
+}
+
+#[test]
+fn stunfisks_paralyzing_crackle_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv08-064").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Stunfisk's Paralyzing Crackle print should play");
+}
