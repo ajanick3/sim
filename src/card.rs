@@ -1126,6 +1126,14 @@ pub enum EnergyEffect {
     /// names what is "done to" the carrier, not every consequence an
     /// attack has anywhere on the board. `Mist Energy`.
     PreventsAttackEffectsOnCarrier,
+    /// If this card is discarded as part of an attack's own effect,
+    /// by the Pokémon it was attached to (never a Trainer, an
+    /// opponent's effect, or a retreat cost), it returns to that
+    /// Pokémon once the discard is done. Read at the one site an
+    /// attack's own effect discards its own attacker's Energy,
+    /// `DiscardsOwnEnergyThenDamagesChosenBenched`. `Boomerang
+    /// Energy`.
+    ReattachesAfterOwnDiscardByAttackEffect,
 }
 
 #[derive(Debug, Clone)]

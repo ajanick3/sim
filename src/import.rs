@@ -1018,6 +1018,9 @@ fn known_energy(name: &str) -> Option<(Type, crate::card::EnergyEffect)> {
         "Mist Energy" => {
             (Type::Colorless, crate::card::EnergyEffect::PreventsAttackEffectsOnCarrier)
         }
+        "Boomerang Energy" => {
+            (Type::Colorless, crate::card::EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect)
+        }
         _ => return None,
     })
 }

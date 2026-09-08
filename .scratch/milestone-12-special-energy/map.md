@@ -68,6 +68,13 @@ one new thing to it.
   effect that writes directly onto a Pokémon should check the helper
   too. Details under [the ticket's
   Answer](issues/05-a-passive-effect-prevention-on-the-carrier.md).
+- Ticket 06: no general "why was this discarded" mechanism needed —
+  only one site discards the attacker's own attached Energy as part
+  of an attack's own effect
+  (`DiscardsOwnEnergyThenDamagesChosenBenched`), so
+  `EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect` is read
+  right there. Details under [the ticket's
+  Answer](issues/06-reattaching-after-its-own-discard.md).
 
 ## Fog
 
