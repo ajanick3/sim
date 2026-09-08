@@ -989,6 +989,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Drakloak", "Recon Directive") => {
             AbilityEffect::OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(2)
         }
+        ("Metang", "Metal Maker") => {
+            AbilityEffect::OncePerTurnMayLookAtTopCardsAttachFoundBasicEnergyOfType(4, Type::Metal)
+        }
         ("Munkidori", "Adrena-Brain") => {
             AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 Type::Darkness,
@@ -1151,6 +1154,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Shaymin", "Send Flowers") => AttackEffect::SearchEnergyAttachToBenchedOfType(Type::Grass),
         ("Shaymin", "Reflect Energy") => AttackEffect::MoveOwnAttachedEnergyToChosenBenched,
         ("Latias ex", "Eon Blade") => AttackEffect::AttackerCannotAttackNextTurn,
+        ("Metang", "Guard Press") => AttackEffect::SelfDamageReductionNextTurn(30),
         ("Munkidori", "Mind Bend") => {
             AttackEffect::InflictsCondition(crate::card::Condition::Confused)
         }

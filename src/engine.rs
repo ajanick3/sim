@@ -1210,6 +1210,17 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     state.spend(Limit::AbilityUsed(player, ability.name));
                     state.phase = Phase::LookingAtTopCardsToTakeOne { player, pokemon, count };
                 }
+                crate::card::AbilityEffect::OncePerTurnMayLookAtTopCardsAttachFoundBasicEnergyOfType(
+                    count,
+                    kind,
+                ) => {
+                    // Spent immediately, the same reasoning as
+                    // `OncePerTurnMayLookAtTopCardsTakeOneRestToBottom`.
+                    let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+                    state.spend(Limit::AbilityUsed(player, ability.name));
+                    state.phase =
+                        Phase::ResolvingEnergyFoundInTopPeek { player, pokemon, kind, remaining: count };
+                }
             }
         }
 
@@ -1498,6 +1509,45 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.log.push(format!("{name} taken from the top (Recon Directive)."));
             state.phase = Phase::Main;
             settle(state);
+        }
+
+        Action::AttachFoundEnergyTo { card, target } => {
+            let (player, pokemon, kind, remaining) = match state.phase {
+                Phase::ResolvingEnergyFoundInTopPeek { player, pokemon, kind, remaining } => {
+                    (player, pokemon, kind, remaining)
+                }
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.pokemon[target.index()].attached.push(card);
+            let name = state.def_of(card).name();
+            let target_name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} attaches to {target_name} (Metal Maker)."));
+            let left = remaining - 1;
+            if left == 0 {
+                state.phase = Phase::Main;
+                settle(state);
+            } else {
+                state.phase = Phase::ResolvingEnergyFoundInTopPeek { player, pokemon, kind, remaining: left };
+            }
+        }
+
+        Action::PutFoundCardOnBottom { card } => {
+            let (player, pokemon, kind, remaining) = match state.phase {
+                Phase::ResolvingEnergyFoundInTopPeek { player, pokemon, kind, remaining } => {
+                    (player, pokemon, kind, remaining)
+                }
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].library.insert(0, card);
+            let left = remaining - 1;
+            if left == 0 {
+                state.phase = Phase::Main;
+                settle(state);
+            } else {
+                state.phase = Phase::ResolvingEnergyFoundInTopPeek { player, pokemon, kind, remaining: left };
+            }
         }
 
         Action::AcceptSnowSink => {
