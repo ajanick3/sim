@@ -1205,6 +1205,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     side.prizes.len() > state.player(player.opponent()).prizes.len()
                 }
                 Some(Requirement::HandSizeIs(count)) => side.hand.len() as u32 == count,
+                Some(Requirement::OpponentPrizesExactly(exactly)) => {
+                    state.player(player.opponent()).prizes.len() == exactly
+                }
                 Some(Requirement::SecondCopyOfThisInHand) => {
                     let def = state.cards[card.index()].def;
                     side.hand
