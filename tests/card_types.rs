@@ -24,8 +24,8 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
         "a Supporter is refused as a Supporter"
     );
     // Enhanced Hammer discards a Special Energy — refused outright,
-    // since this pool never admits a special Energy at all
-    // (Refusal::IsASpecialEnergy), so no target could ever exist.
+    // needing a discard-any-Special-Energy shape Milestone 12 has
+    // not built yet, even though a Special Energy can now exist.
     assert_eq!(
         reason_for("sv06-148"),
         Some(Refusal::IsATrainer(TrainerKind::Item)),
@@ -92,9 +92,9 @@ fn the_kinds_add_up_to_the_pool() {
     // this session (`TrainerEffect::MayDiscardUpToTwoToolsAnywhere`),
     // takes it down to 273.
     assert_eq!(trainers, 273, "the Trainers still refused, by kind");
-    // Milestone 12 (Special Energy) admitted Growing Grass Energy,
-    // the first print, taking this from 21 to 20.
-    assert_eq!(count(Refusal::IsASpecialEnergy), 20, "every Energy card");
+    // Milestone 12 (Special Energy) admitted Growing Grass Energy and
+    // Enriching Energy, taking this from 21 to 19.
+    assert_eq!(count(Refusal::IsASpecialEnergy), 19, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
         0,

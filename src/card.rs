@@ -1089,6 +1089,13 @@ pub enum EnergyEffect {
     /// action; read directly by `effective_hp`, the same way a
     /// Tool's own `IncreasesHp` already is. `Growing Grass Energy`.
     IncreasesCarrierHp(u32),
+    /// The moment this card is attached from hand — never when it
+    /// arrives any other way (dealt directly onto the board, moved
+    /// by another effect) — the player draws this many cards. Read
+    /// directly by `Action::AttachEnergy`'s own apply handler, the
+    /// only site a card ever leaves hand to attach. `Enriching
+    /// Energy`.
+    DrawCardsOnAttachFromHand(u32),
 }
 
 #[derive(Debug, Clone)]

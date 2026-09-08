@@ -42,6 +42,11 @@ one new thing to it.
   like `Jamming Tower` names only Tools in its own printed text.
   See [ADR 0080](../../docs/adr/0080-a-special-energy-carries-its-own-effect.md),
   which supersedes [ADR 0034](../../docs/adr/0034-enhanced-hammer-is-refused-for-a-card-kind-out-of-scope.md).
+- Ticket 02: an attach-from-hand trigger needs no new plumbing —
+  `Action::AttachEnergy`'s own apply handler is the only site a card
+  ever leaves hand to attach, so `EnergyEffect::DrawCardsOnAttachFromHand`
+  is read directly there, right after the card joins `attached`.
+  Details under [the ticket's Answer](issues/02-an-attach-from-hand-trigger.md).
 
 ## Fog
 
