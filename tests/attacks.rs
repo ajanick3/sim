@@ -2354,3 +2354,67 @@ fn alakazam_is_admitted_from_the_artifact() {
         "at least one Alakazam print should play"
     );
 }
+
+// --- Beyond the spec: damage to a chosen Benched Pokemon ex ---
+
+#[test]
+fn deals_damage_to_a_chosen_benched_ex_only() {
+    let attack = Attack {
+        name: "Pinpoint Dive",
+        cost: vec![Type::Colorless],
+        base_damage: 60,
+        inflicts: None,
+        effect: Some(AttackEffect::DamageChosenOpponentBenchedEx(60)),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    // A plain (non-ex) Benched Pokemon, from the fixture's own defender.
+    let plain_bench_def = state.cards[state.pokemon(state.player(opponent).active.unwrap()).top_card().index()].def;
+    let plain_bench_card = deal_new_card(&mut state, opponent, plain_bench_def);
+    let plain_bench = state.put_into_play(opponent, plain_bench_card);
+    state.players[opponent.index()].bench.push(plain_bench);
+
+    let ex_bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let ex_bench = state.put_into_play(opponent, ex_bench_card);
+    state.players[opponent.index()].bench.push(ex_bench);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingBenchedExDamageTarget { .. }));
+    let actions = legal_actions(&state);
+    assert!(actions.contains(&Action::DamageBenchedEx { target: ex_bench }));
+    assert!(!actions.contains(&Action::DamageBenchedEx { target: plain_bench }));
+
+    apply(&mut state, Action::DamageBenchedEx { target: ex_bench }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(ex_bench).damage, 60);
+    assert_eq!(state.pokemon(plain_bench).damage, 0);
+}
+
+#[test]
+fn no_benched_ex_opens_no_phase() {
+    let attack = Attack {
+        name: "Pinpoint Dive",
+        cost: vec![Type::Colorless],
+        base_damage: 60,
+        inflicts: None,
+        effect: Some(AttackEffect::DamageChosenOpponentBenchedEx(60)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no Benched Pokemon ex to target");
+}
+
+#[test]
+fn shaymin_pinpoint_dive_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv05-013").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Shaymin's Pinpoint Dive print should play");
+}

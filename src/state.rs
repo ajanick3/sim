@@ -349,6 +349,10 @@ pub enum Phase {
     /// opponent's Pokémon of their choosing, Active or Benched alike.
     /// `Fezandipiti ex`'s `Cruel Arrow`.
     ChoosingAnyOpponentPokemonDamageTarget { player: PlayerId, damage: u32 },
+    /// The narrower mirror of `ChoosingAnyOpponentPokemonDamageTarget`,
+    /// offering only the opponent's Benched Pokémon ex. `Shaymin`'s
+    /// `Pinpoint Dive`.
+    ChoosingBenchedExDamageTarget { player: PlayerId, damage: u32 },
     /// `player` opened `pokemon`'s own Ability that attaches Energy
     /// from hand as the effect itself. `Teal Mask Ogerpon ex`'s
     /// `Teal Dance`.

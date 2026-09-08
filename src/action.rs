@@ -186,6 +186,9 @@ pub enum Action {
     /// Deal `Phase::ChoosingAnyOpponentPokemonDamageTarget`'s flat
     /// damage to this Pokémon, Active or Benched.
     DamageChosenOpponentPokemon { target: PokemonId },
+    /// Deal `Phase::ChoosingBenchedExDamageTarget`'s flat damage to
+    /// this Benched Pokémon ex.
+    DamageBenchedEx { target: PokemonId },
     /// Attach this Energy from hand, as part of
     /// `Phase::DecidingToUseTealDance`.
     AttachEnergyForTealDance { card: CardId },
@@ -275,6 +278,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToUseLastDitchCatch { player, .. } => Some(player),
         Phase::DecidingToUsePsychicDraw { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
+        Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
         Phase::DecidingToUseTealDance { player, .. } => Some(player),
         Phase::DecidingCursedBlastTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => Some(player),
@@ -613,6 +617,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player: whose, .. } => {
             for pokemon in state.player(whose.opponent()).in_play() {
                 actions.push(Action::DamageChosenOpponentPokemon { target: pokemon });
+            }
+            return actions;
+        }
+        Phase::ChoosingBenchedExDamageTarget { player: whose, .. } => {
+            for pokemon in &state.player(whose.opponent()).bench {
+                if state.pokemon_def(*pokemon).prizes > 1 {
+                    actions.push(Action::DamageBenchedEx { target: *pokemon });
+                }
             }
             return actions;
         }
@@ -1403,6 +1415,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::AcceptPsychicDraw => "Use Psychic Draw".to_string(),
         Action::DeclinePsychicDraw => "Decline Psychic Draw".to_string(),
         Action::DamageChosenOpponentPokemon { target } => {
+            format!("Damage {}", state.pokemon_def(target).name)
+        }
+        Action::DamageBenchedEx { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
         }
         Action::AttachEnergyForTealDance { card } => {
