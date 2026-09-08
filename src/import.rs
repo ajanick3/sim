@@ -1168,6 +1168,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Metang", "Guard Press") => AttackEffect::SelfDamageReductionNextTurn(30),
         ("Patrat", "Procurement") => AttackEffect::SearchLibraryForItemCardToHand,
         ("Noctowl", "Talon Hunt") => AttackEffect::SearchLibraryForUpToCardsOfAnyKindToHand(2),
+        ("Dipplin", "Energy Loop") => AttackEffect::MoveOwnAttachedEnergyToHand,
         ("Crustle", "Superb Scissors") => AttackEffect::IgnoresDefendersEffects,
         ("Munkidori", "Mind Bend") => {
             AttackEffect::InflictsCondition(crate::card::Condition::Confused)
