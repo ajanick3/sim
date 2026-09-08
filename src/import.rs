@@ -1285,6 +1285,7 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Iron Crown ex", "Cobalt Command") => {
             AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(20)
         }
+        ("Annihilape", "Lose Cool") => AbilityEffect::PassiveBonusDamageToActiveIfSelfDamaged(120),
         ("Tatsugiri", "Attract Customers") => {
             AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(6)
         }
@@ -1418,6 +1419,14 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Rabsca", "Psychic") => AttackEffect::DamagePerCount(Count::DefenderEnergyAttachedCount, 30),
         ("Rabsca", "Counterturn") => AttackEffect::BonusDamageIfOwnLibraryAtMost(3, 200),
         ("Iron Crown ex", "Twin Shotels") => AttackEffect::DamageTwoChosenOpponentPokemon(50),
+        ("Koraidon ex", "Retribution Strike") => {
+            AttackEffect::BonusDamagePerCount(Count::OwnDamageCounters, 10)
+        }
+        ("Koraidon ex", "Kaiser Tackle") => AttackEffect::Recoil(60),
+        ("Koraidon ex", "Orichalcum Fang") => AttackEffect::BonusDamageIfOwnKnockedOutLastTurn(120),
+        ("Koraidon ex", "Impact Blow") => AttackEffect::CannotUseThisAttackNextTurn,
+        ("Koraidon ex", "Revenge Buster") => AttackEffect::BonusDamageIfOwnBenchDamaged(120),
+        ("Annihilape", "Impact Blow") => AttackEffect::CannotUseThisAttackNextTurn,
         ("Celebi", "Collect") => AttackEffect::DrawCards(1),
         ("Buneary", "Run Around") => AttackEffect::SwitchOwnActive,
         ("Bayleef", "Push Down") => AttackEffect::SwitchOpponentActive,

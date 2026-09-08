@@ -1319,7 +1319,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         if !state.is_first_turn_of_game() && !held(active) && !cannot_attack_at_all {
             let tera_surcharge = state.pokemon_def(active).markers.contains(&crate::card::Marker::Tera)
                 && state.stadium_effect() == Some(crate::card::TrainerEffect::TeraAttacksCostMore);
+            let locked_attack_name = matches!(
+                state.locked_attack_next_turn,
+                Some((target, _, true)) if target == active
+            )
+            .then(|| state.locked_attack_next_turn.unwrap().1);
             for (index, attack) in state.pokemon_def(active).attacks.iter().enumerate() {
+                if Some(attack.name) == locked_attack_name {
+                    continue;
+                }
                 let mut cost = attack.cost.clone();
                 if tera_surcharge {
                     cost.push(crate::card::Type::Colorless);
@@ -1428,6 +1436,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench => false,
             crate::card::AbilityEffect::PassivePreventsAttackEffectsOnBench => false,
             crate::card::AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(_) => false,
+            crate::card::AbilityEffect::PassiveBonusDamageToActiveIfSelfDamaged(_) => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
                 _,

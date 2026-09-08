@@ -3053,3 +3053,218 @@ fn iron_crown_exs_twin_shotels_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv05-081").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Iron Crown ex's Twin Shotels print should play");
 }
+
+// --- Beyond the spec: base damage plus a per-count bonus, additive not multiplicative ---
+
+#[test]
+fn bonus_damage_per_count_adds_to_the_printed_base() {
+    let attack = Attack {
+        name: "Retribution Strike",
+        cost: vec![Type::Colorless],
+        base_damage: 20,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamagePerCount(sim::card::Count::OwnDamageCounters, 10)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    state.pokemon[attacker.index()].damage = 30; // 3 counters
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 50, "20 base plus 3 counters times 10, not 30 alone");
+}
+
+// --- Beyond the spec: bonus damage only after an own Knockout last turn ---
+
+#[test]
+fn bonus_damage_if_own_knocked_out_last_turn() {
+    let attack = Attack {
+        name: "Orichalcum Fang",
+        cost: vec![Type::Colorless],
+        base_damage: 50,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfOwnKnockedOutLastTurn(120)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    state.knocked_out_last_turn[player.index()] = true;
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 170, "an own Knockout last turn, so the bonus applies");
+}
+
+#[test]
+fn no_bonus_damage_without_an_own_knockout_last_turn() {
+    let attack = Attack {
+        name: "Orichalcum Fang",
+        cost: vec![Type::Colorless],
+        base_damage: 50,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfOwnKnockedOutLastTurn(120)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 50, "no Knockout last turn");
+}
+
+// --- Beyond the spec: bonus damage only with a damaged own Bench ---
+
+#[test]
+fn bonus_damage_if_own_bench_damaged() {
+    let attack = Attack {
+        name: "Revenge Buster",
+        cost: vec![Type::Colorless],
+        base_damage: 100,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfOwnBenchDamaged(120)),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let bench_card = deal_new_card(&mut state, player, defender_ex);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+    state.pokemon[bench_mon.index()].damage = 10;
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 220, "the own Bench carries damage, so the bonus applies");
+}
+
+// --- Beyond the spec: a specific named attack locked out, not the whole turn ---
+
+#[test]
+fn cannot_use_this_attack_next_turn_leaves_the_pokemons_other_attack_usable() {
+    let mut db = CardDb::new();
+    let attacker_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-locked-attack-attacker",
+        name: "Koraidon ex",
+        hp: 230,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![
+            Attack {
+                name: "Impact Blow",
+                cost: vec![Type::Colorless],
+                base_damage: 200,
+                inflicts: None,
+                effect: Some(AttackEffect::CannotUseThisAttackNextTurn),
+            },
+            Attack {
+                name: "Other Move",
+                cost: vec![Type::Colorless],
+                base_damage: 10,
+                inflicts: None,
+                effect: None,
+            },
+        ],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-locked-attack-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    // Both sides run the same deck: whichever player ends up moving
+    // first (Rule 17 makes that turn parity, not deck order, decide
+    // who attacks first), the attacker has both attacks available.
+    let mut deck = vec![attacker_mon; 4];
+    while deck.len() < 60 {
+        deck.push(energy);
+    }
+    let mut state =
+        GameState::new(db, [deck.clone(), deck], Box::new(SeededRng::new(3)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    pay_and_attack(&mut state);
+    // The attack already ended the attacker's own turn; one more
+    // EndTurn closes the opponent's, landing back on the attacker's
+    // own very next turn.
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+
+    // Now it's the attacker's own next turn: Impact Blow is locked,
+    // Other Move is not.
+    let attacks: Vec<_> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::Attack { index } => Some(state.pokemon_def(active).attacks[index].name),
+            _ => None,
+        })
+        .collect();
+    assert!(!attacks.contains(&"Impact Blow"), "Impact Blow is locked out this turn");
+    assert!(attacks.contains(&"Other Move"), "the Pokemon's other attack is untouched");
+}
+
+#[test]
+fn koraidon_exs_retribution_strike_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv05-120").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Koraidon ex's Retribution Strike print should play");
+}
+
+#[test]
+fn koraidon_exs_orichalcum_fang_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me02.5-121").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Koraidon ex's Orichalcum Fang print should play");
+}
+
+#[test]
+fn koraidon_exs_revenge_buster_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "svp-197").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Koraidon ex's Revenge Buster print should play");
+}
+
+#[test]
+fn annihilapes_impact_blow_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv10-092").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Annihilape's Impact Blow print should play");
+}
