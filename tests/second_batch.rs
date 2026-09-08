@@ -34,6 +34,7 @@ fn basic(
     evolve_from: Option<&'static str>,
 ) -> CardDefId {
     db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id,
         name,
         hp,
@@ -65,6 +66,7 @@ fn build() -> Set {
     let small = basic(&mut db, "test-small", "Smallmon", 70, 1, None);
     let stage1 = basic(&mut db, "test-stage1", "Bigmon", 120, 1, Some("Smallmon"));
     let stage2 = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-stage2",
         name: "Hugemon",
         hp: 180,
@@ -1652,6 +1654,7 @@ fn pp_up_offers_only_a_benched_pokemon_whose_name_starts_with_ns() {
 fn with_wondrous_patch(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
     let mut db = set.db.clone();
     let psychic_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-psychic-mon",
         name: "Psymon",
         hp: 90,
@@ -1971,6 +1974,7 @@ fn bug_catching_sets_filter_admits_grass_pokemon_and_grass_energy_alike() {
 /// this specific gets its fixture dealt in rather than pre-built.
 fn db_add_grass_mon(state: &mut GameState) -> CardDefId {
     state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-grass-mon",
         name: "Grassmon",
         hp: 60,

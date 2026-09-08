@@ -14,8 +14,8 @@ use serde_json::Value;
 
 use crate::card::{
     Ability, AbilityEffect, Attack, AttackEffect, CardDb, CardDef, CardFilter, Count, Destination,
-    Energy, Pokemon, PromoteFollowUp, Requirement, Slot, Stage, TargetFilter, Then, Trainer,
-    TrainerEffect, TrainerKind, TurnBonusTarget, Type, Zone,
+    Energy, Marker, Pokemon, PromoteFollowUp, Requirement, Slot, Stage, TargetFilter, Then,
+    Trainer, TrainerEffect, TrainerKind, TurnBonusTarget, Type, Zone,
 };
 use crate::ids::CardDefId;
 
@@ -320,20 +320,23 @@ fn read_card(card: &Value, lineage: &HashMap<&str, &str>) -> Result<CardDef, Ref
         Stage::Basic | Stage::Stage1 => None,
     };
 
+    let print_id = card["id"].as_str().unwrap_or("?");
+    let markers = markers_for(print_id, name);
     Ok(CardDef::Pokemon(Pokemon {
-        print_id: leak(card["id"].as_str().unwrap_or("?")),
-        name: leak(card["name"].as_str().unwrap_or("?")),
+        print_id: leak(print_id),
+        name: leak(name),
         hp: card["hp"].as_u64().ok_or(Refusal::UnknownSymbol)? as u32,
         kind,
         weakness: read_modifier(&card["weaknesses"], &["×2", "x2"])?,
         resistance: read_modifier(&card["resistances"], &["-30"])?,
         retreat_cost: card["retreat"].as_u64().unwrap_or(0) as u8,
-        prizes: prizes_for(card["name"].as_str().unwrap_or("")),
+        prizes: prizes_for(&markers),
         stage,
         evolve_from,
         evolves_from_basic,
         ability,
         attacks,
+        markers,
     }))
 }
 
@@ -482,6 +485,20 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             },
         ),
         "Energy Switch" => (free, TrainerEffect::MoveAttachedEnergy),
+        "Tera Orb" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::TeraPokemon,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         "Hilda" => (
             free,
             TrainerEffect::Decide {
@@ -897,19 +914,161 @@ fn trainer_kind(card: &Value) -> TrainerKind {
     }
 }
 
-/// What a knockout of this card is worth, read from its name.
+/// What a print carries beyond its species name, per
+/// [`crate::card::Pokemon::markers`].
 ///
-/// TCGdex's `suffix` field cannot be trusted for this: it is absent on 21 ex
-/// cards, `Mega Charizard X ex` among them, and it uses both `ex` and `EX`.
-/// The name is exact — every card carrying a suffix also ends in ` ex`, and 21
-/// more do — so the name is what this reads. A Trainer named `Mega Signal` is
-/// why the caller must already know this is a Pokémon.
-fn prizes_for(name: &str) -> u32 {
-    if !name.to_lowercase().ends_with(" ex") {
-        return 1;
+/// `ex` and `Mega` are read from the name — TCGdex's `suffix` field
+/// cannot be trusted for this: it is absent on 21 ex cards, `Mega
+/// Charizard X ex` among them, and it uses both `ex` and `EX`. The
+/// name is exact — every card carrying a suffix also ends in ` ex`,
+/// and 21 more do. `Tera` is read from `print_id` against
+/// `TERA_PRINT_IDS` instead: the artifact carries no field for it at
+/// all, and two prints can share an identical name where only one is
+/// Tera (`Hydreigon ex`'s Surging Sparks print is Tera; its
+/// Black Bolt/White Flare print is not), so the name alone can never
+/// answer this one.
+pub fn markers_for(print_id: &str, name: &str) -> Vec<Marker> {
+    let mut markers = Vec::new();
+    if name.to_lowercase().ends_with(" ex") {
+        markers.push(Marker::Ex);
+        if name.starts_with("Mega ") {
+            markers.push(Marker::Mega);
+        }
     }
-    if name.starts_with("Mega ") { 3 } else { 2 }
+    if TERA_PRINT_IDS.contains(&print_id) {
+        markers.push(Marker::Tera);
+    }
+    markers
 }
+
+/// What a knockout of a Pokémon carrying these markers is worth.
+pub fn prizes_for(markers: &[Marker]) -> u32 {
+    if markers.contains(&Marker::Mega) {
+        3
+    } else if markers.contains(&Marker::Ex) {
+        2
+    } else {
+        1
+    }
+}
+
+/// Every Tera print in the artifact, by its own `id` — cross-checked
+/// by hand against pkmncards.com's `is:tera` listing (150 cards) and
+/// this artifact's own H/I/J-regulation pool: 104 of the 150 are
+/// present here, the rest predate this artifact's regulation floor.
+/// Pokémon TCG stopped printing new Tera cards after the sets already
+/// represented below — this list is closed and permanent, not one to
+/// extend as later sets import. A name is not enough to identify one:
+/// `Hydreigon ex`, `Pikachu ex`, `Terapagos ex`, `Lapras ex`,
+/// `Greninja ex`, `Koraidon ex`, and `Miraidon ex` each print both a
+/// Tera version (listed here) and a plain one (not listed) under the
+/// exact same name.
+const TERA_PRINT_IDS: &[&str] = &[
+    "me02.5-038",
+    "me02.5-057",
+    "me02.5-073",
+    "me02.5-121",
+    "me02.5-160",
+    "me02.5-179",
+    "me02.5-277",
+    "sv05-060",
+    "sv05-108",
+    "sv05-190",
+    "sv05-194",
+    "sv06-025",
+    "sv06-029",
+    "sv06-040",
+    "sv06-064",
+    "sv06-106",
+    "sv06-112",
+    "sv06-130",
+    "sv06-190",
+    "sv06-191",
+    "sv06-192",
+    "sv06-194",
+    "sv06-198",
+    "sv06-199",
+    "sv06-200",
+    "sv06-211",
+    "sv06-212",
+    "sv06-213",
+    "sv06-214",
+    "sv06-215",
+    "sv06-221",
+    "sv06.5-015",
+    "sv06.5-081",
+    "sv07-028",
+    "sv07-032",
+    "sv07-051",
+    "sv07-128",
+    "sv07-157",
+    "sv07-158",
+    "sv07-159",
+    "sv07-168",
+    "sv07-170",
+    "sv07-173",
+    "sv08-036",
+    "sv08-057",
+    "sv08-086",
+    "sv08-091",
+    "sv08-106",
+    "sv08-119",
+    "sv08-133",
+    "sv08-142",
+    "sv08-159",
+    "sv08-219",
+    "sv08-221",
+    "sv08-222",
+    "sv08-223",
+    "sv08-225",
+    "sv08-226",
+    "sv08-228",
+    "sv08-238",
+    "sv08-240",
+    "sv08-242",
+    "sv08-247",
+    "sv08-248",
+    "sv08.5-006",
+    "sv08.5-012",
+    "sv08.5-014",
+    "sv08.5-017",
+    "sv08.5-023",
+    "sv08.5-026",
+    "sv08.5-027",
+    "sv08.5-030",
+    "sv08.5-034",
+    "sv08.5-041",
+    "sv08.5-058",
+    "sv08.5-060",
+    "sv08.5-073",
+    "sv08.5-075",
+    "sv08.5-144",
+    "sv08.5-145",
+    "sv08.5-146",
+    "sv08.5-147",
+    "sv08.5-148",
+    "sv08.5-149",
+    "sv08.5-150",
+    "sv08.5-152",
+    "sv08.5-153",
+    "sv08.5-155",
+    "sv08.5-156",
+    "sv08.5-160",
+    "sv08.5-161",
+    "sv08.5-165",
+    "sv08.5-167",
+    "sv08.5-169",
+    "sv08.5-177",
+    "sv08.5-179",
+    "sv08.5-180",
+    "svp-163",
+    "svp-164",
+    "svp-165",
+    "svp-166",
+    "svp-174",
+    "svp-175",
+    "svp-176",
+];
 
 /// Whether every attack this raw print carries would read on its own,
 /// regardless of whether its Ability (if any) also reads. Milestone 11

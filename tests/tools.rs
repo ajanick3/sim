@@ -34,6 +34,7 @@ fn basic(
     evolve_from: Option<&'static str>,
 ) -> CardDefId {
     db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id,
         name,
         hp,
@@ -64,6 +65,7 @@ fn build() -> Set {
     let mon_ex = basic(&mut db, "test-mon-ex", "Testmon ex", 200, 2, None);
     let stage1 = basic(&mut db, "test-stage1", "Bigmon", 120, 1, Some("Smallmon"));
     let stage2 = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-stage2",
         name: "Hugemon",
         hp: 180,
@@ -537,6 +539,7 @@ fn binding_mochi_adds_damage_only_while_poisoned() {
 fn lillies_pearl_game(with_pearl: bool) -> (GameState, u32) {
     let mut db = CardDb::new();
     let lillies_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-lillies-mon",
         name: "Lillie's Testmon",
         hp: 30,

@@ -15,6 +15,7 @@ use sim::state::{GameState, Phase};
 fn one_pokemon_game(hp: u32, kind: Type) -> (GameState, sim::ids::PokemonId) {
     let mut db = CardDb::new();
     let mon_def = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-carrier",
         name: "Energymon",
         hp,
@@ -139,6 +140,7 @@ fn game_through_setup(seed: u64) -> GameState {
 fn game_through_setup_of_type(seed: u64, kind: Type) -> GameState {
     let mut db = CardDb::new();
     let mon_def = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-carrier",
         name: "Energymon",
         hp: 100,
@@ -233,6 +235,7 @@ fn searches_up_to_the_limit_of_basic_pokemon_of_type_to_the_bench() {
     let target = state.player(player).active.unwrap();
 
     let psychic_basic_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-psychic-basic",
         name: "Psychicmon",
         hp: 60,
@@ -371,6 +374,7 @@ fn attacker_and_defender_game_with_attack(
 ) -> (GameState, sim::ids::PokemonId, sim::ids::PokemonId) {
     let mut db = CardDb::new();
     let attacker_def = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-attacker",
         name: "Attackmon",
         hp: 200,
@@ -386,6 +390,7 @@ fn attacker_and_defender_game_with_attack(
         attacks: vec![attack],
     }));
     let defender_def = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-defender",
         name: "Defendmon",
         hp: 200,
@@ -679,6 +684,7 @@ fn prism_energy_pays_only_colorless_off_a_basic() {
     let mut state_and_pokemon = one_pokemon_game(100, Type::Colorless);
     let state = &mut state_and_pokemon.0;
     let evolution_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
         print_id: "test-evolution-carrier",
         name: "Evolvemon",
         hp: 100,
