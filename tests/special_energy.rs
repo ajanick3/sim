@@ -584,3 +584,74 @@ fn mist_energy_is_admitted_from_the_artifact() {
         "at least one Mist Energy print should play"
     );
 }
+
+// --- Ticket 06: reattaching after its own discard ---
+
+#[test]
+fn returns_after_being_discarded_by_the_attackers_own_attack_effect() {
+    let attack = sim::card::Attack {
+        name: "Flamebody Cannon",
+        cost: vec![Type::Colorless],
+        base_damage: 10,
+        inflicts: None,
+        effect: Some(sim::card::AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenched(10)),
+    };
+    let (mut state, attacker, _defender) = attacker_and_defender_game_with_attack(3, attack);
+    let owner = state.pokemon(attacker).owner;
+
+    let boomerang_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-boomerang-energy",
+        name: "Boomerang Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect),
+    }));
+    let boomerang = attach(&mut state, attacker, boomerang_def);
+    let plain_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-plain-energy-discarded",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let plain = attach(&mut state, attacker, plain_def);
+
+    pay_and_attack(&mut state, attacker);
+
+    assert!(
+        state.pokemon(attacker).attached.contains(&boomerang),
+        "Boomerang Energy returns after its own discard"
+    );
+    assert!(!state.player(owner).discard.contains(&boomerang));
+    assert!(state.player(owner).discard.contains(&plain), "a plain Energy stays discarded");
+    assert!(!state.pokemon(attacker).attached.contains(&plain));
+}
+
+#[test]
+fn does_not_return_when_discarded_any_other_way() {
+    let (mut state, pokemon) = one_pokemon_game(100, Type::Colorless);
+    let player = state.current;
+
+    let boomerang_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-boomerang-energy-other-way",
+        name: "Boomerang Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect),
+    }));
+    let boomerang = attach(&mut state, pokemon, boomerang_def);
+    state.pokemon[pokemon.index()].attached.retain(|c| *c != boomerang);
+    state.players[player.index()].discard.push(boomerang);
+
+    assert!(state.player(player).discard.contains(&boomerang), "a plain discard, no attack effect involved");
+    assert!(!state.pokemon(pokemon).attached.contains(&boomerang));
+}
+
+#[test]
+fn boomerang_energy_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Boomerang Energy" && c.playable.is_some()),
+        "at least one Boomerang Energy print should play"
+    );
+}

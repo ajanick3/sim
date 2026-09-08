@@ -2776,12 +2776,24 @@ fn resolve_attack_effect(
                 .copied()
                 .filter(|c| state.def_of(*c).is_energy())
                 .collect();
+            let mut to_reattach = Vec::new();
             for card in energy {
                 state.pokemon[attacker.index()].attached.retain(|c| *c != card);
                 state.players[owner.index()].discard.push(card);
+                if state.def_of(card).as_energy().and_then(|e| e.effect)
+                    == Some(crate::card::EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect)
+                {
+                    to_reattach.push(card);
+                }
             }
             let name = state.pokemon_def(attacker).name;
             state.log.push(format!("{name} discards all its Energy."));
+            for card in to_reattach {
+                state.players[owner.index()].discard.retain(|c| *c != card);
+                state.pokemon[attacker.index()].attached.push(card);
+                let energy_name = state.def_of(card).name();
+                state.log.push(format!("{energy_name} returns to {name}."));
+            }
             if !state.player(owner.opponent()).bench.is_empty() {
                 state.phase = Phase::ChoosingBenchDamageTarget {
                     player: owner,

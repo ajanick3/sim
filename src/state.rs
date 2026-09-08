@@ -817,7 +817,8 @@ impl GameState {
                         ..,
                     )
                     | crate::card::EnergyEffect::CountersAttackerOnDamageTakenWhileActive(_)
-                    | crate::card::EnergyEffect::PreventsAttackEffectsOnCarrier,
+                    | crate::card::EnergyEffect::PreventsAttackEffectsOnCarrier
+                    | crate::card::EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect,
                 )
                 | None => 0,
             })
