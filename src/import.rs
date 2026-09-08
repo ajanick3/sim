@@ -1286,6 +1286,7 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
             AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(20)
         }
         ("Annihilape", "Lose Cool") => AbilityEffect::PassiveBonusDamageToActiveIfSelfDamaged(120),
+        ("Hoothoot", "Insomnia") => AbilityEffect::PassiveImmuneToAsleep,
         ("Tatsugiri", "Attract Customers") => {
             AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(6)
         }
@@ -1446,6 +1447,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         }
         ("Combusken", "Double Kick") => {
             AttackEffect::DamagePerCoinFlipHeads { flips: 2, per_head: 40 }
+        }
+        ("Hoothoot", "Triple Stab") => {
+            AttackEffect::DamagePerCoinFlipHeads { flips: 3, per_head: 10 }
         }
         ("Elgyem", "Slight Shift") => AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon,
         ("Dusknoir", "Shadow Bind") => AttackEffect::DefenderCannotRetreatNextTurn,

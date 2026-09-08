@@ -426,3 +426,89 @@ fn a_checkup_knockout_takes_a_prize_before_the_next_turn() {
     assert_eq!(state.phase, Phase::Main);
     assert!(state.turn_number > turn_before, "then the next turn starts");
 }
+
+// --- Beyond the map: a Pokemon immune to Asleep by its own Ability ---
+
+#[test]
+fn insomnia_prevents_asleep_outright() {
+    let mut db = CardDb::new();
+    let sleeper = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-insomnia-carrier",
+        name: "Hoothoot",
+        hp: 60,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(sim::card::Ability {
+            name: "Insomnia",
+            effect: sim::card::AbilityEffect::PassiveImmuneToAsleep,
+        }),
+        attacks: vec![],
+    }));
+    let other = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-insomnia-other",
+        name: "Plainmon",
+        hp: 60,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-insomnia-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let mut deck_one = vec![sleeper; 4];
+    while deck_one.len() < 60 {
+        deck_one.push(energy);
+    }
+    let mut deck_two = vec![other; 4];
+    while deck_two.len() < 60 {
+        deck_two.push(energy);
+    }
+    let mut state = GameState::new(db, [deck_one, deck_two], Box::new(SeededRng::new(3)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    let carrier = state.player(sim::ids::PlayerId::One).active.unwrap();
+
+    state.inflict(carrier, Condition::Asleep);
+
+    assert!(!state.has_condition(carrier, Condition::Asleep), "Insomnia prevents it outright");
+}
+
+#[test]
+fn hoothoots_triple_stab_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv07-114").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Hoothoot's Triple Stab print should play");
+}
+
+#[test]
+fn hoothoots_insomnia_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv08.5-077").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Hoothoot's Insomnia print should play");
+}

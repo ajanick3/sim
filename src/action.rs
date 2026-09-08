@@ -1437,6 +1437,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassivePreventsAttackEffectsOnBench => false,
             crate::card::AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(_) => false,
             crate::card::AbilityEffect::PassiveBonusDamageToActiveIfSelfDamaged(_) => false,
+            crate::card::AbilityEffect::PassiveImmuneToAsleep => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
                 _,
