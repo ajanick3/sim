@@ -608,7 +608,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::DistributingDamageCounters { player: whose, .. } => {
             let opponent = whose.opponent();
             for pokemon in &state.player(opponent).bench {
-                if !state.bench_damage_counters_blocked(whose, *pokemon) {
+                if !state.bench_damage_counters_blocked(whose, *pokemon)
+                    && !state.bench_attack_damage_blocked(whose, *pokemon)
+                {
                     actions.push(Action::PlaceDamageCounter { target: *pokemon });
                 }
             }
@@ -1406,6 +1408,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement => false,
             crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities => false,
             crate::card::AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(..) => false,
+            crate::card::AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
                 _,

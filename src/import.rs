@@ -1222,6 +1222,7 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Lillie's Clefairy ex", "Fairy Zone") => {
             AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(Type::Dragon, Type::Psychic)
         }
+        ("Shaymin", "Flower Curtain") => AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench,
         ("Tatsugiri", "Attract Customers") => {
             AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(6)
         }

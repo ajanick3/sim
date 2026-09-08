@@ -2235,3 +2235,210 @@ fn fairy_zone_applies_from_the_bench_when_a_different_psychic_pokemon_attacks() 
         "Fairy Zone still overrides the Weakness from the Bench, even though Slowking (not the carrier) is attacking"
     );
 }
+
+// --- Beyond the map: an Ability that shields the non-Rule-Box Bench from attacks ---
+
+/// A game where the second player's Active carries `Flower Curtain`,
+/// and the first player's Active has the named attack — built by
+/// hand rather than reusing `game`, since Flower Curtain protects
+/// the *defending* side's Bench, not the carrier's own.
+fn flower_curtain_game(attacker_attack: Attack, seed: u64) -> (GameState, sim::ids::CardDefId) {
+    let mut db = CardDb::new();
+    let attacker_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-flower-curtain-attacker",
+        name: "Attackmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![attacker_attack],
+    }));
+    let carrier = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-flower-curtain-carrier",
+        name: "Shaymin",
+        hp: 70,
+        kind: Type::Grass,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Flower Curtain",
+            effect: sim::card::AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench,
+        }),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-flower-curtain-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let mut attacker_deck = vec![attacker_mon; 4];
+    while attacker_deck.len() < 60 {
+        attacker_deck.push(energy);
+    }
+    let mut defender_deck = vec![carrier; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(energy);
+    }
+    let mut state =
+        GameState::new(db, [attacker_deck, defender_deck], Box::new(SeededRng::new(seed)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    (state, carrier)
+}
+
+fn pay_and_attack_flower_curtain(state: &mut GameState) {
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let cost_len = state.pokemon_def(active).attacks[0].cost.len();
+    for _ in 0..cost_len {
+        let side = state.player(player);
+        let card = side
+            .hand
+            .iter()
+            .chain(side.library.iter())
+            .find(|c| state.def_of(**c).is_energy())
+            .copied()
+            .expect("the deck holds Energy");
+        state.remove_from_hand(player, card);
+        state.players[player.index()].library.retain(|c| *c != card);
+        state.pokemon[active.index()].attached.push(card);
+    }
+    let attack = legal_actions(state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the attacker is paid for");
+    apply(state, attack).unwrap();
+}
+
+#[test]
+fn flower_curtain_blocks_flat_bench_damage_from_an_opponents_attack() {
+    let attack = Attack {
+        name: "Flamebody Cannon",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(sim::card::AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenched(90)),
+    };
+    let (mut state, carrier_def) = flower_curtain_game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    // Bench a second copy of the carrier, so there's a non-Rule-Box
+    // Benched target to protect.
+    let bench_card = deal_new_card(&mut state, opponent, carrier_def);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack_flower_curtain(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingBenchDamageTarget { .. }));
+    let target = state.player(opponent).bench[0];
+    apply(&mut state, Action::DamageBenchedPokemon { target }).unwrap();
+
+    assert_eq!(state.pokemon(target).damage, 0, "Flower Curtain stops the damage landing");
+}
+
+#[test]
+fn flower_curtain_does_not_protect_a_benched_ex() {
+    let attack = Attack {
+        name: "Flamebody Cannon",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(sim::card::AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenched(90)),
+    };
+    let (mut state, _carrier_def) = flower_curtain_game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let ex_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: vec![sim::card::Marker::Ex],
+        print_id: "test-flower-curtain-benched-ex",
+        name: "Benchmon ex",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let bench_card = deal_new_card(&mut state, opponent, ex_def);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack_flower_curtain(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingBenchDamageTarget { .. }));
+    let target = state.player(opponent).bench[0];
+    apply(&mut state, Action::DamageBenchedPokemon { target }).unwrap();
+
+    assert_eq!(state.pokemon(target).damage, 90, "Flower Curtain names only non-Rule-Box Pokemon");
+}
+
+#[test]
+fn flower_curtain_blocks_a_damage_counter_spread_attack_too() {
+    let attack = Attack {
+        name: "Phantom Dive",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(sim::card::AttackEffect::DamageCountersToOpponentBenchAnyWay(6)),
+    };
+    let (mut state, carrier_def) = flower_curtain_game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let bench_card = deal_new_card(&mut state, opponent, carrier_def);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack_flower_curtain(&mut state);
+
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "Flower Curtain leaves no legal Bench target for the spread, so the effect fizzles outright"
+    );
+    assert_eq!(state.pokemon(bench_mon).damage, 0);
+}
+
+#[test]
+fn flower_curtain_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Shaymin" && c.playable.is_some()),
+        "at least one Shaymin print should play"
+    );
+}
