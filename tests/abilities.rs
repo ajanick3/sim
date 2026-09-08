@@ -2670,3 +2670,209 @@ fn rabsca_is_admitted_from_the_artifact() {
         "at least one Rabsca print should play"
     );
 }
+
+// --- Beyond the map: an Ability that boosts Future attackers, except itself by name ---
+
+fn cobalt_command_game(attacker_name: &'static str, future: bool, seed: u64) -> GameState {
+    let mut db = CardDb::new();
+    let mut markers = Vec::new();
+    if future {
+        markers.push(sim::card::Marker::Future);
+    }
+    let attacker_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers,
+        print_id: "test-cobalt-command-attacker",
+        name: attacker_name,
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: if attacker_name == "Iron Crown ex" { 2 } else { 1 },
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: if attacker_name == "Iron Crown ex" {
+            Some(Ability {
+                name: "Cobalt Command",
+                effect: sim::card::AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(20),
+            })
+        } else {
+            None
+        },
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 50,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-cobalt-command-defender",
+        name: "Defendmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-cobalt-command-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let mut attacker_deck = vec![attacker_mon; 4];
+    while attacker_deck.len() < 60 {
+        attacker_deck.push(energy);
+    }
+    let mut defender_deck = vec![defender_mon; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(energy);
+    }
+    let mut state =
+        GameState::new(db, [attacker_deck, defender_deck], Box::new(SeededRng::new(seed)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    state
+}
+
+fn pay_and_attack_cobalt_command(state: &mut GameState) {
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let cost_len = state.pokemon_def(active).attacks[0].cost.len();
+    for _ in 0..cost_len {
+        let side = state.player(player);
+        let card = side
+            .hand
+            .iter()
+            .chain(side.library.iter())
+            .find(|c| state.def_of(**c).is_energy())
+            .copied()
+            .expect("the deck holds Energy");
+        state.remove_from_hand(player, card);
+        state.players[player.index()].library.retain(|c| *c != card);
+        state.pokemon[active.index()].attached.push(card);
+    }
+    let attack = legal_actions(state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the attacker is paid for");
+    apply(state, attack).unwrap();
+}
+
+#[test]
+fn cobalt_command_boosts_a_future_attacker() {
+    let mut state = cobalt_command_game("Iron Bundle", true, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let carrier = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-cobalt-command-carrier",
+        name: "Iron Crown ex",
+        hp: 220,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Cobalt Command",
+            effect: sim::card::AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(20),
+        }),
+        attacks: vec![],
+    }));
+    let carrier_card = deal_new_card(&mut state, player, carrier);
+    let carrier_bench = state.put_into_play(player, carrier_card);
+    state.players[player.index()].bench.push(carrier_bench);
+
+    pay_and_attack_cobalt_command(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 70, "50 base plus the 20 bonus");
+}
+
+#[test]
+fn cobalt_command_does_not_boost_a_non_future_attacker() {
+    let mut state = cobalt_command_game("Iron Bundle", false, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let carrier = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-cobalt-command-carrier-no-boost",
+        name: "Iron Crown ex",
+        hp: 220,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Cobalt Command",
+            effect: sim::card::AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(20),
+        }),
+        attacks: vec![],
+    }));
+    let carrier_card = deal_new_card(&mut state, player, carrier);
+    let carrier_bench = state.put_into_play(player, carrier_card);
+    state.players[player.index()].bench.push(carrier_bench);
+
+    pay_and_attack_cobalt_command(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 50, "no Future marker, so no bonus");
+}
+
+#[test]
+fn cobalt_command_does_not_boost_iron_crown_ex_itself_by_name() {
+    // Attacking with Iron Crown ex itself, carrying Future and its
+    // own Cobalt Command — the exclusion is by name, not "not the
+    // carrier", so it still applies to this attacker.
+    let mut state = cobalt_command_game("Iron Crown ex", true, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack_cobalt_command(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 50, "Iron Crown ex is excluded from its own bonus, by name");
+}
+
+#[test]
+fn iron_crown_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Iron Crown ex" && c.playable.is_some()),
+        "at least one Iron Crown ex print should play"
+    );
+}

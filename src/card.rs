@@ -803,6 +803,15 @@ pub enum AttackEffect {
     /// limited to the Bench; the opponent's Active is offered too.
     /// `Fezandipiti ex`'s `Cruel Arrow`.
     DamageChosenOpponentPokemon(u32),
+    /// The same flat, unaffected-by-anything damage
+    /// `DamageChosenOpponentPokemon` deals, but to two distinct
+    /// opponent Pokémon of the player's choosing rather than one —
+    /// Active or Benched either pick, and immune to any Bench-shield
+    /// effect (`Battle Cage`, `Flower Curtain`, `Spherical Shield`)
+    /// the same way it is immune to Weakness and Resistance, since
+    /// its own text says "isn't affected... by any effects on those
+    /// Pokémon." `Iron Crown ex`'s `Twin Shotels`.
+    DamageTwoChosenOpponentPokemon(u32),
     /// The mirror of `DamageChosenOpponentPokemon`, but the flat
     /// amount is computed from a counted board fact rather than
     /// printed outright — opens the same
@@ -970,6 +979,20 @@ pub enum Marker {
     /// project's own artifact already carries — this is a closed,
     /// permanent list, not one to revisit as later sets import.
     Tera,
+    /// The Paradox "Ancient" trait — unlike `Tera`, nobody has
+    /// confirmed this list is closed, so treat it as open. A print
+    /// carries this by exact print id in `import::ANCIENT_PRINT_IDS`,
+    /// scoped only to the names the sample decks actually use — see
+    /// that const's own doc comment before assuming a name not there
+    /// is untagged. No effect reads this yet.
+    Ancient,
+    /// The Paradox "Future" trait — the same open-list caveat
+    /// `Ancient` carries applies here too. A print carries this by
+    /// exact print id in `import::FUTURE_PRINT_IDS`, same deck-scoped
+    /// caveat. Read by
+    /// `AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed`,
+    /// `Iron Crown ex`'s `Cobalt Command`.
+    Future,
 }
 
 /// An Ability as printed. Milestone 8's own vocabulary, parallel to
@@ -1191,6 +1214,17 @@ pub enum AbilityEffect {
     /// (the ruling on Shiftry's Expelling Tornado confirms this).
     /// `Rabsca`'s `Spherical Shield`.
     PassivePreventsAttackEffectsOnBench,
+    /// A standing effect, not a choice: while this Pokémon is in
+    /// play, an attack used by any of this Pokémon's own owner's
+    /// `Marker::Future` Pokémon — except one printed `Iron Crown ex`
+    /// by name, not only this Ability's own carrier — does this much
+    /// more damage to the opponent's Active Pokémon, before Weakness
+    /// and Resistance. Read directly in `damage_dealt_with`, the
+    /// same slot an attacker's own Tool bonus already occupies, since
+    /// every call there already computes damage against the
+    /// opponent's Active by construction (the single-Active format).
+    /// `Iron Crown ex`'s `Cobalt Command`.
+    PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(u32),
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for

@@ -142,6 +142,36 @@ fn hydreigon_ex_has_both_a_tera_print_and_a_plain_one() {
 }
 
 #[test]
+fn koraidon_ex_has_an_ancient_print_and_two_plain_ones() {
+    use sim::card::Marker;
+    use sim::import::markers_for;
+
+    // The same Koraidon ex split Tera already forced print-id
+    // precision for: only the Temporal Forces print is Ancient.
+    assert_eq!(
+        markers_for("sv05-120", "Koraidon ex"),
+        vec![Marker::Ex, Marker::Ancient]
+    );
+    // me02.5-121 is Koraidon ex's own Tera print, not Ancient.
+    assert_eq!(markers_for("me02.5-121", "Koraidon ex"), vec![Marker::Ex, Marker::Tera]);
+    assert_eq!(markers_for("svp-197", "Koraidon ex"), vec![Marker::Ex]);
+}
+
+#[test]
+fn iron_crown_ex_carries_future_on_every_print() {
+    use sim::card::Marker;
+    use sim::import::markers_for;
+
+    for print_id in ["sv05-081", "sv05-191", "sv05-206", "sv05-216", "sv08.5-158", "svp-146"] {
+        assert_eq!(
+            markers_for(print_id, "Iron Crown ex"),
+            vec![Marker::Ex, Marker::Future],
+            "every Iron Crown ex print in the artifact is Future"
+        );
+    }
+}
+
+#[test]
 fn prizes_is_computed_from_markers_not_the_name_directly() {
     use sim::import::{markers_for, prizes_for};
 

@@ -1303,7 +1303,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 | crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities
                 | crate::card::AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(..)
                 | crate::card::AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench
-                | crate::card::AbilityEffect::PassivePreventsAttackEffectsOnBench => {
+                | crate::card::AbilityEffect::PassivePreventsAttackEffectsOnBench
+                | crate::card::AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(_) => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
@@ -1403,6 +1404,32 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.log.push(format!("{name} takes {damage}."));
             state.phase = Phase::Main;
             settle(state);
+        }
+
+        Action::DamageOneOfTwoChosenOpponentPokemon { target } => {
+            let (player, damage, excluding) = match state.phase {
+                Phase::ChoosingTwoOpponentPokemonDamageTargets { player, damage, excluding } => {
+                    (player, damage, excluding)
+                }
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[target.index()].damage += damage;
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} takes {damage}."));
+            if excluding.is_none()
+                && state.player(player.opponent()).in_play().iter().any(|p| *p != target)
+            {
+                // The first pick: reopen the same phase, this pick now
+                // excluded, so the second pick names a different one.
+                state.phase = Phase::ChoosingTwoOpponentPokemonDamageTargets {
+                    player,
+                    damage,
+                    excluding: Some(target),
+                };
+            } else {
+                state.phase = Phase::Main;
+                settle(state);
+            }
         }
 
         Action::DamageBenchedEx { target } => {
@@ -3016,6 +3043,14 @@ fn resolve_attack_effect(
             let owner = state.pokemon(attacker).owner;
             state.phase = Phase::ChoosingAnyOpponentPokemonDamageTarget { player: owner, damage };
         }
+        crate::card::AttackEffect::DamageTwoChosenOpponentPokemon(damage) => {
+            let owner = state.pokemon(attacker).owner;
+            state.phase = Phase::ChoosingTwoOpponentPokemonDamageTargets {
+                player: owner,
+                damage,
+                excluding: None,
+            };
+        }
         crate::card::AttackEffect::DamageChosenOpponentBenchedEx(damage) => {
             let owner = state.pokemon(attacker).owner;
             let any_benched_ex = state
@@ -3358,6 +3393,26 @@ fn damage_dealt_with(
                 }
             }
             _ => {}
+        }
+    }
+
+    // Step 32c: `Cobalt Command` — read from the attacker's own side,
+    // not only the carrier, and gated on the attacker's own `Future`
+    // marker and its own name (a second `Iron Crown ex` on the Bench
+    // doesn't boost the one attacking).
+    let attacker_owner = state.pokemon(attacker).owner;
+    let attacker_name = state.pokemon_def(attacker).name;
+    if attacker_name != "Iron Crown ex" && state.pokemon_def(attacker).markers.contains(&crate::card::Marker::Future) {
+        let cobalt_command_bonus = state.player(attacker_owner).in_play().iter().find_map(|p| {
+            match state.pokemon_def(*p).ability.map(|a| a.effect) {
+                Some(crate::card::AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(bonus)) => {
+                    Some(bonus)
+                }
+                _ => None,
+            }
+        });
+        if let Some(bonus) = cobalt_command_bonus {
+            damage += bonus;
         }
     }
 

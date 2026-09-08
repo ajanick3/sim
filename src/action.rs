@@ -208,6 +208,10 @@ pub enum Action {
     /// Deal `Phase::ChoosingAnyOpponentPokemonDamageTarget`'s flat
     /// damage to this Pokémon, Active or Benched.
     DamageChosenOpponentPokemon { target: PokemonId },
+    /// Pick one of `Phase::ChoosingTwoOpponentPokemonDamageTargets`'s
+    /// two targets — the first call reopens the same phase excluding
+    /// this pick, the second resolves it.
+    DamageOneOfTwoChosenOpponentPokemon { target: PokemonId },
     /// Deal `Phase::ChoosingBenchedExDamageTarget`'s flat damage to
     /// this Benched Pokémon ex.
     DamageBenchedEx { target: PokemonId },
@@ -330,6 +334,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToUseLastDitchCatch { player, .. } => Some(player),
         Phase::DecidingToUsePsychicDraw { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
+        Phase::ChoosingTwoOpponentPokemonDamageTargets { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
         Phase::MovingDamageCountersFromOwnToOpponent { player, .. } => Some(player),
@@ -706,6 +711,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player: whose, .. } => {
             for pokemon in state.player(whose.opponent()).in_play() {
                 actions.push(Action::DamageChosenOpponentPokemon { target: pokemon });
+            }
+            return actions;
+        }
+        Phase::ChoosingTwoOpponentPokemonDamageTargets { player: whose, excluding, .. } => {
+            for pokemon in state.player(whose.opponent()).in_play() {
+                if Some(pokemon) != excluding {
+                    actions.push(Action::DamageOneOfTwoChosenOpponentPokemon { target: pokemon });
+                }
             }
             return actions;
         }
@@ -1414,6 +1427,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(..) => false,
             crate::card::AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench => false,
             crate::card::AbilityEffect::PassivePreventsAttackEffectsOnBench => false,
+            crate::card::AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(_) => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
                 _,
@@ -1673,6 +1687,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::AcceptPsychicDraw => "Use Psychic Draw".to_string(),
         Action::DeclinePsychicDraw => "Decline Psychic Draw".to_string(),
         Action::DamageChosenOpponentPokemon { target } => {
+            format!("Damage {}", state.pokemon_def(target).name)
+        }
+        Action::DamageOneOfTwoChosenOpponentPokemon { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
         }
         Action::DamageBenchedEx { target } => {

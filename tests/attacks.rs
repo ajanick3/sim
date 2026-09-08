@@ -2986,3 +2986,70 @@ fn rabscas_counterturn_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv08-014").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Rabsca's Counterturn print should play");
 }
+
+// --- Beyond the spec: flat damage to two distinct chosen opponent Pokemon ---
+
+#[test]
+fn twin_shotels_damages_two_distinct_chosen_pokemon() {
+    let attack = Attack {
+        name: "Twin Shotels",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DamageTwoChosenOpponentPokemon(50)),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let active = state.player(opponent).active.unwrap();
+    let bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingTwoOpponentPokemonDamageTargets { excluding: None, .. }));
+    apply(&mut state, Action::DamageOneOfTwoChosenOpponentPokemon { target: active }).unwrap();
+    assert!(matches!(
+        state.phase,
+        Phase::ChoosingTwoOpponentPokemonDamageTargets { excluding: Some(t), .. } if t == active
+    ));
+    apply(&mut state, Action::DamageOneOfTwoChosenOpponentPokemon { target: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(active).damage, 50);
+    assert_eq!(state.pokemon(bench_mon).damage, 50);
+}
+
+#[test]
+fn twin_shotels_stops_after_one_pick_with_only_one_opponent_pokemon_in_play() {
+    let attack = Attack {
+        name: "Twin Shotels",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DamageTwoChosenOpponentPokemon(50)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let active = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingTwoOpponentPokemonDamageTargets { .. }));
+    apply(&mut state, Action::DamageOneOfTwoChosenOpponentPokemon { target: active }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "only the Active was in play, so there's no second pick");
+    assert_eq!(state.pokemon(active).damage, 50);
+}
+
+#[test]
+fn iron_crown_exs_twin_shotels_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv05-081").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Iron Crown ex's Twin Shotels print should play");
+}

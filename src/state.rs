@@ -376,6 +376,15 @@ pub enum Phase {
     /// offering only the opponent's Benched Pokémon ex. `Shaymin`'s
     /// `Pinpoint Dive`.
     ChoosingBenchedExDamageTarget { player: PlayerId, damage: u32 },
+    /// `player` used an attack that deals this much flat damage to
+    /// two distinct opponent Pokémon of their choosing, Active or
+    /// Benched — `excluding`, once the first is picked, holding it
+    /// out of the second choice. If only one opponent Pokémon is in
+    /// play, the second choice is skipped outright rather than
+    /// forcing a repeat pick — a fair reading of "to 2 of your
+    /// opponent's Pokémon" with only one to name. `Iron Crown ex`'s
+    /// `Twin Shotels`.
+    ChoosingTwoOpponentPokemonDamageTargets { player: PlayerId, damage: u32, excluding: Option<PokemonId> },
     /// `player` used an attack that searches the deck for an Energy
     /// card to attach to a chosen own Benched Pokémon of this type.
     /// `Shaymin`'s `Send Flowers`.
