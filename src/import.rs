@@ -398,6 +398,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         ),
         "Nighttime Mine" => (free, TrainerEffect::TeraAttacksCostMore),
         "Area Zero Underdepths" => (free, TrainerEffect::TeraPokemonRaisesBenchLimit),
+        "Battle Cage" => (free, TrainerEffect::PreventsDamageCountersOnBench),
         "Judge" => (free, TrainerEffect::BothShuffleHandThenDraw { you: 4, opponent: 4 }),
         "Lillie's Determination" => (
             free,

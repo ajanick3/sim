@@ -2378,7 +2378,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::DamagesNonDarknessBasicBenched(_)
         | TrainerEffect::GrassCanEvolveTheTurnItIsPlayed
         | TrainerEffect::TeraAttacksCostMore
-        | TrainerEffect::TeraPokemonRaisesBenchLimit => {}
+        | TrainerEffect::TeraPokemonRaisesBenchLimit
+        | TrainerEffect::PreventsDamageCountersOnBench => {}
 
         // "Recovers from all Special Conditions" reads as an immediate
         // sweep at the moment this becomes true for a Pokémon — playing
@@ -2814,7 +2815,12 @@ fn resolve_attack_effect(
         }
         crate::card::AttackEffect::DamageCountersToOpponentBenchAnyWay(count) => {
             let owner = state.pokemon(attacker).owner;
-            if !state.player(owner.opponent()).bench.is_empty() {
+            let any_target = state
+                .player(owner.opponent())
+                .bench
+                .iter()
+                .any(|p| !state.bench_damage_counters_blocked(*p));
+            if any_target {
                 state.phase = Phase::DistributingDamageCounters {
                     player: owner,
                     remaining: count,

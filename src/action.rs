@@ -608,7 +608,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::DistributingDamageCounters { player: whose, .. } => {
             let opponent = whose.opponent();
             for pokemon in &state.player(opponent).bench {
-                actions.push(Action::PlaceDamageCounter { target: *pokemon });
+                if !state.bench_damage_counters_blocked(*pokemon) {
+                    actions.push(Action::PlaceDamageCounter { target: *pokemon });
+                }
             }
             return actions;
         }
@@ -793,6 +795,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
                 let max = limit.min(damage / 10);
                 for target in state.player(whose.opponent()).in_play() {
+                    if state.bench_damage_counters_blocked(target) {
+                        continue;
+                    }
                     for tens in 1..=max {
                         actions.push(Action::MoveDamageCountersFromOwnToOpponent {
                             source,
