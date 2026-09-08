@@ -181,7 +181,7 @@ regenerates this section from `data/cards.json` and the committed
 | [Team Rocket's Factory](src/import.rs#L789) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (56/95 built)
+### Pokémon (57/95 built)
 
 | Card | Attacks | Ability |
 | --- | --- | --- |
@@ -220,9 +220,9 @@ regenerates this section from `data/cards.json` and the committed
 | Elgyem | [✅](src/import.rs#L1107) | — |
 | Enamorus | ❌ | — |
 | Fan Rotom | [✅](src/import.rs#L1129) | [✅](src/import.rs#L1018) |
-| Fezandipiti ex | [✅](src/import.rs#L1137) | [✅](src/import.rs#L990) |
+| Fezandipiti ex | [✅](src/import.rs#L1140) | [✅](src/import.rs#L990) |
 | Flutter Mane | ❌ | ❌ |
-| Genesect | [✅](src/import.rs#L234) | ❌ |
+| Genesect | [✅](src/import.rs#L1133) | ❌ |
 | Genesect ex | [✅](src/import.rs#L1123) | [✅](src/import.rs#L1002) |
 | Goldeen | [✅](src/import.rs#L234) | ❌ |
 | Grookey | [✅](src/import.rs#L234) | — |
@@ -237,13 +237,13 @@ regenerates this section from `data/cards.json` and the committed
 | Lillie's Clefairy ex | ❌ | ❌ |
 | Mega Absol ex | ❌ | — |
 | Mega Excadrill ex | ❌ | — |
-| Mega Kangaskhan ex | [✅](src/import.rs#L1133) | [✅](src/import.rs#L984) |
+| Mega Kangaskhan ex | [✅](src/import.rs#L1136) | [✅](src/import.rs#L984) |
 | Mega Lopunny ex | ❌ | — |
 | Mega Sharpedo ex | [✅](src/import.rs#L1087) | — |
 | Mega Skarmory ex | ❌ | — |
 | Mega Slowbro ex | ❌ | — |
 | Meganium | [✅](src/import.rs#L234) | ❌ |
-| Meowth ex | [✅](src/import.rs#L1136) | [✅](src/import.rs#L987) |
+| Meowth ex | [✅](src/import.rs#L1139) | [✅](src/import.rs#L987) |
 | Metagross | ❌ | — |
 | Metang | [✅](src/import.rs#L234) | ❌ |
 | Moltres | [✅](src/import.rs#L1097) | — |
@@ -272,7 +272,7 @@ regenerates this section from `data/cards.json` and the committed
 | Stunfisk | ❌ | — |
 | Tapu Bulu | [✅](src/import.rs#L1044) | — |
 | Tatsugiri | [✅](src/import.rs#L234) | ❌ |
-| Teal Mask Ogerpon ex | [✅](src/import.rs#L1138) | [✅](src/import.rs#L993) |
+| Teal Mask Ogerpon ex | [✅](src/import.rs#L1141) | [✅](src/import.rs#L993) |
 | Thwackey | [✅](src/import.rs#L234) | ❌ |
 | Torchic | [✅](src/import.rs#L1100) | — |
 | Toxel | [✅](src/import.rs#L1085) | — |

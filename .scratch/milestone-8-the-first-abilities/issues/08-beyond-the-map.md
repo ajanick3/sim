@@ -76,7 +76,27 @@ same way Milestone 11 continued past its own spec:
   newly Active one. Its own attack needed `Count::OpponentPrizesTakenCount`.
   Completes all 5 prints.
 
-Coverage: 604 -> 636 across these nine PRs.
+- **Genesect**'s `Bug's Cannon`
+  (`AttackEffect::DamagePerCountToChosenOpponentPokemon`) — the mirror
+  of `DamageChosenOpponentPokemon`, opening the same
+  `Phase::ChoosingAnyOpponentPokemonDamageTarget` but with the flat
+  amount computed from `Count::OwnGrassEnergyAttachedCount` instead of
+  printed outright. This print carries no Ability at all, so it needed
+  no Ability-side work. Admits its me02-008 print — Genesect's other
+  print (`sv06.5-040`) pairs a plain attack with a static/continuous
+  Ability (`ACE Nullifier`), the milestone's own deferred bucket.
+
+Coverage: 604 -> 637 across these ten PRs.
+
+## Also read and left deferred, checked fresh this pass
+
+- **Pecharunt** (non-ex) — `me02.5-143` needs the same persistent
+  same-attack-name bonus `Metagross`'s `Meteor Mash` was deferred for
+  (Milestone 11); `svp-129`/`svp-149` pair a two-effect attack (Poison
+  *and* a retreat restriction in one printed line — `AttackEffect`
+  carries only one effect per attack today) with a static/continuous
+  checkup-based Ability. Neither piece is a quick win; left for a
+  session that wants to build the shared mechanism.
 
 ## What is left
 

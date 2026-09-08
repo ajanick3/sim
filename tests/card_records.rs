@@ -223,5 +223,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Benched Pokemon of a type, excluding a name, then Poisoning the
     // new Active) and its own attack, Irritated Outburst (damage per
     // Prize the opponent has taken) complete all 5 prints.
-    assert_eq!(admitted, 636, "coverage moves only on purpose");
+    // Genesect's Bug's Cannon (damage per a counted board fact, to a
+    // chosen opponent Pokemon — the mirror of DamageChosenOpponentPokemon
+    // opening the same phase) admits its me02-008 print.
+    assert_eq!(admitted, 637, "coverage moves only on purpose");
 }

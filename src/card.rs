@@ -723,6 +723,13 @@ pub enum AttackEffect {
     /// limited to the Bench; the opponent's Active is offered too.
     /// `Fezandipiti ex`'s `Cruel Arrow`.
     DamageChosenOpponentPokemon(u32),
+    /// The mirror of `DamageChosenOpponentPokemon`, but the flat
+    /// amount is computed from a counted board fact rather than
+    /// printed outright — opens the same
+    /// `Phase::ChoosingAnyOpponentPokemonDamageTarget`, since nothing
+    /// about the choice itself differs once the count is read.
+    /// `Genesect`'s `Bug's Cannon`.
+    DamagePerCountToChosenOpponentPokemon(Count, u32),
     /// The attacker takes this much less damage from attacks during
     /// the opponent's very next turn, after Weakness and Resistance —
     /// the mirror of `DefenderDealsLessDamageNextTurn`'s own lifetime
@@ -772,6 +779,9 @@ pub enum Count {
     /// Prize cards the opponent has already taken (6 minus how many
     /// remain). `Pecharunt ex`'s `Irritated Outburst`.
     OpponentPrizesTakenCount,
+    /// Grass Energy attached to the attacker itself. `Genesect`'s
+    /// `Bug's Cannon`.
+    OwnGrassEnergyAttachedCount,
 }
 
 /// How far along its evolution line a Pokémon card is printed. The artifact

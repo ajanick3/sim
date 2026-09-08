@@ -1130,6 +1130,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Pecharunt ex", "Irritated Outburst") => {
             AttackEffect::DamagePerCount(Count::OpponentPrizesTakenCount, 60)
         }
+        ("Genesect", "Bug's Cannon") => {
+            AttackEffect::DamagePerCountToChosenOpponentPokemon(Count::OwnGrassEnergyAttachedCount, 20)
+        }
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }
