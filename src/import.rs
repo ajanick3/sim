@@ -1021,6 +1021,9 @@ fn known_energy(name: &str) -> Option<(Type, crate::card::EnergyEffect)> {
         "Boomerang Energy" => {
             (Type::Colorless, crate::card::EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect)
         }
+        "Prism Energy" => {
+            (Type::Colorless, crate::card::EnergyEffect::ProvidesAnyTypeIfAttachedToBasic)
+        }
         _ => return None,
     })
 }

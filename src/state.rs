@@ -818,7 +818,8 @@ impl GameState {
                     )
                     | crate::card::EnergyEffect::CountersAttackerOnDamageTakenWhileActive(_)
                     | crate::card::EnergyEffect::PreventsAttackEffectsOnCarrier
-                    | crate::card::EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect,
+                    | crate::card::EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect
+                    | crate::card::EnergyEffect::ProvidesAnyTypeIfAttachedToBasic,
                 )
                 | None => 0,
             })
@@ -1097,18 +1098,37 @@ impl GameState {
     ///
     /// Every named type is matched first, because a Colorless entry takes any
     /// Energy and would otherwise eat the one Energy a named entry needed.
+    /// A `Prism Energy` attached to a Basic Pokémon is a wildcard, tried
+    /// only once every fixed-type card that could match a named entry is
+    /// already spoken for — the same "named first" ordering, one layer
+    /// deeper.
     pub fn pays_cost(&self, id: PokemonId, cost: &[Type]) -> bool {
-        let mut available = self.attached_energy_types(id);
+        let carrier_is_basic = self.pokemon_def(id).stage == crate::card::Stage::Basic;
+        let mut available = Vec::new();
+        let mut wildcards = 0u32;
+        for card in &self.pokemon(id).attached {
+            let Some(energy) = self.def_of(*card).as_energy() else {
+                continue;
+            };
+            if carrier_is_basic
+                && energy.effect == Some(crate::card::EnergyEffect::ProvidesAnyTypeIfAttachedToBasic)
+            {
+                wildcards += 1;
+            } else {
+                available.push(energy.kind);
+            }
+        }
         for required in cost.iter().filter(|t| **t != Type::Colorless) {
             match available.iter().position(|kind| kind == required) {
                 Some(at) => {
                     available.remove(at);
                 }
+                None if wildcards > 0 => wildcards -= 1,
                 None => return false,
             }
         }
-        let colorless = cost.iter().filter(|t| **t == Type::Colorless).count();
-        available.len() >= colorless
+        let colorless = cost.iter().filter(|t| **t == Type::Colorless).count() as u32;
+        available.len() as u32 + wildcards >= colorless
     }
 
     /// Clear the once-per-turn flags for whoever is about to play.

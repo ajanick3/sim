@@ -1134,6 +1134,15 @@ pub enum EnergyEffect {
     /// `DiscardsOwnEnergyThenDamagesChosenBenched`. `Boomerang
     /// Energy`.
     ReattachesAfterOwnDiscardByAttackEffect,
+    /// A standing effect, not a choice: while attached to a Basic
+    /// Pokémon, this card pays any single named type an attack's
+    /// cost still needs, contributing exactly one unit of Energy —
+    /// attached to a Stage 1 or 2 Pokémon it pays only Colorless,
+    /// like a plain Basic Energy of no named type. Read directly by
+    /// `pays_cost`, in place of its own printed `kind`, which stays
+    /// `Colorless` (the value it falls back to off a Basic).
+    /// `Prism Energy`.
+    ProvidesAnyTypeIfAttachedToBasic,
 }
 
 #[derive(Debug, Clone)]

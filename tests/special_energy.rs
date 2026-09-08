@@ -655,3 +655,68 @@ fn boomerang_energy_is_admitted_from_the_artifact() {
         "at least one Boomerang Energy print should play"
     );
 }
+
+// --- Ticket 07: a flexible provided type ---
+
+#[test]
+fn prism_energy_pays_any_single_named_type_on_a_basic() {
+    let (mut state, pokemon) = one_pokemon_game(100, Type::Colorless);
+    let prism_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-prism-energy-basic",
+        name: "Prism Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::ProvidesAnyTypeIfAttachedToBasic),
+    }));
+    attach(&mut state, pokemon, prism_def);
+
+    assert!(state.pays_cost(pokemon, &[Type::Fire]));
+    assert!(state.pays_cost(pokemon, &[Type::Water]));
+    assert!(!state.pays_cost(pokemon, &[Type::Fire, Type::Water]), "only 1 Energy at a time");
+}
+
+#[test]
+fn prism_energy_pays_only_colorless_off_a_basic() {
+    let mut state_and_pokemon = one_pokemon_game(100, Type::Colorless);
+    let state = &mut state_and_pokemon.0;
+    let evolution_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-evolution-carrier",
+        name: "Evolvemon",
+        hp: 100,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Stage1,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let card = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: evolution_def, owner: PlayerId::One });
+    let evolution = state.put_into_play(PlayerId::One, card);
+
+    let prism_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-prism-energy-stage1",
+        name: "Prism Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::ProvidesAnyTypeIfAttachedToBasic),
+    }));
+    attach(state, evolution, prism_def);
+
+    assert!(!state.pays_cost(evolution, &[Type::Fire]), "not a Basic Pokemon");
+    assert!(state.pays_cost(evolution, &[Type::Colorless]), "still pays Colorless");
+}
+
+#[test]
+fn prism_energy_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Prism Energy" && c.playable.is_some()),
+        "at least one Prism Energy print should play"
+    );
+}
