@@ -882,6 +882,10 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 // `Shaymin`'s `Flower Curtain`: this attack was already
                 // used, but its damage never lands on a protected target.
                 state.log.push(format!("{name} would take {damage}, but Flower Curtain stops it landing."));
+            } else if state.bench_attack_effect_blocked(player, target) {
+                // `Rabsca`'s `Spherical Shield`: same shape, but with no
+                // Rule-Box carve-out.
+                state.log.push(format!("{name} would take {damage}, but Spherical Shield stops it landing."));
             } else {
                 state.pokemon[target.index()].damage += damage;
                 state.log.push(format!("{name} takes {damage}."));
@@ -1298,7 +1302,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 | crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement
                 | crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities
                 | crate::card::AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(..)
-                | crate::card::AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench => {
+                | crate::card::AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench
+                | crate::card::AbilityEffect::PassivePreventsAttackEffectsOnBench => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
@@ -1401,13 +1406,20 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::DamageBenchedEx { target } => {
-            let damage = match state.phase {
-                Phase::ChoosingBenchedExDamageTarget { damage, .. } => damage,
+            let (player, damage) = match state.phase {
+                Phase::ChoosingBenchedExDamageTarget { player, damage } => (player, damage),
                 _ => return Err(IllegalAction),
             };
-            state.pokemon[target.index()].damage += damage;
             let name = state.pokemon_def(target).name;
-            state.log.push(format!("{name} takes {damage}."));
+            if state.bench_attack_effect_blocked(player, target) {
+                // `Rabsca`'s `Spherical Shield`: a Benched ex has no
+                // Rule Box exemption from Flower Curtain, but Spherical
+                // Shield names every Benched Pokemon regardless.
+                state.log.push(format!("{name} would take {damage}, but Spherical Shield stops it landing."));
+            } else {
+                state.pokemon[target.index()].damage += damage;
+                state.log.push(format!("{name} takes {damage}."));
+            }
             state.phase = Phase::Main;
             settle(state);
         }
@@ -2693,6 +2705,14 @@ fn attack(state: &mut GameState, index: usize) {
                 attack.base_damage
             }
         }
+        Some(crate::card::AttackEffect::BonusDamageIfOwnLibraryAtMost(threshold, bonus)) => {
+            let owner = state.pokemon(attacker).owner;
+            if state.player(owner).library.len() <= threshold {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
         _ => attack.base_damage,
     };
     let ignore_defenders_effects =
@@ -2808,8 +2828,11 @@ fn resolve_attack_effect(
             let opponent = owner.opponent();
             let in_play = state.player(opponent).in_play();
             let any_move = in_play.iter().any(|from| {
-                state.pokemon(*from).attached.iter().any(|c| state.def_of(*c).is_energy())
-                    && in_play.iter().any(|target| target != from)
+                !state.bench_attack_effect_blocked(owner, *from)
+                    && state.pokemon(*from).attached.iter().any(|c| state.def_of(*c).is_energy())
+                    && in_play.iter().any(|target| {
+                        target != from && !state.bench_attack_effect_blocked(owner, *target)
+                    })
             });
             if any_move {
                 state.phase = Phase::MovingOpponentsEnergy { chooser: owner, of: opponent };
@@ -2846,6 +2869,7 @@ fn resolve_attack_effect(
             let any_target = state.player(owner.opponent()).bench.iter().any(|p| {
                 !state.bench_damage_counters_blocked(owner, *p)
                     && !state.bench_attack_damage_blocked(owner, *p)
+                    && !state.bench_attack_effect_blocked(owner, *p)
             });
             if any_target {
                 state.phase = Phase::DistributingDamageCounters {
@@ -2918,6 +2942,9 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::BonusDamageIfDefenderIsStage(..) => {}
+        // Already spent, before `damage_dealt_with` ran — see `attack`'s
+        // own `base` computation.
+        crate::card::AttackEffect::BonusDamageIfOwnLibraryAtMost(..) => {}
         crate::card::AttackEffect::DrawCards(count) => {
             let owner = state.pokemon(attacker).owner;
             for _ in 0..count {
@@ -3191,6 +3218,7 @@ fn count_for_attack(
         crate::card::Count::BothBenchedPokemonCount => {
             state.player(owner).bench.len() as u32 + state.player(opponent).bench.len() as u32
         }
+        crate::card::Count::DefenderEnergyAttachedCount => state.energy_attached(defender) as u32,
     }
 }
 

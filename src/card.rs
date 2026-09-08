@@ -775,6 +775,10 @@ pub enum AttackEffect {
     /// `BonusDamageIfDefenderIsEx`, read against `Stage` instead of
     /// prize value. `Paldean Tauros`'s `Spirited Tackle`.
     BonusDamageIfDefenderIsStage(Stage, u32),
+    /// This much more damage, but only if the attacker's own owner
+    /// has this many cards or fewer left in their library. `Rabsca`'s
+    /// `Counterturn`.
+    BonusDamageIfOwnLibraryAtMost(usize, u32),
     /// Flip this many coins; this much damage for each heads. Read
     /// once, the same pre-`damage_dealt_with` slot `DamagePerCount`
     /// already occupies, but counted from flips rather than a board
@@ -893,6 +897,8 @@ pub enum Count {
     /// Every Benched Pokémon in play, both sides combined. `Lillie's
     /// Clefairy ex`'s `Full Moon Rondo`.
     BothBenchedPokemonCount,
+    /// Energy attached to the defender alone. `Rabsca`'s `Psychic`.
+    DefenderEnergyAttachedCount,
 }
 
 /// How far along its evolution line a Pokémon card is printed. The artifact
@@ -1173,6 +1179,18 @@ pub enum AbilityEffect {
     /// would deal attack damage to a specifically-Benched target.
     /// `Shaymin`'s `Flower Curtain`.
     PassivePreventsAttackDamageToNonRuleBoxBench,
+    /// A standing effect, not a choice: while this Pokémon is in
+    /// play, no attack from the opponent's Pokémon may do any damage
+    /// or any other effect — to *any* Benched Pokémon of this
+    /// Pokémon's own owner, Rule Box or not (unlike `Flower
+    /// Curtain`'s carve-out). Read directly by
+    /// `GameState::bench_attack_effect_blocked` at every site that
+    /// would apply an attack's damage or non-damage effect to a
+    /// specifically-Benched target — a Benched target still touched
+    /// by an effect it wasn't the chosen target of is protected too
+    /// (the ruling on Shiftry's Expelling Tornado confirms this).
+    /// `Rabsca`'s `Spherical Shield`.
+    PassivePreventsAttackEffectsOnBench,
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for

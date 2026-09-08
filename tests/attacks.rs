@@ -2843,3 +2843,146 @@ fn damage_per_both_sides_benched_pokemon() {
 // Admission is checked once, in tests/abilities.rs, alongside Fairy
 // Zone — Full Moon Rondo is this card's only attack, so the same
 // admission proves both effects build.
+
+#[test]
+fn spherical_shield_blocks_a_move_onto_or_off_a_protected_bench_target() {
+    let attack = Attack {
+        name: "Slight Shift",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let energy_card = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.pokemon[defender.index()].attached.push(energy_card);
+
+    let rabsca_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-spherical-shield-slight-shift",
+        name: "Rabsca",
+        hp: 90,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(sim::card::Ability {
+            name: "Spherical Shield",
+            effect: sim::card::AbilityEffect::PassivePreventsAttackEffectsOnBench,
+        }),
+        attacks: vec![],
+    }));
+    let bench_card = deal_new_card(&mut state, opponent, rabsca_def);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "the only unprotected Pokemon is the Active alone, so there's no legal from/to pair to move between"
+    );
+    assert!(state.pokemon(defender).attached.contains(&energy_card), "the move never happened");
+}
+
+#[test]
+fn damage_per_defender_energy_attached() {
+    let attack = multiplier_attack(sim::card::Count::DefenderEnergyAttachedCount, 30);
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    for _ in 0..2 {
+        let card = *state
+            .player(opponent)
+            .library
+            .iter()
+            .find(|c| state.def_of(**c).is_energy())
+            .unwrap();
+        state.players[opponent.index()].library.retain(|c| *c != card);
+        state.pokemon[defender.index()].attached.push(card);
+    }
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 60, "2 Energy on the defender times 30");
+}
+
+#[test]
+fn rabscas_psychic_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv05-024").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Rabsca's Psychic print should play");
+}
+
+// --- Beyond the spec: bonus damage only with a near-empty library ---
+
+#[test]
+fn bonus_damage_if_own_library_at_most() {
+    let attack = Attack {
+        name: "Counterturn",
+        cost: vec![Type::Colorless],
+        base_damage: 40,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfOwnLibraryAtMost(3, 200)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    while state.player(player).library.len() > 3 {
+        let card = state.player(player).library[0];
+        state.players[player.index()].library.retain(|c| *c != card);
+        state.players[player.index()].discard.push(card);
+    }
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 240, "3 or fewer left in the library, so the bonus applies");
+}
+
+#[test]
+fn no_bonus_damage_with_more_than_the_library_threshold() {
+    let attack = Attack {
+        name: "Counterturn",
+        cost: vec![Type::Colorless],
+        base_damage: 40,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfOwnLibraryAtMost(3, 200)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 40, "still well over 3 cards left, so no bonus");
+}
+
+#[test]
+fn rabscas_counterturn_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv08-014").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Rabsca's Counterturn print should play");
+}

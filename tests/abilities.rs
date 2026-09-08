@@ -2442,3 +2442,231 @@ fn flower_curtain_is_admitted_from_the_artifact() {
         "at least one Shaymin print should play"
     );
 }
+
+// --- Beyond the map: an Ability that shields the whole Bench from attacks and their effects ---
+
+/// A game where the second player's Active carries `Spherical
+/// Shield`, and the first player's Active has the named attack.
+fn spherical_shield_game(attacker_attack: Attack, seed: u64) -> (GameState, sim::ids::CardDefId) {
+    let mut db = CardDb::new();
+    let attacker_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-spherical-shield-attacker",
+        name: "Attackmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![attacker_attack],
+    }));
+    let carrier = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-spherical-shield-carrier",
+        name: "Rabsca",
+        hp: 90,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Spherical Shield",
+            effect: sim::card::AbilityEffect::PassivePreventsAttackEffectsOnBench,
+        }),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-spherical-shield-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let mut attacker_deck = vec![attacker_mon; 4];
+    while attacker_deck.len() < 60 {
+        attacker_deck.push(energy);
+    }
+    let mut defender_deck = vec![carrier; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(energy);
+    }
+    let mut state =
+        GameState::new(db, [attacker_deck, defender_deck], Box::new(SeededRng::new(seed)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    (state, carrier)
+}
+
+fn pay_and_attack_spherical_shield(state: &mut GameState) {
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let cost_len = state.pokemon_def(active).attacks[0].cost.len();
+    for _ in 0..cost_len {
+        let side = state.player(player);
+        let card = side
+            .hand
+            .iter()
+            .chain(side.library.iter())
+            .find(|c| state.def_of(**c).is_energy())
+            .copied()
+            .expect("the deck holds Energy");
+        state.remove_from_hand(player, card);
+        state.players[player.index()].library.retain(|c| *c != card);
+        state.pokemon[active.index()].attached.push(card);
+    }
+    let attack = legal_actions(state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the attacker is paid for");
+    apply(state, attack).unwrap();
+}
+
+#[test]
+fn spherical_shield_blocks_dragapult_exs_phantom_dive() {
+    let attack = Attack {
+        name: "Phantom Dive",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(sim::card::AttackEffect::DamageCountersToOpponentBenchAnyWay(6)),
+    };
+    let (mut state, carrier_def) = spherical_shield_game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let bench_card = deal_new_card(&mut state, opponent, carrier_def);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack_spherical_shield(&mut state);
+
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "Spherical Shield leaves no legal Bench target, so Phantom Dive's spread fizzles outright"
+    );
+    assert_eq!(state.pokemon(bench_mon).damage, 0);
+}
+
+#[test]
+fn spherical_shield_blocks_n_s_darmanitans_flamebody_cannon() {
+    let attack = Attack {
+        name: "Flamebody Cannon",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(sim::card::AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenched(90)),
+    };
+    let (mut state, carrier_def) = spherical_shield_game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let bench_card = deal_new_card(&mut state, opponent, carrier_def);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack_spherical_shield(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingBenchDamageTarget { .. }));
+    let target = state.player(opponent).bench[0];
+    apply(&mut state, Action::DamageBenchedPokemon { target }).unwrap();
+
+    assert_eq!(state.pokemon(target).damage, 0, "Spherical Shield stops Flamebody Cannon landing");
+}
+
+#[test]
+fn spherical_shield_does_not_block_munkidoris_adrena_brain() {
+    // Spherical Shield names only attacks — Adrena-Brain is an
+    // Ability, so it moves damage counters onto a Rabsca-protected
+    // Bench exactly as it would with no Shield in play at all.
+    let ability = Ability {
+        name: "Adrena-Brain",
+        effect: sim::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
+            Type::Darkness,
+            3,
+        ),
+    };
+    let (mut state, munkidori_def) = game(ability, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let active = state.player(player).active.unwrap();
+
+    let dark_energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-adrena-brain-vs-shield-energy",
+        name: "Darkness Energy",
+        kind: Type::Darkness,
+        effect: None,
+    }));
+    let dark_energy = deal_new_card(&mut state, player, dark_energy_def);
+    state.pokemon[active.index()].attached.push(dark_energy);
+    state.pokemon[active.index()].damage = 50;
+
+    let rabsca_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-adrena-brain-vs-shield-rabsca",
+        name: "Rabsca",
+        hp: 90,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Spherical Shield",
+            effect: sim::card::AbilityEffect::PassivePreventsAttackEffectsOnBench,
+        }),
+        attacks: vec![],
+    }));
+    let rabsca_card = deal_new_card(&mut state, opponent, rabsca_def);
+    let rabsca_bench = state.put_into_play(opponent, rabsca_card);
+    state.players[opponent.index()].bench.push(rabsca_bench);
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+    assert!(matches!(state.phase, Phase::MovingDamageCountersFromOwnToOpponent { .. }));
+    apply(
+        &mut state,
+        Action::MoveDamageCountersFromOwnToOpponent { source: active, target: rabsca_bench, count: 30 },
+    )
+    .unwrap();
+
+    assert_eq!(state.pokemon(active).damage, 20, "the counters leave the source");
+    assert_eq!(
+        state.pokemon(rabsca_bench).damage, 30,
+        "Spherical Shield names only attacks, so Adrena-Brain (an Ability) lands normally"
+    );
+    let _ = munkidori_def;
+}
+
+#[test]
+fn rabsca_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Rabsca" && c.playable.is_some()),
+        "at least one Rabsca print should play"
+    );
+}

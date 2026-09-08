@@ -1044,6 +1044,23 @@ impl GameState {
             })
     }
 
+    /// Whether `target`, sitting on its own owner's Bench, is
+    /// protected from any damage or any other effect an attack from
+    /// `by`'s side would apply to it — Rule Box or not, unlike
+    /// `bench_attack_damage_blocked`'s own carve-out. `Rabsca`'s
+    /// `Spherical Shield`.
+    pub fn bench_attack_effect_blocked(&self, by: PlayerId, target: PokemonId) -> bool {
+        let owner = self.pokemon(target).owner;
+        owner != by
+            && self.player(owner).active != Some(target)
+            && self.player(owner).in_play().iter().any(|p| {
+                !self.abilities_disabled_for(*p)
+                    && self.pokemon_def(*p).ability.is_some_and(|a| {
+                        a.effect == crate::card::AbilityEffect::PassivePreventsAttackEffectsOnBench
+                    })
+            })
+    }
+
     /// The cards in one of a player's zones. A Trainer effect moves between
     /// these; a Pokémon's attachments are not one of them.
     pub fn zone(&self, player: PlayerId, zone: crate::card::Zone) -> &Vec<CardId> {

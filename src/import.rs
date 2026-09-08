@@ -1223,6 +1223,7 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
             AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(Type::Dragon, Type::Psychic)
         }
         ("Shaymin", "Flower Curtain") => AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench,
+        ("Rabsca", "Spherical Shield") => AbilityEffect::PassivePreventsAttackEffectsOnBench,
         ("Tatsugiri", "Attract Customers") => {
             AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(6)
         }
@@ -1352,6 +1353,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Slowpoke", "Dangle Tail") => AttackEffect::TakePokemonFromDiscard,
         ("Duskull", "Come and Get You") => AttackEffect::SearchDiscardForNamedToBench("Duskull", 3),
         ("Torchic", "Collect") => AttackEffect::DrawCards(1),
+        ("Rabsca", "Triple Draw") => AttackEffect::DrawCards(3),
+        ("Rabsca", "Psychic") => AttackEffect::DamagePerCount(Count::DefenderEnergyAttachedCount, 30),
+        ("Rabsca", "Counterturn") => AttackEffect::BonusDamageIfOwnLibraryAtMost(3, 200),
         ("Celebi", "Collect") => AttackEffect::DrawCards(1),
         ("Buneary", "Run Around") => AttackEffect::SwitchOwnActive,
         ("Bayleef", "Push Down") => AttackEffect::SwitchOpponentActive,
