@@ -361,6 +361,12 @@ pub enum Phase {
     /// `limit` damage counters from an own Pokémon to an opponent's.
     /// `Munkidori`'s `Adrena-Brain`.
     MovingDamageCountersFromOwnToOpponent { player: PlayerId, pokemon: PokemonId, limit: u32 },
+    /// `player` opened `pokemon`'s own Ability that peeks at the top
+    /// `count` cards of the library — still in place, read fresh by
+    /// both `legal_actions` and the taking action, since nothing else
+    /// can change the library while this phase is open. `Drakloak`'s
+    /// `Recon Directive`.
+    LookingAtTopCardsToTakeOne { player: PlayerId, pokemon: PokemonId, count: u32 },
     /// `player` opened `pokemon`'s own Ability that attaches Energy
     /// from hand as the effect itself. `Teal Mask Ogerpon ex`'s
     /// `Teal Dance`.

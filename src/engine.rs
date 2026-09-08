@@ -1201,6 +1201,15 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     state.phase =
                         Phase::MovingDamageCountersFromOwnToOpponent { player, pokemon, limit };
                 }
+                crate::card::AbilityEffect::OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(count) => {
+                    // Spent immediately: unlike a search that may come up
+                    // empty, looking at the top of the library and putting
+                    // the rest on the bottom always happens once opened —
+                    // there is no "decline" step left to spend it on.
+                    let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+                    state.spend(Limit::AbilityUsed(player, ability.name));
+                    state.phase = Phase::LookingAtTopCardsToTakeOne { player, pokemon, count };
+                }
             }
         }
 
@@ -1465,6 +1474,28 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 Phase::MovingDamageCountersFromOwnToOpponent { .. } => {}
                 _ => return Err(IllegalAction),
             };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::TakeCardFromTopPeek { card } => {
+            let (player, count) = match state.phase {
+                Phase::LookingAtTopCardsToTakeOne { player, count, .. } => (player, count),
+                _ => return Err(IllegalAction),
+            };
+            let library = &mut state.players[player.index()].library;
+            let seen = (count as usize).min(library.len());
+            let start = library.len() - seen;
+            let peeked: Vec<CardId> = library.drain(start..).collect();
+            for c in peeked {
+                if c == card {
+                    state.players[player.index()].hand.push(c);
+                } else {
+                    state.players[player.index()].library.insert(0, c);
+                }
+            }
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} taken from the top (Recon Directive)."));
             state.phase = Phase::Main;
             settle(state);
         }
