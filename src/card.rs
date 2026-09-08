@@ -1031,11 +1031,15 @@ pub enum AbilityEffect {
     OncePerTurnWhileActiveMayShuffleSelfIntoDeck,
     /// Once during the player's own turn, the player may put this
     /// many damage counters on one of the opponent's Pokémon,
-    /// choosing which. If they do, the Pokémon carrying this Ability
-    /// is Knocked Out outright — modeled by raising its own damage to
-    /// its effective HP rather than a separate forced-knockout
-    /// primitive, so the ordinary `knock_out_the_dead` sweep still
-    /// awards the Prize. `Dusclops`'s and `Dusknoir`'s `Cursed Blast`.
+    /// choosing which — a direct placement, so a target sitting on
+    /// the Bench under `Battle Cage` takes nothing (the ruling on
+    /// this very Ability confirms it: the counters never land, but
+    /// the Ability was still used). If they do, the Pokémon carrying
+    /// this Ability is Knocked Out outright regardless of whether the
+    /// placement landed — modeled by raising its own damage to its
+    /// effective HP rather than a separate forced-knockout primitive,
+    /// so the ordinary `knock_out_the_dead` sweep still awards the
+    /// Prize. `Dusclops`'s and `Dusknoir`'s `Cursed Blast`.
     OncePerTurnMayDamageOpponentThenKnockOutSelf(u32),
     /// Once during the player's own turn, the player may search the
     /// library for up to `limit` Evolution Pokémon of this type and

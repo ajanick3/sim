@@ -658,6 +658,59 @@ fn damages_the_opponent_then_knocks_out_the_carrier() {
 }
 
 #[test]
+fn battle_cage_stops_cursed_blast_landing_on_a_benched_target_but_the_carrier_still_ko_s() {
+    let ability = Ability {
+        name: "Cursed Blast",
+        effect: sim::card::AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(13),
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let active = state.player(player).active.unwrap();
+    // A Bench Pokemon of the player's own, so a promotion has somewhere to go.
+    let bench_card = deal_new_card(&mut state, player, carrier_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    let cage = state.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-battle-cage-cursed-blast",
+        name: "Battle Cage",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::PreventsDamageCountersOnBench,
+    }));
+    let cage_card = deal_new_card(&mut state, player, cage);
+    state.stadium = Some((player, cage_card));
+
+    let opponent_bench_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-cursed-blast-bench-target",
+        name: "Benchmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let opponent_bench_card = deal_new_card(&mut state, opponent, opponent_bench_def);
+    let opponent_bench = state.put_into_play(opponent, opponent_bench_card);
+    state.players[opponent.index()].bench.push(opponent_bench);
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+    assert!(matches!(state.phase, Phase::DecidingCursedBlastTarget { .. }));
+    apply(&mut state, Action::DamageOpponentForCursedBlast { target: opponent_bench }).unwrap();
+
+    assert_eq!(state.pokemon(opponent_bench).damage, 0, "Battle Cage stops the counters landing");
+    assert!(state.pokemon(active).knocked_out, "the Ability was still used, so the carrier still KO's");
+}
+
+#[test]
 fn dusclops_is_admitted_from_the_artifact() {
     let import = sim::import::load(
         &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
