@@ -1287,6 +1287,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         }
         ("Annihilape", "Lose Cool") => AbilityEffect::PassiveBonusDamageToActiveIfSelfDamaged(120),
         ("Hoothoot", "Insomnia") => AbilityEffect::PassiveImmuneToAsleep,
+        ("Flutter Mane", "Midnight Fluttering") => {
+            AbilityEffect::PassiveDisablesOpponentActiveAbilityExceptSelf
+        }
         ("Tatsugiri", "Attract Customers") => {
             AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(6)
         }
@@ -1462,6 +1465,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::CoinFlipInflictsAndDiscardsDefenderEnergy(Condition::Paralyzed)
         }
         ("Cofagrigus", "Perplex") => AttackEffect::InflictsCondition(Condition::Confused),
+        ("Flutter Mane", "Hex Hurl") => AttackEffect::DamageCountersToOpponentBenchAnyWay(2),
         ("Elgyem", "Slight Shift") => AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon,
         ("Dusknoir", "Shadow Bind") => AttackEffect::DefenderCannotRetreatNextTurn,
         ("Genesect ex", "Protect Charge") => AttackEffect::SelfDamageReductionNextTurn(30),

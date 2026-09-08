@@ -892,8 +892,34 @@ impl GameState {
     /// checks this first, on the specific Pokémon that effect would
     /// come from, rather than the Ability being removed.
     pub fn abilities_disabled_for(&self, id: PokemonId) -> bool {
-        self.stadium_effect() == Some(crate::card::TrainerEffect::AbilitiesDisabled)
-            && self.pokemon_def(id).kind == crate::card::Type::Colorless
+        let by_watchtower = self.stadium_effect() == Some(crate::card::TrainerEffect::AbilitiesDisabled)
+            && self.pokemon_def(id).kind == crate::card::Type::Colorless;
+        by_watchtower || self.abilities_disabled_for_by_midnight_fluttering(id)
+    }
+
+    /// `Flutter Mane`'s own `Midnight Fluttering`: while it is in the
+    /// Active Spot, the opponent's Active Pokémon has no Ability,
+    /// except one that is itself `Midnight Fluttering`. `id` must be
+    /// its own owner's Active — the card's own text names only the
+    /// opponent's Active, never a Benched Pokémon. Folded into
+    /// `abilities_disabled_for` rather than read at its own separate
+    /// sites, so every site that already checks that one gate covers
+    /// this too.
+    fn abilities_disabled_for_by_midnight_fluttering(&self, id: PokemonId) -> bool {
+        let owner = self.pokemon(id).owner;
+        if self.player(owner).active != Some(id) {
+            return false;
+        }
+        let opponent_active = self.player(owner.opponent()).active;
+        let carrier_active = opponent_active.is_some_and(|p| {
+            self.pokemon_def(p).ability.is_some_and(|a| {
+                a.effect == crate::card::AbilityEffect::PassiveDisablesOpponentActiveAbilityExceptSelf
+            })
+        });
+        carrier_active
+            && self.pokemon_def(id).ability.is_none_or(|a| {
+                a.effect != crate::card::AbilityEffect::PassiveDisablesOpponentActiveAbilityExceptSelf
+            })
     }
 
     /// The Weakness type `id` actually has: the printed value, unless

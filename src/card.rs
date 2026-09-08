@@ -1279,6 +1279,12 @@ pub enum AbilityEffect {
     /// that ever applies a Special Condition. `Hoothoot`'s
     /// `Insomnia`.
     PassiveImmuneToAsleep,
+    /// A standing effect, not a choice: while this Pokémon is in the
+    /// Active Spot, the opponent's Active Pokémon has no Ability —
+    /// except one that is itself this same effect (a mirror match).
+    /// Folded into `GameState::abilities_disabled_for` rather than
+    /// read at its own sites. `Flutter Mane`'s `Midnight Fluttering`.
+    PassiveDisablesOpponentActiveAbilityExceptSelf,
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for
