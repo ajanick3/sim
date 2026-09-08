@@ -1189,6 +1189,9 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 | crate::card::AbilityEffect::WhenBenchedFromHandMaySwitchThenMoveAnyEnergy => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
                 }
+                crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost => {
+                    unreachable!("legal_actions never offers UseAbility for a standing passive effect")
+                }
             }
         }
 

@@ -985,6 +985,7 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Mega Kangaskhan ex", "Run Errand") => {
             AbilityEffect::OncePerTurnWhileActiveMayDrawCards(2)
         }
+        ("Latias ex", "Skyliner") => AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost,
         ("Meowth ex", "Last-Ditch Catch") => AbilityEffect::WhenBenchedFromHandMaySearchSupporter,
         ("Kadabra", "Psychic Draw") => AbilityEffect::WhenEvolvedFromHandMayDrawCards(2),
         ("Alakazam", "Psychic Draw") => AbilityEffect::WhenEvolvedFromHandMayDrawCards(3),
@@ -1140,6 +1141,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Shaymin", "Pinpoint Dive") => AttackEffect::DamageChosenOpponentBenchedEx(60),
         ("Shaymin", "Send Flowers") => AttackEffect::SearchEnergyAttachToBenchedOfType(Type::Grass),
         ("Shaymin", "Reflect Energy") => AttackEffect::MoveOwnAttachedEnergyToChosenBenched,
+        ("Latias ex", "Eon Blade") => AttackEffect::AttackerCannotAttackNextTurn,
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }

@@ -1195,3 +1195,77 @@ fn pecharunt_ex_is_admitted_from_the_artifact() {
         "at least one Pecharunt ex print should play"
     );
 }
+
+// --- Beyond the map: a standing Ability read directly, never used as an action ---
+
+#[test]
+fn skyliner_removes_retreat_cost_from_every_own_basic_in_play() {
+    let ability = Ability {
+        name: "Skyliner",
+        effect: sim::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost,
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    assert_eq!(state.effective_retreat_cost(active), 0, "the carrier itself is a Basic");
+
+    let bench_card = deal_new_card(&mut state, player, carrier_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+    assert_eq!(state.effective_retreat_cost(bench_mon), 0, "a Benched Basic too");
+
+    // Never offered as a standing choice.
+    let actions = legal_actions(&state);
+    assert!(!actions.contains(&Action::UseAbility { pokemon: active }));
+}
+
+#[test]
+fn skyliner_does_not_touch_a_stage_1_or_the_opponents_pokemon() {
+    let ability = Ability {
+        name: "Skyliner",
+        effect: sim::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost,
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let opponent_active = state.player(opponent).active.unwrap();
+    assert_eq!(state.effective_retreat_cost(opponent_active), 1, "not this player's own Pokemon");
+
+    let evolution_def = state.db.add(sim::card::CardDef::Pokemon(sim::card::Pokemon {
+        print_id: "test-stage-1",
+        name: "Evolvemon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 1,
+        stage: Stage::Stage1,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let evolution_card = deal_new_card(&mut state, player, evolution_def);
+    let evolution = state.put_into_play(player, evolution_card);
+    state.players[player.index()].bench.push(evolution);
+    assert_eq!(state.effective_retreat_cost(evolution), 2, "not a Basic Pokemon");
+}
+
+#[test]
+fn latias_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Latias ex" && c.playable.is_some()),
+        "at least one Latias ex print should play"
+    );
+}
