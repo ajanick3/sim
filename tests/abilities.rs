@@ -1269,3 +1269,89 @@ fn latias_ex_is_admitted_from_the_artifact() {
         "at least one Latias ex print should play"
     );
 }
+
+// --- Beyond the map: move damage counters from an own Pokemon to the opponent's ---
+
+#[test]
+fn moves_up_to_the_limit_of_damage_counters_to_the_opponent() {
+    let ability = Ability {
+        name: "Adrena-Brain",
+        effect: sim::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
+            Type::Darkness,
+            3,
+        ),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let dark_energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-dark-energy",
+        name: "Darkness Energy",
+        kind: Type::Darkness,
+    }));
+    let dark_energy = deal_new_card(&mut state, player, dark_energy_def);
+    state.pokemon[active.index()].attached.push(dark_energy);
+    state.pokemon[active.index()].damage = 50;
+
+    let opponent = player.opponent();
+    let opponent_active = state.player(opponent).active.unwrap();
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(result.is_ok(), "carries Darkness Energy and has an own damaged Pokemon");
+    assert!(matches!(state.phase, Phase::MovingDamageCountersFromOwnToOpponent { .. }));
+
+    let actions = legal_actions(&state);
+    assert!(actions.contains(&Action::MoveDamageCountersFromOwnToOpponent {
+        source: active,
+        target: opponent_active,
+        count: 30,
+    }));
+    assert!(
+        !actions.contains(&Action::MoveDamageCountersFromOwnToOpponent {
+            source: active,
+            target: opponent_active,
+            count: 40,
+        }),
+        "at most 3 counters, the Ability's own limit"
+    );
+
+    apply(
+        &mut state,
+        Action::MoveDamageCountersFromOwnToOpponent { source: active, target: opponent_active, count: 30 },
+    )
+    .unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(active).damage, 20);
+    assert_eq!(state.pokemon(opponent_active).damage, 30);
+}
+
+#[test]
+fn adrena_brain_not_offered_without_darkness_energy_or_own_damage() {
+    let ability = Ability {
+        name: "Adrena-Brain",
+        effect: sim::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
+            Type::Darkness,
+            3,
+        ),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(result.is_err(), "no Darkness Energy attached and no own damage");
+}
+
+#[test]
+fn munkidori_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Munkidori" && c.playable.is_some()),
+        "at least one Munkidori print should play"
+    );
+}
