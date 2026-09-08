@@ -1026,6 +1026,14 @@ pub enum AbilityEffect {
     /// directly by `damage_dealt_with`. `Crustle`'s
     /// `Mysterious Rock Inn`.
     PassiveImmuneToDamageFromOpponentEx,
+    /// Once during the player's own turn, only while this Pokémon is
+    /// the Active, the player may look at the top this-many cards of
+    /// their own library and take a Supporter card found there into
+    /// hand, choosing which if more than one — the rest, and the
+    /// Supporter if none is taken, shuffle back into the library.
+    /// Opens `Phase::LookingAtTopCardsForSupporter`. No Supporter in
+    /// the peek opens no phase. `Tatsugiri`'s `Attract Customers`.
+    OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(u32),
 }
 
 /// A basic Energy card as printed.

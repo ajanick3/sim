@@ -233,6 +233,12 @@ pub enum Action {
     /// it to the bottom instead, as part of
     /// `Phase::ResolvingEnergyFoundInTopPeek`.
     PutFoundCardOnBottom { card: CardId },
+    /// Take this Supporter, seen among the top of the library, as
+    /// part of `Phase::LookingAtTopCardsForSupporter`. The rest
+    /// shuffle back.
+    TakeSupporterFromTopPeek { card: CardId },
+    /// Decline to take any.
+    DeclineTopPeekSupporter,
     /// Accept `Phase::DecidingToUseSnowSink`'s discard.
     AcceptSnowSink,
     /// Decline it.
@@ -304,6 +310,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::MovingDamageCountersFromOwnToOpponent { player, .. } => Some(player),
         Phase::LookingAtTopCardsToTakeOne { player, .. } => Some(player),
         Phase::ResolvingEnergyFoundInTopPeek { player, .. } => Some(player),
+        Phase::LookingAtTopCardsForSupporter { player, .. } => Some(player),
         Phase::DecidingToUseTealDance { player, .. } => Some(player),
         Phase::DecidingCursedBlastTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => Some(player),
@@ -766,6 +773,18 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     }
                 }
             }
+            return actions;
+        }
+        Phase::LookingAtTopCardsForSupporter { player: whose, count, .. } => {
+            let library = &state.player(whose).library;
+            let seen = count.min(library.len() as u32) as usize;
+            for card in &library[library.len() - seen..] {
+                if state.matches_filter(*card, crate::card::CardFilter::TrainerOfKind(TrainerKind::Supporter))
+                {
+                    actions.push(Action::TakeSupporterFromTopPeek { card: *card });
+                }
+            }
+            actions.push(Action::DeclineTopPeekSupporter);
             return actions;
         }
         Phase::DecidingToUseSnowSink { .. } => {
@@ -1307,6 +1326,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 _,
                 _,
             ) => !side.library.is_empty(),
+            crate::card::AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(count) => {
+                side.active == Some(pokemon) && {
+                    let seen = (count as usize).min(side.library.len());
+                    side.library[side.library.len() - seen..].iter().any(|c| {
+                        state.matches_filter(*c, crate::card::CardFilter::TrainerOfKind(TrainerKind::Supporter))
+                    })
+                }
+            }
         };
         if eligible {
             actions.push(Action::UseAbility { pokemon });
@@ -1551,6 +1578,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::PutFoundCardOnBottom { card } => {
             format!("Bury {} (Metal Maker)", state.def_of(card).name())
         }
+        Action::TakeSupporterFromTopPeek { card } => {
+            format!("Take {} (Attract Customers)", state.def_of(card).name())
+        }
+        Action::DeclineTopPeekSupporter => "Decline Attract Customers".to_string(),
         Action::AttachEnergyForTealDance { card } => {
             format!("Attach {} (Teal Dance)", state.def_of(card).name())
         }

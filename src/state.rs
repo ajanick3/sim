@@ -379,6 +379,12 @@ pub enum Phase {
         kind: crate::card::Type,
         remaining: u32,
     },
+    /// `player` opened `pokemon`'s own Ability that peeks at the top
+    /// `count` cards of the library for a Supporter to take, the rest
+    /// shuffling back — read fresh from the library's own top slice,
+    /// the same way `LookingAtTopCardsToTakeOne` is. `Tatsugiri`'s
+    /// `Attract Customers`.
+    LookingAtTopCardsForSupporter { player: PlayerId, pokemon: PokemonId, count: u32 },
     /// `player` opened `pokemon`'s own Ability that attaches Energy
     /// from hand as the effect itself. `Teal Mask Ogerpon ex`'s
     /// `Teal Dance`.

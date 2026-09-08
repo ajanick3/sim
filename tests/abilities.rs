@@ -1599,3 +1599,84 @@ fn crustle_is_admitted_from_the_artifact() {
         "at least one Crustle print should play"
     );
 }
+
+// --- Beyond the map: peek at the top of the library for a Supporter, shuffle back ---
+
+#[test]
+fn takes_a_supporter_seen_at_the_top_and_shuffles_the_rest_back() {
+    let ability = Ability {
+        name: "Attract Customers",
+        effect: sim::card::AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(6),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let supporter_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-supporter",
+        name: "Test Supporter",
+        kind: sim::card::TrainerKind::Supporter,
+        requirement: None,
+        effect: sim::card::TrainerEffect::MoveAttachedEnergy,
+    }));
+    let supporter = deal_new_card(&mut state, player, supporter_def);
+    let library_len_before = state.player(player).library.len();
+    state.players[player.index()].library.push(supporter);
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+    assert!(matches!(state.phase, Phase::LookingAtTopCardsForSupporter { .. }));
+
+    let actions = legal_actions(&state);
+    assert!(actions.contains(&Action::TakeSupporterFromTopPeek { card: supporter }));
+    assert!(actions.contains(&Action::DeclineTopPeekSupporter));
+
+    apply(&mut state, Action::TakeSupporterFromTopPeek { card: supporter }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&supporter));
+    assert_eq!(state.player(player).library.len(), library_len_before);
+}
+
+#[test]
+fn attract_customers_only_works_from_the_active_spot() {
+    let ability = Ability {
+        name: "Attract Customers",
+        effect: sim::card::AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(6),
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+
+    let bench_card = deal_new_card(&mut state, player, carrier_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: bench_mon });
+    assert!(result.is_err(), "Attract Customers only works from the Active Spot");
+}
+
+#[test]
+fn attract_customers_not_offered_with_no_supporter_in_the_peek() {
+    let ability = Ability {
+        name: "Attract Customers",
+        effect: sim::card::AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(6),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    state.players[player.index()].library.clear();
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(result.is_err(), "no Supporter in the deck at all, let alone the peek");
+}
+
+#[test]
+fn tatsugiri_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Tatsugiri" && c.playable.is_some()),
+        "at least one Tatsugiri print should play"
+    );
+}
