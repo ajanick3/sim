@@ -2632,7 +2632,9 @@ fn attack(state: &mut GameState, index: usize) {
             state.log.push(format!("{attacker_name} takes {amount} back."));
         }
     }
-    if let Some(condition) = attack.inflicts {
+    if let Some(condition) = attack.inflicts
+        && !state.attack_effects_on_it_prevented(defender)
+    {
         state.inflict(defender, condition);
         let name = state.pokemon_def(defender).name;
         state.log.push(format!("{name} is now {condition:?}."));
@@ -2678,12 +2680,14 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt_with` ran.
         crate::card::AttackEffect::IgnoresDefendersEffects => {}
         crate::card::AttackEffect::InflictsCondition(condition) => {
-            state.inflict(defender, condition);
-            let name = state.pokemon_def(defender).name;
-            state.log.push(format!("{name} is now {condition:?}."));
+            if !state.attack_effects_on_it_prevented(defender) {
+                state.inflict(defender, condition);
+                let name = state.pokemon_def(defender).name;
+                state.log.push(format!("{name} is now {condition:?}."));
+            }
         }
         crate::card::AttackEffect::CoinFlipInflicts(condition) => {
-            if state.rng.flip() {
+            if state.rng.flip() && !state.attack_effects_on_it_prevented(defender) {
                 state.inflict(defender, condition);
                 let name = state.pokemon_def(defender).name;
                 state.log.push(format!("{name} is now {condition:?}."));
@@ -2693,9 +2697,11 @@ fn resolve_attack_effect(
         // own `base` computation.
         crate::card::AttackEffect::CoinFlipBonusDamage(_) => {}
         crate::card::AttackEffect::DefenderCannotRetreatNextTurn => {
-            state.opponent_next_turn_restriction = Some((defender, effect, state.current));
-            let name = state.pokemon_def(defender).name;
-            state.log.push(format!("{name} cannot retreat next turn."));
+            if !state.attack_effects_on_it_prevented(defender) {
+                state.opponent_next_turn_restriction = Some((defender, effect, state.current));
+                let name = state.pokemon_def(defender).name;
+                state.log.push(format!("{name} cannot retreat next turn."));
+            }
         }
         crate::card::AttackEffect::MayShuffleFixedEnergyThenDamageChosenBenched { count, damage } => {
             let owner = state.pokemon(attacker).owner;
@@ -2739,11 +2745,13 @@ fn resolve_attack_effect(
             }
         }
         crate::card::AttackEffect::DefenderDealsLessDamageNextTurn(amount) => {
-            state.opponent_next_turn_restriction = Some((defender, effect, state.current));
-            let name = state.pokemon_def(defender).name;
-            state
-                .log
-                .push(format!("{name} deals {amount} less damage next turn."));
+            if !state.attack_effects_on_it_prevented(defender) {
+                state.opponent_next_turn_restriction = Some((defender, effect, state.current));
+                let name = state.pokemon_def(defender).name;
+                state
+                    .log
+                    .push(format!("{name} deals {amount} less damage next turn."));
+            }
         }
         crate::card::AttackEffect::AttackerCannotAttackNextTurn => {
             state.own_next_turn_restriction = Some((attacker, effect, false));

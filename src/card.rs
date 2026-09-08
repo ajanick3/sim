@@ -1117,6 +1117,15 @@ pub enum EnergyEffect {
     /// attack never reaches it, so "while Active" is automatic here.
     /// `Spiky Energy`.
     CountersAttackerOnDamageTakenWhileActive(u32),
+    /// A standing effect, not a choice: damage still lands normally,
+    /// but every other effect an opponent's attack would apply
+    /// directly to the carrier — a Special Condition, a next-turn
+    /// restriction naming the carrier — does not. An effect already
+    /// in place is not retroactively removed. Read at each such
+    /// effect's own grant site, not centrally — the printed text
+    /// names what is "done to" the carrier, not every consequence an
+    /// attack has anywhere on the board. `Mist Energy`.
+    PreventsAttackEffectsOnCarrier,
 }
 
 #[derive(Debug, Clone)]
