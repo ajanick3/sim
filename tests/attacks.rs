@@ -2763,3 +2763,46 @@ fn dipplin_energy_loop_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv10-017").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Dipplin's Energy Loop print should play");
 }
+
+// --- Beyond the spec: discard the defender's Tools before dealing damage ---
+
+#[test]
+fn discards_the_defenders_tools_before_dealing_damage() {
+    let attack = Attack {
+        name: "Peck Off",
+        cost: vec![Type::Colorless],
+        base_damage: 30,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsDefendersTools),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    let tool_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-tool",
+        name: "Test Tool",
+        kind: sim::card::TrainerKind::Tool,
+        requirement: None,
+        effect: sim::card::TrainerEffect::Nothing,
+    }));
+    let tool = deal_new_card(&mut state, opponent, tool_def);
+    state.pokemon[defender.index()].attached.push(tool);
+
+    pay_and_attack(&mut state);
+
+    assert!(!state.pokemon(defender).attached.contains(&tool), "the Tool is discarded");
+    assert!(state.player(opponent).discard.contains(&tool));
+    assert_eq!(state.pokemon(defender).damage, 30, "damage still lands as printed");
+}
+
+#[test]
+fn seaking_peck_off_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv06-045").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Seaking's Peck Off print should play");
+}

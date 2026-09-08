@@ -794,6 +794,10 @@ pub enum AttackEffect {
     /// than 2 Pokémon in play, or none carrying Energy) opens no
     /// phase. `Elgyem`'s `Slight Shift`.
     MoveOpponentsEnergyBetweenTheirPokemon,
+    /// Before dealing damage, discard every Pokémon Tool attached to
+    /// the defender. Unconditional, no phase — nothing for the
+    /// player to choose. `Seaking`'s `Peck Off`.
+    DiscardsDefendersTools,
 }
 
 /// What `AttackEffect::DamagePerCount` counts.
