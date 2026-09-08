@@ -227,6 +227,16 @@ pub enum Action {
     AcceptPsychicDraw,
     /// Decline it.
     DeclinePsychicDraw,
+    /// Accept `Phase::DecidingToUseJewelSeeker`'s search.
+    AcceptJewelSeeker,
+    /// Decline it.
+    DeclineJewelSeeker,
+    /// Take this Trainer card as part of
+    /// `Phase::SearchingLibraryForTrainerCards`.
+    TakeTrainerCardFromLibrary { card: CardId },
+    /// Stop `Phase::SearchingLibraryForTrainerCards` before its
+    /// limit is reached.
+    FinishSearchingTrainerCards,
     /// Deal `Phase::ChoosingAnyOpponentPokemonDamageTarget`'s flat
     /// damage to this Pokémon, Active or Benched.
     DamageChosenOpponentPokemon { target: PokemonId },
@@ -355,6 +365,8 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToShuffleEnergyForBenchDamage { player, .. } => Some(player),
         Phase::DecidingToUseLastDitchCatch { player, .. } => Some(player),
         Phase::DecidingToUsePsychicDraw { player, .. } => Some(player),
+        Phase::DecidingToUseJewelSeeker { player, .. } => Some(player),
+        Phase::SearchingLibraryForTrainerCards { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
         Phase::ChoosingTwoOpponentPokemonDamageTargets { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
@@ -733,6 +745,20 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::DecidingToUsePsychicDraw { .. } => {
             actions.push(Action::AcceptPsychicDraw);
             actions.push(Action::DeclinePsychicDraw);
+            return actions;
+        }
+        Phase::DecidingToUseJewelSeeker { .. } => {
+            actions.push(Action::AcceptJewelSeeker);
+            actions.push(Action::DeclineJewelSeeker);
+            return actions;
+        }
+        Phase::SearchingLibraryForTrainerCards { player: whose, .. } => {
+            for card in &state.player(whose).library {
+                if state.matches_filter(*card, crate::card::CardFilter::AnyTrainer) {
+                    actions.push(Action::TakeTrainerCardFromLibrary { card: *card });
+                }
+            }
+            actions.push(Action::FinishSearchingTrainerCards);
             return actions;
         }
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player: whose, .. } => {
@@ -1488,6 +1514,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // Triggered the moment this Pokémon evolves from hand
             // (`trigger_psychic_draw`), never a standing choice.
             crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(_) => false,
+            crate::card::AbilityEffect::WhenEvolvedFromHandMaySearchTrainersIfOwnTeraInPlay(_) => false,
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_snow_sink`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium => false,
@@ -1781,6 +1808,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DeclineLastDitchCatch => "Decline Last-Ditch Catch".to_string(),
         Action::AcceptPsychicDraw => "Use Psychic Draw".to_string(),
         Action::DeclinePsychicDraw => "Decline Psychic Draw".to_string(),
+        Action::AcceptJewelSeeker => "Use Jewel Seeker".to_string(),
+        Action::DeclineJewelSeeker => "Decline Jewel Seeker".to_string(),
+        Action::TakeTrainerCardFromLibrary { card } => format!("Take {}", state.def_of(card).name()),
+        Action::FinishSearchingTrainerCards => "Stop searching".to_string(),
         Action::DamageChosenOpponentPokemon { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
         }
