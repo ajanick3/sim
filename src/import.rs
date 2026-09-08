@@ -1015,6 +1015,9 @@ fn known_energy(name: &str) -> Option<(Type, crate::card::EnergyEffect)> {
         "Spiky Energy" => {
             (Type::Colorless, crate::card::EnergyEffect::CountersAttackerOnDamageTakenWhileActive(20))
         }
+        "Mist Energy" => {
+            (Type::Colorless, crate::card::EnergyEffect::PreventsAttackEffectsOnCarrier)
+        }
         _ => return None,
     })
 }

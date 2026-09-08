@@ -816,7 +816,8 @@ impl GameState {
                     | crate::card::EnergyEffect::WhenAttachedToTypeSearchesBasicPokemonOfTypeToBench(
                         ..,
                     )
-                    | crate::card::EnergyEffect::CountersAttackerOnDamageTakenWhileActive(_),
+                    | crate::card::EnergyEffect::CountersAttackerOnDamageTakenWhileActive(_)
+                    | crate::card::EnergyEffect::PreventsAttackEffectsOnCarrier,
                 )
                 | None => 0,
             })
@@ -906,6 +907,17 @@ impl GameState {
                     .ability
                     .is_some_and(|a| a.effect == crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities)
             })
+        })
+    }
+
+    /// Whether `id` carries `EnergyEffect::PreventsAttackEffectsOnCarrier`
+    /// — every site that would apply an opponent's attack effect
+    /// directly to a Pokémon checks this first. `Mist Energy`.
+    pub fn attack_effects_on_it_prevented(&self, id: PokemonId) -> bool {
+        self.pokemon(id).attached.iter().any(|c| {
+            self.def_of(*c)
+                .as_energy()
+                .is_some_and(|e| e.effect == Some(crate::card::EnergyEffect::PreventsAttackEffectsOnCarrier))
         })
     }
 

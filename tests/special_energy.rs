@@ -353,6 +353,22 @@ fn telepathic_psychic_energy_is_admitted_from_the_artifact() {
 /// player's Active is a plain punching bag — the same shape
 /// `tests/attacks.rs`'s own fixture already takes.
 fn attacker_and_defender_game(seed: u64) -> (GameState, sim::ids::PokemonId, sim::ids::PokemonId) {
+    attacker_and_defender_game_with_attack(
+        seed,
+        sim::card::Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        },
+    )
+}
+
+fn attacker_and_defender_game_with_attack(
+    seed: u64,
+    attack: sim::card::Attack,
+) -> (GameState, sim::ids::PokemonId, sim::ids::PokemonId) {
     let mut db = CardDb::new();
     let attacker_def = db.add(CardDef::Pokemon(Pokemon {
         print_id: "test-attacker",
@@ -367,13 +383,7 @@ fn attacker_and_defender_game(seed: u64) -> (GameState, sim::ids::PokemonId, sim
         evolve_from: None,
         evolves_from_basic: None,
         ability: None,
-        attacks: vec![sim::card::Attack {
-            name: "Tackle",
-            cost: vec![Type::Colorless],
-            base_damage: 10,
-            inflicts: None,
-            effect: None,
-        }],
+        attacks: vec![attack],
     }));
     let defender_def = db.add(CardDef::Pokemon(Pokemon {
         print_id: "test-defender",
@@ -487,5 +497,90 @@ fn spiky_energy_is_admitted_from_the_artifact() {
     assert!(
         import.cards.iter().any(|c| c.name == "Spiky Energy" && c.playable.is_some()),
         "at least one Spiky Energy print should play"
+    );
+}
+
+// --- Ticket 05: a passive effect-prevention on the carrier ---
+
+#[test]
+fn blocks_condition_infliction_but_not_damage() {
+    let attack = sim::card::Attack {
+        name: "Poison Sting",
+        cost: vec![Type::Colorless],
+        base_damage: 10,
+        inflicts: Some(sim::card::Condition::Poisoned),
+        effect: None,
+    };
+    let (mut state, attacker, defender) = attacker_and_defender_game_with_attack(3, attack);
+
+    let mist_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-mist-energy",
+        name: "Mist Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::PreventsAttackEffectsOnCarrier),
+    }));
+    attach(&mut state, defender, mist_def);
+
+    pay_and_attack(&mut state, attacker);
+
+    assert_eq!(state.pokemon(defender).damage, 10, "damage still lands");
+    assert!(
+        !state.has_condition(defender, sim::card::Condition::Poisoned),
+        "Mist Energy prevents the Poison"
+    );
+}
+
+#[test]
+fn without_mist_energy_the_condition_still_applies() {
+    let attack = sim::card::Attack {
+        name: "Poison Sting",
+        cost: vec![Type::Colorless],
+        base_damage: 10,
+        inflicts: Some(sim::card::Condition::Poisoned),
+        effect: None,
+    };
+    let (mut state, attacker, defender) = attacker_and_defender_game_with_attack(3, attack);
+
+    pay_and_attack(&mut state, attacker);
+
+    assert!(state.has_condition(defender, sim::card::Condition::Poisoned), "no Mist Energy attached");
+}
+
+#[test]
+fn blocks_a_next_turn_restriction_naming_the_carrier() {
+    let attack = sim::card::Attack {
+        name: "Binding Blow",
+        cost: vec![Type::Colorless],
+        base_damage: 10,
+        inflicts: None,
+        effect: Some(sim::card::AttackEffect::DefenderCannotRetreatNextTurn),
+    };
+    let (mut state, attacker, defender) = attacker_and_defender_game_with_attack(3, attack);
+
+    let mist_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-mist-energy-retreat",
+        name: "Mist Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::PreventsAttackEffectsOnCarrier),
+    }));
+    attach(&mut state, defender, mist_def);
+
+    pay_and_attack(&mut state, attacker);
+
+    assert_eq!(
+        state.opponent_next_turn_restriction, None,
+        "Mist Energy prevents the retreat restriction from ever being granted"
+    );
+}
+
+#[test]
+fn mist_energy_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Mist Energy" && c.playable.is_some()),
+        "at least one Mist Energy print should play"
     );
 }

@@ -93,9 +93,9 @@ fn the_kinds_add_up_to_the_pool() {
     // takes it down to 273.
     assert_eq!(trainers, 273, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy) admitted Growing Grass Energy,
-    // Enriching Energy, Telepathic Psychic Energy, and Spiky Energy
-    // (two prints), taking this from 21 to 16.
-    assert_eq!(count(Refusal::IsASpecialEnergy), 16, "every Energy card");
+    // Enriching Energy, Telepathic Psychic Energy, Spiky Energy (two
+    // prints), and Mist Energy, taking this from 21 to 15.
+    assert_eq!(count(Refusal::IsASpecialEnergy), 15, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
         0,

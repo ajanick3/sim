@@ -60,6 +60,14 @@ one new thing to it.
   damage effect at the one site the base attack's damage lands
   already satisfies it for free. Details under [the ticket's
   Answer](issues/04-counter-damage-from-a-hit-taken.md).
+- Ticket 05: no central interception point — each grant site that
+  applies an effect directly to the defender checks a small
+  `attack_effects_on_it_prevented` helper first, rather than routing
+  every `AttackEffect` through one chokepoint. `DiscardsDefendersTools`
+  (`Peck Off`) was left ungated, a known narrow gap; any future
+  effect that writes directly onto a Pokémon should check the helper
+  too. Details under [the ticket's
+  Answer](issues/05-a-passive-effect-prevention-on-the-carrier.md).
 
 ## Fog
 
