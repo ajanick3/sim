@@ -1138,6 +1138,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::PlaceDamageCountersOnDefenderPerCount(Count::OwnHandSizeCount, 2)
         }
         ("Shaymin", "Pinpoint Dive") => AttackEffect::DamageChosenOpponentBenchedEx(60),
+        ("Shaymin", "Send Flowers") => AttackEffect::SearchEnergyAttachToBenchedOfType(Type::Grass),
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }

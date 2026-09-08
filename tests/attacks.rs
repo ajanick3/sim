@@ -2418,3 +2418,89 @@ fn shaymin_pinpoint_dive_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv05-013").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Shaymin's Pinpoint Dive print should play");
 }
+
+// --- Beyond the spec: search an Energy, attach to a chosen Benched Pokemon of a type ---
+
+#[test]
+fn searches_an_energy_and_attaches_it_to_a_chosen_benched_pokemon_of_type() {
+    let attack = Attack {
+        name: "Send Flowers",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchEnergyAttachToBenchedOfType(Type::Grass)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+
+    let grass_bench_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-grass-bench",
+        name: "Grassmon",
+        hp: 200,
+        kind: Type::Grass,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let bench_card = deal_new_card(&mut state, player, grass_bench_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    let plain_bench_def = state.cards[state.pokemon(state.player(player).active.unwrap()).top_card().index()].def;
+    let plain_bench_card = deal_new_card(&mut state, player, plain_bench_def);
+    let plain_bench = state.put_into_play(player, plain_bench_card);
+    state.players[player.index()].bench.push(plain_bench);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::SearchingForEnergyToAttachToBenchedOfType { .. }));
+    let library_before = state.player(player).library.len();
+    let actions = legal_actions(&state);
+    assert!(actions.contains(&Action::AttachSearchedEnergyTo { target: bench_mon }));
+    assert!(!actions.contains(&Action::AttachSearchedEnergyTo { target: plain_bench }));
+
+    apply(&mut state, Action::AttachSearchedEnergyTo { target: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(bench_mon).attached.len(), 1);
+    assert!(state.def_of(state.pokemon(bench_mon).attached[0]).is_energy());
+    assert_eq!(state.player(player).library.len(), library_before - 1);
+}
+
+#[test]
+fn not_offered_with_no_energy_or_no_benched_target_of_type() {
+    let attack = Attack {
+        name: "Send Flowers",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchEnergyAttachToBenchedOfType(Type::Grass)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no Grass Benched Pokemon and no Energy in library");
+}
+
+#[test]
+fn shaymin_send_flowers_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me03-003").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Shaymin's Send Flowers print should play");
+}

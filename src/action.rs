@@ -189,6 +189,9 @@ pub enum Action {
     /// Deal `Phase::ChoosingBenchedExDamageTarget`'s flat damage to
     /// this Benched Pokémon ex.
     DamageBenchedEx { target: PokemonId },
+    /// Attach `Phase::SearchingForEnergyToAttachToBenchedOfType`'s
+    /// Energy to this Benched Pokémon of the matching type.
+    AttachSearchedEnergyTo { target: PokemonId },
     /// Attach this Energy from hand, as part of
     /// `Phase::DecidingToUseTealDance`.
     AttachEnergyForTealDance { card: CardId },
@@ -279,6 +282,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToUsePsychicDraw { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
+        Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
         Phase::DecidingToUseTealDance { player, .. } => Some(player),
         Phase::DecidingCursedBlastTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => Some(player),
@@ -624,6 +628,18 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             for pokemon in &state.player(whose.opponent()).bench {
                 if state.pokemon_def(*pokemon).prizes > 1 {
                     actions.push(Action::DamageBenchedEx { target: *pokemon });
+                }
+            }
+            return actions;
+        }
+        Phase::SearchingForEnergyToAttachToBenchedOfType { player: whose, kind } => {
+            let has_energy =
+                state.player(whose).library.iter().any(|c| state.def_of(*c).is_energy());
+            if has_energy {
+                for target in &state.player(whose).bench {
+                    if state.pokemon_def(*target).kind == kind {
+                        actions.push(Action::AttachSearchedEnergyTo { target: *target });
+                    }
                 }
             }
             return actions;
@@ -1419,6 +1435,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::DamageBenchedEx { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
+        }
+        Action::AttachSearchedEnergyTo { target } => {
+            format!("Attach Energy to {}", state.pokemon_def(target).name)
         }
         Action::AttachEnergyForTealDance { card } => {
             format!("Attach {} (Teal Dance)", state.def_of(card).name())

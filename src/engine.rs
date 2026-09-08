@@ -1264,6 +1264,26 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::AttachSearchedEnergyTo { target } => {
+            let player = match state.phase {
+                Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => player,
+                _ => return Err(IllegalAction),
+            };
+            let energy = *state.players[player.index()]
+                .library
+                .iter()
+                .find(|c| state.def_of(**c).is_energy())
+                .expect("legal_actions offers this only with a qualifying Energy in the library");
+            state.players[player.index()].library.retain(|c| *c != energy);
+            state.pokemon[target.index()].attached.push(energy);
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} takes an Energy (Send Flowers)."));
+            let library = &mut state.players[player.index()].library;
+            shuffle(state.rng.as_mut(), library);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::AttachEnergyForTealDance { card } => {
             let (player, pokemon) = match state.phase {
                 Phase::DecidingToUseTealDance { player, pokemon } => (player, pokemon),
@@ -2583,6 +2603,16 @@ fn resolve_attack_effect(
                 .any(|p| state.pokemon_def(*p).prizes > 1);
             if any_benched_ex {
                 state.phase = Phase::ChoosingBenchedExDamageTarget { player: owner, damage };
+            }
+        }
+        crate::card::AttackEffect::SearchEnergyAttachToBenchedOfType(kind) => {
+            let owner = state.pokemon(attacker).owner;
+            let has_energy =
+                state.player(owner).library.iter().any(|c| state.def_of(*c).is_energy());
+            let has_target =
+                state.player(owner).bench.iter().any(|p| state.pokemon_def(*p).kind == kind);
+            if has_energy && has_target {
+                state.phase = Phase::SearchingForEnergyToAttachToBenchedOfType { player: owner, kind };
             }
         }
         crate::card::AttackEffect::DamagePerCountToChosenOpponentPokemon(count, per_unit) => {
