@@ -180,6 +180,24 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     state.draw(player);
                 }
             }
+            if let Some(crate::card::EnergyEffect::WhenAttachedToTypeSearchesBasicPokemonOfTypeToBench(
+                carrier_kind,
+                pokemon_kind,
+                count,
+            )) = state.def_of(card).as_energy().and_then(|e| e.effect)
+                && state.pokemon_def(target).kind == carrier_kind
+            {
+                let any_basic = state.player(player).library.iter().any(|c| {
+                    state.matches_filter(*c, crate::card::CardFilter::BasicPokemonOfType(pokemon_kind))
+                });
+                if any_basic {
+                    state.phase = Phase::SearchingLibraryForBasicsOfType {
+                        player,
+                        kind: pokemon_kind,
+                        remaining: count,
+                    };
+                }
+            }
         }
 
         Action::PlayTool { card, target } => {
@@ -889,6 +907,37 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             finish_searching_library_for_basics(state, player);
+        }
+
+        Action::TakeBasicPokemonOfTypeForEnergyAttach { card } => {
+            let (player, kind, remaining) = match state.phase {
+                Phase::SearchingLibraryForBasicsOfType { player, kind, remaining } => {
+                    (player, kind, remaining)
+                }
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].library.retain(|c| *c != card);
+            let pokemon = state.put_into_play(player, card);
+            state.players[player.index()].bench.push(pokemon);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} joins the Bench."));
+            if remaining <= 1 {
+                finish_searching_library_for_basics_of_type(state, player);
+            } else {
+                state.phase = Phase::SearchingLibraryForBasicsOfType {
+                    player,
+                    kind,
+                    remaining: remaining - 1,
+                };
+            }
+        }
+
+        Action::FinishSearchingBasicsOfType => {
+            let player = match state.phase {
+                Phase::SearchingLibraryForBasicsOfType { player, .. } => player,
+                _ => return Err(IllegalAction),
+            };
+            finish_searching_library_for_basics_of_type(state, player);
         }
 
         Action::TakeItemFromLibrary { card } => {
@@ -2942,6 +2991,16 @@ fn resolve_attack_effect(
 /// early decline — both shuffle the library, the same as any other
 /// search that looked through it.
 fn finish_searching_library_for_basics(state: &mut GameState, player: PlayerId) {
+    let library = &mut state.players[player.index()].library;
+    shuffle(state.rng.as_mut(), library);
+    state.phase = Phase::Main;
+    settle(state);
+}
+
+/// `Phase::SearchingLibraryForBasicsOfType` ends either on its own limit or
+/// an early decline — both shuffle the library, the same as
+/// `finish_searching_library_for_basics` does. `Telepathic Psychic Energy`.
+fn finish_searching_library_for_basics_of_type(state: &mut GameState, player: PlayerId) {
     let library = &mut state.players[player.index()].library;
     shuffle(state.rng.as_mut(), library);
     state.phase = Phase::Main;

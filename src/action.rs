@@ -151,6 +151,12 @@ pub enum Action {
     /// Stop `Phase::SearchingLibraryForBasics` before its limit is
     /// spent.
     FinishCallForFamily,
+    /// Take this card, found searching for a Basic Pokémon of a type,
+    /// as part of `Phase::SearchingLibraryForBasicsOfType`.
+    TakeBasicPokemonOfTypeForEnergyAttach { card: CardId },
+    /// Stop `Phase::SearchingLibraryForBasicsOfType` before its limit
+    /// is reached.
+    FinishSearchingBasicsOfType,
     /// Move this Energy from the opponent's Active into their hand, as
     /// part of `Phase::MovingOpponentsActiveEnergyToHand`.
     MoveOpponentsActiveEnergyToHand { card: CardId },
@@ -306,6 +312,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DistributingDamageCounters { player, .. } => Some(player),
         Phase::ChoosingBenchDamageTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForBasics { player, .. } => Some(player),
+        Phase::SearchingLibraryForBasicsOfType { player, .. } => Some(player),
         Phase::SearchingLibraryForItem { player } => Some(player),
         Phase::SearchingLibraryForAnyCards { player, .. } => Some(player),
         Phase::MovingOpponentsActiveEnergyToHand { player, .. } => Some(player),
@@ -610,6 +617,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::FinishCallForFamily);
+            return actions;
+        }
+        Phase::SearchingLibraryForBasicsOfType { player: whose, kind, .. } => {
+            for card in &state.player(whose).library {
+                if state.matches_filter(*card, crate::card::CardFilter::BasicPokemonOfType(kind)) {
+                    actions.push(Action::TakeBasicPokemonOfTypeForEnergyAttach { card: *card });
+                }
+            }
+            actions.push(Action::FinishSearchingBasicsOfType);
             return actions;
         }
         Phase::SearchingLibraryForItem { player: whose } => {
@@ -1516,6 +1532,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Bench {}", state.def_of(card).name())
         }
         Action::FinishCallForFamily => "Stop searching".to_string(),
+        Action::TakeBasicPokemonOfTypeForEnergyAttach { card } => {
+            format!("Bench {}", state.def_of(card).name())
+        }
+        Action::FinishSearchingBasicsOfType => "Stop searching".to_string(),
         Action::TakeItemFromLibrary { card } => format!("Take {}", state.def_of(card).name()),
         Action::TakeAnyCardFromLibrary { card } => format!("Take {}", state.def_of(card).name()),
         Action::FinishSearchingAnyCards => "Stop searching".to_string(),

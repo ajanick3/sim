@@ -1004,6 +1004,14 @@ fn known_energy(name: &str) -> Option<(Type, crate::card::EnergyEffect)> {
         "Enriching Energy" => {
             (Type::Colorless, crate::card::EnergyEffect::DrawCardsOnAttachFromHand(4))
         }
+        "Telepathic Psychic Energy" => (
+            Type::Psychic,
+            crate::card::EnergyEffect::WhenAttachedToTypeSearchesBasicPokemonOfTypeToBench(
+                Type::Psychic,
+                Type::Psychic,
+                2,
+            ),
+        ),
         _ => return None,
     })
 }

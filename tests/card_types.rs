@@ -92,9 +92,10 @@ fn the_kinds_add_up_to_the_pool() {
     // this session (`TrainerEffect::MayDiscardUpToTwoToolsAnywhere`),
     // takes it down to 273.
     assert_eq!(trainers, 273, "the Trainers still refused, by kind");
-    // Milestone 12 (Special Energy) admitted Growing Grass Energy and
-    // Enriching Energy, taking this from 21 to 19.
-    assert_eq!(count(Refusal::IsASpecialEnergy), 19, "every Energy card");
+    // Milestone 12 (Special Energy) admitted Growing Grass Energy,
+    // Enriching Energy, and Telepathic Psychic Energy, taking this
+    // from 21 to 18.
+    assert_eq!(count(Refusal::IsASpecialEnergy), 18, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
         0,
