@@ -29,9 +29,9 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
         "Fighting Gong is an Item"
     );
     assert_eq!(
-        reason_for("sv10-180"),
+        reason_for("me01-122"),
         Some(Refusal::IsATrainer(TrainerKind::Stadium)),
-        "Team Rocket's Watchtower is a Stadium"
+        "Mystery Garden is a Stadium"
     );
     assert_eq!(
         reason_for("me02-124"),
@@ -92,8 +92,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Enhanced Hammer (two prints) took it to 266; Glass Trumpet
     // (four prints) took it to 262; Nighttime Mine took it to 261;
     // Area Zero Underdepths (three prints) took it to 258; Battle
-    // Cage (two prints) takes it to 256.
-    assert_eq!(trainers, 256, "the Trainers still refused, by kind");
+    // Cage (two prints) took it to 256; Team Rocket's Watchtower
+    // (two prints) takes it to 254.
+    assert_eq!(trainers, 254, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

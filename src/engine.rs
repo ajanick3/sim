@@ -1580,10 +1580,19 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
             state.spend(Limit::AbilityUsed(player, ability.name));
             state.pokemon[source.index()].damage -= count;
-            state.pokemon[target.index()].damage += count;
             let source_name = state.pokemon_def(source).name;
             let target_name = state.pokemon_def(target).name;
-            state.log.push(format!("{count} damage moves from {source_name} to {target_name}."));
+            if state.bench_damage_counters_blocked(target) {
+                // `Battle Cage`: the counters still leave `source` — the
+                // move already started — but they never land, so they
+                // vanish rather than piling up somewhere else.
+                state.log.push(format!(
+                    "{count} damage would move from {source_name} to {target_name}, but Battle Cage stops it landing; the counters vanish."
+                ));
+            } else {
+                state.pokemon[target.index()].damage += count;
+                state.log.push(format!("{count} damage moves from {source_name} to {target_name}."));
+            }
             state.phase = Phase::Main;
             settle(state);
         }
@@ -2379,7 +2388,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::GrassCanEvolveTheTurnItIsPlayed
         | TrainerEffect::TeraAttacksCostMore
         | TrainerEffect::TeraPokemonRaisesBenchLimit
-        | TrainerEffect::PreventsDamageCountersOnBench => {}
+        | TrainerEffect::PreventsDamageCountersOnBench
+        | TrainerEffect::AbilitiesDisabled => {}
 
         // "Recovers from all Special Conditions" reads as an immediate
         // sweep at the moment this becomes true for a Pokémon — playing
@@ -3331,6 +3341,7 @@ fn damage_dealt_with(
         damage = damage.saturating_sub(amount);
     }
     if !ignore_defenders_effects
+        && !state.abilities_disabled()
         && state.pokemon_def(attacker).prizes > 1
         && state
             .pokemon_def(defender)
@@ -3461,6 +3472,9 @@ fn apply_risky_ruins(state: &mut GameState, pokemon: PokemonId) {
 /// `Action::PlayBasic` benches the card, the same site
 /// `apply_risky_ruins` already reads from.
 fn trigger_last_ditch_catch(state: &mut GameState, player: PlayerId, pokemon: PokemonId) {
+    if state.abilities_disabled() {
+        return;
+    }
     let Some(ability) = state.pokemon_def(pokemon).ability else {
         return;
     };
@@ -3484,6 +3498,9 @@ fn trigger_last_ditch_catch(state: &mut GameState, player: PlayerId, pokemon: Po
 /// Bench" trigger `trigger_last_ditch_catch` reads, but discarding
 /// whichever Stadium is in play instead of searching.
 fn trigger_snow_sink(state: &mut GameState, player: PlayerId, pokemon: PokemonId) {
+    if state.abilities_disabled() {
+        return;
+    }
     let Some(ability) = state.pokemon_def(pokemon).ability else {
         return;
     };
@@ -3502,6 +3519,9 @@ fn trigger_snow_sink(state: &mut GameState, player: PlayerId, pokemon: PokemonId
 /// the Bench" trigger `trigger_last_ditch_catch` and `trigger_snow_sink`
 /// already read, but offering a switch instead.
 fn trigger_rapid_vernier(state: &mut GameState, player: PlayerId, pokemon: PokemonId) {
+    if state.abilities_disabled() {
+        return;
+    }
     let Some(ability) = state.pokemon_def(pokemon).ability else {
         return;
     };
@@ -3522,6 +3542,9 @@ fn trigger_rapid_vernier(state: &mut GameState, player: PlayerId, pokemon: Pokem
 /// `Action::Evolve` finishes, the same spot `trigger_last_ditch_catch`
 /// reads a benched-from-hand trigger from.
 fn trigger_psychic_draw(state: &mut GameState, player: PlayerId, target: PokemonId) {
+    if state.abilities_disabled() {
+        return;
+    }
     let Some(ability) = state.pokemon_def(target).ability else {
         return;
     };

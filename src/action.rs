@@ -794,10 +794,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     continue;
                 }
                 let max = limit.min(damage / 10);
+                // `Battle Cage` never removes this choice: the move still
+                // starts by taking the counters off `source`. It only
+                // stops them landing on a protected Bench target, so a
+                // blocked target stays offered — `apply` is the one that
+                // reads the block, and lets the counters vanish instead
+                // of arriving.
                 for target in state.player(whose.opponent()).in_play() {
-                    if state.bench_damage_counters_blocked(target) {
-                        continue;
-                    }
                     for tens in 1..=max {
                         actions.push(Action::MoveDamageCountersFromOwnToOpponent {
                             source,
@@ -1312,8 +1315,10 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
     // An Ability, offered once its own gates all hold: whose turn it
     // is (already true — `legal_actions` only ever builds this list
     // for `player_to_act`), which Pokémon it demands, and whether the
-    // player has already used one with this name this turn.
-    for pokemon in side.in_play() {
+    // player has already used one with this name this turn. Skipped
+    // outright under `Team Rocket's Watchtower` — no Pokémon in play
+    // has an Ability while that Stadium stands.
+    for pokemon in side.in_play().into_iter().filter(|_| !state.abilities_disabled()) {
         let Some(ability) = state.pokemon_def(pokemon).ability else {
             continue;
         };

@@ -3,7 +3,10 @@
 //! fixture already took.
 
 use sim::action::{Action, legal_actions};
-use sim::card::{Ability, Attack, CardDb, CardDef, Energy, Pokemon, Stage, Type};
+use sim::card::{
+    Ability, Attack, CardDb, CardDef, Energy, Pokemon, Stage, Trainer, TrainerEffect,
+    TrainerKind, Type,
+};
 use sim::engine::apply;
 use sim::rng::SeededRng;
 use sim::state::{GameState, Phase};
@@ -1341,6 +1344,85 @@ fn moves_up_to_the_limit_of_damage_counters_to_the_opponent() {
     assert_eq!(state.phase, Phase::Main);
     assert_eq!(state.pokemon(active).damage, 20);
     assert_eq!(state.pokemon(opponent_active).damage, 30);
+}
+
+#[test]
+fn battle_cage_lets_adrena_brains_counters_vanish_rather_than_land_on_the_bench() {
+    let ability = Ability {
+        name: "Adrena-Brain",
+        effect: sim::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
+            Type::Darkness,
+            3,
+        ),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let cage = state.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-battle-cage",
+        name: "Battle Cage",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::PreventsDamageCountersOnBench,
+    }));
+    let cage_card = deal_new_card(&mut state, player, cage);
+    state.stadium = Some((player, cage_card));
+
+    let dark_energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-dark-energy-cage",
+        name: "Darkness Energy",
+        kind: Type::Darkness,
+        effect: None,
+    }));
+    let dark_energy = deal_new_card(&mut state, player, dark_energy_def);
+    state.pokemon[active.index()].attached.push(dark_energy);
+    state.pokemon[active.index()].damage = 50;
+
+    let opponent = player.opponent();
+    let bench_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-opponent-bench",
+        name: "Benchmon",
+        hp: 100,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let bench_card = deal_new_card(&mut state, opponent, bench_def);
+    let opponent_bench = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(opponent_bench);
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+    assert!(matches!(state.phase, Phase::MovingDamageCountersFromOwnToOpponent { .. }));
+    assert!(
+        legal_actions(&state).contains(&Action::MoveDamageCountersFromOwnToOpponent {
+            source: active,
+            target: opponent_bench,
+            count: 30,
+        }),
+        "the move is still offered even though Battle Cage will stop it landing"
+    );
+
+    apply(
+        &mut state,
+        Action::MoveDamageCountersFromOwnToOpponent {
+            source: active,
+            target: opponent_bench,
+            count: 30,
+        },
+    )
+    .unwrap();
+
+    assert_eq!(state.pokemon(active).damage, 20, "the counters still leave the source");
+    assert_eq!(state.pokemon(opponent_bench).damage, 0, "Battle Cage stops them landing on the Bench");
 }
 
 #[test]

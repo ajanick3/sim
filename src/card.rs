@@ -487,14 +487,25 @@ pub enum TrainerEffect {
     /// Underdepths`.
     TeraPokemonRaisesBenchLimit,
     /// A standing effect, not a resolved-once one: while this Stadium
-    /// is in play, no attack or Ability effect may place (or move)
-    /// damage counters onto any Benched Pokémon, either player's.
-    /// Damage from an attack landing normally is untouched — only a
-    /// direct placement bypassing the ordinary damage order is
-    /// blocked. Read directly by `GameState::bench_damage_counters_blocked`
-    /// at each site that would place a damage counter onto a
-    /// specifically-Benched target. `Battle Cage`.
+    /// is in play, no attack or Ability effect may place a damage
+    /// counter onto any Benched Pokémon, either player's. Damage from
+    /// an attack landing normally is untouched — only a direct
+    /// placement bypassing the ordinary damage order is blocked.
+    /// Read directly by `GameState::bench_damage_counters_blocked` at
+    /// each site that would place a damage counter onto a
+    /// specifically-Benched target. A *move* (Munkidori's
+    /// Adrena-Brain) still takes its counters off the source — that
+    /// half of the effect isn't a placement — but the counters vanish
+    /// rather than landing on a blocked Bench target, so `apply`
+    /// reads the block itself rather than `legal_actions` filtering
+    /// the target out. `Battle Cage`.
     PreventsDamageCountersOnBench,
+    /// A standing effect, not a resolved-once one: while this Stadium
+    /// is in play, no Pokémon in play, either player's, has an
+    /// Ability — read directly by `GameState::abilities_disabled` at
+    /// every site that would otherwise offer, trigger, or read a
+    /// standing Ability effect. `Team Rocket's Watchtower`.
+    AbilitiesDisabled,
 }
 
 /// What a card demands before it may be played at all.
