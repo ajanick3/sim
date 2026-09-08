@@ -1374,6 +1374,14 @@ impl GameState {
         if self.immune_under_festival_grounds(id) {
             return;
         }
+        if condition == Condition::Asleep
+            && !self.abilities_disabled_for(id)
+            && self.pokemon_def(id).ability.is_some_and(|a| {
+                a.effect == crate::card::AbilityEffect::PassiveImmuneToAsleep
+            })
+        {
+            return;
+        }
         if rotates(condition) {
             self.pokemon[id.index()].conditions.retain(|c| !rotates(*c));
         } else {

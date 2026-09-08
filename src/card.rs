@@ -1256,6 +1256,11 @@ pub enum AbilityEffect {
     /// own carrier's attacks, not a whole side. `Annihilape`'s `Lose
     /// Cool`.
     PassiveBonusDamageToActiveIfSelfDamaged(u32),
+    /// A standing effect, not a choice: this Pokémon can never become
+    /// Asleep. Read directly by `GameState::inflict`, the one site
+    /// that ever applies a Special Condition. `Hoothoot`'s
+    /// `Insomnia`.
+    PassiveImmuneToAsleep,
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for
