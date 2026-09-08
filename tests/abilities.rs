@@ -1961,3 +1961,277 @@ fn psyduck_is_admitted_from_the_artifact() {
         "at least one Psyduck print should play"
     );
 }
+
+// --- Beyond the map: an Ability that overrides an opponent type's Weakness ---
+
+/// A game where the first player's Active carries `Fairy Zone`, and
+/// the second player's Active prints a Dragon Weakness — so Fairy
+/// Zone's override (Dragon to Psychic) is observable against a
+/// Psychic attacker.
+fn fairy_zone_game(carrier_kind: Type, seed: u64) -> GameState {
+    let mut db = CardDb::new();
+    let carrier = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-fairy-zone-carrier",
+        name: "Lillie's Clefairy ex",
+        hp: 190,
+        kind: carrier_kind,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Fairy Zone",
+            effect: sim::card::AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(
+                Type::Dragon,
+                Type::Psychic,
+            ),
+        }),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 50,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-fairy-zone-defender",
+        name: "Dragonmon",
+        hp: 200,
+        kind: Type::Dragon,
+        weakness: Some(Type::Dragon),
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-fairy-zone-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+
+    let mut carrier_deck = vec![carrier; 4];
+    while carrier_deck.len() < 60 {
+        carrier_deck.push(energy);
+    }
+    let mut defender_deck = vec![defender_mon; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(energy);
+    }
+    let mut state =
+        GameState::new(db, [carrier_deck, defender_deck], Box::new(SeededRng::new(seed)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    state
+}
+
+fn pay_and_attack_fairy_zone(state: &mut GameState) {
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let cost_len = state.pokemon_def(active).attacks[0].cost.len();
+    for _ in 0..cost_len {
+        let side = state.player(player);
+        let card = side
+            .hand
+            .iter()
+            .chain(side.library.iter())
+            .find(|c| state.def_of(**c).is_energy())
+            .copied()
+            .expect("the deck holds Energy");
+        state.remove_from_hand(player, card);
+        state.players[player.index()].library.retain(|c| *c != card);
+        state.pokemon[active.index()].attached.push(card);
+    }
+    let attack = legal_actions(state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the attacker is paid for");
+    apply(state, attack).unwrap();
+}
+
+#[test]
+fn fairy_zone_makes_a_dragon_weak_to_psychic() {
+    let mut state = fairy_zone_game(Type::Psychic, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack_fairy_zone(&mut state);
+
+    assert_eq!(
+        state.pokemon(defender).damage, 100,
+        "Fairy Zone overrides the Dragon Weakness to Psychic, so the Psychic attacker doubles it"
+    );
+}
+
+#[test]
+fn without_fairy_zone_a_dragon_weakness_ignores_a_psychic_attacker() {
+    // The carrier's own type still matters for the attack itself, but
+    // giving it no Ability at all removes Fairy Zone's override —
+    // Dragon Weakness (the printed value) never matches a Psychic
+    // attacker, so no doubling happens either way.
+    let mut db = CardDb::new();
+    let attacker_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-no-fairy-zone-attacker",
+        name: "Attackmon",
+        hp: 190,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 50,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-no-fairy-zone-defender",
+        name: "Dragonmon",
+        hp: 200,
+        kind: Type::Dragon,
+        weakness: Some(Type::Dragon),
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-no-fairy-zone-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let mut attacker_deck = vec![attacker_mon; 4];
+    while attacker_deck.len() < 60 {
+        attacker_deck.push(energy);
+    }
+    let mut defender_deck = vec![defender_mon; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(energy);
+    }
+    let mut state =
+        GameState::new(db, [attacker_deck, defender_deck], Box::new(SeededRng::new(3)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack_fairy_zone(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 50, "no Fairy Zone in play, so no override applies");
+}
+
+#[test]
+fn lillies_clefairy_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Lillie's Clefairy ex" && c.playable.is_some()),
+        "at least one Lillie's Clefairy ex print should play"
+    );
+}
+
+#[test]
+fn fairy_zone_applies_from_the_bench_when_a_different_psychic_pokemon_attacks() {
+    // Fairy Zone reads every Pokemon on the carrier's own side, not
+    // only the one attacking — so a second Psychic Pokemon (paired
+    // here with Slowking, since it prints the same Psychic type)
+    // gets the same Dragon-to-Psychic Weakness override even while
+    // Lillie's Clefairy ex itself sits on the Bench, not attacking.
+    let mut state = fairy_zone_game(Type::Psychic, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let carrier = state.player(player).active.unwrap();
+
+    let slowking_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-fairy-zone-slowking",
+        name: "Slowking",
+        hp: 120,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 3,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 50,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let slowking_card = deal_new_card(&mut state, player, slowking_def);
+    let slowking = state.put_into_play(player, slowking_card);
+
+    // Bench the carrier, promote Slowking: the carrier's own Ability
+    // still reads from the Bench, but it is no longer the attacker.
+    state.players[player.index()].bench.push(carrier);
+    state.players[player.index()].active = Some(slowking);
+
+    let defender = state.player(opponent).active.unwrap();
+    pay_and_attack_fairy_zone(&mut state);
+
+    assert_eq!(
+        state.pokemon(defender).damage, 100,
+        "Fairy Zone still overrides the Weakness from the Bench, even though Slowking (not the carrier) is attacking"
+    );
+}

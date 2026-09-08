@@ -1405,6 +1405,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx => false,
             crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement => false,
             crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities => false,
+            crate::card::AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(..) => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
                 _,

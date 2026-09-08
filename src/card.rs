@@ -890,6 +890,9 @@ pub enum Count {
     /// Cards in the attacker's owner's own hand. `Alakazam`'s
     /// `Powerful Hand`.
     OwnHandSizeCount,
+    /// Every Benched Pokémon in play, both sides combined. `Lillie's
+    /// Clefairy ex`'s `Full Moon Rondo`.
+    BothBenchedPokemonCount,
 }
 
 /// How far along its evolution line a Pokémon card is printed. The artifact
@@ -1152,6 +1155,14 @@ pub enum AbilityEffect {
     /// `OncePerTurnMayDamageOpponentThenKnockOutSelf`. `Psyduck`'s
     /// `Damp`.
     PassiveDisablesSelfKnockOutAbilities,
+    /// A standing effect, not a choice: while this Pokémon is in
+    /// play, every opponent's Pokémon printed with `from` as its
+    /// Weakness type has `to` instead — its printed Weakness (if any
+    /// other type) is overridden outright, not added to. Read
+    /// directly by `GameState::effective_weakness`, the one site that
+    /// ever reads a Pokémon's Weakness for damage. `Lillie's
+    /// Clefairy ex`'s `Fairy Zone` (`{N}` Dragon to `{P}` Psychic).
+    PassiveSetsOpponentTypeWeaknessTo(Type, Type),
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for

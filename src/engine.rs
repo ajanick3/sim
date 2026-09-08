@@ -1290,7 +1290,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost
                 | crate::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx
                 | crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement
-                | crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities => {
+                | crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities
+                | crate::card::AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(..) => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
@@ -3181,6 +3182,9 @@ fn count_for_attack(
             })
             .count() as u32,
         crate::card::Count::OwnHandSizeCount => state.player(owner).hand.len() as u32,
+        crate::card::Count::BothBenchedPokemonCount => {
+            state.player(owner).bench.len() as u32 + state.player(opponent).bench.len() as u32
+        }
     }
 }
 
@@ -3330,11 +3334,10 @@ fn damage_dealt_with(
     // Stadium bonus.
     if !ignore_defenders_effects {
         let attacker_type = state.pokemon_def(attacker).kind;
-        let defender_def = state.pokemon_def(defender);
-        if defender_def.weakness == Some(attacker_type) {
+        if state.effective_weakness(defender) == Some(attacker_type) {
             damage *= 2;
         }
-        if defender_def.resistance == Some(attacker_type) {
+        if state.pokemon_def(defender).resistance == Some(attacker_type) {
             damage = damage.saturating_sub(30);
         }
     }

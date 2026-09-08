@@ -2816,3 +2816,30 @@ fn seaking_peck_off_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv06-045").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Seaking's Peck Off print should play");
 }
+
+// --- Beyond the spec: damage per every Benched Pokemon, both sides ---
+
+#[test]
+fn damage_per_both_sides_benched_pokemon() {
+    let attack = multiplier_attack(sim::card::Count::BothBenchedPokemonCount, 20);
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let card = deal_new_card(&mut state, opponent, defender_ex);
+    let opponent_bench = state.put_into_play(opponent, card);
+    state.players[opponent.index()].bench.push(opponent_bench);
+    for _ in 0..2 {
+        let card = deal_new_card(&mut state, player, defender_ex);
+        let own_bench = state.put_into_play(player, card);
+        state.players[player.index()].bench.push(own_bench);
+    }
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 60, "1 opponent Benched plus 2 own Benched, times 20");
+}
+
+// Admission is checked once, in tests/abilities.rs, alongside Fairy
+// Zone — Full Moon Rondo is this card's only attack, so the same
+// admission proves both effects build.

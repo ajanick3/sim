@@ -1219,6 +1219,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Crustle", "Mysterious Rock Inn") => AbilityEffect::PassiveImmuneToDamageFromOpponentEx,
         ("Patrat", "Watchful Eye") => AbilityEffect::PassiveBlocksDamageCounterMovement,
         ("Psyduck", "Damp") => AbilityEffect::PassiveDisablesSelfKnockOutAbilities,
+        ("Lillie's Clefairy ex", "Fairy Zone") => {
+            AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(Type::Dragon, Type::Psychic)
+        }
         ("Tatsugiri", "Attract Customers") => {
             AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(6)
         }
@@ -1414,6 +1417,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         }
         ("Zeraora", "Combat Thunder") => {
             AttackEffect::DamagePerCount(Count::OpponentBenchedPokemonCount, 20)
+        }
+        ("Lillie's Clefairy ex", "Full Moon Rondo") => {
+            AttackEffect::DamagePerCount(Count::BothBenchedPokemonCount, 20)
         }
         _ => return None,
     })
