@@ -7,7 +7,7 @@
 
 use crate::card::{Condition, Destination, Requirement, TrainerEffect, TrainerKind};
 use crate::ids::{CardId, PlayerId, PokemonId};
-use crate::state::{BENCH_LIMIT, GameState, Limit, Phase};
+use crate::state::{GameState, Limit, Phase};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Action {
@@ -63,6 +63,10 @@ pub enum Action {
     /// Discard one Special Energy attached to a Pokémon the opponent
     /// controls, as part of `Phase::DiscardingOpponentSpecialEnergy`.
     DiscardOpponentSpecialEnergy { card: CardId },
+    /// Discard this own Benched Pokémon, as part of
+    /// `Phase::DiscardingBenchDownTo`. Not a Knockout: no Prize, no
+    /// `knocked_out` flag.
+    DiscardBenchedPokemon { pokemon: PokemonId },
     /// Discard one card from hand toward what a card demanded to be played.
     PayWithCard { card: CardId },
     /// Move one attached Energy onto another Pokémon you control.
@@ -352,6 +356,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::EvolvingWithRareCandy { player } => Some(player),
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::DiscardingOpponentSpecialEnergy { chooser, .. } => Some(chooser),
+        Phase::DiscardingBenchDownTo { player, .. } => Some(player),
         Phase::Checkup { player } => Some(player),
         Phase::Over => None,
     }
@@ -389,7 +394,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             return actions;
         }
         Phase::PlacingBench { .. } => {
-            if side.bench.len() < BENCH_LIMIT {
+            if side.bench.len() < state.bench_limit(player) {
                 for card in &side.hand {
                     if state.def_of(*card).is_basic_pokemon() {
                         actions.push(Action::PlaceOnBench { card: *card });
@@ -435,7 +440,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // Bench offers nothing and the choice ends. A card bound to
             // attach needs some Pokémon in play the target filter admits.
             let room = match to {
-                Destination::Bench => state.player(chooser).bench.len() < BENCH_LIMIT,
+                Destination::Bench => state.player(chooser).bench.len() < state.bench_limit(chooser),
                 Destination::Attach(target_filter) => state
                     .player(chooser)
                     .in_play()
@@ -1015,6 +1020,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
+        Phase::DiscardingBenchDownTo { player: whose, .. } => {
+            for pokemon in &state.player(whose).bench {
+                actions.push(Action::DiscardBenchedPokemon { pokemon: *pokemon });
+            }
+            return actions;
+        }
         Phase::EvolvingWithRareCandy { player: whose } => {
             for (card, target) in rare_candy_pairs(state, whose) {
                 actions.push(Action::EvolveSkippingOneStage { card, target });
@@ -1056,7 +1067,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
 
     for card in &side.hand {
         let def = state.def_of(*card);
-        if def.is_basic_pokemon() && side.bench.len() < BENCH_LIMIT {
+        if def.is_basic_pokemon() && side.bench.len() < state.bench_limit(player) {
             actions.push(Action::PlayBasic { card: *card });
         }
         // A Tool attaches like Energy does — immediately, with a target —
@@ -1608,6 +1619,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::DiscardOpponentSpecialEnergy { card } => {
             format!("Discard the opponent's {}", state.def_of(card).name())
+        }
+        Action::DiscardBenchedPokemon { pokemon } => {
+            format!("Discard {} from the Bench", state.pokemon_def(pokemon).name)
         }
         Action::ChooseWhoGoesFirst { first } => format!("{first:?} takes the first turn"),
         Action::TakeBonusDraw => "Take a bonus card".to_string(),

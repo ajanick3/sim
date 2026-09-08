@@ -239,6 +239,14 @@ pub enum Phase {
     /// only a Special Energy — one carrying an effect. `Enhanced
     /// Hammer`.
     DiscardingOpponentSpecialEnergy { chooser: PlayerId, of: PlayerId },
+    /// `player`'s own Bench holds more than `BENCH_LIMIT` and must
+    /// shrink to it — `Area Zero Underdepths`, either because
+    /// `player`'s last Tera Pokémon just left play, or because the
+    /// card itself did. `then`, when `Some`, names the other player,
+    /// who discards down next once `player` finishes — only when
+    /// this card itself left play, never the reactive case, which
+    /// touches one player alone.
+    DiscardingBenchDownTo { player: PlayerId, then: Option<PlayerId> },
     /// `chooser` discards up to `remaining` cards matching `filter` from
     /// `of`'s hand — the same shape as `DiscardingOpponentEnergy`, over a
     /// hand instead of a Pokémon's attachments. `chooser == of` is
@@ -932,6 +940,29 @@ impl GameState {
                 .as_energy()
                 .is_some_and(|e| e.effect == Some(crate::card::EnergyEffect::PreventsAttackEffectsOnCarrier))
         })
+    }
+
+    /// Whether `player` has a Pokémon carrying `Marker::Tera` in play,
+    /// Active or Benched alike. `Area Zero Underdepths`, `Briar`,
+    /// `Glass Trumpet`, `Nighttime Mine`.
+    pub fn has_tera_in_play(&self, player: PlayerId) -> bool {
+        self.player(player)
+            .in_play()
+            .iter()
+            .any(|p| self.pokemon_def(*p).markers.contains(&crate::card::Marker::Tera))
+    }
+
+    /// How many Pokémon `player`'s Bench holds room for: `BENCH_LIMIT`
+    /// (rule 14), or 8 while `Area Zero Underdepths` is in play and
+    /// this player has a Tera Pokémon of their own in play.
+    pub fn bench_limit(&self, player: PlayerId) -> usize {
+        if self.stadium_effect() == Some(crate::card::TrainerEffect::TeraPokemonRaisesBenchLimit)
+            && self.has_tera_in_play(player)
+        {
+            8
+        } else {
+            BENCH_LIMIT
+        }
     }
 
     /// The cards in one of a player's zones. A Trainer effect moves between
