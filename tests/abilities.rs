@@ -58,6 +58,7 @@ fn game(ability: Ability, seed: u64) -> (GameState, sim::ids::CardDefId) {
         print_id: "test-colorless-energy",
         name: "Colorless Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
 
     let mut carrier_deck = vec![carrier; 4];
@@ -418,6 +419,7 @@ fn attaches_energy_from_hand_and_draws() {
         print_id: "test-grass-energy",
         name: "Grass Energy",
         kind: Type::Grass,
+        effect: None,
     }));
     let energy = deal_new_card(&mut state, player, grass_energy_def);
     state.players[player.index()].hand.push(energy);
@@ -447,6 +449,7 @@ fn declining_teal_dance_draws_nothing() {
         print_id: "test-grass-energy",
         name: "Grass Energy",
         kind: Type::Grass,
+        effect: None,
     }));
     let energy = deal_new_card(&mut state, player, grass_energy_def);
     state.players[player.index()].hand.push(energy);
@@ -753,6 +756,7 @@ fn attaches_energy_from_discard_to_a_chosen_own_pokemon() {
         print_id: "test-basic-energy",
         name: "Basic Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
     let energy = deal_new_card(&mut state, player, energy_def);
     state.players[player.index()].discard.push(energy);
@@ -873,6 +877,7 @@ fn switches_in_then_moves_energy_from_other_pokemon() {
         print_id: "test-energy",
         name: "Test Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
     let energy = deal_new_card(&mut state, player, energy_def);
     state.pokemon[old_active.index()].attached.push(energy);
@@ -973,6 +978,7 @@ fn searches_energy_attaches_to_benched_of_type_then_damages_it() {
         print_id: "test-dark-energy",
         name: "Darkness Energy",
         kind: Type::Darkness,
+        effect: None,
     }));
     let energy = deal_new_card(&mut state, player, energy_def);
     state.players[player.index()].library.push(energy);
@@ -1289,6 +1295,7 @@ fn moves_up_to_the_limit_of_damage_counters_to_the_opponent() {
         print_id: "test-dark-energy",
         name: "Darkness Energy",
         kind: Type::Darkness,
+        effect: None,
     }));
     let dark_energy = deal_new_card(&mut state, player, dark_energy_def);
     state.pokemon[active.index()].attached.push(dark_energy);
@@ -1438,6 +1445,7 @@ fn attaches_found_energy_and_buries_everything_else() {
         print_id: "test-metal-energy",
         name: "Metal Energy",
         kind: Type::Metal,
+        effect: None,
     }));
     let metal_energy = deal_new_card(&mut state, player, metal_energy_def);
     let library_len_before = state.player(player).library.len();
@@ -1536,6 +1544,7 @@ fn takes_no_damage_from_an_ex_attacker() {
         print_id: "test-colorless-energy-ex-atk",
         name: "Colorless Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
     let energy = deal_new_card(&mut state, opponent, energy_def);
     state.pokemon[ex_attacker.index()].attached.push(energy);
@@ -1570,6 +1579,7 @@ fn takes_the_usual_damage_from_a_non_ex_attacker() {
         print_id: "test-colorless-energy-non-ex",
         name: "Colorless Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
     let energy = deal_new_card(&mut state, opponent, energy_def);
     state.pokemon[opponent_active.index()].attached.push(energy);
@@ -1701,6 +1711,7 @@ fn watchful_eye_blocks_damage_counter_movement_even_from_the_opponents_side() {
         print_id: "test-dark-energy-watchful",
         name: "Darkness Energy",
         kind: Type::Darkness,
+        effect: None,
     }));
     let dark_energy = deal_new_card(&mut state, player, dark_energy_def);
     state.pokemon[active.index()].attached.push(dark_energy);

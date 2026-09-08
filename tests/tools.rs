@@ -87,6 +87,7 @@ fn build() -> Set {
         print_id: "test-energy",
         name: "Colorless Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
     Set {
         db,
@@ -559,6 +560,7 @@ fn lillies_pearl_game(with_pearl: bool) -> (GameState, u32) {
         print_id: "test-colorless-energy-lp",
         name: "Colorless Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
     let pearl = db.add(CardDef::Trainer(Trainer {
         print_id: "test-lillies-pearl",

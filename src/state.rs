@@ -797,6 +797,19 @@ impl GameState {
                 })
                 .sum()
         };
+        // A Special Energy's own HP bonus, unlike a Tool's, is never
+        // switched off by a Stadium like `Jamming Tower` — its printed
+        // text names only Tools.
+        let energy_bonus: u32 = self
+            .pokemon(id)
+            .attached
+            .iter()
+            .filter_map(|c| self.def_of(*c).as_energy())
+            .map(|e| match e.effect {
+                Some(crate::card::EnergyEffect::IncreasesCarrierHp(amount)) => amount,
+                None => 0,
+            })
+            .sum();
         let stadium_reduction = match self.stadium_effect() {
             Some(crate::card::TrainerEffect::ReducesHpForStage(stage, amount))
                 if self.pokemon_def(id).stage == stage =>
@@ -805,7 +818,7 @@ impl GameState {
             }
             _ => 0,
         };
-        (printed + bonus).saturating_sub(stadium_reduction)
+        (printed + bonus + energy_bonus).saturating_sub(stadium_reduction)
     }
 
     pub fn remaining_hp(&self, id: PokemonId) -> u32 {
@@ -932,7 +945,7 @@ impl GameState {
                 .is_some_and(|p| p.prizes == 1),
             CardFilter::PokemonOrBasicEnergy => {
                 let def = self.def_of(card);
-                def.as_pokemon().is_some() || def.is_energy()
+                def.as_pokemon().is_some() || def.as_energy().is_some_and(|e| e.effect.is_none())
             }
             CardFilter::EvolutionPokemon => self
                 .def_of(card)
@@ -942,7 +955,10 @@ impl GameState {
                 .def_of(card)
                 .as_pokemon()
                 .is_some_and(|p| p.stage == stage),
-            CardFilter::BasicEnergy => self.def_of(card).is_energy(),
+            // "Basic" excludes a Special Energy — its own printed
+            // effect is what tells the two apart, the same field a
+            // Special Energy needed once one could be admitted at all.
+            CardFilter::BasicEnergy => self.def_of(card).as_energy().is_some_and(|e| e.effect.is_none()),
             CardFilter::PokemonEx => self.def_of(card).as_pokemon().is_some_and(|p| p.prizes > 1),
             CardFilter::BasicPokemonWithHpAtMost(hp) => self
                 .def_of(card)
@@ -950,7 +966,7 @@ impl GameState {
                 .is_some_and(|p| p.stage == crate::card::Stage::Basic && p.hp <= hp),
             CardFilter::AnyTrainer => self.def_of(card).as_trainer().is_some(),
             CardFilter::BasicEnergyOfType(kind) => match self.def_of(card) {
-                CardDef::Energy(energy) => energy.kind == kind,
+                CardDef::Energy(energy) => energy.kind == kind && energy.effect.is_none(),
                 CardDef::Pokemon(_) | CardDef::Trainer(_) => false,
             },
             CardFilter::TrainerOfKind(kind) => self
@@ -959,13 +975,14 @@ impl GameState {
                 .is_some_and(|t| t.kind == kind),
             CardFilter::PokemonOfTypeOrBasicEnergyOfType(kind) => match self.def_of(card) {
                 CardDef::Pokemon(p) => p.kind == kind,
-                CardDef::Energy(e) => e.kind == kind,
+                CardDef::Energy(e) => e.kind == kind && e.effect.is_none(),
                 CardDef::Trainer(_) => false,
             },
             CardFilter::AnyCard => true,
             CardFilter::PokemonWithoutRuleBoxOrBasicEnergy => {
                 let def = self.def_of(card);
-                def.as_pokemon().is_some_and(|p| p.prizes == 1) || def.is_energy()
+                def.as_pokemon().is_some_and(|p| p.prizes == 1)
+                    || def.as_energy().is_some_and(|e| e.effect.is_none())
             }
             CardFilter::SupporterNameContains(word) => self
                 .def_of(card)

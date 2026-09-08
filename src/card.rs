@@ -1066,13 +1066,29 @@ pub enum AbilityEffect {
     PassiveDisablesSelfKnockOutAbilities,
 }
 
-/// A basic Energy card as printed.
+/// An Energy card as printed — a Basic Energy every deck supplies for
+/// itself (`effect: None`), or a Special Energy the artifact names
+/// (`effect: Some(_)`), matched by print name the same way an attack
+/// or an Ability is (`known_energy` in `src/import.rs`).
 #[derive(Debug, Clone)]
 pub struct Energy {
     /// See [`Pokemon::print_id`].
     pub print_id: &'static str,
     pub name: &'static str,
     pub kind: Type,
+    pub effect: Option<EnergyEffect>,
+}
+
+/// What a Special Energy actually does, once the engine can run it —
+/// the same discipline `AttackEffect` and `AbilityEffect` already
+/// hold: a value the engine executes, never text read at runtime.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum EnergyEffect {
+    /// A standing effect, not a choice: while this card is attached,
+    /// its carrier's HP is this much higher. Never offered as an
+    /// action; read directly by `effective_hp`, the same way a
+    /// Tool's own `IncreasesHp` already is. `Growing Grass Energy`.
+    IncreasesCarrierHp(u32),
 }
 
 #[derive(Debug, Clone)]
@@ -1125,6 +1141,13 @@ impl CardDef {
 
     pub fn is_energy(&self) -> bool {
         matches!(self, CardDef::Energy(_))
+    }
+
+    pub fn as_energy(&self) -> Option<&Energy> {
+        match self {
+            CardDef::Energy(e) => Some(e),
+            CardDef::Pokemon(_) | CardDef::Trainer(_) => None,
+        }
     }
 }
 

@@ -34,6 +34,7 @@ fn game(prizes: u32) -> (GameState, u32) {
         print_id: "test-colorless-energy",
         name: "Colorless Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
 
     let mut decklist = vec![victim; 12];

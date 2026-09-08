@@ -87,6 +87,7 @@ fn build() -> Set {
         print_id: "test-energy",
         name: "Colorless Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
     Set {
         db,

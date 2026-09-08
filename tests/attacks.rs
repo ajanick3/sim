@@ -73,6 +73,7 @@ fn game(attacker_attack: Attack, seed: u64) -> (GameState, sim::ids::CardDefId) 
         print_id: "test-colorless-energy",
         name: "Colorless Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
 
     let mut attacker_deck = vec![attacker_mon; 4];
@@ -357,6 +358,7 @@ fn game_with_weak_defender(attacker_attack: Attack, seed: u64) -> GameState {
         print_id: "test-colorless-energy-w",
         name: "Colorless Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
 
     let mut attacker_deck = vec![attacker_mon; 4];
@@ -2652,6 +2654,7 @@ fn seaking_hydro_jet_deals_damage_per_water_energy_to_a_chosen_pokemon() {
         print_id: "test-water-energy",
         name: "Water Energy",
         kind: Type::Water,
+        effect: None,
     }));
     let water_energy = deal_new_card(&mut state, player, water_energy_def);
     state.pokemon[active.index()].attached.push(water_energy);

@@ -1,6 +1,6 @@
 # Enhanced Hammer is refused: Special Energy is structurally absent
 
-**Status:** Accepted — 2026-09-07
+**Status:** Superseded by [0080](0080-a-special-energy-carries-its-own-effect.md) — 2026-09-08
 
 ## Context
 
