@@ -986,6 +986,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
             AbilityEffect::OncePerTurnWhileActiveMayDrawCards(2)
         }
         ("Latias ex", "Skyliner") => AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost,
+        ("Drakloak", "Recon Directive") => {
+            AbilityEffect::OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(2)
+        }
         ("Munkidori", "Adrena-Brain") => {
             AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 Type::Darkness,

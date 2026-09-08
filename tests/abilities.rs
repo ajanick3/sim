@@ -1355,3 +1355,66 @@ fn munkidori_is_admitted_from_the_artifact() {
         "at least one Munkidori print should play"
     );
 }
+
+// --- Beyond the map: peek at the top of the library, take one, bury the rest ---
+
+#[test]
+fn takes_one_of_the_top_cards_seen_and_buries_the_rest() {
+    let ability = Ability {
+        name: "Recon Directive",
+        effect: sim::card::AbilityEffect::OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(2),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let library_before = state.player(player).library.clone();
+    let top = *library_before.last().unwrap();
+    let second_from_top = library_before[library_before.len() - 2];
+    let bottom_before = library_before[0];
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+    assert!(matches!(state.phase, Phase::LookingAtTopCardsToTakeOne { .. }));
+
+    let actions = legal_actions(&state);
+    assert!(actions.contains(&Action::TakeCardFromTopPeek { card: top }));
+    assert!(actions.contains(&Action::TakeCardFromTopPeek { card: second_from_top }));
+
+    apply(&mut state, Action::TakeCardFromTopPeek { card: top }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&top));
+    assert_eq!(state.player(player).library.len(), library_before.len() - 1);
+    assert_eq!(
+        state.player(player).library[0], second_from_top,
+        "the card not taken goes to the bottom"
+    );
+    assert_eq!(state.player(player).library[1], bottom_before, "the old bottom shifts up");
+}
+
+#[test]
+fn recon_directive_not_offered_with_an_empty_library() {
+    let ability = Ability {
+        name: "Recon Directive",
+        effect: sim::card::AbilityEffect::OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(2),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    state.players[player.index()].library.clear();
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(result.is_err(), "an empty library has nothing to peek at");
+}
+
+#[test]
+fn drakloak_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Drakloak" && c.playable.is_some()),
+        "at least one Drakloak print should play"
+    );
+}

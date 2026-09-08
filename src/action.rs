@@ -223,6 +223,9 @@ pub enum Action {
     MoveDamageCountersFromOwnToOpponent { source: PokemonId, target: PokemonId, count: u32 },
     /// Decline to move any.
     DeclineMovingDamageCounters,
+    /// Take this card, seen among the top of the library, as part of
+    /// `Phase::LookingAtTopCardsToTakeOne`. The rest go to the bottom.
+    TakeCardFromTopPeek { card: CardId },
     /// Accept `Phase::DecidingToUseSnowSink`'s discard.
     AcceptSnowSink,
     /// Decline it.
@@ -292,6 +295,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
         Phase::MovingDamageCountersFromOwnToOpponent { player, .. } => Some(player),
+        Phase::LookingAtTopCardsToTakeOne { player, .. } => Some(player),
         Phase::DecidingToUseTealDance { player, .. } => Some(player),
         Phase::DecidingCursedBlastTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => Some(player),
@@ -733,6 +737,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::DeclineMovingDamageCounters);
+            return actions;
+        }
+        Phase::LookingAtTopCardsToTakeOne { player: whose, count, .. } => {
+            let library = &state.player(whose).library;
+            let seen = count.min(library.len() as u32) as usize;
+            for card in &library[library.len() - seen..] {
+                actions.push(Action::TakeCardFromTopPeek { card: *card });
+            }
             return actions;
         }
         Phase::DecidingToUseSnowSink { .. } => {
@@ -1266,6 +1278,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     .any(|c| state.matches_filter(*c, crate::card::CardFilter::BasicEnergyOfType(kind)))
                     && side.in_play().iter().any(|p| state.pokemon(*p).damage > 0)
             }
+            crate::card::AbilityEffect::OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(_) => {
+                !side.library.is_empty()
+            }
         };
         if eligible {
             actions.push(Action::UseAbility { pokemon });
@@ -1499,6 +1514,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
             state.pokemon_def(target).name
         ),
         Action::DeclineMovingDamageCounters => "Decline moving damage counters".to_string(),
+        Action::TakeCardFromTopPeek { card } => {
+            format!("Take {} (Recon Directive)", state.def_of(card).name())
+        }
         Action::AttachEnergyForTealDance { card } => {
             format!("Attach {} (Teal Dance)", state.def_of(card).name())
         }

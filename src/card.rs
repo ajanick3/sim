@@ -1004,6 +1004,13 @@ pub enum AbilityEffect {
     /// carrying any damage opens no phase. `Munkidori`'s
     /// `Adrena-Brain`.
     OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(Type, u32),
+    /// Once during the player's own turn, the player may look at the
+    /// top this-many cards of their own library and put one of them
+    /// into hand, choosing which — the rest go to the bottom of the
+    /// library, in the order they were seen. Opens
+    /// `Phase::LookingAtTopCardsToTakeOne`. An empty library opens no
+    /// phase. `Drakloak`'s `Recon Directive`.
+    OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(u32),
 }
 
 /// A basic Energy card as printed.
