@@ -1222,6 +1222,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     state.phase =
                         Phase::ResolvingEnergyFoundInTopPeek { player, pokemon, kind, remaining: count };
                 }
+                crate::card::AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(count) => {
+                    // Not spent here: opening the choice is not using it —
+                    // only actually taking a Supporter is. Declining shuffles
+                    // the peek back with nothing spent, the same way
+                    // `DecidingToUseTealDance` already works.
+                    state.phase = Phase::LookingAtTopCardsForSupporter { player, pokemon, count };
+                }
             }
         }
 
@@ -1549,6 +1556,32 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             } else {
                 state.phase = Phase::ResolvingEnergyFoundInTopPeek { player, pokemon, kind, remaining: left };
             }
+        }
+
+        Action::TakeSupporterFromTopPeek { card } => {
+            let (player, pokemon) = match state.phase {
+                Phase::LookingAtTopCardsForSupporter { player, pokemon, .. } => (player, pokemon),
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} taken from the top (Attract Customers)."));
+            let library = &mut state.players[player.index()].library;
+            shuffle(state.rng.as_mut(), library);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DeclineTopPeekSupporter => {
+            match state.phase {
+                Phase::LookingAtTopCardsForSupporter { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
         }
 
         Action::AcceptSnowSink => {
