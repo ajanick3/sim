@@ -87,3 +87,20 @@ reads `false` outright when `by` owns `target`. No admitted card
 this session ever placed a counter on its own side's Bench, so this
 one never changed behavior for a built card — only the general
 helper's own correctness.
+
+**2026-09-08, later the same day.** A third gap, found by reading
+Battle Cage's own rulings page fully rather than only the one
+ruling already quoted in ADR 0082: `Dusclops`'s and `Dusknoir`'s
+`Cursed Blast` (`AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf`)
+places its damage counters directly, exactly like `Adrena-Brain`,
+but its own `apply` handler
+(`Action::DamageOpponentForCursedBlast`) never read
+`bench_damage_counters_blocked` at all — a genuine live bug against
+an admitted card, not only a latent one. The compendium's own ruling
+on this exact Ability confirms the shape: the counters never land on
+a Battle-Cage-protected Bench target, but the Ability was still used,
+so the carrier still knocks itself out regardless. Fixed the same
+way as `Adrena-Brain`: `legal_actions` keeps offering every target,
+and `apply` checks the block before adding the damage, letting it
+vanish rather than land while the self-knockout still happens
+unconditionally.

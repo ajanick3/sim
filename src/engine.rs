@@ -1458,9 +1458,19 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
             state.spend(Limit::AbilityUsed(player, ability.name));
-            state.pokemon[target.index()].damage += damage;
             let target_name = state.pokemon_def(target).name;
-            state.log.push(format!("{target_name} takes {damage}."));
+            if state.bench_damage_counters_blocked(player, target) {
+                // `Battle Cage`: the Ability is still used — Dusknoir
+                // still knocks itself out below — but a Benched target
+                // protected by Battle Cage takes no damage counters at
+                // all, so nothing lands.
+                state.log.push(format!(
+                    "{target_name} would take {damage}, but Battle Cage stops it landing."
+                ));
+            } else {
+                state.pokemon[target.index()].damage += damage;
+                state.log.push(format!("{target_name} takes {damage}."));
+            }
             // "This Pokémon is Knocked Out" outright: raising its own
             // damage to its effective HP, not a separate forced-knockout
             // primitive, so the ordinary sweep still awards the Prize.
