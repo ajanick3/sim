@@ -233,6 +233,11 @@ pub enum Action {
     /// Switch this Benched Pokémon in for the Active, as part of
     /// `Phase::DecidingToUseSubjugatingChains` — it is then Poisoned.
     SwitchForSubjugatingChains { target: PokemonId },
+    /// Discard this attached Tool, as part of
+    /// `Phase::DiscardingToolsAnywhere`.
+    DiscardToolAnywhere { card: CardId },
+    /// Stop before the limit is spent.
+    FinishDiscardingToolsAnywhere,
 }
 
 /// Whose choice the engine is waiting for. It is not always the player whose
@@ -281,6 +286,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::SearchingForSinisterSurgeTarget { player, .. } => Some(player),
         Phase::SearchingForFanCall { player, .. } => Some(player),
         Phase::DecidingToUseSubjugatingChains { player, .. } => Some(player),
+        Phase::DiscardingToolsAnywhere { player, .. } => Some(player),
         Phase::MovingOpponentsEnergy { chooser, .. } => Some(chooser),
         Phase::SearchingDiscardForNamedToBench { player, .. } => Some(player),
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
@@ -700,6 +706,19 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::FinishFanCall);
+            return actions;
+        }
+        Phase::DiscardingToolsAnywhere { .. } => {
+            for side_player in [PlayerId::One, PlayerId::Two] {
+                for pokemon in state.player(side_player).in_play() {
+                    for card in &state.pokemon(pokemon).attached {
+                        if state.def_of(*card).as_trainer().is_some_and(|t| t.kind == TrainerKind::Tool) {
+                            actions.push(Action::DiscardToolAnywhere { card: *card });
+                        }
+                    }
+                }
+            }
+            actions.push(Action::FinishDiscardingToolsAnywhere);
             return actions;
         }
         Phase::DecidingToUseSubjugatingChains { player: whose, kind, excluding, .. } => {
@@ -1423,5 +1442,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::SwitchForSubjugatingChains { target } => {
             format!("Switch in {} (Subjugating Chains)", state.pokemon_def(target).name)
         }
+        Action::DiscardToolAnywhere { card } => {
+            format!("Discard {} (Tool Scrapper)", state.def_of(card).name())
+        }
+        Action::FinishDiscardingToolsAnywhere => "Stop discarding Tools".to_string(),
     }
 }

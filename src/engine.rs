@@ -1540,6 +1540,38 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::DiscardToolAnywhere { card } => {
+            let (player, remaining) = match state.phase {
+                Phase::DiscardingToolsAnywhere { player, remaining } => (player, remaining),
+                _ => return Err(IllegalAction),
+            };
+            let owner = [PlayerId::One, PlayerId::Two]
+                .into_iter()
+                .find(|p| state.player(*p).in_play().iter().any(|pk| state.pokemon(*pk).attached.contains(&card)))
+                .expect("legal_actions offers this only for a Tool actually attached somewhere");
+            for pokemon in state.player(owner).in_play() {
+                state.pokemon[pokemon.index()].attached.retain(|c| *c != card);
+            }
+            state.players[owner.index()].discard.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} is discarded (Tool Scrapper)."));
+            if remaining <= 1 {
+                state.phase = Phase::Main;
+                settle(state);
+            } else {
+                state.phase = Phase::DiscardingToolsAnywhere { player, remaining: remaining - 1 };
+            }
+        }
+
+        Action::FinishDiscardingToolsAnywhere => {
+            match state.phase {
+                Phase::DiscardingToolsAnywhere { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::ChooseJaninesTarget { target } => {
             let (player, remaining, mut chosen) = match state.phase {
                 Phase::ChoosingJaninesTargets { player, remaining, chosen } => {
@@ -2033,6 +2065,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                 remaining: 2,
                 chosen: [None, None],
             };
+        }
+
+        TrainerEffect::MayDiscardUpToTwoToolsAnywhere => {
+            state.phase = Phase::DiscardingToolsAnywhere { player, remaining: 2 };
         }
 
         TrainerEffect::CoinFlipDiscardOpponentEnergy => {

@@ -226,5 +226,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Genesect's Bug's Cannon (damage per a counted board fact, to a
     // chosen opponent Pokemon — the mirror of DamageChosenOpponentPokemon
     // opening the same phase) admits its me02-008 print.
-    assert_eq!(admitted, 637, "coverage moves only on purpose");
+    // Tool Scrapper (an Item: discard up to 2 Pokemon Tools attached
+    // anywhere in play, either player's) admits all 3 of its prints —
+    // the first Item admitted since the Items milestone's own ticket
+    // order closed.
+    assert_eq!(admitted, 640, "coverage moves only on purpose");
 }

@@ -403,6 +403,10 @@ pub enum Phase {
         kind: crate::card::Type,
         excluding: &'static str,
     },
+    /// `player` played `Tool Scrapper` and may discard up to
+    /// `remaining` more Pokémon Tools attached anywhere in play,
+    /// either player's.
+    DiscardingToolsAnywhere { player: PlayerId, remaining: u32 },
     SearchingForFanCall {
         player: PlayerId,
         pokemon: PokemonId,
