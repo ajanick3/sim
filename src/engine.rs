@@ -1416,6 +1416,20 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::MoveEnergyToChosenBenched { card, target } => {
+            let (_player, attacker) = match state.phase {
+                Phase::ChoosingEnergyAndBenchedTargetToMove { player, attacker } => (player, attacker),
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[attacker.index()].attached.retain(|c| *c != card);
+            state.pokemon[target.index()].attached.push(card);
+            let name = state.def_of(card).name();
+            let target_name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} moves to {target_name}."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::AcceptSnowSink => {
             let (player, pokemon) = match state.phase {
                 Phase::DecidingToUseSnowSink { player, pokemon } => (player, pokemon),
@@ -2635,6 +2649,14 @@ fn resolve_attack_effect(
             let any_energy = state.pokemon(attacker).attached.iter().any(|c| state.def_of(*c).is_energy());
             if any_energy {
                 state.phase = Phase::ChoosingOwnEnergyToHand { player: owner, attacker };
+            }
+        }
+        crate::card::AttackEffect::MoveOwnAttachedEnergyToChosenBenched => {
+            let owner = state.pokemon(attacker).owner;
+            let any_energy = state.pokemon(attacker).attached.iter().any(|c| state.def_of(*c).is_energy());
+            let any_bench = !state.player(owner).bench.is_empty();
+            if any_energy && any_bench {
+                state.phase = Phase::ChoosingEnergyAndBenchedTargetToMove { player: owner, attacker };
             }
         }
         crate::card::AttackEffect::SelfDamageReductionNextTurn(amount) => {
