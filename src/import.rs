@@ -1001,6 +1001,9 @@ fn read_ability(pokemon_name: &str, abilities: Option<&Vec<Value>>) -> Result<Op
 fn known_energy(name: &str) -> Option<(Type, crate::card::EnergyEffect)> {
     Some(match name {
         "Growing Grass Energy" => (Type::Grass, crate::card::EnergyEffect::IncreasesCarrierHp(20)),
+        "Enriching Energy" => {
+            (Type::Colorless, crate::card::EnergyEffect::DrawCardsOnAttachFromHand(4))
+        }
         _ => return None,
     })
 }

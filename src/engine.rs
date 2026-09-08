@@ -173,6 +173,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             if state.immune_under_festival_grounds(target) {
                 state.clear_conditions(target);
             }
+            if let Some(crate::card::EnergyEffect::DrawCardsOnAttachFromHand(count)) =
+                state.def_of(card).as_energy().and_then(|e| e.effect)
+            {
+                for _ in 0..count {
+                    state.draw(player);
+                }
+            }
         }
 
         Action::PlayTool { card, target } => {

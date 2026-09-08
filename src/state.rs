@@ -807,7 +807,7 @@ impl GameState {
             .filter_map(|c| self.def_of(*c).as_energy())
             .map(|e| match e.effect {
                 Some(crate::card::EnergyEffect::IncreasesCarrierHp(amount)) => amount,
-                None => 0,
+                Some(crate::card::EnergyEffect::DrawCardsOnAttachFromHand(_)) | None => 0,
             })
             .sum();
         let stadium_reduction = match self.stadium_effect() {
