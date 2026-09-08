@@ -838,6 +838,17 @@ pub enum AttackEffect {
     /// Opens `Phase::DiscardingAnyBasicEnergyForDamagePerCard`.
     /// `Raging Bolt ex`'s `Bellowing Thunder`.
     MayDiscardAnyOwnBasicEnergyForDamagePerCard(u32),
+    /// Discard this many cards from the top of the opponent's
+    /// library — fewer if their library holds fewer. `Mega Excadrill
+    /// ex`'s `Undermine`.
+    DiscardsTopOfOpponentsLibrary(u32),
+    /// This much more damage, but only if the attacker has at least
+    /// this many Energy cards attached beyond its own printed
+    /// attack cost — a threshold read against the cost, unlike every
+    /// other Energy-count bonus, which reads a fixed number or a
+    /// fixed type regardless of what the attack itself costs.
+    /// `Mega Excadrill ex`'s `Maximum Drilling`.
+    BonusDamageIfExtraEnergyAttached(u32, u32),
     /// Discard the whole hand, then draw this many cards outright —
     /// unlike `TrainerEffect::ShuffleHandThenDraw`, the discarded
     /// hand goes to the discard pile, not back into the deck.
