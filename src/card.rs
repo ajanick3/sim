@@ -447,6 +447,10 @@ pub enum TrainerEffect {
     /// before searching once per target, or applies a Special Condition
     /// outside attack resolution.
     JaninesSecretArt,
+    /// Choose up to 2 Pokémon Tools attached to any Pokémon in play —
+    /// either player's — and discard them, one at a time. Opens
+    /// `Phase::DiscardingToolsAnywhere`. `Tool Scrapper`.
+    MayDiscardUpToTwoToolsAnywhere,
 }
 
 /// What a card demands before it may be played at all.

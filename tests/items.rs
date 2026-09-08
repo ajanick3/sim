@@ -1006,3 +1006,96 @@ fn transformation_tome_consumes_its_second_copy_and_swaps_in_the_discard() {
     assert_eq!(state.pokemon(target).damage, 30);
     assert!(state.pokemon(target).attached.contains(&attached));
 }
+
+// --- Beyond the milestone's own ticket order: Tool Scrapper ---
+
+#[test]
+fn discards_up_to_two_tools_anywhere_in_play() {
+    let set = build();
+    let mut state = game(&set, set.mon, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+
+    let tool_def = state.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tool",
+        name: "Test Tool",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::MoveAttachedEnergy,
+    }));
+    let own_active = state.player(player).active.unwrap();
+    let own_tool = deal_new_card(&mut state, player, tool_def);
+    state.pokemon[own_active.index()].attached.push(own_tool);
+
+    let opp_active = state.player(opponent).active.unwrap();
+    let opp_tool = deal_new_card(&mut state, opponent, tool_def);
+    state.pokemon[opp_active.index()].attached.push(opp_tool);
+
+    let scrapper_def = state.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-scrapper",
+        name: "Tool Scrapper",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::MayDiscardUpToTwoToolsAnywhere,
+    }));
+    let scrapper = deal_new_card(&mut state, player, scrapper_def);
+    state.players[player.index()].hand.push(scrapper);
+
+    apply(&mut state, Action::PlayTrainer { card: scrapper }).unwrap();
+
+    assert!(matches!(state.phase, Phase::DiscardingToolsAnywhere { .. }));
+    apply(&mut state, Action::DiscardToolAnywhere { card: own_tool }).unwrap();
+    apply(&mut state, Action::DiscardToolAnywhere { card: opp_tool }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).discard.contains(&own_tool));
+    assert!(state.player(opponent).discard.contains(&opp_tool));
+    assert!(!state.pokemon(own_active).attached.contains(&own_tool));
+    assert!(!state.pokemon(opp_active).attached.contains(&opp_tool));
+}
+
+#[test]
+fn tool_scrapper_can_be_declined_early() {
+    let set = build();
+    let mut state = game(&set, set.mon, 3);
+    let player = state.current;
+
+    let tool_def = state.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tool",
+        name: "Test Tool",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::MoveAttachedEnergy,
+    }));
+    let own_active = state.player(player).active.unwrap();
+    let own_tool = deal_new_card(&mut state, player, tool_def);
+    state.pokemon[own_active.index()].attached.push(own_tool);
+
+    let scrapper_def = state.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-scrapper",
+        name: "Tool Scrapper",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::MayDiscardUpToTwoToolsAnywhere,
+    }));
+    let scrapper = deal_new_card(&mut state, player, scrapper_def);
+    state.players[player.index()].hand.push(scrapper);
+
+    apply(&mut state, Action::PlayTrainer { card: scrapper }).unwrap();
+    apply(&mut state, Action::FinishDiscardingToolsAnywhere).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(own_active).attached.contains(&own_tool), "declined, nothing discarded");
+}
+
+#[test]
+fn tool_scrapper_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Tool Scrapper" && c.playable.is_some()),
+        "Tool Scrapper should play"
+    );
+}

@@ -23,12 +23,13 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
         Some(Refusal::IsATrainer(TrainerKind::Supporter)),
         "a Supporter is refused as a Supporter"
     );
-    // Tool Scrapper discards a Tool attached in play — a mechanism the
-    // Tools milestone owns, since nothing attaches a Tool yet.
+    // Enhanced Hammer discards a Special Energy — refused outright,
+    // since this pool never admits a special Energy at all
+    // (Refusal::IsASpecialEnergy), so no target could ever exist.
     assert_eq!(
-        reason_for("me02.5-212"),
+        reason_for("sv06-148"),
         Some(Refusal::IsATrainer(TrainerKind::Item)),
-        "Tool Scrapper is an Item"
+        "Enhanced Hammer is an Item"
     );
     assert_eq!(
         reason_for("sv10-180"),
@@ -87,8 +88,10 @@ fn the_kinds_add_up_to_the_pool() {
     // Lillie's Pearl, Punk Helmet, Lucky Helmet, Handheld Fan,
     // Powerglass, Gravity Mountain, N's Castle, Academy at Night,
     // Team Rocket's Factory, Lumiose City, Jamming Tower, Risky Ruins,
-    // Forest of Vitality, and Festival Grounds.
-    assert_eq!(trainers, 276, "the Trainers still refused, by kind");
+    // Forest of Vitality, and Festival Grounds. Tool Scrapper, built
+    // this session (`TrainerEffect::MayDiscardUpToTwoToolsAnywhere`),
+    // takes it down to 273.
+    assert_eq!(trainers, 273, "the Trainers still refused, by kind");
     assert_eq!(count(Refusal::IsASpecialEnergy), 21, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
