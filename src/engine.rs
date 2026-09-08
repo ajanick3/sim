@@ -2497,6 +2497,20 @@ fn attack(state: &mut GameState, index: usize) {
         state.log.push(format!("{name}'s {} does nothing: no Stadium in play.", attack.name));
         return;
     }
+    if matches!(attack.effect, Some(crate::card::AttackEffect::DiscardsDefendersTools)) {
+        let opponent = state.pokemon(defender).owner;
+        let tools: Vec<CardId> = state
+            .pokemon(defender)
+            .attached
+            .iter()
+            .copied()
+            .filter(|c| state.def_of(*c).as_trainer().is_some_and(|t| t.kind == TrainerKind::Tool))
+            .collect();
+        for tool in tools {
+            state.pokemon[defender.index()].attached.retain(|c| *c != tool);
+            state.players[opponent.index()].discard.push(tool);
+        }
+    }
     let base = match attack.effect {
         Some(crate::card::AttackEffect::DamagePerCount(count, per_unit)) => {
             count_for_attack(state, attacker, defender, count) * per_unit
@@ -2839,6 +2853,9 @@ fn resolve_attack_effect(
         // reached when a Stadium is in play, so there is nothing left
         // to do.
         crate::card::AttackEffect::FizzlesWithNoStadiumInPlay => {}
+        // Already done, at the top of `attack` — before damage, not
+        // after, and unconditional, so there is nothing left to do.
+        crate::card::AttackEffect::DiscardsDefendersTools => {}
         crate::card::AttackEffect::MoveOwnAttachedEnergyToHand => {
             let owner = state.pokemon(attacker).owner;
             let any_energy = state.pokemon(attacker).attached.iter().any(|c| state.def_of(*c).is_energy());
