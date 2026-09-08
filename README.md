@@ -189,101 +189,101 @@ than guessed at, so the placement numbers have three gaps.
 
 | Card | Attacks | Ability |
 | --- | --- | --- |
-| Abra | [✅](src/import.rs#L1336) | [✅](src/import.rs#L1252) |
-| Alakazam | [✅](src/import.rs#L1394) | [✅](src/import.rs#L1242) |
+| Abra | [✅](src/import.rs#L1337) | [✅](src/import.rs#L1253) |
+| Alakazam | [✅](src/import.rs#L1395) | [✅](src/import.rs#L1243) |
 | Annihilape | ❌ | ❌ |
-| Applin | [✅](src/import.rs#L1326) | — |
-| Bayleef | [✅](src/import.rs#L1356) | — |
-| Beldum | [✅](src/import.rs#L1348) | — |
-| Blaziken ex | [✅](src/import.rs#L1377) | [✅](src/import.rs#L1258) |
+| Applin | [✅](src/import.rs#L1327) | — |
+| Bayleef | [✅](src/import.rs#L1357) | — |
+| Beldum | [✅](src/import.rs#L1349) | — |
+| Blaziken ex | [✅](src/import.rs#L1378) | [✅](src/import.rs#L1259) |
 | Bloodmoon Ursaluna ex | ❌ | ❌ |
 | Brute Bonnet | ❌ | — |
-| Budew | [✅](src/import.rs#L1361) | — |
-| Buneary | [✅](src/import.rs#L1355) | — |
-| Carvanha | [✅](src/import.rs#L1295) | — |
-| Celebi | [✅](src/import.rs#L1354) | — |
+| Budew | [✅](src/import.rs#L1362) | — |
+| Buneary | [✅](src/import.rs#L1356) | — |
+| Carvanha | [✅](src/import.rs#L1296) | — |
+| Celebi | [✅](src/import.rs#L1355) | — |
 | Chi-Yu | ❌ | — |
-| Chien-Pao | [✅](src/import.rs#L1378) | [✅](src/import.rs#L1261) |
-| Chikorita | [✅](src/import.rs#L1357) | — |
+| Chien-Pao | [✅](src/import.rs#L1379) | [✅](src/import.rs#L1262) |
+| Chikorita | [✅](src/import.rs#L1358) | — |
 | Cofagrigus | ❌ | — |
-| Combusken | [✅](src/import.rs#L1371) | — |
-| Crustle | [✅](src/import.rs#L1406) | [✅](src/import.rs#L1219) |
-| Dedenne | [✅](src/import.rs#L1323) | — |
-| Dipplin | [✅](src/import.rs#L1404) | ❌ |
-| Dragapult ex | [✅](src/import.rs#L1330) | — |
-| Drakloak | [✅](src/import.rs#L234) | [✅](src/import.rs#L1228) |
+| Combusken | [✅](src/import.rs#L1372) | — |
+| Crustle | [✅](src/import.rs#L1407) | [✅](src/import.rs#L1219) |
+| Dedenne | [✅](src/import.rs#L1324) | — |
+| Dipplin | [✅](src/import.rs#L1405) | ❌ |
+| Dragapult ex | [✅](src/import.rs#L1331) | — |
+| Drakloak | [✅](src/import.rs#L234) | [✅](src/import.rs#L1229) |
 | Dreepy | [✅](src/import.rs#L234) | — |
-| Drilbur | [✅](src/import.rs#L1337) | ❌ |
-| Dudunsparce | [✅](src/import.rs#L234) | [✅](src/import.rs#L1249) |
-| Dudunsparce ex | [✅](src/import.rs#L1308) | — |
-| Dunsparce | [✅](src/import.rs#L1349) | — |
-| Dusclops | [✅](src/import.rs#L234) | [✅](src/import.rs#L1253) |
-| Dusknoir | [✅](src/import.rs#L1375) | [✅](src/import.rs#L1254) |
-| Duskull | [✅](src/import.rs#L1352) | — |
-| Dwebble | [✅](src/import.rs#L1342) | — |
-| Elgyem | [✅](src/import.rs#L1360) | — |
+| Drilbur | [✅](src/import.rs#L1338) | ❌ |
+| Dudunsparce | [✅](src/import.rs#L234) | [✅](src/import.rs#L1250) |
+| Dudunsparce ex | [✅](src/import.rs#L1309) | — |
+| Dunsparce | [✅](src/import.rs#L1350) | — |
+| Dusclops | [✅](src/import.rs#L234) | [✅](src/import.rs#L1254) |
+| Dusknoir | [✅](src/import.rs#L1376) | [✅](src/import.rs#L1255) |
+| Duskull | [✅](src/import.rs#L1353) | — |
+| Dwebble | [✅](src/import.rs#L1343) | — |
+| Elgyem | [✅](src/import.rs#L1361) | — |
 | Enamorus | ❌ | — |
-| Fan Rotom | [✅](src/import.rs#L1382) | [✅](src/import.rs#L1271) |
-| Fezandipiti ex | [✅](src/import.rs#L1414) | [✅](src/import.rs#L1243) |
+| Fan Rotom | [✅](src/import.rs#L1383) | [✅](src/import.rs#L1272) |
+| Fezandipiti ex | [✅](src/import.rs#L1415) | [✅](src/import.rs#L1244) |
 | Flutter Mane | ❌ | ❌ |
-| Genesect | [✅](src/import.rs#L1386) | ❌ |
-| Genesect ex | [✅](src/import.rs#L1376) | [✅](src/import.rs#L1255) |
+| Genesect | [✅](src/import.rs#L1387) | ❌ |
+| Genesect ex | [✅](src/import.rs#L1377) | [✅](src/import.rs#L1256) |
 | Goldeen | [✅](src/import.rs#L234) | ❌ |
 | Grookey | [✅](src/import.rs#L234) | — |
-| Hoothoot | [✅](src/import.rs#L1339) | ❌ |
+| Hoothoot | [✅](src/import.rs#L1340) | ❌ |
 | Hydrapple ex | ❌ | ❌ |
 | Iron Crown ex | ❌ | ❌ |
-| Iron Leaves ex | [✅](src/import.rs#L1381) | [✅](src/import.rs#L1262) |
-| Kadabra | [✅](src/import.rs#L234) | [✅](src/import.rs#L1241) |
+| Iron Leaves ex | [✅](src/import.rs#L1382) | [✅](src/import.rs#L1263) |
+| Kadabra | [✅](src/import.rs#L234) | [✅](src/import.rs#L1242) |
 | Koraidon ex | ❌ | — |
 | Kyurem | ❌ | ❌ |
-| Latias ex | [✅](src/import.rs#L1400) | [✅](src/import.rs#L1218) |
-| Lillie's Clefairy ex | [✅](src/import.rs#L1421) | [✅](src/import.rs#L1222) |
+| Latias ex | [✅](src/import.rs#L1401) | [✅](src/import.rs#L1218) |
+| Lillie's Clefairy ex | [✅](src/import.rs#L1422) | [✅](src/import.rs#L1222) |
 | Mega Absol ex | ❌ | — |
 | Mega Excadrill ex | ❌ | — |
-| Mega Kangaskhan ex | [✅](src/import.rs#L1410) | [✅](src/import.rs#L1215) |
+| Mega Kangaskhan ex | [✅](src/import.rs#L1411) | [✅](src/import.rs#L1215) |
 | Mega Lopunny ex | ❌ | — |
-| Mega Sharpedo ex | [✅](src/import.rs#L1340) | — |
+| Mega Sharpedo ex | [✅](src/import.rs#L1341) | — |
 | Mega Skarmory ex | ❌ | — |
 | Mega Slowbro ex | ❌ | — |
 | Meganium | [✅](src/import.rs#L234) | ❌ |
-| Meowth ex | [✅](src/import.rs#L1413) | [✅](src/import.rs#L1240) |
+| Meowth ex | [✅](src/import.rs#L1414) | [✅](src/import.rs#L1241) |
 | Metagross | ❌ | — |
-| Metang | [✅](src/import.rs#L1401) | [✅](src/import.rs#L1231) |
-| Moltres | [✅](src/import.rs#L1350) | — |
-| Munkidori | [✅](src/import.rs#L1407) | [✅](src/import.rs#L1234) |
-| N's Darmanitan | [✅](src/import.rs#L1305) | — |
+| Metang | [✅](src/import.rs#L1402) | [✅](src/import.rs#L1232) |
+| Moltres | [✅](src/import.rs#L1351) | — |
+| Munkidori | [✅](src/import.rs#L1408) | [✅](src/import.rs#L1235) |
+| N's Darmanitan | [✅](src/import.rs#L1306) | — |
 | N's Darumaka | [✅](src/import.rs#L234) | — |
-| N's Reshiram | [✅](src/import.rs#L1302) | — |
-| N's Zekrom | [✅](src/import.rs#L1314) | — |
+| N's Reshiram | [✅](src/import.rs#L1303) | — |
+| N's Zekrom | [✅](src/import.rs#L1315) | — |
 | N's Zoroark ex | ❌ | ❌ |
 | N's Zorua | [✅](src/import.rs#L234) | — |
-| Noctowl | [✅](src/import.rs#L1403) | ❌ |
-| Paldean Tauros | [✅](src/import.rs#L1298) | — |
-| Passimian | [✅](src/import.rs#L1311) | — |
-| Patrat | [✅](src/import.rs#L1402) | [✅](src/import.rs#L1220) |
+| Noctowl | [✅](src/import.rs#L1404) | ❌ |
+| Paldean Tauros | [✅](src/import.rs#L1299) | — |
+| Passimian | [✅](src/import.rs#L1312) | — |
+| Patrat | [✅](src/import.rs#L1403) | [✅](src/import.rs#L1220) |
 | Pecharunt | ❌ | ❌ |
-| Pecharunt ex | [✅](src/import.rs#L1383) | [✅](src/import.rs#L1278) |
+| Pecharunt ex | [✅](src/import.rs#L1384) | [✅](src/import.rs#L1279) |
 | Psyduck | [✅](src/import.rs#L234) | [✅](src/import.rs#L1221) |
 | Rabsca | ❌ | ❌ |
 | Raging Bolt ex | ❌ | — |
-| Rellor | [✅](src/import.rs#L1296) | — |
-| Seaking | [✅](src/import.rs#L1390) | ❌ |
-| Shaymin | [✅](src/import.rs#L1397) | ❌ |
-| Slowking | [✅](src/import.rs#L1343) | — |
-| Slowpoke | [✅](src/import.rs#L1351) | ❌ |
+| Rellor | [✅](src/import.rs#L1297) | — |
+| Seaking | [✅](src/import.rs#L1391) | ❌ |
+| Shaymin | [✅](src/import.rs#L1398) | [✅](src/import.rs#L1225) |
+| Slowking | [✅](src/import.rs#L1344) | — |
+| Slowpoke | [✅](src/import.rs#L1352) | ❌ |
 | Smoochum | ❌ | — |
 | Stunfisk | ❌ | — |
-| Tapu Bulu | [✅](src/import.rs#L1297) | — |
-| Tatsugiri | [✅](src/import.rs#L234) | [✅](src/import.rs#L1225) |
-| Teal Mask Ogerpon ex | [✅](src/import.rs#L1415) | [✅](src/import.rs#L1246) |
+| Tapu Bulu | [✅](src/import.rs#L1298) | — |
+| Tatsugiri | [✅](src/import.rs#L234) | [✅](src/import.rs#L1226) |
+| Teal Mask Ogerpon ex | [✅](src/import.rs#L1416) | [✅](src/import.rs#L1247) |
 | Thwackey | [✅](src/import.rs#L234) | ❌ |
-| Torchic | [✅](src/import.rs#L1353) | — |
-| Toxel | [✅](src/import.rs#L1338) | — |
-| Toxtricity | [✅](src/import.rs#L234) | [✅](src/import.rs#L1265) |
-| Wellspring Mask Ogerpon ex | [✅](src/import.rs#L1328) | — |
-| Yveltal | [✅](src/import.rs#L1327) | — |
-| Zeraora | [✅](src/import.rs#L1320) | — |
+| Torchic | [✅](src/import.rs#L1354) | — |
+| Toxel | [✅](src/import.rs#L1339) | — |
+| Toxtricity | [✅](src/import.rs#L234) | [✅](src/import.rs#L1266) |
+| Wellspring Mask Ogerpon ex | [✅](src/import.rs#L1329) | — |
+| Yveltal | [✅](src/import.rs#L1328) | — |
+| Zeraora | [✅](src/import.rs#L1321) | — |
 
 ## The documents
 

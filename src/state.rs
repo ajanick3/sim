@@ -1025,6 +1025,25 @@ impl GameState {
             && self.stadium_effect() == Some(crate::card::TrainerEffect::PreventsDamageCountersOnBench)
     }
 
+    /// Whether `target`, sitting on its own owner's Bench with no
+    /// Rule Box (a plain `prizes == 1` print), is protected from any
+    /// damage an attack from `by`'s side would do to it — flat
+    /// damage or a placed counter alike, wider than `Battle Cage`'s
+    /// own carve-out. `Shaymin`'s `Flower Curtain`.
+    pub fn bench_attack_damage_blocked(&self, by: PlayerId, target: PokemonId) -> bool {
+        let owner = self.pokemon(target).owner;
+        owner != by
+            && self.player(owner).active != Some(target)
+            && self.pokemon_def(target).prizes == 1
+            && self.player(owner).in_play().iter().any(|p| {
+                !self.abilities_disabled_for(*p)
+                    && self.pokemon_def(*p).ability.is_some_and(|a| {
+                        a.effect
+                            == crate::card::AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench
+                    })
+            })
+    }
+
     /// The cards in one of a player's zones. A Trainer effect moves between
     /// these; a Pokémon's attachments are not one of them.
     pub fn zone(&self, player: PlayerId, zone: crate::card::Zone) -> &Vec<CardId> {

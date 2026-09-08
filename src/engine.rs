@@ -873,13 +873,19 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::DamageBenchedPokemon { target } => {
-            let damage = match state.phase {
-                Phase::ChoosingBenchDamageTarget { damage, .. } => damage,
+            let (player, damage) = match state.phase {
+                Phase::ChoosingBenchDamageTarget { player, damage } => (player, damage),
                 _ => return Err(IllegalAction),
             };
-            state.pokemon[target.index()].damage += damage;
             let name = state.pokemon_def(target).name;
-            state.log.push(format!("{name} takes {damage}."));
+            if state.bench_attack_damage_blocked(player, target) {
+                // `Shaymin`'s `Flower Curtain`: this attack was already
+                // used, but its damage never lands on a protected target.
+                state.log.push(format!("{name} would take {damage}, but Flower Curtain stops it landing."));
+            } else {
+                state.pokemon[target.index()].damage += damage;
+                state.log.push(format!("{name} takes {damage}."));
+            }
             state.phase = Phase::Main;
             settle(state);
         }
@@ -1291,7 +1297,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 | crate::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx
                 | crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement
                 | crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities
-                | crate::card::AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(..) => {
+                | crate::card::AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(..)
+                | crate::card::AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
@@ -2836,11 +2843,10 @@ fn resolve_attack_effect(
         }
         crate::card::AttackEffect::DamageCountersToOpponentBenchAnyWay(count) => {
             let owner = state.pokemon(attacker).owner;
-            let any_target = state
-                .player(owner.opponent())
-                .bench
-                .iter()
-                .any(|p| !state.bench_damage_counters_blocked(owner, *p));
+            let any_target = state.player(owner.opponent()).bench.iter().any(|p| {
+                !state.bench_damage_counters_blocked(owner, *p)
+                    && !state.bench_attack_damage_blocked(owner, *p)
+            });
             if any_target {
                 state.phase = Phase::DistributingDamageCounters {
                     player: owner,

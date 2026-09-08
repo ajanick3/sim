@@ -1163,6 +1163,16 @@ pub enum AbilityEffect {
     /// ever reads a Pokémon's Weakness for damage. `Lillie's
     /// Clefairy ex`'s `Fairy Zone` (`{N}` Dragon to `{P}` Psychic).
     PassiveSetsOpponentTypeWeaknessTo(Type, Type),
+    /// A standing effect, not a choice: while this Pokémon is in
+    /// play, no attack from the opponent's Pokémon may do any damage
+    /// — flat damage or a placed counter alike, unlike `Battle
+    /// Cage`'s narrower carve-out — to a Benched Pokémon of this
+    /// Pokémon's own owner that has no Rule Box (a Pokémon ex,
+    /// Pokémon V, etc. does). Read directly by
+    /// `GameState::bench_attack_damage_blocked` at every site that
+    /// would deal attack damage to a specifically-Benched target.
+    /// `Shaymin`'s `Flower Curtain`.
+    PassivePreventsAttackDamageToNonRuleBoxBench,
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for
