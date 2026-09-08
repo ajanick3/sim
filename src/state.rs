@@ -239,6 +239,10 @@ pub enum Phase {
     /// only a Special Energy — one carrying an effect. `Enhanced
     /// Hammer`.
     DiscardingOpponentSpecialEnergy { chooser: PlayerId, of: PlayerId },
+    /// The attacking player picks one Energy attached to `target` (a
+    /// specific Pokémon, not a whole side) to discard.
+    /// `Stunfisk`'s `Paralyzing Crackle`.
+    DiscardingDefenderEnergyForAttack { chooser: PlayerId, target: PokemonId },
     /// `player`'s own Bench holds more than `BENCH_LIMIT` and must
     /// shrink to it — `Area Zero Underdepths`, either because
     /// `player`'s last Tera Pokémon just left play, or because the

@@ -13,9 +13,9 @@ use std::collections::HashMap;
 use serde_json::Value;
 
 use crate::card::{
-    Ability, AbilityEffect, Attack, AttackEffect, CardDb, CardDef, CardFilter, Count, Destination,
-    Energy, Marker, Pokemon, PromoteFollowUp, Requirement, Slot, Stage, TargetFilter, Then,
-    Trainer, TrainerEffect, TrainerKind, TurnBonusTarget, Type, Zone,
+    Ability, AbilityEffect, Attack, AttackEffect, CardDb, CardDef, CardFilter, Condition, Count,
+    Destination, Energy, Marker, Pokemon, PromoteFollowUp, Requirement, Slot, Stage, TargetFilter,
+    Then, Trainer, TrainerEffect, TrainerKind, TurnBonusTarget, Type, Zone,
 };
 use crate::ids::CardDefId;
 
@@ -1451,6 +1451,17 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Hoothoot", "Triple Stab") => {
             AttackEffect::DamagePerCoinFlipHeads { flips: 3, per_head: 10 }
         }
+        ("Brute Bonnet", "Relentless Punches") => {
+            AttackEffect::BonusDamagePerCount(Count::DefenderDamageCounters, 50)
+        }
+        ("Enamorus", "Love Resonance") => AttackEffect::BonusDamageIfSharedTypeInPlay(120),
+        ("Stunfisk", "Muddy Bolt") => {
+            AttackEffect::BonusDamageIfOwnEnergyOfTypeAttached(Type::Fighting, 20)
+        }
+        ("Stunfisk", "Paralyzing Crackle") => {
+            AttackEffect::CoinFlipInflictsAndDiscardsDefenderEnergy(Condition::Paralyzed)
+        }
+        ("Cofagrigus", "Perplex") => AttackEffect::InflictsCondition(Condition::Confused),
         ("Elgyem", "Slight Shift") => AttackEffect::MoveOpponentsEnergyBetweenTheirPokemon,
         ("Dusknoir", "Shadow Bind") => AttackEffect::DefenderCannotRetreatNextTurn,
         ("Genesect ex", "Protect Charge") => AttackEffect::SelfDamageReductionNextTurn(30),

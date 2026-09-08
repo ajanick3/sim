@@ -2065,6 +2065,20 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::DiscardDefenderEnergyForAttack { card } => {
+            let target = match state.phase {
+                Phase::DiscardingDefenderEnergyForAttack { target, .. } => target,
+                _ => return Err(IllegalAction),
+            };
+            let owner = state.pokemon(target).owner;
+            state.pokemon[target.index()].attached.retain(|c| *c != card);
+            state.players[owner.index()].discard.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} is discarded."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::DiscardBenchedPokemon { pokemon } => {
             let (player, then) = match state.phase {
                 Phase::DiscardingBenchDownTo { player, then } => (player, then),
@@ -2762,6 +2776,35 @@ fn attack(state: &mut GameState, index: usize) {
                 attack.base_damage
             }
         }
+        Some(crate::card::AttackEffect::BonusDamageIfSharedTypeInPlay(bonus)) => {
+            let owner = state.pokemon(attacker).owner;
+            let opponent = owner.opponent();
+            let own_types: Vec<_> =
+                state.player(owner).in_play().iter().map(|p| state.pokemon_def(*p).kind).collect();
+            let shared = state
+                .player(opponent)
+                .in_play()
+                .iter()
+                .any(|p| own_types.contains(&state.pokemon_def(*p).kind));
+            if shared {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
+        Some(crate::card::AttackEffect::BonusDamageIfOwnEnergyOfTypeAttached(kind, bonus)) => {
+            let count = count_for_attack(
+                state,
+                attacker,
+                defender,
+                crate::card::Count::OwnEnergyOfTypeAttachedCount(kind),
+            );
+            if count > 0 {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
         _ => attack.base_damage,
     };
     let ignore_defenders_effects =
@@ -2844,6 +2887,20 @@ fn resolve_attack_effect(
                 state.inflict(defender, condition);
                 let name = state.pokemon_def(defender).name;
                 state.log.push(format!("{name} is now {condition:?}."));
+            }
+        }
+        crate::card::AttackEffect::CoinFlipInflictsAndDiscardsDefenderEnergy(condition) => {
+            if state.rng.flip() && !state.attack_effects_on_it_prevented(defender) {
+                state.inflict(defender, condition);
+                let name = state.pokemon_def(defender).name;
+                state.log.push(format!("{name} is now {condition:?}."));
+                let owner = state.pokemon(attacker).owner;
+                if !state.pokemon(defender).attached.is_empty() {
+                    state.phase = Phase::DiscardingDefenderEnergyForAttack {
+                        chooser: owner,
+                        target: defender,
+                    };
+                }
             }
         }
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
@@ -3009,6 +3066,12 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::BonusDamageIfOwnBenchDamaged(_) => {}
+        // Already spent, before `damage_dealt_with` ran — see `attack`'s
+        // own `base` computation.
+        crate::card::AttackEffect::BonusDamageIfSharedTypeInPlay(_) => {}
+        // Already spent, before `damage_dealt_with` ran — see `attack`'s
+        // own `base` computation.
+        crate::card::AttackEffect::BonusDamageIfOwnEnergyOfTypeAttached(..) => {}
         crate::card::AttackEffect::DrawCards(count) => {
             let owner = state.pokemon(attacker).owner;
             for _ in 0..count {
@@ -3291,6 +3354,7 @@ fn count_for_attack(
             state.player(owner).bench.len() as u32 + state.player(opponent).bench.len() as u32
         }
         crate::card::Count::DefenderEnergyAttachedCount => state.energy_attached(defender) as u32,
+        crate::card::Count::DefenderDamageCounters => state.pokemon(defender).damage / 10,
     }
 }
 
