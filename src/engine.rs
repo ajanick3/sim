@@ -1582,7 +1582,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.pokemon[source.index()].damage -= count;
             let source_name = state.pokemon_def(source).name;
             let target_name = state.pokemon_def(target).name;
-            if state.bench_damage_counters_blocked(target) {
+            if state.bench_damage_counters_blocked(player, target) {
                 // `Battle Cage`: the counters still leave `source` — the
                 // move already started — but they never land, so they
                 // vanish rather than piling up somewhere else.
@@ -2829,7 +2829,7 @@ fn resolve_attack_effect(
                 .player(owner.opponent())
                 .bench
                 .iter()
-                .any(|p| !state.bench_damage_counters_blocked(*p));
+                .any(|p| !state.bench_damage_counters_blocked(owner, *p));
             if any_target {
                 state.phase = Phase::DistributingDamageCounters {
                     player: owner,
@@ -3341,7 +3341,7 @@ fn damage_dealt_with(
         damage = damage.saturating_sub(amount);
     }
     if !ignore_defenders_effects
-        && !state.abilities_disabled()
+        && !state.abilities_disabled_for(defender)
         && state.pokemon_def(attacker).prizes > 1
         && state
             .pokemon_def(defender)
@@ -3472,7 +3472,7 @@ fn apply_risky_ruins(state: &mut GameState, pokemon: PokemonId) {
 /// `Action::PlayBasic` benches the card, the same site
 /// `apply_risky_ruins` already reads from.
 fn trigger_last_ditch_catch(state: &mut GameState, player: PlayerId, pokemon: PokemonId) {
-    if state.abilities_disabled() {
+    if state.abilities_disabled_for(pokemon) {
         return;
     }
     let Some(ability) = state.pokemon_def(pokemon).ability else {
@@ -3498,7 +3498,7 @@ fn trigger_last_ditch_catch(state: &mut GameState, player: PlayerId, pokemon: Po
 /// Bench" trigger `trigger_last_ditch_catch` reads, but discarding
 /// whichever Stadium is in play instead of searching.
 fn trigger_snow_sink(state: &mut GameState, player: PlayerId, pokemon: PokemonId) {
-    if state.abilities_disabled() {
+    if state.abilities_disabled_for(pokemon) {
         return;
     }
     let Some(ability) = state.pokemon_def(pokemon).ability else {
@@ -3519,7 +3519,7 @@ fn trigger_snow_sink(state: &mut GameState, player: PlayerId, pokemon: PokemonId
 /// the Bench" trigger `trigger_last_ditch_catch` and `trigger_snow_sink`
 /// already read, but offering a switch instead.
 fn trigger_rapid_vernier(state: &mut GameState, player: PlayerId, pokemon: PokemonId) {
-    if state.abilities_disabled() {
+    if state.abilities_disabled_for(pokemon) {
         return;
     }
     let Some(ability) = state.pokemon_def(pokemon).ability else {
@@ -3542,7 +3542,7 @@ fn trigger_rapid_vernier(state: &mut GameState, player: PlayerId, pokemon: Pokem
 /// `Action::Evolve` finishes, the same spot `trigger_last_ditch_catch`
 /// reads a benched-from-hand trigger from.
 fn trigger_psychic_draw(state: &mut GameState, player: PlayerId, target: PokemonId) {
-    if state.abilities_disabled() {
+    if state.abilities_disabled_for(target) {
         return;
     }
     let Some(ability) = state.pokemon_def(target).ability else {

@@ -501,9 +501,10 @@ pub enum TrainerEffect {
     /// the target out. `Battle Cage`.
     PreventsDamageCountersOnBench,
     /// A standing effect, not a resolved-once one: while this Stadium
-    /// is in play, no Pokémon in play, either player's, has an
-    /// Ability — read directly by `GameState::abilities_disabled` at
-    /// every site that would otherwise offer, trigger, or read a
+    /// is in play, no `{C}` (Colorless) Pokémon in play, either
+    /// player's, has an Ability — a Pokémon of any other type keeps
+    /// its own. Read directly by `GameState::abilities_disabled_for`
+    /// at every site that would otherwise offer, trigger, or read a
     /// standing Ability effect. `Team Rocket's Watchtower`.
     AbilitiesDisabled,
 }

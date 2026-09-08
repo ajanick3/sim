@@ -864,12 +864,17 @@ impl GameState {
         self.attached_energy_types(id).len() as u8
     }
 
-    /// Whether `Team Rocket's Watchtower` (or any Stadium with the same
-    /// effect) is in play — every site that would offer, trigger, or
-    /// read a standing Ability effect checks this first, on either
-    /// player's Pokémon, rather than the Ability being removed.
-    pub fn abilities_disabled(&self) -> bool {
+    /// Whether `id` has no Ability while `Team Rocket's Watchtower` (or
+    /// any Stadium with the same effect) is in play. The card's own
+    /// text names only `{C}` (Colorless) Pokémon — either player's,
+    /// but never a Pokémon of any other type — so this reads `id`'s
+    /// own printed type, not a single stadium-wide flag. Every site
+    /// that would offer, trigger, or read a standing Ability effect
+    /// checks this first, on the specific Pokémon that effect would
+    /// come from, rather than the Ability being removed.
+    pub fn abilities_disabled_for(&self, id: PokemonId) -> bool {
         self.stadium_effect() == Some(crate::card::TrainerEffect::AbilitiesDisabled)
+            && self.pokemon_def(id).kind == crate::card::Type::Colorless
     }
 
     /// The Retreat Cost this Pokémon actually pays: the printed cost, less
@@ -885,12 +890,13 @@ impl GameState {
         {
             return 0;
         }
-        if !self.abilities_disabled() && self.pokemon_def(id).stage == crate::card::Stage::Basic {
+        if self.pokemon_def(id).stage == crate::card::Stage::Basic {
             let owner = self.pokemon(id).owner;
             let has_skyliner = self.player(owner).in_play().iter().any(|p| {
-                self.pokemon_def(*p)
-                    .ability
-                    .is_some_and(|a| a.effect == crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost)
+                !self.abilities_disabled_for(*p)
+                    && self.pokemon_def(*p).ability.is_some_and(|a| {
+                        a.effect == crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost
+                    })
             });
             if has_skyliner {
                 return 0;
@@ -917,28 +923,28 @@ impl GameState {
     /// `AbilityEffect::PassiveBlocksDamageCounterMovement`. `Patrat`'s
     /// `Watchful Eye`.
     pub fn damage_counter_movement_blocked(&self) -> bool {
-        !self.abilities_disabled()
-            && [PlayerId::One, PlayerId::Two].iter().any(|p| {
-                self.player(*p).in_play().iter().any(|pokemon| {
-                    self.pokemon_def(*pokemon)
-                        .ability
-                        .is_some_and(|a| a.effect == crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement)
-                })
+        [PlayerId::One, PlayerId::Two].iter().any(|p| {
+            self.player(*p).in_play().iter().any(|pokemon| {
+                !self.abilities_disabled_for(*pokemon)
+                    && self.pokemon_def(*pokemon).ability.is_some_and(|a| {
+                        a.effect == crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement
+                    })
             })
+        })
     }
 
     /// Whether any Pokémon in play, on either side, carries
     /// `AbilityEffect::PassiveDisablesSelfKnockOutAbilities`.
     /// `Psyduck`'s `Damp`.
     pub fn self_knockout_abilities_disabled(&self) -> bool {
-        !self.abilities_disabled()
-            && [PlayerId::One, PlayerId::Two].iter().any(|p| {
-                self.player(*p).in_play().iter().any(|pokemon| {
-                    self.pokemon_def(*pokemon).ability.is_some_and(|a| {
+        [PlayerId::One, PlayerId::Two].iter().any(|p| {
+            self.player(*p).in_play().iter().any(|pokemon| {
+                !self.abilities_disabled_for(*pokemon)
+                    && self.pokemon_def(*pokemon).ability.is_some_and(|a| {
                         a.effect == crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities
                     })
-                })
             })
+        })
     }
 
     /// Whether `id` carries `EnergyEffect::PreventsAttackEffectsOnCarrier`
@@ -976,14 +982,19 @@ impl GameState {
     }
 
     /// Whether `target`, sitting on its own owner's Bench, is
-    /// protected from a damage counter an attack or Ability effect
-    /// would place there directly. `Battle Cage`. A Pokémon that is
-    /// its owner's Active is never protected by this — Battle Cage
-    /// names only the Bench, and ordinary attack damage is untouched
-    /// regardless.
-    pub fn bench_damage_counters_blocked(&self, target: PokemonId) -> bool {
+    /// protected from a damage counter that `by`'s Pokémon (an attack
+    /// or an Ability effect) would place there directly. `Battle
+    /// Cage` only ever blocks a *cross-side* placement — the ruling
+    /// on Gardevoir ex's own `Psychic Embrace` confirms an effect
+    /// still places its counters normally on its own side's Bench —
+    /// so this reads `false` outright when `by` owns `target`. A
+    /// Pokémon that is its owner's Active is never protected by this
+    /// either way — Battle Cage names only the Bench, and ordinary
+    /// attack damage is untouched regardless.
+    pub fn bench_damage_counters_blocked(&self, by: PlayerId, target: PokemonId) -> bool {
         let owner = self.pokemon(target).owner;
-        self.player(owner).active != Some(target)
+        owner != by
+            && self.player(owner).active != Some(target)
             && self.stadium_effect() == Some(crate::card::TrainerEffect::PreventsDamageCountersOnBench)
     }
 

@@ -1424,6 +1424,53 @@ fn without_watchtower_the_same_ability_is_offered() {
 }
 
 #[test]
+fn watchtower_leaves_a_non_colorless_pokemons_ability_alone() {
+    let (set, card) = with_watchtower(build());
+    let mut db = set.db.clone();
+    let grass_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-drawmon-grass",
+        name: "Drawmon",
+        hp: 200,
+        kind: Type::Grass,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Draw Power",
+            effect: AbilityEffect::OncePerTurnWhileActiveMayDrawCards(1),
+        }),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let set = Set { db, ..set };
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    let mine_card = deal_new_card(&mut state, player, grass_mon);
+    let mine_active = state.put_into_play(player, mine_card);
+    state.players[player.index()].active = Some(mine_active);
+
+    assert!(
+        legal_actions(&state)
+            .iter()
+            .any(|a| matches!(a, Action::UseAbility { pokemon } if *pokemon == mine_active)),
+        "Team Rocket's Watchtower names only {{C}} Pokémon; a Grass Pokémon keeps its Ability"
+    );
+}
+
+#[test]
 fn team_rockets_watchtower_is_admitted_from_the_artifact() {
     let import = sim::import::load(
         &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
