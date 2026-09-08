@@ -977,3 +977,231 @@ fn nighttime_mine_is_admitted_from_the_artifact() {
         "Nighttime Mine should play"
     );
 }
+
+// --- Beyond the map: a Stadium that raises the Bench limit, and cleans up after itself ---
+
+fn with_area_zero(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let area_zero = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-area-zero",
+        name: "Area Zero Underdepths",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::TeraPokemonRaisesBenchLimit,
+    }));
+    let tera_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: vec![sim::card::Marker::Ex, sim::card::Marker::Tera],
+        print_id: "test-tera-area-zero",
+        name: "Testmon ex Tera",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    (Set { db, ..set }, area_zero, tera_mon)
+}
+
+fn fill_bench(state: &mut GameState, player: PlayerId, def: CardDefId, count: usize) {
+    for _ in 0..count {
+        let card = deal_new_card(state, player, def);
+        let pokemon = state.put_into_play(player, card);
+        state.players[player.index()].bench.push(pokemon);
+    }
+}
+
+#[test]
+fn area_zero_raises_the_bench_limit_only_with_an_own_tera_pokemon() {
+    let (set, area_zero, tera_mon) = with_area_zero(build());
+    let mut state = game(&set, area_zero, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, area_zero);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    // Top off to exactly 5, whatever setup itself already benched.
+    let to_fill = 5 - state.player(player).bench.len();
+    fill_bench(&mut state, player, set.mon, to_fill);
+    assert_eq!(state.player(player).bench.len(), 5);
+    assert!(
+        !legal_actions(&state).iter().any(|a| matches!(a, Action::PlayBasic { .. })),
+        "no Tera Pokemon yet: still capped at 5"
+    );
+
+    let tera_card = deal_new_card(&mut state, player, tera_mon);
+    let tera_pokemon = state.put_into_play(player, tera_card);
+    state.players[player.index()].bench.push(tera_pokemon);
+    assert_eq!(state.player(player).bench.len(), 6);
+
+    fill_bench(&mut state, player, set.mon, 1);
+    assert_eq!(state.player(player).bench.len(), 7);
+    let basic_in_hand = deal_new_card(&mut state, player, set.mon);
+    state.players[player.index()].hand.push(basic_in_hand);
+    assert!(
+        legal_actions(&state).iter().any(|a| matches!(a, Action::PlayBasic { .. })),
+        "a Tera Pokemon in play raises the limit to 8"
+    );
+
+    apply(&mut state, Action::PlayBasic { card: basic_in_hand }).unwrap();
+    assert_eq!(state.player(player).bench.len(), 8);
+    let basic_in_hand = deal_new_card(&mut state, player, set.mon);
+    state.players[player.index()].hand.push(basic_in_hand);
+    assert!(
+        !legal_actions(&state).iter().any(|a| matches!(a, Action::PlayBasic { .. })),
+        "8 is still a limit"
+    );
+}
+
+#[test]
+fn losing_the_last_tera_pokemon_forces_a_discard_down_to_five() {
+    let (set, area_zero, tera_mon) = with_area_zero(build());
+    let mut state = game(&set, area_zero, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let played = ensure_in_hand(&mut state, player, area_zero);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    // The Tera Pokemon is the Active itself — a low-HP stand-in, so a
+    // single attack Knocks it out — and it alone is what raises the
+    // Bench limit for the 6 filler Pokemon behind it.
+    let tera_card = deal_new_card(&mut state, player, tera_mon);
+    let low_hp_tera = state.put_into_play(player, tera_card);
+    state.pokemon[low_hp_tera.index()].damage = 190; // 10 HP left, of 200
+    state.players[player.index()].active = Some(low_hp_tera);
+    fill_bench(&mut state, player, set.mon, 6);
+    assert!(state.player(player).bench.len() > 5, "the raised limit allows this");
+
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    assert_eq!(state.current, opponent, "the opponent's own turn, to attack");
+
+    // A known Active, so its printed attack (Tackle, 10 damage) is
+    // guaranteed to match the low HP left on `low_hp_tera` exactly.
+    let opp_active_card = deal_new_card(&mut state, opponent, set.mon);
+    let opp_active = state.put_into_play(opponent, opp_active_card);
+    state.players[opponent.index()].active = Some(opp_active);
+    let energy = deal_new_card(&mut state, opponent, set.energy);
+    state.pokemon[opp_active.index()].attached.push(energy);
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the opponent's Active is paid for");
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(
+        state.phase,
+        Phase::DiscardingBenchDownTo { player, then: None },
+        "the last Tera Pokemon just left play, over the raised limit"
+    );
+
+    while state.player(player).bench.len() > 5 {
+        let pokemon = state.player(player).bench[0];
+        apply(&mut state, Action::DiscardBenchedPokemon { pokemon }).unwrap();
+    }
+    assert_eq!(state.player(player).bench.len(), 5);
+    // The Knocked Out Active itself still needs replacing — bench
+    // cleanup runs first (`settle`'s own ordering), promotion after.
+    assert!(
+        matches!(state.phase, Phase::Promoting { of, .. } if of == player),
+        "the Active that was Knocked Out still needs promoting: {:?}",
+        state.phase
+    );
+}
+
+#[test]
+fn area_zero_leaving_play_discards_both_players_down_to_five_owner_first() {
+    let (set, area_zero, tera_mon) = with_area_zero(build());
+    let mut db = set.db.clone();
+    let replacement = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-replacement-stadium",
+        name: "Some Other Stadium",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::Nothing,
+    }));
+    let set = Set { db, ..set };
+    let mut state = game(&set, area_zero, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+
+    let played = ensure_in_hand(&mut state, player, area_zero);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    for who in [player, opponent] {
+        let tera_card = deal_new_card(&mut state, who, tera_mon);
+        let tera_pokemon = state.put_into_play(who, tera_card);
+        state.players[who.index()].bench.push(tera_pokemon);
+        fill_bench(&mut state, who, set.mon, 6);
+        assert!(state.player(who).bench.len() > 5, "well over the un-raised limit");
+    }
+
+    // Rule 13: one Stadium a turn — already spent this turn on Area
+    // Zero itself, so play the replacement on `player`'s next turn.
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    assert_eq!(state.current, player, "back to Area Zero's own owner");
+
+    // Never part of the decklist, so dealt directly rather than found
+    // through `ensure_in_hand`.
+    let replacement_card = deal_new_card(&mut state, player, replacement);
+    state.players[player.index()].hand.push(replacement_card);
+    apply(&mut state, Action::PlayTrainer { card: replacement_card }).unwrap();
+
+    assert_eq!(
+        state.phase,
+        Phase::DiscardingBenchDownTo { player, then: Some(opponent) },
+        "Area Zero's own owner discards first"
+    );
+
+    while state.player(player).bench.len() > 5 {
+        let pokemon = state.player(player).bench[0];
+        apply(&mut state, Action::DiscardBenchedPokemon { pokemon }).unwrap();
+    }
+    assert_eq!(
+        state.phase,
+        Phase::DiscardingBenchDownTo { player: opponent, then: None },
+        "then the opponent"
+    );
+
+    while state.player(opponent).bench.len() > 5 {
+        let pokemon = state.player(opponent).bench[0];
+        apply(&mut state, Action::DiscardBenchedPokemon { pokemon }).unwrap();
+    }
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).bench.len(), 5);
+    assert_eq!(state.player(opponent).bench.len(), 5);
+}
+
+#[test]
+fn area_zero_underdepths_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Area Zero Underdepths" && c.playable.is_some()),
+        "Area Zero Underdepths should play"
+    );
+}

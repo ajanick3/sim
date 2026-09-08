@@ -4,7 +4,7 @@ use crate::action::{Action, legal_actions};
 use crate::card::{CardDb, Condition, Destination, Requirement, TrainerEffect, TrainerKind, Zone};
 use crate::ids::{CardDefId, CardId, PlayerId, PokemonId};
 use crate::rng::{Rng, shuffle};
-use crate::state::{GameState, Limit, Outcome, Phase, WinReason};
+use crate::state::{BENCH_LIMIT, GameState, Limit, Outcome, Phase, WinReason};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct IllegalAction;
@@ -109,6 +109,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     state.spend(Limit::StadiumPlayed(player));
                     if let Some((owner, old)) = state.stadium {
                         state.players[owner.index()].discard.push(old);
+                        open_discard_bench_down_to_if_stadium_left(state, owner, old);
                     }
                     state.stadium = Some((player, card));
                 }
@@ -1694,8 +1695,10 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.players[owner.index()].discard.push(card);
             let name = state.def_of(card).name();
             state.log.push(format!("{name} is discarded (Snow Sink)."));
-            state.phase = Phase::Main;
-            settle(state);
+            if !open_discard_bench_down_to_if_stadium_left(state, owner, card) {
+                state.phase = Phase::Main;
+                settle(state);
+            }
         }
 
         Action::DeclineSnowSink => {
@@ -1992,6 +1995,18 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.log.push(format!("{name} is discarded."));
             state.phase = Phase::Main;
             settle(state);
+        }
+
+        Action::DiscardBenchedPokemon { pokemon } => {
+            let (player, then) = match state.phase {
+                Phase::DiscardingBenchDownTo { player, then } => (player, then),
+                _ => return Err(IllegalAction),
+            };
+            discard_benched_pokemon(state, pokemon);
+            if !open_discard_bench_down_to(state, player, then) {
+                state.phase = Phase::Main;
+                settle(state);
+            }
         }
     }
 
@@ -2362,7 +2377,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::ToolsHaveNoEffect
         | TrainerEffect::DamagesNonDarknessBasicBenched(_)
         | TrainerEffect::GrassCanEvolveTheTurnItIsPlayed
-        | TrainerEffect::TeraAttacksCostMore => {}
+        | TrainerEffect::TeraAttacksCostMore
+        | TrainerEffect::TeraPokemonRaisesBenchLimit => {}
 
         // "Recovers from all Special Conditions" reads as an immediate
         // sweep at the moment this becomes true for a Pokémon — playing
@@ -3338,6 +3354,21 @@ fn settle(state: &mut GameState) {
             return;
         }
 
+        // `Area Zero Underdepths`: the moment a player's last Tera
+        // Pokémon leaves play, an oversized Bench (raised past
+        // `BENCH_LIMIT` while they still had one) must shrink back
+        // down. Read every pass through this loop, the same general
+        // sweep `knock_out_the_dead` already is, since a Tera
+        // Pokémon can leave play by more than one route.
+        if state.stadium_effect() == Some(crate::card::TrainerEffect::TeraPokemonRaisesBenchLimit) {
+            for player in [PlayerId::One, PlayerId::Two] {
+                if state.player(player).bench.len() > BENCH_LIMIT && !state.has_tera_in_play(player) {
+                    state.phase = Phase::DiscardingBenchDownTo { player, then: None };
+                    return;
+                }
+            }
+        }
+
         // Rule 40: the player whose Active was knocked out chooses the next one.
         for player in [PlayerId::One, PlayerId::Two] {
             if state.player(player).active.is_none() {
@@ -3665,6 +3696,49 @@ fn knock_out(state: &mut GameState, pokemon: PokemonId) {
     state.pokemon[pokemon.index()].knocked_out = true;
     state.knocked_out_last_turn[owner.index()] = true;
     state.log.push(format!("{name} is Knocked Out."));
+}
+
+/// A Benched Pokémon leaving play because the Bench must shrink — not a
+/// Knockout: no Prize, no `knocked_out` flag, nothing `Unfair Stamp` or
+/// `Lillie's Pearl` should ever read from this. `Area Zero Underdepths`.
+fn discard_benched_pokemon(state: &mut GameState, pokemon: PokemonId) {
+    let owner = state.pokemon(pokemon).owner;
+    let name = state.pokemon_def(pokemon).name;
+    let cards = std::mem::take(&mut state.pokemon[pokemon.index()].cards);
+    let attached = std::mem::take(&mut state.pokemon[pokemon.index()].attached);
+    let side = &mut state.players[owner.index()];
+    side.discard.extend(cards);
+    side.discard.extend(attached);
+    side.bench.retain(|p| *p != pokemon);
+    state.log.push(format!("{name} is discarded from the Bench."));
+}
+
+/// Opens `Phase::DiscardingBenchDownTo` for `player` if their own Bench
+/// still holds more than `BENCH_LIMIT`, chaining to `then` once `player`
+/// no longer needs to. Returns whether a phase was opened — `false`
+/// means `state.phase` was left untouched, and it is the caller's own
+/// job to decide what that means for them (return to `Main` and
+/// `settle`, or simply carry on). `Area Zero Underdepths`.
+fn open_discard_bench_down_to(state: &mut GameState, player: PlayerId, then: Option<PlayerId>) -> bool {
+    if state.player(player).bench.len() > BENCH_LIMIT {
+        state.phase = Phase::DiscardingBenchDownTo { player, then };
+        true
+    } else if let Some(next) = then {
+        open_discard_bench_down_to(state, next, None)
+    } else {
+        false
+    }
+}
+
+/// `card`, owned by `owner`, just left play — read for `Area Zero
+/// Underdepths` alone: if it was the one raising the Bench limit, both
+/// players must shrink back down to `BENCH_LIMIT`, `owner` (the player
+/// who played this card) first. Returns whether a phase was opened,
+/// the same convention `open_discard_bench_down_to` itself carries.
+fn open_discard_bench_down_to_if_stadium_left(state: &mut GameState, owner: PlayerId, card: CardId) -> bool {
+    state.def_of(card).as_trainer().is_some_and(|t| {
+        t.effect == crate::card::TrainerEffect::TeraPokemonRaisesBenchLimit
+    }) && open_discard_bench_down_to(state, owner, Some(owner.opponent()))
 }
 
 fn take_prizes(state: &mut GameState, player: PlayerId, count: usize) {

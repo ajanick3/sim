@@ -475,6 +475,17 @@ pub enum TrainerEffect {
     /// once an attack is legal to use, so no other site reads this.
     /// `Nighttime Mine`.
     TeraAttacksCostMore,
+    /// A standing effect, not a resolved-once one: while this Stadium
+    /// is in play, a player with a Pokémon carrying `Marker::Tera` in
+    /// play may have up to 8 Pokémon on their own Bench, read
+    /// directly by `GameState::bench_limit`. The rest of the card's
+    /// own text — discarding down to 5 the moment a player's last
+    /// Tera Pokémon leaves play, and discarding both players down to
+    /// 5 (this card's own owner first) the moment this card itself
+    /// leaves play — is reactive, not read from this variant at all:
+    /// `settle` and `stadium_left_play` carry it. `Area Zero
+    /// Underdepths`.
+    TeraPokemonRaisesBenchLimit,
 }
 
 /// What a card demands before it may be played at all.
