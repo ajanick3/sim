@@ -2316,3 +2316,41 @@ fn genesect_bugs_cannon_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "me02-008").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Genesect's Bug's Cannon print should play");
 }
+
+// --- Beyond the spec: placing damage counters per a counted board fact ---
+
+#[test]
+fn places_damage_counters_on_the_defender_per_hand_size() {
+    let attack = Attack {
+        name: "Powerful Hand",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::PlaceDamageCountersOnDefenderPerCount(
+            sim::card::Count::OwnHandSizeCount,
+            2,
+        )),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let hand_size = state.player(player).hand.len() as u32;
+
+    pay_and_attack(&mut state);
+
+    // Paying the attack's own cost removed 1 card from hand first.
+    assert_eq!(state.pokemon(defender).damage, (hand_size - 1) * 2 * 10);
+}
+
+#[test]
+fn alakazam_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Alakazam" && c.playable.is_some()),
+        "at least one Alakazam print should play"
+    );
+}

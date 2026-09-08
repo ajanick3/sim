@@ -230,5 +230,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // anywhere in play, either player's) admits all 3 of its prints —
     // the first Item admitted since the Items milestone's own ticket
     // order closed.
-    assert_eq!(admitted, 640, "coverage moves only on purpose");
+    // Alakazam's Powerful Hand (placing damage counters per a
+    // counted board fact, bypassing the ordinary damage order
+    // entirely — the same shape DamageCountersToOpponentBenchAnyWay
+    // already takes) completes all 3 Alakazam prints.
+    assert_eq!(admitted, 643, "coverage moves only on purpose");
 }

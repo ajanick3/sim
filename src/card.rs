@@ -734,6 +734,13 @@ pub enum AttackEffect {
     /// about the choice itself differs once the count is read.
     /// `Genesect`'s `Bug's Cannon`.
     DamagePerCountToChosenOpponentPokemon(Count, u32),
+    /// Place this many damage counters (10 damage each) on the
+    /// defender, for each unit of a counted board fact — "place
+    /// damage counters" bypasses the ordinary damage order entirely,
+    /// the same way `DamageCountersToOpponentBenchAnyWay` already
+    /// does, rather than running through `damage_dealt_with` the way
+    /// `DamagePerCount` does. `Alakazam`'s `Powerful Hand`.
+    PlaceDamageCountersOnDefenderPerCount(Count, u32),
     /// The attacker takes this much less damage from attacks during
     /// the opponent's very next turn, after Weakness and Resistance —
     /// the mirror of `DefenderDealsLessDamageNextTurn`'s own lifetime
@@ -786,6 +793,9 @@ pub enum Count {
     /// Grass Energy attached to the attacker itself. `Genesect`'s
     /// `Bug's Cannon`.
     OwnGrassEnergyAttachedCount,
+    /// Cards in the attacker's owner's own hand. `Alakazam`'s
+    /// `Powerful Hand`.
+    OwnHandSizeCount,
 }
 
 /// How far along its evolution line a Pokémon card is printed. The artifact
