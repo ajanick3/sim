@@ -382,6 +382,20 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             TrainerEffect::GrantsBonusPrizeIfOwnTeraAttackerKnocksOutThisTurn,
         ),
         "Enhanced Hammer" => (free, TrainerEffect::DiscardOpponentSpecialEnergy),
+        "Glass Trumpet" => (
+            Some(Requirement::OwnTeraPokemonInPlay),
+            TrainerEffect::Decide {
+                from: Zone::Discard,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicEnergy,
+                    to: Destination::Attach(TargetFilter::BenchedOfType(Type::Colorless)),
+                    limit: 2,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         "Judge" => (free, TrainerEffect::BothShuffleHandThenDraw { you: 4, opponent: 4 }),
         "Lillie's Determination" => (
             free,

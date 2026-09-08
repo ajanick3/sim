@@ -508,6 +508,9 @@ pub enum Requirement {
     /// The opponent holds exactly this many Prize cards — narrower
     /// than `OpponentPrizesAtMost`, which also allows fewer. `Briar`.
     OpponentPrizesExactly(usize),
+    /// The player has a Pokémon carrying `Marker::Tera` in play — read
+    /// from the board, and costs nothing. `Glass Trumpet`.
+    OwnTeraPokemonInPlay,
 }
 
 /// A Trainer as printed.

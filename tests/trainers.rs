@@ -706,3 +706,127 @@ fn enhanced_hammer_is_admitted_from_the_artifact() {
         "Enhanced Hammer should play"
     );
 }
+
+// --- Beyond the map: attach Energy from discard, gated on a Tera Pokemon in play ---
+
+#[test]
+fn glass_trumpet_needs_a_tera_pokemon_in_play() {
+    let set = build2();
+    let mut db = set.db.clone();
+    let glass_trumpet = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-glass-trumpet",
+        name: "Glass Trumpet",
+        kind: TrainerKind::Item,
+        requirement: Some(sim::card::Requirement::OwnTeraPokemonInPlay),
+        effect: TrainerEffect::Decide {
+            from: sim::card::Zone::Discard,
+            slots: vec![sim::card::Slot {
+                filter: sim::card::CardFilter::BasicEnergy,
+                to: sim::card::Destination::Attach(sim::card::TargetFilter::BenchedOfType(Type::Colorless)),
+                limit: 2,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    let set = Set2 { db, ..set };
+    let mut state = game2(&set, glass_trumpet, 3);
+    let player = state.current;
+    let card = ensure_in_hand2(&mut state, player, glass_trumpet);
+
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "no Tera Pokemon in play"
+    );
+}
+
+#[test]
+fn glass_trumpet_attaches_energy_from_discard_to_benched_colorless() {
+    let set = build2();
+    let mut db = set.db.clone();
+    let glass_trumpet = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-glass-trumpet-attach",
+        name: "Glass Trumpet",
+        kind: TrainerKind::Item,
+        requirement: Some(sim::card::Requirement::OwnTeraPokemonInPlay),
+        effect: TrainerEffect::Decide {
+            from: sim::card::Zone::Discard,
+            slots: vec![sim::card::Slot {
+                filter: sim::card::CardFilter::BasicEnergy,
+                to: sim::card::Destination::Attach(sim::card::TargetFilter::BenchedOfType(Type::Colorless)),
+                limit: 2,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    let tera_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: vec![sim::card::Marker::Ex, sim::card::Marker::Tera],
+        print_id: "test-tera-active",
+        name: "Testmon ex Tera",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let set = Set2 { db, ..set };
+    let mut state = game2(&set, glass_trumpet, 3);
+    let player = state.current;
+
+    // A Tera Pokemon on the player's own board (benched is fine — the
+    // requirement reads anywhere in play).
+    let tera_card = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: tera_mon, owner: player });
+    let tera_pokemon = state.put_into_play(player, tera_card);
+    state.players[player.index()].bench.push(tera_pokemon);
+
+    // A Benched Colorless Pokemon to receive the Energy.
+    let bench_card = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: set.mon, owner: player });
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    // A Basic Energy physically in the discard pile.
+    let energy_card = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: set.energy, owner: player });
+    state.players[player.index()].discard.push(energy_card);
+
+    let card = ensure_in_hand2(&mut state, player, glass_trumpet);
+    assert!(legal_actions(&state).contains(&Action::PlayTrainer { card }), "a Tera Pokemon is in play");
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert!(matches!(state.phase, Phase::Deciding { .. }));
+    apply(&mut state, Action::TakeCardOnto { card: energy_card, target: bench_mon }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(bench_mon).attached.contains(&energy_card));
+    assert!(!state.player(player).discard.contains(&energy_card));
+}
+
+#[test]
+fn glass_trumpet_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Glass Trumpet" && c.playable.is_some()),
+        "Glass Trumpet should play"
+    );
+}
