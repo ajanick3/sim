@@ -486,6 +486,15 @@ pub enum TrainerEffect {
     /// `settle` and `stadium_left_play` carry it. `Area Zero
     /// Underdepths`.
     TeraPokemonRaisesBenchLimit,
+    /// A standing effect, not a resolved-once one: while this Stadium
+    /// is in play, no attack or Ability effect may place (or move)
+    /// damage counters onto any Benched Pokémon, either player's.
+    /// Damage from an attack landing normally is untouched — only a
+    /// direct placement bypassing the ordinary damage order is
+    /// blocked. Read directly by `GameState::bench_damage_counters_blocked`
+    /// at each site that would place a damage counter onto a
+    /// specifically-Benched target. `Battle Cage`.
+    PreventsDamageCountersOnBench,
 }
 
 /// What a card demands before it may be played at all.

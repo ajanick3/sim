@@ -91,8 +91,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Tera Orb took it to 272; Briar (four prints) took it to 268;
     // Enhanced Hammer (two prints) took it to 266; Glass Trumpet
     // (four prints) took it to 262; Nighttime Mine took it to 261;
-    // Area Zero Underdepths (three prints) takes it to 258.
-    assert_eq!(trainers, 258, "the Trainers still refused, by kind");
+    // Area Zero Underdepths (three prints) took it to 258; Battle
+    // Cage (two prints) takes it to 256.
+    assert_eq!(trainers, 256, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

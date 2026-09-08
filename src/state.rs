@@ -965,6 +965,18 @@ impl GameState {
         }
     }
 
+    /// Whether `target`, sitting on its own owner's Bench, is
+    /// protected from a damage counter an attack or Ability effect
+    /// would place there directly. `Battle Cage`. A Pokémon that is
+    /// its owner's Active is never protected by this — Battle Cage
+    /// names only the Bench, and ordinary attack damage is untouched
+    /// regardless.
+    pub fn bench_damage_counters_blocked(&self, target: PokemonId) -> bool {
+        let owner = self.pokemon(target).owner;
+        self.player(owner).active != Some(target)
+            && self.stadium_effect() == Some(crate::card::TrainerEffect::PreventsDamageCountersOnBench)
+    }
+
     /// The cards in one of a player's zones. A Trainer effect moves between
     /// these; a Pokémon's attachments are not one of them.
     pub fn zone(&self, player: PlayerId, zone: crate::card::Zone) -> &Vec<CardId> {

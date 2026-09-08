@@ -8,7 +8,7 @@ use sim::card::{
     TurnBonusTarget, Type, Zone,
 };
 use sim::engine::apply;
-use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
+use sim::ids::{CardDefId, CardId, PlayerId};
 use sim::rng::SeededRng;
 use sim::state::GameState;
 use sim::state::Phase;
@@ -1203,5 +1203,135 @@ fn area_zero_underdepths_is_admitted_from_the_artifact() {
     assert!(
         import.cards.iter().any(|c| c.name == "Area Zero Underdepths" && c.playable.is_some()),
         "Area Zero Underdepths should play"
+    );
+}
+
+// --- Beyond the map: a Stadium that blocks damage counters placed on the Bench ---
+
+fn with_battle_cage(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-battle-cage",
+        name: "Battle Cage",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::PreventsDamageCountersOnBench,
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn battle_cage_blocks_a_damage_counter_spread_attack_onto_the_bench() {
+    let (set, card) = with_battle_cage(build());
+    let mut db = set.db.clone();
+    let spreader = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-spreader",
+        name: "Spreadmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Spread Blast",
+            cost: vec![Type::Colorless],
+            base_damage: 0,
+            inflicts: None,
+            effect: Some(sim::card::AttackEffect::DamageCountersToOpponentBenchAnyWay(3)),
+        }],
+    }));
+    let set = Set { db, ..set };
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    let attacker_card = deal_new_card(&mut state, player, spreader);
+    let attacker = state.put_into_play(player, attacker_card);
+    state.players[player.index()].active = Some(attacker);
+    let energy = deal_new_card(&mut state, player, set.energy);
+    state.pokemon[attacker.index()].attached.push(energy);
+
+    let bench_card = deal_new_card(&mut state, opponent, set.mon);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the spreader is paid for");
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "no unblocked Bench target, so the effect fizzles");
+    assert_eq!(state.pokemon(bench_mon).damage, 0);
+}
+
+#[test]
+fn without_battle_cage_the_same_attack_still_spreads_normally() {
+    let mut db = build().db;
+    let spreader = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-spreader-no-cage",
+        name: "Spreadmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Spread Blast",
+            cost: vec![Type::Colorless],
+            base_damage: 0,
+            inflicts: None,
+            effect: Some(sim::card::AttackEffect::DamageCountersToOpponentBenchAnyWay(3)),
+        }],
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, spreader, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+
+    let attacker_card = deal_new_card(&mut state, player, spreader);
+    let attacker = state.put_into_play(player, attacker_card);
+    state.players[player.index()].active = Some(attacker);
+    let energy = deal_new_card(&mut state, player, set.energy);
+    state.pokemon[attacker.index()].attached.push(energy);
+
+    let bench_card = deal_new_card(&mut state, opponent, set.mon);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the spreader is paid for");
+    apply(&mut state, attack).unwrap();
+
+    assert!(matches!(state.phase, Phase::DistributingDamageCounters { .. }), "no Battle Cage in play");
+    apply(&mut state, Action::PlaceDamageCounter { target: bench_mon }).unwrap();
+    assert_eq!(state.pokemon(bench_mon).damage, 10);
+}
+
+#[test]
+fn battle_cage_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Battle Cage" && c.playable.is_some()),
+        "Battle Cage should play"
     );
 }
