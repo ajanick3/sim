@@ -1493,3 +1493,109 @@ fn metang_is_admitted_from_the_artifact() {
         "at least one Metang print should play"
     );
 }
+
+// --- Beyond the map: a standing Ability that blocks an ex attacker's damage ---
+
+#[test]
+fn takes_no_damage_from_an_ex_attacker() {
+    let ability = Ability {
+        name: "Mysterious Rock Inn",
+        effect: sim::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx,
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let carrier = state.player(player).active.unwrap();
+
+    let ex_attacker_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-ex-attacker",
+        name: "Attackmon ex",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 50,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let ex_card = deal_new_card(&mut state, opponent, ex_attacker_def);
+    let ex_attacker = state.put_into_play(opponent, ex_card);
+    state.players[opponent.index()].active = Some(ex_attacker);
+
+    let energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-colorless-energy-ex-atk",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+    }));
+    let energy = deal_new_card(&mut state, opponent, energy_def);
+    state.pokemon[ex_attacker.index()].attached.push(energy);
+
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the ex attacker is paid for");
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(state.pokemon(carrier).damage, 0, "Mysterious Rock Inn blocks an ex attacker outright");
+}
+
+#[test]
+fn takes_the_usual_damage_from_a_non_ex_attacker() {
+    let ability = Ability {
+        name: "Mysterious Rock Inn",
+        effect: sim::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx,
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let carrier = state.player(player).active.unwrap();
+    let opponent_active = state.player(opponent).active.unwrap();
+
+    let energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-colorless-energy-non-ex",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+    }));
+    let energy = deal_new_card(&mut state, opponent, energy_def);
+    state.pokemon[opponent_active.index()].attached.push(energy);
+
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the plain defender is paid for");
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(state.pokemon(carrier).damage, 10, "a plain (non-ex) attacker still deals its damage");
+}
+
+#[test]
+fn crustle_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Crustle" && c.playable.is_some()),
+        "at least one Crustle print should play"
+    );
+}
