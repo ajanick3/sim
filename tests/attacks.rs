@@ -3717,3 +3717,96 @@ fn raging_bolt_exs_bellowing_thunder_is_admitted_from_the_artifact() {
         "at least one Raging Bolt ex print should play"
     );
 }
+
+// --- Beyond the spec: discard the top N of the opponent's library ---
+
+#[test]
+fn discards_top_of_opponents_library() {
+    let attack = Attack {
+        name: "Undermine",
+        cost: vec![Type::Colorless],
+        base_damage: 90,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsTopOfOpponentsLibrary(2)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let top_two: Vec<_> = state.player(opponent).library.iter().take(2).copied().collect();
+
+    pay_and_attack(&mut state);
+
+    // The attack ends the attacker's own turn, which starts the
+    // opponent's — including their own draw — inside this same
+    // `apply` call, so the library also loses that one card beyond
+    // the two Undermine itself discards; only the discard pile's own
+    // count is exact.
+    assert_eq!(state.player(opponent).discard.len(), 2, "exactly the top two, discarded");
+    for card in top_two {
+        assert!(state.player(opponent).discard.contains(&card));
+    }
+}
+
+#[test]
+fn mega_excadrill_exs_undermine_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Mega Excadrill ex" && c.playable.is_some()),
+        "at least one Mega Excadrill ex print should play"
+    );
+}
+
+// --- Beyond the spec: bonus damage only with extra Energy beyond the attack's own cost ---
+
+#[test]
+fn bonus_damage_with_extra_energy_beyond_cost() {
+    let attack = Attack {
+        name: "Maximum Drilling",
+        cost: vec![Type::Colorless],
+        base_damage: 200,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfExtraEnergyAttached(2, 130)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    // Cost is 1; attach 2 more beyond it (3 total) for the bonus.
+    for _ in 0..2 {
+        let card = *state
+            .player(player)
+            .library
+            .iter()
+            .find(|c| state.def_of(**c).is_energy())
+            .unwrap();
+        state.players[player.index()].library.retain(|c| *c != card);
+        state.pokemon[attacker.index()].attached.push(card);
+    }
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 330, "200 base plus the 130 bonus");
+}
+
+#[test]
+fn no_bonus_damage_without_enough_extra_energy() {
+    let attack = Attack {
+        name: "Maximum Drilling",
+        cost: vec![Type::Colorless],
+        base_damage: 200,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfExtraEnergyAttached(2, 130)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 200, "only the cost's own 1 Energy attached, no bonus");
+}

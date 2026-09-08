@@ -1474,6 +1474,10 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Stunfisk", "Muddy Bolt") => {
             AttackEffect::BonusDamageIfOwnEnergyOfTypeAttached(Type::Fighting, 20)
         }
+        ("Mega Excadrill ex", "Undermine") => AttackEffect::DiscardsTopOfOpponentsLibrary(2),
+        ("Mega Excadrill ex", "Maximum Drilling") => {
+            AttackEffect::BonusDamageIfExtraEnergyAttached(2, 130)
+        }
         ("Stunfisk", "Paralyzing Crackle") => {
             AttackEffect::CoinFlipInflictsAndDiscardsDefenderEnergy(Condition::Paralyzed)
         }

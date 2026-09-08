@@ -2992,6 +2992,14 @@ fn attack(state: &mut GameState, index: usize) {
                 attack.base_damage
             }
         }
+        Some(crate::card::AttackEffect::BonusDamageIfExtraEnergyAttached(threshold, bonus)) => {
+            let extra = (state.energy_attached(attacker) as usize).saturating_sub(attack.cost.len());
+            if extra >= threshold as usize {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
         _ => attack.base_damage,
     };
     let ignore_defenders_effects =
@@ -3288,6 +3296,18 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::BonusDamageIfOwnEnergyOfTypeAttached(..) => {}
+        // Already spent, before `damage_dealt_with` ran — see `attack`'s
+        // own `base` computation.
+        crate::card::AttackEffect::BonusDamageIfExtraEnergyAttached(..) => {}
+        crate::card::AttackEffect::DiscardsTopOfOpponentsLibrary(count) => {
+            let opponent = state.pokemon(attacker).owner.opponent();
+            let taken: Vec<_> = state.player(opponent).library.iter().take(count as usize).copied().collect();
+            for card in &taken {
+                state.players[opponent.index()].library.retain(|c| c != card);
+                state.players[opponent.index()].discard.push(*card);
+            }
+            state.log.push(format!("{} card(s) discarded from the opponent's library.", taken.len()));
+        }
         crate::card::AttackEffect::DrawCards(count) => {
             let owner = state.pokemon(attacker).owner;
             for _ in 0..count {
