@@ -54,6 +54,12 @@ one new thing to it.
   `ChoosingBenchedExDamageTarget` already made against
   `ChoosingAnyOpponentPokemonDamageTarget`. Details under [the
   ticket's Answer](issues/03-a-search-to-the-bench-from-an-attach.md).
+- Ticket 04: no new "while Active" check was needed — `attack()`'s
+  own `defender` parameter is, by construction, always the opponent's
+  Active in this single-Active-format engine, so reading the counter-
+  damage effect at the one site the base attack's damage lands
+  already satisfies it for free. Details under [the ticket's
+  Answer](issues/04-counter-damage-from-a-hit-taken.md).
 
 ## Fog
 

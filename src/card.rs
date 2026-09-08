@@ -1107,6 +1107,16 @@ pub enum EnergyEffect {
     /// Pokémon in the library still attaches the Energy — only the
     /// search is skipped. `Telepathic Psychic Energy`.
     WhenAttachedToTypeSearchesBasicPokemonOfTypeToBench(Type, Type, u32),
+    /// A standing effect, not a choice: while the carrier is Active
+    /// and takes damage from an opponent's attack — even a hit that
+    /// knocks it out — the attacker takes this much damage right
+    /// back, placed directly (no Weakness or Resistance), the same
+    /// convention `PlaceDamageCountersOnDefenderPerCount` already
+    /// reads by. Read at the one site the base attack's own damage
+    /// ever lands on the primary defender — a direct-Bench-targeting
+    /// attack never reaches it, so "while Active" is automatic here.
+    /// `Spiky Energy`.
+    CountersAttackerOnDamageTakenWhileActive(u32),
 }
 
 #[derive(Debug, Clone)]

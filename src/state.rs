@@ -815,7 +815,8 @@ impl GameState {
                     crate::card::EnergyEffect::DrawCardsOnAttachFromHand(_)
                     | crate::card::EnergyEffect::WhenAttachedToTypeSearchesBasicPokemonOfTypeToBench(
                         ..,
-                    ),
+                    )
+                    | crate::card::EnergyEffect::CountersAttackerOnDamageTakenWhileActive(_),
                 )
                 | None => 0,
             })
