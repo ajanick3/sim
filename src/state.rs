@@ -357,6 +357,10 @@ pub enum Phase {
     /// card to attach to a chosen own Benched Pokémon of this type.
     /// `Shaymin`'s `Send Flowers`.
     SearchingForEnergyToAttachToBenchedOfType { player: PlayerId, kind: crate::card::Type },
+    /// `player` opened `pokemon`'s own Ability that moves up to
+    /// `limit` damage counters from an own Pokémon to an opponent's.
+    /// `Munkidori`'s `Adrena-Brain`.
+    MovingDamageCountersFromOwnToOpponent { player: PlayerId, pokemon: PokemonId, limit: u32 },
     /// `player` opened `pokemon`'s own Ability that attaches Energy
     /// from hand as the effect itself. `Teal Mask Ogerpon ex`'s
     /// `Teal Dance`.

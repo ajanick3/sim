@@ -1192,6 +1192,15 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
+                crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
+                    _,
+                    limit,
+                ) => {
+                    // Not spent here: opening the choice is not using it —
+                    // only actually moving a counter, or declining, is.
+                    state.phase =
+                        Phase::MovingDamageCountersFromOwnToOpponent { player, pokemon, limit };
+                }
             }
         }
 
@@ -1429,6 +1438,33 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             let name = state.def_of(card).name();
             let target_name = state.pokemon_def(target).name;
             state.log.push(format!("{name} moves to {target_name}."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::MoveDamageCountersFromOwnToOpponent { source, target, count } => {
+            let (player, pokemon) = match state.phase {
+                Phase::MovingDamageCountersFromOwnToOpponent { player, pokemon, .. } => {
+                    (player, pokemon)
+                }
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.pokemon[source.index()].damage -= count;
+            state.pokemon[target.index()].damage += count;
+            let source_name = state.pokemon_def(source).name;
+            let target_name = state.pokemon_def(target).name;
+            state.log.push(format!("{count} damage moves from {source_name} to {target_name}."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DeclineMovingDamageCounters => {
+            match state.phase {
+                Phase::MovingDamageCountersFromOwnToOpponent { .. } => {}
+                _ => return Err(IllegalAction),
+            };
             state.phase = Phase::Main;
             settle(state);
         }

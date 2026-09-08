@@ -218,6 +218,11 @@ pub enum Action {
     /// Move this attached Energy to this own Benched Pokémon, as
     /// part of `Phase::ChoosingEnergyAndBenchedTargetToMove`.
     MoveEnergyToChosenBenched { card: CardId, target: PokemonId },
+    /// Move this many damage counters from `source` to `target`, as
+    /// part of `Phase::MovingDamageCountersFromOwnToOpponent`.
+    MoveDamageCountersFromOwnToOpponent { source: PokemonId, target: PokemonId, count: u32 },
+    /// Decline to move any.
+    DeclineMovingDamageCounters,
     /// Accept `Phase::DecidingToUseSnowSink`'s discard.
     AcceptSnowSink,
     /// Decline it.
@@ -286,6 +291,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
+        Phase::MovingDamageCountersFromOwnToOpponent { player, .. } => Some(player),
         Phase::DecidingToUseTealDance { player, .. } => Some(player),
         Phase::DecidingCursedBlastTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => Some(player),
@@ -707,6 +713,26 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     }
                 }
             }
+            return actions;
+        }
+        Phase::MovingDamageCountersFromOwnToOpponent { player: whose, limit, .. } => {
+            for source in state.player(whose).in_play() {
+                let damage = state.pokemon(source).damage;
+                if damage == 0 {
+                    continue;
+                }
+                let max = limit.min(damage / 10);
+                for target in state.player(whose.opponent()).in_play() {
+                    for tens in 1..=max {
+                        actions.push(Action::MoveDamageCountersFromOwnToOpponent {
+                            source,
+                            target,
+                            count: tens * 10,
+                        });
+                    }
+                }
+            }
+            actions.push(Action::DeclineMovingDamageCounters);
             return actions;
         }
         Phase::DecidingToUseSnowSink { .. } => {
@@ -1229,6 +1255,17 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // A standing effect read directly by `effective_retreat_cost`,
             // never a standing choice.
             crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost => false,
+            crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
+                kind,
+                _,
+            ) => {
+                state
+                    .pokemon(pokemon)
+                    .attached
+                    .iter()
+                    .any(|c| state.matches_filter(*c, crate::card::CardFilter::BasicEnergyOfType(kind)))
+                    && side.in_play().iter().any(|p| state.pokemon(*p).damage > 0)
+            }
         };
         if eligible {
             actions.push(Action::UseAbility { pokemon });
@@ -1456,6 +1493,12 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::AttachSearchedEnergyTo { target } => {
             format!("Attach Energy to {}", state.pokemon_def(target).name)
         }
+        Action::MoveDamageCountersFromOwnToOpponent { source, target, count } => format!(
+            "Move {count} damage from {} to {}",
+            state.pokemon_def(source).name,
+            state.pokemon_def(target).name
+        ),
+        Action::DeclineMovingDamageCounters => "Decline moving damage counters".to_string(),
         Action::AttachEnergyForTealDance { card } => {
             format!("Attach {} (Teal Dance)", state.def_of(card).name())
         }

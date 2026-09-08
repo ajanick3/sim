@@ -995,6 +995,15 @@ pub enum AbilityEffect {
     /// offered as `Action::UseAbility`; read directly by
     /// `effective_retreat_cost`. `Latias ex`'s `Skyliner`.
     PassiveOwnBasicPokemonHaveNoRetreatCost,
+    /// Once during the player's own turn, only while this Pokémon has
+    /// any Energy of this type attached, the player may move up to
+    /// this many damage counters (10 damage each) from one of their
+    /// own Pokémon to one of the opponent's, choosing the source, the
+    /// target, and how many. Opens
+    /// `Phase::MovingDamageCountersFromOwnToOpponent`. No own Pokémon
+    /// carrying any damage opens no phase. `Munkidori`'s
+    /// `Adrena-Brain`.
+    OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(Type, u32),
 }
 
 /// A basic Energy card as printed.

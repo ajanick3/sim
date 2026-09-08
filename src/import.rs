@@ -986,6 +986,12 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
             AbilityEffect::OncePerTurnWhileActiveMayDrawCards(2)
         }
         ("Latias ex", "Skyliner") => AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost,
+        ("Munkidori", "Adrena-Brain") => {
+            AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
+                Type::Darkness,
+                3,
+            )
+        }
         ("Meowth ex", "Last-Ditch Catch") => AbilityEffect::WhenBenchedFromHandMaySearchSupporter,
         ("Kadabra", "Psychic Draw") => AbilityEffect::WhenEvolvedFromHandMayDrawCards(2),
         ("Alakazam", "Psychic Draw") => AbilityEffect::WhenEvolvedFromHandMayDrawCards(3),
@@ -1142,6 +1148,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Shaymin", "Send Flowers") => AttackEffect::SearchEnergyAttachToBenchedOfType(Type::Grass),
         ("Shaymin", "Reflect Energy") => AttackEffect::MoveOwnAttachedEnergyToChosenBenched,
         ("Latias ex", "Eon Blade") => AttackEffect::AttackerCannotAttackNextTurn,
+        ("Munkidori", "Mind Bend") => {
+            AttackEffect::InflictsCondition(crate::card::Condition::Confused)
+        }
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }
