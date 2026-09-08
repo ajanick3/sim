@@ -2622,6 +2622,15 @@ fn attack(state: &mut GameState, index: usize) {
     state.attacking_defender = Some(defender);
     if damage > 0 {
         trigger_defenders_tool(state, attacker, defender);
+        if let Some(crate::card::EnergyEffect::CountersAttackerOnDamageTakenWhileActive(amount)) =
+            state.pokemon(defender).attached.iter().find_map(|c| {
+                state.def_of(*c).as_energy().and_then(|e| e.effect)
+            })
+        {
+            state.pokemon[attacker.index()].damage += amount;
+            let attacker_name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{attacker_name} takes {amount} back."));
+        }
     }
     if let Some(condition) = attack.inflicts {
         state.inflict(defender, condition);

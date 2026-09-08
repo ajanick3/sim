@@ -346,3 +346,146 @@ fn telepathic_psychic_energy_is_admitted_from_the_artifact() {
         "at least one Telepathic Psychic Energy print should play"
     );
 }
+
+// --- Ticket 04: counter-damage from a hit taken ---
+
+/// A game where the first player's Active can attack, and the second
+/// player's Active is a plain punching bag — the same shape
+/// `tests/attacks.rs`'s own fixture already takes.
+fn attacker_and_defender_game(seed: u64) -> (GameState, sim::ids::PokemonId, sim::ids::PokemonId) {
+    let mut db = CardDb::new();
+    let attacker_def = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-attacker",
+        name: "Attackmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![sim::card::Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let defender_def = db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-defender",
+        name: "Defendmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let energy_def = db.add(CardDef::Energy(Energy {
+        print_id: "test-colorless-energy-attack",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let mut attacker_deck = vec![attacker_def; 4];
+    while attacker_deck.len() < 60 {
+        attacker_deck.push(energy_def);
+    }
+    let mut defender_deck = vec![defender_def; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(energy_def);
+    }
+    let mut state = GameState::new(db, [attacker_deck, defender_deck], Box::new(SeededRng::new(seed)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    let attacker = state.player(state.current).active.unwrap();
+    let defender = state.player(state.current.opponent()).active.unwrap();
+    (state, attacker, defender)
+}
+
+fn pay_and_attack(state: &mut GameState, attacker: sim::ids::PokemonId) {
+    let player = state.current;
+    let cost_len = state.pokemon_def(attacker).attacks[0].cost.len();
+    for _ in 0..cost_len {
+        let side = state.player(player);
+        let card = side
+            .hand
+            .iter()
+            .chain(side.library.iter())
+            .find(|c| state.def_of(**c).is_energy())
+            .copied()
+            .expect("the deck holds Energy");
+        state.remove_from_hand(player, card);
+        state.players[player.index()].library.retain(|c| *c != card);
+        state.pokemon[attacker.index()].attached.push(card);
+    }
+    let attack = legal_actions(state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("a paid-for Active can attack");
+    apply(state, attack).unwrap();
+}
+
+#[test]
+fn counters_the_attacker_when_the_carrier_takes_damage_while_active() {
+    let (mut state, attacker, defender) = attacker_and_defender_game(3);
+
+    let spiky_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-spiky-energy",
+        name: "Spiky Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::CountersAttackerOnDamageTakenWhileActive(20)),
+    }));
+    attach(&mut state, defender, spiky_def);
+
+    pay_and_attack(&mut state, attacker);
+
+    assert_eq!(state.pokemon(defender).damage, 10, "the attack's own damage still lands");
+    assert_eq!(state.pokemon(attacker).damage, 20, "the attacker takes the counter-damage back");
+}
+
+#[test]
+fn still_counters_the_attacker_on_a_knockout_hit() {
+    let (mut state, attacker, defender) = attacker_and_defender_game(3);
+    state.pokemon[defender.index()].damage = 195;
+
+    let spiky_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-spiky-energy-ko",
+        name: "Spiky Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::CountersAttackerOnDamageTakenWhileActive(20)),
+    }));
+    attach(&mut state, defender, spiky_def);
+
+    pay_and_attack(&mut state, attacker);
+
+    assert_eq!(state.pokemon(attacker).damage, 20, "still counters even on a Knockout");
+}
+
+#[test]
+fn spiky_energy_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Spiky Energy" && c.playable.is_some()),
+        "at least one Spiky Energy print should play"
+    );
+}
