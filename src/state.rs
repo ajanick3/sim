@@ -864,6 +864,14 @@ impl GameState {
         self.attached_energy_types(id).len() as u8
     }
 
+    /// Whether `Team Rocket's Watchtower` (or any Stadium with the same
+    /// effect) is in play — every site that would offer, trigger, or
+    /// read a standing Ability effect checks this first, on either
+    /// player's Pokémon, rather than the Ability being removed.
+    pub fn abilities_disabled(&self) -> bool {
+        self.stadium_effect() == Some(crate::card::TrainerEffect::AbilitiesDisabled)
+    }
+
     /// The Retreat Cost this Pokémon actually pays: the printed cost, less
     /// whatever an attached Tool like `Air Balloon` takes off, or zero
     /// outright under a Stadium like `N's Castle`. `pokemon_def(id).retreat_cost`
@@ -877,7 +885,7 @@ impl GameState {
         {
             return 0;
         }
-        if self.pokemon_def(id).stage == crate::card::Stage::Basic {
+        if !self.abilities_disabled() && self.pokemon_def(id).stage == crate::card::Stage::Basic {
             let owner = self.pokemon(id).owner;
             let has_skyliner = self.player(owner).in_play().iter().any(|p| {
                 self.pokemon_def(*p)
@@ -909,26 +917,28 @@ impl GameState {
     /// `AbilityEffect::PassiveBlocksDamageCounterMovement`. `Patrat`'s
     /// `Watchful Eye`.
     pub fn damage_counter_movement_blocked(&self) -> bool {
-        [PlayerId::One, PlayerId::Two].iter().any(|p| {
-            self.player(*p).in_play().iter().any(|pokemon| {
-                self.pokemon_def(*pokemon)
-                    .ability
-                    .is_some_and(|a| a.effect == crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement)
+        !self.abilities_disabled()
+            && [PlayerId::One, PlayerId::Two].iter().any(|p| {
+                self.player(*p).in_play().iter().any(|pokemon| {
+                    self.pokemon_def(*pokemon)
+                        .ability
+                        .is_some_and(|a| a.effect == crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement)
+                })
             })
-        })
     }
 
     /// Whether any Pokémon in play, on either side, carries
     /// `AbilityEffect::PassiveDisablesSelfKnockOutAbilities`.
     /// `Psyduck`'s `Damp`.
     pub fn self_knockout_abilities_disabled(&self) -> bool {
-        [PlayerId::One, PlayerId::Two].iter().any(|p| {
-            self.player(*p).in_play().iter().any(|pokemon| {
-                self.pokemon_def(*pokemon)
-                    .ability
-                    .is_some_and(|a| a.effect == crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities)
+        !self.abilities_disabled()
+            && [PlayerId::One, PlayerId::Two].iter().any(|p| {
+                self.player(*p).in_play().iter().any(|pokemon| {
+                    self.pokemon_def(*pokemon).ability.is_some_and(|a| {
+                        a.effect == crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities
+                    })
+                })
             })
-        })
     }
 
     /// Whether `id` carries `EnergyEffect::PreventsAttackEffectsOnCarrier`

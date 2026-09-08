@@ -3,9 +3,9 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, PromoteFollowUp,
-    Requirement, Slot, Stage, TargetFilter, Then, Trainer, TrainerEffect, TrainerKind,
-    TurnBonusTarget, Type, Zone,
+    Ability, AbilityEffect, Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon,
+    PromoteFollowUp, Requirement, Slot, Stage, TargetFilter, Then, Trainer, TrainerEffect,
+    TrainerKind, TurnBonusTarget, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId};
@@ -1333,5 +1333,104 @@ fn battle_cage_is_admitted_from_the_artifact() {
     assert!(
         import.cards.iter().any(|c| c.name == "Battle Cage" && c.playable.is_some()),
         "Battle Cage should play"
+    );
+}
+
+// --- No Pokemon has an Ability while this Stadium stands ---
+
+fn with_watchtower(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-watchtower",
+        name: "Team Rocket's Watchtower",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::AbilitiesDisabled,
+    }));
+    (Set { db, ..set }, card)
+}
+
+fn abled_mon(db: &mut CardDb, print_id: &'static str) -> CardDefId {
+    db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id,
+        name: "Drawmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Draw Power",
+            effect: AbilityEffect::OncePerTurnWhileActiveMayDrawCards(1),
+        }),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }))
+}
+
+#[test]
+fn watchtower_offers_no_ability_from_either_side() {
+    let (set, card) = with_watchtower(build());
+    let mut db = set.db.clone();
+    let mine = abled_mon(&mut db, "test-drawmon-mine");
+    let theirs = abled_mon(&mut db, "test-drawmon-theirs");
+    let set = Set { db, ..set };
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    let mine_card = deal_new_card(&mut state, player, mine);
+    let mine_active = state.put_into_play(player, mine_card);
+    state.players[player.index()].active = Some(mine_active);
+
+    let their_card = deal_new_card(&mut state, opponent, theirs);
+    let their_active = state.put_into_play(opponent, their_card);
+    state.players[opponent.index()].active = Some(their_active);
+
+    assert!(
+        !legal_actions(&state).iter().any(|a| matches!(a, Action::UseAbility { .. })),
+        "Team Rocket's Watchtower leaves no Ability to use, either side's"
+    );
+}
+
+#[test]
+fn without_watchtower_the_same_ability_is_offered() {
+    let mut db = build().db;
+    let mine = abled_mon(&mut db, "test-drawmon-no-tower");
+    let set = Set { db, ..build() };
+    let mut state = game(&set, mine, 3);
+    let player = state.current;
+
+    let mine_card = deal_new_card(&mut state, player, mine);
+    let mine_active = state.put_into_play(player, mine_card);
+    state.players[player.index()].active = Some(mine_active);
+
+    assert!(
+        legal_actions(&state).iter().any(|a| matches!(a, Action::UseAbility { pokemon } if *pokemon == mine_active)),
+        "no Watchtower in play"
+    );
+}
+
+#[test]
+fn team_rockets_watchtower_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Team Rocket's Watchtower" && c.playable.is_some()),
+        "Team Rocket's Watchtower should play"
     );
 }
