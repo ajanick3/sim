@@ -989,6 +989,12 @@ pub enum AbilityEffect {
     /// `Phase::DecidingToUseSubjugatingChains`. No qualifying Bench
     /// Pokémon opens no phase. `Pecharunt ex`'s `Subjugating Chains`.
     OncePerTurnMaySwitchBenchedOfTypeExcludingNamedThenPoison(Type, &'static str),
+    /// A standing effect, not a choice: while this Pokémon is in
+    /// play, every Basic Pokémon the owner has in play — Active or
+    /// Benched, this one included — has no Retreat Cost. Never
+    /// offered as `Action::UseAbility`; read directly by
+    /// `effective_retreat_cost`. `Latias ex`'s `Skyliner`.
+    PassiveOwnBasicPokemonHaveNoRetreatCost,
 }
 
 /// A basic Energy card as printed.

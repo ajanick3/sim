@@ -796,6 +796,17 @@ impl GameState {
         {
             return 0;
         }
+        if self.pokemon_def(id).stage == crate::card::Stage::Basic {
+            let owner = self.pokemon(id).owner;
+            let has_skyliner = self.player(owner).in_play().iter().any(|p| {
+                self.pokemon_def(*p)
+                    .ability
+                    .is_some_and(|a| a.effect == crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost)
+            });
+            if has_skyliner {
+                return 0;
+            }
+        }
         let printed = self.pokemon_def(id).retreat_cost as u32;
         let reduction: u32 = if self.tools_disabled() {
             0

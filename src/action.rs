@@ -1226,6 +1226,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // Triggered the moment this Pokémon is played from hand
             // (`trigger_rapid_vernier`), never a standing choice.
             crate::card::AbilityEffect::WhenBenchedFromHandMaySwitchThenMoveAnyEnergy => false,
+            // A standing effect read directly by `effective_retreat_cost`,
+            // never a standing choice.
+            crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost => false,
         };
         if eligible {
             actions.push(Action::UseAbility { pokemon });
