@@ -308,6 +308,9 @@ pub enum Phase {
     /// from an attack, not a Trainer's `Decide`, so it names no card
     /// to read slots back from. `Drilbur`/`Toxel`'s `Call for Family`.
     SearchingLibraryForBasics { player: PlayerId, remaining: u32 },
+    /// `player` used an attack that searches the entire library for
+    /// an Item card to take into hand. `Patrat`'s `Procurement`.
+    SearchingLibraryForItem { player: PlayerId },
     /// `player` used an attack that may move Energy off the opponent's
     /// Active into the opponent's hand, up to `remaining` more.
     /// `Slowking`'s `Wash the Slate Clean`.
@@ -850,6 +853,19 @@ impl GameState {
                 .sum()
         };
         printed.saturating_sub(reduction)
+    }
+
+    /// Whether any Pokémon in play, on either side, carries
+    /// `AbilityEffect::PassiveBlocksDamageCounterMovement`. `Patrat`'s
+    /// `Watchful Eye`.
+    pub fn damage_counter_movement_blocked(&self) -> bool {
+        [PlayerId::One, PlayerId::Two].iter().any(|p| {
+            self.player(*p).in_play().iter().any(|pokemon| {
+                self.pokemon_def(*pokemon)
+                    .ability
+                    .is_some_and(|a| a.effect == crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement)
+            })
+        })
     }
 
     /// The cards in one of a player's zones. A Trainer effect moves between

@@ -2567,3 +2567,67 @@ fn shaymin_reflect_energy_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv08.5-087").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Shaymin's Reflect Energy print should play");
 }
+
+// --- Beyond the spec: search the whole library for an Item card ---
+
+#[test]
+fn searches_the_whole_library_for_an_item_and_shuffles_after() {
+    let attack = Attack {
+        name: "Procurement",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchLibraryForItemCardToHand),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+
+    let item_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-item",
+        name: "Test Item",
+        kind: sim::card::TrainerKind::Item,
+        requirement: None,
+        effect: sim::card::TrainerEffect::MoveAttachedEnergy,
+    }));
+    let item = deal_new_card(&mut state, player, item_def);
+    let library_len_before = state.player(player).library.len();
+    state.players[player.index()].library.push(item);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::SearchingLibraryForItem { .. }));
+    let actions = legal_actions(&state);
+    assert!(actions.contains(&Action::TakeItemFromLibrary { card: item }));
+
+    apply(&mut state, Action::TakeItemFromLibrary { card: item }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&item));
+    assert_eq!(state.player(player).library.len(), library_len_before);
+}
+
+#[test]
+fn no_item_in_the_library_opens_no_phase() {
+    let attack = Attack {
+        name: "Procurement",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchLibraryForItemCardToHand),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no Item card anywhere in the library");
+}
+
+#[test]
+fn patrat_procurement_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv10.5w-072").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Patrat's Procurement print should play");
+}

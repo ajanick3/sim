@@ -987,6 +987,7 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         }
         ("Latias ex", "Skyliner") => AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost,
         ("Crustle", "Mysterious Rock Inn") => AbilityEffect::PassiveImmuneToDamageFromOpponentEx,
+        ("Patrat", "Watchful Eye") => AbilityEffect::PassiveBlocksDamageCounterMovement,
         ("Tatsugiri", "Attract Customers") => {
             AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(6)
         }
@@ -1159,6 +1160,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Shaymin", "Reflect Energy") => AttackEffect::MoveOwnAttachedEnergyToChosenBenched,
         ("Latias ex", "Eon Blade") => AttackEffect::AttackerCannotAttackNextTurn,
         ("Metang", "Guard Press") => AttackEffect::SelfDamageReductionNextTurn(30),
+        ("Patrat", "Procurement") => AttackEffect::SearchLibraryForItemCardToHand,
         ("Crustle", "Superb Scissors") => AttackEffect::IgnoresDefendersEffects,
         ("Munkidori", "Mind Bend") => {
             AttackEffect::InflictsCondition(crate::card::Condition::Confused)

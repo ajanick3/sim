@@ -1680,3 +1680,72 @@ fn tatsugiri_is_admitted_from_the_artifact() {
         "at least one Tatsugiri print should play"
     );
 }
+
+// --- Beyond the map: a standing Ability that blocks damage counter movement everywhere ---
+
+#[test]
+fn watchful_eye_blocks_damage_counter_movement_even_from_the_opponents_side() {
+    let ability = Ability {
+        name: "Adrena-Brain",
+        effect: sim::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
+            Type::Darkness,
+            3,
+        ),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let active = state.player(player).active.unwrap();
+
+    let dark_energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-dark-energy-watchful",
+        name: "Darkness Energy",
+        kind: Type::Darkness,
+    }));
+    let dark_energy = deal_new_card(&mut state, player, dark_energy_def);
+    state.pokemon[active.index()].attached.push(dark_energy);
+    state.pokemon[active.index()].damage = 50;
+
+    let watcher_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-watcher",
+        name: "Watchmon",
+        hp: 100,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Watchful Eye",
+            effect: sim::card::AbilityEffect::PassiveBlocksDamageCounterMovement,
+        }),
+        attacks: vec![Attack {
+            name: "Bite",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let watcher_card = deal_new_card(&mut state, opponent, watcher_def);
+    let watcher = state.put_into_play(opponent, watcher_card);
+    state.players[opponent.index()].bench.push(watcher);
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(result.is_err(), "Watchful Eye blocks damage counter movement on either side");
+}
+
+#[test]
+fn patrat_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Patrat" && c.playable.is_some()),
+        "at least one Patrat print should play"
+    );
+}
