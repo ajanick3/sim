@@ -142,6 +142,12 @@ pub enum Action {
     /// Take this Item, found by searching the whole library, as part
     /// of `Phase::SearchingLibraryForItem`.
     TakeItemFromLibrary { card: CardId },
+    /// Take this card, found by searching the whole library, as part
+    /// of `Phase::SearchingLibraryForAnyCards`.
+    TakeAnyCardFromLibrary { card: CardId },
+    /// Stop `Phase::SearchingLibraryForAnyCards` before its limit is
+    /// reached.
+    FinishSearchingAnyCards,
     /// Stop `Phase::SearchingLibraryForBasics` before its limit is
     /// spent.
     FinishCallForFamily,
@@ -301,6 +307,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingBenchDamageTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForBasics { player, .. } => Some(player),
         Phase::SearchingLibraryForItem { player } => Some(player),
+        Phase::SearchingLibraryForAnyCards { player, .. } => Some(player),
         Phase::MovingOpponentsActiveEnergyToHand { player, .. } => Some(player),
         Phase::TakingTrainerFromDiscard { player } => Some(player),
         Phase::SearchingLibraryToEvolveSelf { player, .. } => Some(player),
@@ -611,6 +618,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     actions.push(Action::TakeItemFromLibrary { card: *card });
                 }
             }
+            return actions;
+        }
+        Phase::SearchingLibraryForAnyCards { player: whose, .. } => {
+            for card in &state.player(whose).library {
+                actions.push(Action::TakeAnyCardFromLibrary { card: *card });
+            }
+            actions.push(Action::FinishSearchingAnyCards);
             return actions;
         }
         Phase::MovingOpponentsActiveEnergyToHand { player: whose, .. } => {
@@ -1503,6 +1517,8 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::FinishCallForFamily => "Stop searching".to_string(),
         Action::TakeItemFromLibrary { card } => format!("Take {}", state.def_of(card).name()),
+        Action::TakeAnyCardFromLibrary { card } => format!("Take {}", state.def_of(card).name()),
+        Action::FinishSearchingAnyCards => "Stop searching".to_string(),
         Action::MoveOpponentsActiveEnergyToHand { card } => {
             format!("Move {} to their hand", state.def_of(card).name())
         }

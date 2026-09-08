@@ -621,6 +621,11 @@ pub enum AttackEffect {
     /// No Item card in the library opens no phase. `Patrat`'s
     /// `Procurement`.
     SearchLibraryForItemCardToHand,
+    /// Search the entire library for up to this many cards, of any
+    /// kind, and put them into hand, then shuffle — opens
+    /// `Phase::SearchingLibraryForAnyCards`. An empty library opens
+    /// no phase. `Noctowl`'s `Talon Hunt`.
+    SearchLibraryForUpToCardsOfAnyKindToHand(u32),
     /// The opponent reveals their hand. The engine already tracks every
     /// zone in full (`view::PlayerView` hides a zone only at render
     /// time, and nothing in `legal_actions` ever gates a choice on
