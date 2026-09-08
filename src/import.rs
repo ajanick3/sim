@@ -1134,6 +1134,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Genesect", "Bug's Cannon") => {
             AttackEffect::DamagePerCountToChosenOpponentPokemon(Count::OwnGrassEnergyAttachedCount, 20)
         }
+        ("Alakazam", "Powerful Hand") => {
+            AttackEffect::PlaceDamageCountersOnDefenderPerCount(Count::OwnHandSizeCount, 2)
+        }
         ("Mega Kangaskhan ex", "Rapid-Fire Combo") => {
             AttackEffect::DamagePerCoinFlipUntilTails(50)
         }

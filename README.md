@@ -181,12 +181,12 @@ regenerates this section from `data/cards.json` and the committed
 | [Team Rocket's Factory](src/import.rs#L790) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (57/95 built)
+### Pokémon (58/95 built)
 
 | Card | Attacks | Ability |
 | --- | --- | --- |
 | Abra | [✅](src/import.rs#L1084) | [✅](src/import.rs#L1000) |
-| Alakazam | ❌ | [✅](src/import.rs#L990) |
+| Alakazam | [✅](src/import.rs#L1137) | [✅](src/import.rs#L990) |
 | Annihilape | ❌ | ❌ |
 | Applin | [✅](src/import.rs#L1074) | — |
 | Bayleef | [✅](src/import.rs#L1104) | — |
@@ -220,7 +220,7 @@ regenerates this section from `data/cards.json` and the committed
 | Elgyem | [✅](src/import.rs#L1108) | — |
 | Enamorus | ❌ | — |
 | Fan Rotom | [✅](src/import.rs#L1130) | [✅](src/import.rs#L1019) |
-| Fezandipiti ex | [✅](src/import.rs#L1141) | [✅](src/import.rs#L991) |
+| Fezandipiti ex | [✅](src/import.rs#L1144) | [✅](src/import.rs#L991) |
 | Flutter Mane | ❌ | ❌ |
 | Genesect | [✅](src/import.rs#L1134) | ❌ |
 | Genesect ex | [✅](src/import.rs#L1124) | [✅](src/import.rs#L1003) |
@@ -237,13 +237,13 @@ regenerates this section from `data/cards.json` and the committed
 | Lillie's Clefairy ex | ❌ | ❌ |
 | Mega Absol ex | ❌ | — |
 | Mega Excadrill ex | ❌ | — |
-| Mega Kangaskhan ex | [✅](src/import.rs#L1137) | [✅](src/import.rs#L985) |
+| Mega Kangaskhan ex | [✅](src/import.rs#L1140) | [✅](src/import.rs#L985) |
 | Mega Lopunny ex | ❌ | — |
 | Mega Sharpedo ex | [✅](src/import.rs#L1088) | — |
 | Mega Skarmory ex | ❌ | — |
 | Mega Slowbro ex | ❌ | — |
 | Meganium | [✅](src/import.rs#L234) | ❌ |
-| Meowth ex | [✅](src/import.rs#L1140) | [✅](src/import.rs#L988) |
+| Meowth ex | [✅](src/import.rs#L1143) | [✅](src/import.rs#L988) |
 | Metagross | ❌ | — |
 | Metang | [✅](src/import.rs#L234) | ❌ |
 | Moltres | [✅](src/import.rs#L1098) | — |
@@ -272,7 +272,7 @@ regenerates this section from `data/cards.json` and the committed
 | Stunfisk | ❌ | — |
 | Tapu Bulu | [✅](src/import.rs#L1045) | — |
 | Tatsugiri | [✅](src/import.rs#L234) | ❌ |
-| Teal Mask Ogerpon ex | [✅](src/import.rs#L1142) | [✅](src/import.rs#L994) |
+| Teal Mask Ogerpon ex | [✅](src/import.rs#L1145) | [✅](src/import.rs#L994) |
 | Thwackey | [✅](src/import.rs#L234) | ❌ |
 | Torchic | [✅](src/import.rs#L1101) | — |
 | Toxel | [✅](src/import.rs#L1086) | — |

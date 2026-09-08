@@ -2567,6 +2567,12 @@ fn resolve_attack_effect(
             let damage = count_for_attack(state, attacker, defender, count) * per_unit;
             state.phase = Phase::ChoosingAnyOpponentPokemonDamageTarget { player: owner, damage };
         }
+        crate::card::AttackEffect::PlaceDamageCountersOnDefenderPerCount(count, counters) => {
+            let amount = count_for_attack(state, attacker, defender, count) * counters * 10;
+            state.pokemon[defender.index()].damage += amount;
+            let name = state.pokemon_def(defender).name;
+            state.log.push(format!("{name} takes {amount}."));
+        }
         // Already checked, at the top of `attack` — this arm is only
         // reached when a Stadium is in play, so there is nothing left
         // to do.
@@ -2687,6 +2693,7 @@ fn count_for_attack(
                 crate::card::CardDef::Pokemon(_) | crate::card::CardDef::Trainer(_) => false,
             })
             .count() as u32,
+        crate::card::Count::OwnHandSizeCount => state.player(owner).hand.len() as u32,
     }
 }
 
