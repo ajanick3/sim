@@ -2274,3 +2274,45 @@ fn pecharunt_ex_is_admitted_from_the_artifact() {
         "at least one Pecharunt ex print should play"
     );
 }
+
+// --- Beyond the spec: damage per count to a chosen opponent Pokemon ---
+
+#[test]
+fn damage_per_count_to_a_chosen_opponent_pokemon() {
+    let attack = Attack {
+        name: "Bug's Cannon",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DamagePerCountToChosenOpponentPokemon(
+            sim::card::Count::OwnDamageCounters,
+            20,
+        )),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let attacker = state.player(player).active.unwrap();
+    state.pokemon[attacker.index()].damage = 30; // 3 counters
+    let bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingAnyOpponentPokemonDamageTarget { .. }));
+    apply(&mut state, Action::DamageChosenOpponentPokemon { target: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(bench_mon).damage, 60, "3 counters times 20");
+}
+
+#[test]
+fn genesect_bugs_cannon_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me02-008").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Genesect's Bug's Cannon print should play");
+}

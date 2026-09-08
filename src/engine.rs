@@ -2526,6 +2526,11 @@ fn resolve_attack_effect(
             let owner = state.pokemon(attacker).owner;
             state.phase = Phase::ChoosingAnyOpponentPokemonDamageTarget { player: owner, damage };
         }
+        crate::card::AttackEffect::DamagePerCountToChosenOpponentPokemon(count, per_unit) => {
+            let owner = state.pokemon(attacker).owner;
+            let damage = count_for_attack(state, attacker, defender, count) * per_unit;
+            state.phase = Phase::ChoosingAnyOpponentPokemonDamageTarget { player: owner, damage };
+        }
         // Already checked, at the top of `attack` — this arm is only
         // reached when a Stadium is in play, so there is nothing left
         // to do.
@@ -2637,6 +2642,15 @@ fn count_for_attack(
         crate::card::Count::OpponentPrizesTakenCount => {
             6 - state.player(opponent).prizes.len() as u32
         }
+        crate::card::Count::OwnGrassEnergyAttachedCount => state
+            .pokemon(attacker)
+            .attached
+            .iter()
+            .filter(|c| match state.def_of(**c) {
+                crate::card::CardDef::Energy(energy) => energy.kind == crate::card::Type::Grass,
+                crate::card::CardDef::Pokemon(_) | crate::card::CardDef::Trainer(_) => false,
+            })
+            .count() as u32,
     }
 }
 
