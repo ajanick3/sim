@@ -172,7 +172,7 @@ than guessed at, so the placement numbers have three gaps.
 | [Team Rocket's Factory](src/import.rs#L790) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (68/95 built)
+### Pokémon (69/95 built)
 
 | Card | Attacks | Ability |
 | --- | --- | --- |
@@ -194,9 +194,9 @@ than guessed at, so the placement numbers have three gaps.
 | Chikorita | [✅](src/import.rs#L1124) | — |
 | Cofagrigus | ❌ | — |
 | Combusken | [✅](src/import.rs#L1138) | — |
-| Crustle | [✅](src/import.rs#L1171) | [✅](src/import.rs#L989) |
+| Crustle | [✅](src/import.rs#L1172) | [✅](src/import.rs#L989) |
 | Dedenne | [✅](src/import.rs#L1090) | — |
-| Dipplin | ❌ | ❌ |
+| Dipplin | [✅](src/import.rs#L1171) | ❌ |
 | Dragapult ex | [✅](src/import.rs#L1097) | — |
 | Drakloak | [✅](src/import.rs#L234) | [✅](src/import.rs#L995) |
 | Dreepy | [✅](src/import.rs#L234) | — |
@@ -211,7 +211,7 @@ than guessed at, so the placement numbers have three gaps.
 | Elgyem | [✅](src/import.rs#L1127) | — |
 | Enamorus | ❌ | — |
 | Fan Rotom | [✅](src/import.rs#L1149) | [✅](src/import.rs#L1038) |
-| Fezandipiti ex | [✅](src/import.rs#L1179) | [✅](src/import.rs#L1010) |
+| Fezandipiti ex | [✅](src/import.rs#L1180) | [✅](src/import.rs#L1010) |
 | Flutter Mane | ❌ | ❌ |
 | Genesect | [✅](src/import.rs#L1153) | ❌ |
 | Genesect ex | [✅](src/import.rs#L1143) | [✅](src/import.rs#L1022) |
@@ -228,17 +228,17 @@ than guessed at, so the placement numbers have three gaps.
 | Lillie's Clefairy ex | ❌ | ❌ |
 | Mega Absol ex | ❌ | — |
 | Mega Excadrill ex | ❌ | — |
-| Mega Kangaskhan ex | [✅](src/import.rs#L1175) | [✅](src/import.rs#L985) |
+| Mega Kangaskhan ex | [✅](src/import.rs#L1176) | [✅](src/import.rs#L985) |
 | Mega Lopunny ex | ❌ | — |
 | Mega Sharpedo ex | [✅](src/import.rs#L1107) | — |
 | Mega Skarmory ex | ❌ | — |
 | Mega Slowbro ex | ❌ | — |
 | Meganium | [✅](src/import.rs#L234) | ❌ |
-| Meowth ex | [✅](src/import.rs#L1178) | [✅](src/import.rs#L1007) |
+| Meowth ex | [✅](src/import.rs#L1179) | [✅](src/import.rs#L1007) |
 | Metagross | ❌ | — |
 | Metang | [✅](src/import.rs#L1168) | [✅](src/import.rs#L998) |
 | Moltres | [✅](src/import.rs#L1117) | — |
-| Munkidori | [✅](src/import.rs#L1172) | [✅](src/import.rs#L1001) |
+| Munkidori | [✅](src/import.rs#L1173) | [✅](src/import.rs#L1001) |
 | N's Darmanitan | [✅](src/import.rs#L1072) | — |
 | N's Darumaka | [✅](src/import.rs#L234) | — |
 | N's Reshiram | [✅](src/import.rs#L1069) | — |
@@ -263,7 +263,7 @@ than guessed at, so the placement numbers have three gaps.
 | Stunfisk | ❌ | — |
 | Tapu Bulu | [✅](src/import.rs#L1064) | — |
 | Tatsugiri | [✅](src/import.rs#L234) | [✅](src/import.rs#L992) |
-| Teal Mask Ogerpon ex | [✅](src/import.rs#L1180) | [✅](src/import.rs#L1013) |
+| Teal Mask Ogerpon ex | [✅](src/import.rs#L1181) | [✅](src/import.rs#L1013) |
 | Thwackey | [✅](src/import.rs#L234) | ❌ |
 | Torchic | [✅](src/import.rs#L1120) | — |
 | Toxel | [✅](src/import.rs#L1105) | — |

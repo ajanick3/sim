@@ -2753,3 +2753,13 @@ fn noctowl_is_admitted_from_the_artifact() {
         "at least one Noctowl print should play"
     );
 }
+
+#[test]
+fn dipplin_energy_loop_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv10-017").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Dipplin's Energy Loop print should play");
+}
