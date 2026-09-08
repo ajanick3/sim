@@ -1189,7 +1189,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 | crate::card::AbilityEffect::WhenBenchedFromHandMaySwitchThenMoveAnyEnergy => {
                     unreachable!("legal_actions never offers UseAbility for a play-triggered effect")
                 }
-                crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost => {
+                crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost
+                | crate::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
@@ -3057,6 +3058,15 @@ fn damage_dealt_with(
         && target == defender
     {
         damage = damage.saturating_sub(amount);
+    }
+    if !ignore_defenders_effects
+        && state.pokemon_def(attacker).prizes > 1
+        && state
+            .pokemon_def(defender)
+            .ability
+            .is_some_and(|a| a.effect == crate::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx)
+    {
+        damage = 0;
     }
 
     // Step 35: 1 counter per 10 damage, so damage lands in tens.

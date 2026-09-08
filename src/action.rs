@@ -1288,6 +1288,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // A standing effect read directly by `effective_retreat_cost`,
             // never a standing choice.
             crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost => false,
+            crate::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
                 _,

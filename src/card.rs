@@ -1020,6 +1020,12 @@ pub enum AbilityEffect {
     /// `Phase::ResolvingEnergyFoundInTopPeek`. An empty library opens
     /// no phase. `Metang`'s `Metal Maker`.
     OncePerTurnMayLookAtTopCardsAttachFoundBasicEnergyOfType(u32, Type),
+    /// A standing effect, not a choice: while this Pokémon is in
+    /// play, it takes no damage from an attack whose attacker is an
+    /// ex Pokémon. Never offered as `Action::UseAbility`; read
+    /// directly by `damage_dealt_with`. `Crustle`'s
+    /// `Mysterious Rock Inn`.
+    PassiveImmuneToDamageFromOpponentEx,
 }
 
 /// A basic Energy card as printed.
