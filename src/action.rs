@@ -610,6 +610,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             for pokemon in &state.player(opponent).bench {
                 if !state.bench_damage_counters_blocked(whose, *pokemon)
                     && !state.bench_attack_damage_blocked(whose, *pokemon)
+                    && !state.bench_attack_effect_blocked(whose, *pokemon)
                 {
                     actions.push(Action::PlaceDamageCounter { target: *pokemon });
                 }
@@ -911,15 +912,18 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
-        Phase::MovingOpponentsEnergy { of, .. } => {
+        Phase::MovingOpponentsEnergy { chooser, of } => {
             let in_play = state.player(of).in_play();
             for from in &in_play {
+                if state.bench_attack_effect_blocked(chooser, *from) {
+                    continue;
+                }
                 for card in &state.pokemon(*from).attached {
                     if !state.def_of(*card).is_energy() {
                         continue;
                     }
                     for target in &in_play {
-                        if target != from {
+                        if target != from && !state.bench_attack_effect_blocked(chooser, *target) {
                             actions.push(Action::MoveOpponentsEnergy {
                                 card: *card,
                                 target: *target,
@@ -1409,6 +1413,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities => false,
             crate::card::AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(..) => false,
             crate::card::AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench => false,
+            crate::card::AbilityEffect::PassivePreventsAttackEffectsOnBench => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
                 _,
