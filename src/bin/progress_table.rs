@@ -169,7 +169,14 @@ fn main() {
                 } else {
                     "❌".to_string()
                 };
-                println!("| {name} | {attacks_cell} | {ability_cell} |");
+                let name_cell = if built.contains(name) {
+                    let span = if attacks_built.contains(name) { known_attack_span } else { known_ability_span };
+                    let line = source_line(&import_rs, name, span);
+                    format!("[{name}](src/import.rs#L{line})")
+                } else {
+                    name.clone()
+                };
+                println!("| {name_cell} | {attacks_cell} | {ability_cell} |");
             }
         } else {
             let span = if kind == "Energy" { known_energy_span } else { known_trainer_span };
