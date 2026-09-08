@@ -88,6 +88,7 @@ fn build() -> Set {
         print_id: "test-energy",
         name: "Colorless Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
     Set {
         db,
@@ -1533,6 +1534,7 @@ fn with_janines_secret_art(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
         print_id: "test-dark-energy",
         name: "Darkness Energy",
         kind: Type::Darkness,
+        effect: None,
     }));
     let card = db.add(CardDef::Trainer(Trainer {
         print_id: "test-janines-secret-art",

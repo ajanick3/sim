@@ -83,6 +83,7 @@ fn main() {
     let known_trainer_span = function_span(&import_rs, "known_trainer");
     let known_attack_span = function_span(&import_rs, "known_attack");
     let known_ability_span = function_span(&import_rs, "known_ability");
+    let known_energy_span = function_span(&import_rs, "known_energy");
 
     // A name's category and kind, and whether any of its prints is
     // admitted. A name with several prints (an errata, a reprint) is
@@ -110,6 +111,8 @@ fn main() {
                 "Stadium" => "Stadium",
                 _ => continue,
             }
+        } else if kind == "Energy" {
+            "Energy"
         } else {
             continue;
         };
@@ -130,7 +133,7 @@ fn main() {
         }
     }
 
-    for kind in ["Supporter", "Item", "Tool", "Stadium", "Pokemon"] {
+    for kind in ["Supporter", "Item", "Tool", "Stadium", "Energy", "Pokemon"] {
         let mut names: Vec<&String> = kind_of
             .iter()
             .filter(|(_, k)| **k == kind)
@@ -141,6 +144,8 @@ fn main() {
         let done = names.iter().filter(|n| built.contains(**n)).count();
         let heading = if kind == "Pokemon" {
             "Pokémon".to_string()
+        } else if kind == "Energy" {
+            "Special Energy".to_string()
         } else {
             format!("{kind}s")
         };
@@ -167,12 +172,13 @@ fn main() {
                 println!("| {name} | {attacks_cell} | {ability_cell} |");
             }
         } else {
+            let span = if kind == "Energy" { known_energy_span } else { known_trainer_span };
             println!("| Card | Status |");
             println!("| --- | --- |");
             for name in names {
                 let mark = if built.contains(name) { "✅" } else { "❌" };
                 let cell = if built.contains(name) {
-                    let line = source_line(&import_rs, name, known_trainer_span);
+                    let line = source_line(&import_rs, name, span);
                     format!("[{name}](src/import.rs#L{line})")
                 } else {
                     name.clone()

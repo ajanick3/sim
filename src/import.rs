@@ -115,6 +115,7 @@ impl Import {
             print_id: basic_energy_print_id(kind),
             name: basic_energy_name(kind),
             kind,
+            effect: None,
         }));
         self.basic_energy.push((kind, id));
         id
@@ -251,7 +252,19 @@ fn read_card(card: &Value, lineage: &HashMap<&str, &str>) -> Result<CardDef, Ref
                 None => Err(Refusal::IsATrainer(kind)),
             };
         }
-        Some("Energy") => return Err(Refusal::IsASpecialEnergy),
+        Some("Energy") => {
+            let name = card["name"].as_str().unwrap_or("?");
+            let id = card["id"].as_str().unwrap_or("?");
+            return match known_energy(name) {
+                Some((kind, effect)) => Ok(CardDef::Energy(Energy {
+                    print_id: leak(id),
+                    name: leak(name),
+                    kind,
+                    effect: Some(effect),
+                })),
+                None => Err(Refusal::IsASpecialEnergy),
+            };
+        }
         Some("Pokemon") => {}
         _ => return Err(Refusal::NotABasicPokemon),
     }
@@ -980,6 +993,18 @@ fn read_ability(pokemon_name: &str, abilities: Option<&Vec<Value>>) -> Result<Op
 /// own machinery (`Action::UseAbility`), not `attack` or
 /// `resolve_trainer`. Empty until this milestone's first ticket
 /// admits a real card.
+/// A Special Energy's type and effect, matched by its own print name —
+/// the same discipline `known_attack` and `known_ability` already
+/// hold. `data/cards.json` carries no field naming what type an Energy
+/// provides, so it is read here, from real-world knowledge of the
+/// print, the same way `known_attack`'s effects are.
+fn known_energy(name: &str) -> Option<(Type, crate::card::EnergyEffect)> {
+    Some(match name {
+        "Growing Grass Energy" => (Type::Grass, crate::card::EnergyEffect::IncreasesCarrierHp(20)),
+        _ => return None,
+    })
+}
+
 fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect> {
     Some(match (pokemon_name, ability_name) {
         ("Mega Kangaskhan ex", "Run Errand") => {

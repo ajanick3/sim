@@ -35,6 +35,7 @@ fn game(inflicts: Condition, rng: Box<dyn Rng>) -> GameState {
         print_id: "test-grass-energy",
         name: "Grass Energy",
         kind: Type::Grass,
+        effect: None,
     }));
 
     // Enough Pokémon that an opening hand fills a Bench, so a test can retreat.

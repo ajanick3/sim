@@ -91,11 +91,13 @@ fn build() -> Set {
         print_id: "test-energy",
         name: "Colorless Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
     let fire_energy = db.add(CardDef::Energy(Energy {
         print_id: "test-fire-energy",
         name: "Fire Energy",
         kind: Type::Fire,
+        effect: None,
     }));
     let cyrano = db.add(CardDef::Trainer(Trainer {
         print_id: "test-cyrano",
@@ -1673,6 +1675,7 @@ fn with_wondrous_patch(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
         print_id: "test-psychic-energy",
         name: "Psychic Energy",
         kind: Type::Psychic,
+        effect: None,
     }));
     let patch = db.add(CardDef::Trainer(Trainer {
         print_id: "test-wondrous-patch",
@@ -1994,6 +1997,7 @@ fn db_add_grass_energy(state: &mut GameState) -> CardDefId {
         print_id: "test-grass-energy",
         name: "Grass Energy",
         kind: Type::Grass,
+        effect: None,
     }))
 }
 

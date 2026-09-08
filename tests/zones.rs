@@ -43,6 +43,7 @@ fn build() -> Set {
         print_id: "test-energy",
         name: "Colorless Energy",
         kind: Type::Colorless,
+        effect: None,
     }));
     let stadium = db.add(CardDef::Trainer(Trainer {
         print_id: "test-stadium",

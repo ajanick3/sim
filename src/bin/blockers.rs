@@ -105,7 +105,7 @@ fn main() {
         );
     }
 
-    for label in ["Ability", "Trainer, not yet built", "Attack text"] {
+    for label in ["Ability", "Trainer, not yet built", "Attack text", "Special Energy"] {
         let Some(names) = by_name.get(label) else {
             continue;
         };

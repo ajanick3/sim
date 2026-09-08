@@ -101,18 +101,21 @@ pub fn milestone1() -> Milestone1 {
         print_id: "synthetic-lightning-energy",
         name: "Lightning Energy",
         kind: Type::Lightning,
+        effect: None,
     }));
 
     let fire_energy = db.add(CardDef::Energy(Energy {
         print_id: "synthetic-fire-energy",
         name: "Fire Energy",
         kind: Type::Fire,
+        effect: None,
     }));
 
     let water_energy = db.add(CardDef::Energy(Energy {
         print_id: "synthetic-water-energy",
         name: "Water Energy",
         kind: Type::Water,
+        effect: None,
     }));
 
     Milestone1 {

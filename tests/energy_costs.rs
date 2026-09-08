@@ -187,6 +187,7 @@ fn a_free_retreat_asks_nothing() {
         print_id: "test-psychic-energy",
         name: "Psychic Energy",
         kind: Type::Psychic,
+        effect: None,
     }));
 
     let mut decklist = vec![drifter; 6];

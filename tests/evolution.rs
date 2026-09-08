@@ -60,6 +60,7 @@ fn build() -> Set {
         print_id: "test-grass-energy",
         name: "Grass Energy",
         kind: Type::Grass,
+        effect: None,
     }));
     Set {
         db,
