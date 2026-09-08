@@ -1388,6 +1388,16 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Zeraora", "Shocking Knuckle") => {
             AttackEffect::CoinFlipInflicts(crate::card::Condition::Paralyzed)
         }
+        ("Zeraora", "Strong Volt") => AttackEffect::DiscardsFixedOwnEnergyChosen(1),
+        ("Metagross", "Luster Blast") => AttackEffect::DiscardsFixedOwnEnergyChosen(2),
+        ("Metagross", "Bounce Back") => AttackEffect::SwitchOpponentActive,
+        ("Metagross", "Metallic Hammer") => {
+            AttackEffect::MayDiscardUpToOwnEnergyOfTypeForFlatBonusDamage(Type::Metal, 3, 150)
+        }
+        ("Raging Bolt ex", "Burst Roar") => AttackEffect::DiscardsHandThenDrawsCards(6),
+        ("Raging Bolt ex", "Bellowing Thunder") => {
+            AttackEffect::MayDiscardAnyOwnBasicEnergyForDamagePerCard(70)
+        }
         ("Dedenne", "Thunder Shock") => {
             AttackEffect::CoinFlipInflicts(crate::card::Condition::Paralyzed)
         }

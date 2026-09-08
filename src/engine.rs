@@ -2080,6 +2080,148 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::DiscardOwnEnergyForAttack { card } => {
+            let (player, attacker, remaining) = match state.phase {
+                Phase::ChoosingOwnEnergyToDiscardForAttack { player, attacker, remaining } => {
+                    (player, attacker, remaining)
+                }
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[attacker.index()].attached.retain(|c| *c != card);
+            state.players[player.index()].discard.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} is discarded."));
+            if remaining > 1 {
+                state.phase = Phase::ChoosingOwnEnergyToDiscardForAttack {
+                    player,
+                    attacker,
+                    remaining: remaining - 1,
+                };
+            } else {
+                state.phase = Phase::Main;
+                settle(state);
+            }
+        }
+
+        Action::AcceptDiscardOwnEnergyForBonusDamage => {
+            let (player, attacker, defender, kind, max, bonus) = match state.phase {
+                Phase::DecidingToDiscardOwnEnergyForBonusDamage {
+                    player,
+                    attacker,
+                    defender,
+                    kind,
+                    max,
+                    bonus,
+                } => (player, attacker, defender, kind, max, bonus),
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[defender.index()].damage += bonus;
+            let name = state.pokemon_def(defender).name;
+            state.log.push(format!("{name} takes {bonus} more."));
+            state.phase = Phase::ChoosingOwnEnergyToDiscardForBonusDamage {
+                player,
+                attacker,
+                kind,
+                remaining: max,
+            };
+        }
+
+        Action::DeclineDiscardOwnEnergyForBonusDamage => {
+            match state.phase {
+                Phase::DecidingToDiscardOwnEnergyForBonusDamage { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DiscardOwnEnergyForBonusDamage { card } => {
+            let (player, attacker, kind, remaining) = match state.phase {
+                Phase::ChoosingOwnEnergyToDiscardForBonusDamage { player, attacker, kind, remaining } => {
+                    (player, attacker, kind, remaining)
+                }
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[attacker.index()].attached.retain(|c| *c != card);
+            state.players[player.index()].discard.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} is discarded."));
+            if remaining > 1 {
+                state.phase = Phase::ChoosingOwnEnergyToDiscardForBonusDamage {
+                    player,
+                    attacker,
+                    kind,
+                    remaining: remaining - 1,
+                };
+            } else {
+                state.phase = Phase::Main;
+                settle(state);
+            }
+        }
+
+        Action::FinishDiscardingOwnEnergyForBonusDamage => {
+            match state.phase {
+                Phase::ChoosingOwnEnergyToDiscardForBonusDamage { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DiscardBasicEnergyForDamagePerCard { card } => {
+            let (player, attacker, defender, per_card, discarded_so_far) = match state.phase {
+                Phase::DiscardingAnyBasicEnergyForDamagePerCard {
+                    player,
+                    attacker,
+                    defender,
+                    per_card,
+                    discarded_so_far,
+                } => (player, attacker, defender, per_card, discarded_so_far),
+                _ => return Err(IllegalAction),
+            };
+            let owner = state
+                .player(player)
+                .in_play()
+                .into_iter()
+                .find(|p| state.pokemon(*p).attached.contains(&card))
+                .expect("legal_actions offers this only for an own attached Basic Energy");
+            state.pokemon[owner.index()].attached.retain(|c| *c != card);
+            state.players[player.index()].discard.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} is discarded."));
+            state.phase = Phase::DiscardingAnyBasicEnergyForDamagePerCard {
+                player,
+                attacker,
+                defender,
+                per_card,
+                discarded_so_far: discarded_so_far + 1,
+            };
+        }
+
+        Action::FinishDiscardingBasicEnergyForDamagePerCard => {
+            let (attacker, defender, per_card, discarded_so_far) = match state.phase {
+                Phase::DiscardingAnyBasicEnergyForDamagePerCard {
+                    attacker, defender, per_card, discarded_so_far, ..
+                } => (attacker, defender, per_card, discarded_so_far),
+                _ => return Err(IllegalAction),
+            };
+            if discarded_so_far > 0 {
+                let mut bonus = discarded_so_far * per_card;
+                let attacker_type = state.pokemon_def(attacker).kind;
+                if state.effective_weakness(defender) == Some(attacker_type) {
+                    bonus *= 2;
+                }
+                if state.pokemon_def(defender).resistance == Some(attacker_type) {
+                    bonus = bonus.saturating_sub(30);
+                }
+                state.pokemon[defender.index()].damage += bonus;
+                let name = state.pokemon_def(defender).name;
+                state.log.push(format!("{name} takes {bonus} more."));
+            }
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::DiscardBenchedPokemon { pokemon } => {
             let (player, then) = match state.phase {
                 Phase::DiscardingBenchDownTo { player, then } => (player, then),
@@ -2904,6 +3046,35 @@ fn resolve_attack_effect(
                 }
             }
         }
+        crate::card::AttackEffect::DiscardsFixedOwnEnergyChosen(count) => {
+            let owner = state.pokemon(attacker).owner;
+            state.phase = Phase::ChoosingOwnEnergyToDiscardForAttack {
+                player: owner,
+                attacker,
+                remaining: count,
+            };
+        }
+        crate::card::AttackEffect::MayDiscardUpToOwnEnergyOfTypeForFlatBonusDamage(kind, max, bonus) => {
+            let owner = state.pokemon(attacker).owner;
+            state.phase = Phase::DecidingToDiscardOwnEnergyForBonusDamage {
+                player: owner,
+                attacker,
+                defender,
+                kind,
+                max,
+                bonus,
+            };
+        }
+        crate::card::AttackEffect::MayDiscardAnyOwnBasicEnergyForDamagePerCard(per_card) => {
+            let owner = state.pokemon(attacker).owner;
+            state.phase = Phase::DiscardingAnyBasicEnergyForDamagePerCard {
+                player: owner,
+                attacker,
+                defender,
+                per_card,
+                discarded_so_far: 0,
+            };
+        }
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::CoinFlipBonusDamage(_) => {}
@@ -3080,6 +3251,16 @@ fn resolve_attack_effect(
             }
             let name = state.pokemon_def(attacker).name;
             state.log.push(format!("{name} draws {count}."));
+        }
+        crate::card::AttackEffect::DiscardsHandThenDrawsCards(count) => {
+            let owner = state.pokemon(attacker).owner;
+            let hand = std::mem::take(&mut state.players[owner.index()].hand);
+            state.players[owner.index()].discard.extend(hand);
+            for _ in 0..count {
+                state.draw(owner);
+            }
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} discards its hand and draws {count}."));
         }
         crate::card::AttackEffect::RevealOpponentsHand => {
             let opponent = state.pokemon(attacker).owner.opponent();

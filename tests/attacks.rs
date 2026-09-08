@@ -3460,3 +3460,260 @@ fn stunfisks_paralyzing_crackle_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv08-064").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Stunfisk's Paralyzing Crackle print should play");
 }
+
+// --- Beyond the spec: discard a fixed number of own Energy, chosen by the player ---
+
+#[test]
+fn discards_fixed_own_energy_chosen() {
+    let attack = Attack {
+        name: "Strong Volt",
+        cost: vec![Type::Colorless],
+        base_damage: 120,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsFixedOwnEnergyChosen(1)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 120, "the printed damage lands regardless");
+    assert!(matches!(state.phase, Phase::ChoosingOwnEnergyToDiscardForAttack { remaining: 1, .. }));
+    let card = state.pokemon(attacker).attached[0];
+    apply(&mut state, Action::DiscardOwnEnergyForAttack { card }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(attacker).attached.is_empty());
+    assert!(state.player(player).discard.contains(&card));
+}
+
+#[test]
+fn discards_fixed_own_energy_chosen_over_multiple_picks() {
+    let attack = Attack {
+        name: "Luster Blast",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 20,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsFixedOwnEnergyChosen(2)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingOwnEnergyToDiscardForAttack { remaining: 2, .. }));
+    let first = state.pokemon(attacker).attached[0];
+    apply(&mut state, Action::DiscardOwnEnergyForAttack { card: first }).unwrap();
+    assert!(matches!(state.phase, Phase::ChoosingOwnEnergyToDiscardForAttack { remaining: 1, .. }));
+    let second = state.pokemon(attacker).attached[0];
+    apply(&mut state, Action::DiscardOwnEnergyForAttack { card: second }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(attacker).attached.len(), 0);
+}
+
+#[test]
+fn zeraoras_strong_volt_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv05-057").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Zeraora's Strong Volt print should play");
+}
+
+#[test]
+fn metagrosss_luster_blast_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me04-061").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Metagross's Metallic Hammer print should play");
+}
+
+// --- Beyond the spec: may discard up to N of a type for a flat bonus, even with zero ---
+
+#[test]
+fn metallic_hammer_grants_the_bonus_even_discarding_nothing() {
+    let attack = Attack {
+        name: "Metallic Hammer",
+        cost: vec![Type::Colorless],
+        base_damage: 50,
+        inflicts: None,
+        effect: Some(AttackEffect::MayDiscardUpToOwnEnergyOfTypeForFlatBonusDamage(Type::Metal, 3, 50)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::DecidingToDiscardOwnEnergyForBonusDamage { .. }));
+    apply(&mut state, Action::AcceptDiscardOwnEnergyForBonusDamage).unwrap();
+
+    assert_eq!(state.pokemon(defender).damage, 100, "50 base plus the 50 bonus, taken for free");
+    assert!(matches!(state.phase, Phase::ChoosingOwnEnergyToDiscardForBonusDamage { .. }));
+    apply(&mut state, Action::FinishDiscardingOwnEnergyForBonusDamage).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(defender).damage, 100, "declining to discard further doesn't undo the bonus");
+}
+
+#[test]
+fn declining_metallic_hammers_bonus_grants_nothing() {
+    let attack = Attack {
+        name: "Metallic Hammer",
+        cost: vec![Type::Colorless],
+        base_damage: 150,
+        inflicts: None,
+        effect: Some(AttackEffect::MayDiscardUpToOwnEnergyOfTypeForFlatBonusDamage(Type::Metal, 3, 150)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    apply(&mut state, Action::DeclineDiscardOwnEnergyForBonusDamage).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(defender).damage, 150, "no bonus without accepting");
+}
+
+// --- Beyond the spec: discard the whole hand, then draw outright ---
+
+#[test]
+fn discards_hand_then_draws_cards() {
+    let attack = Attack {
+        name: "Burst Roar",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsHandThenDrawsCards(6)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    // `pay_and_attack` may pull the paying Energy from hand or
+    // library — only what's still in hand right before the attack
+    // itself fires is what Burst Roar discards.
+    let hand_before: Vec<_> = {
+        let active = state.player(player).active.unwrap();
+        let cost_len = state.pokemon_def(active).attacks[0].cost.len();
+        for _ in 0..cost_len {
+            let side = state.player(player);
+            let card = side
+                .hand
+                .iter()
+                .chain(side.library.iter())
+                .find(|c| state.def_of(**c).is_energy())
+                .copied()
+                .expect("the deck holds Energy");
+            state.remove_from_hand(player, card);
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.pokemon[active.index()].attached.push(card);
+        }
+        state.player(player).hand.clone()
+    };
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the attacker is paid for");
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), 6, "drew exactly 6");
+    for card in hand_before {
+        assert!(state.player(player).discard.contains(&card), "the old hand landed in the discard pile");
+    }
+}
+
+#[test]
+fn raging_bolt_exs_burst_roar_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv05-123").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Raging Bolt ex's Burst Roar print should play");
+}
+
+// --- Beyond the spec: discard any amount of own Basic Energy, damage per card ---
+
+#[test]
+fn bellowing_thunder_deals_damage_per_card_discarded() {
+    let attack = Attack {
+        name: "Bellowing Thunder",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::MayDiscardAnyOwnBasicEnergyForDamagePerCard(70)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    // Attach a second Energy beyond the one cost already put there, so
+    // there are two to discard.
+    let extra_energy = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-bellowing-thunder-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let extra = deal_new_card(&mut state, player, extra_energy);
+    state.pokemon[attacker.index()].attached.push(extra);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::DiscardingAnyBasicEnergyForDamagePerCard { .. }));
+    let cards: Vec<_> = state.pokemon(attacker).attached.clone();
+    for card in &cards {
+        apply(&mut state, Action::DiscardBasicEnergyForDamagePerCard { card: *card }).unwrap();
+    }
+    apply(&mut state, Action::FinishDiscardingBasicEnergyForDamagePerCard).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(defender).damage, cards.len() as u32 * 70);
+    assert!(state.pokemon(attacker).attached.is_empty());
+}
+
+#[test]
+fn bellowing_thunder_deals_no_damage_discarding_nothing() {
+    let attack = Attack {
+        name: "Bellowing Thunder",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::MayDiscardAnyOwnBasicEnergyForDamagePerCard(70)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    apply(&mut state, Action::FinishDiscardingBasicEnergyForDamagePerCard).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(defender).damage, 0, "declining outright deals nothing");
+}
+
+#[test]
+fn raging_bolt_exs_bellowing_thunder_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Raging Bolt ex" && c.playable.is_some()),
+        "at least one Raging Bolt ex print should play"
+    );
+}
