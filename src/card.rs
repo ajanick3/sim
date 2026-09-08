@@ -741,6 +741,13 @@ pub enum AttackEffect {
     /// does, rather than running through `damage_dealt_with` the way
     /// `DamagePerCount` does. `Alakazam`'s `Powerful Hand`.
     PlaceDamageCountersOnDefenderPerCount(Count, u32),
+    /// This much flat damage (no Weakness or Resistance) to one of
+    /// the opponent's Benched Pokémon ex, the player's choice of
+    /// which — narrower than `DamageChosenOpponentPokemon`, which
+    /// offers every Pokémon the opponent has. Opens
+    /// `Phase::ChoosingBenchedExDamageTarget`. No Benched Pokémon ex
+    /// opens no phase. `Shaymin`'s `Pinpoint Dive`.
+    DamageChosenOpponentBenchedEx(u32),
     /// The attacker takes this much less damage from attacks during
     /// the opponent's very next turn, after Weakness and Resistance —
     /// the mirror of `DefenderDealsLessDamageNextTurn`'s own lifetime

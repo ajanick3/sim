@@ -1252,6 +1252,18 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::DamageBenchedEx { target } => {
+            let damage = match state.phase {
+                Phase::ChoosingBenchedExDamageTarget { damage, .. } => damage,
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[target.index()].damage += damage;
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} takes {damage}."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::AttachEnergyForTealDance { card } => {
             let (player, pokemon) = match state.phase {
                 Phase::DecidingToUseTealDance { player, pokemon } => (player, pokemon),
@@ -2561,6 +2573,17 @@ fn resolve_attack_effect(
         crate::card::AttackEffect::DamageChosenOpponentPokemon(damage) => {
             let owner = state.pokemon(attacker).owner;
             state.phase = Phase::ChoosingAnyOpponentPokemonDamageTarget { player: owner, damage };
+        }
+        crate::card::AttackEffect::DamageChosenOpponentBenchedEx(damage) => {
+            let owner = state.pokemon(attacker).owner;
+            let any_benched_ex = state
+                .player(owner.opponent())
+                .bench
+                .iter()
+                .any(|p| state.pokemon_def(*p).prizes > 1);
+            if any_benched_ex {
+                state.phase = Phase::ChoosingBenchedExDamageTarget { player: owner, damage };
+            }
         }
         crate::card::AttackEffect::DamagePerCountToChosenOpponentPokemon(count, per_unit) => {
             let owner = state.pokemon(attacker).owner;

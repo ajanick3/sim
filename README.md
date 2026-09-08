@@ -76,15 +76,6 @@ site. Sixty-one of the sixty-four are kept: three named their cards by
 Japanese-region set codes this artifact does not hold, and were dropped rather
 than guessed at, so the placement numbers have three gaps.
 
-## Card progress
-
-Which cards in `decks/` the engine plays today, by kind, in the order the
-Trainers effort takes them: Supporters, Items, Tools, Stadiums, Pokémon.
-A Pokémon carries two separate columns, Attacks and Ability, since
-Milestone 11 and Milestone 8 make separate progress on the same
-species — a card plays only once both read (`—` marks a Pokémon
-printed with no Ability at all). `cargo run --bin progress_table`
-regenerates this section from `data/cards.json` and the committed
 ### Supporters (25/26 built)
 
 | Card | Status |
@@ -181,7 +172,7 @@ regenerates this section from `data/cards.json` and the committed
 | [Team Rocket's Factory](src/import.rs#L790) | ✅ |
 | Team Rocket's Watchtower | ❌ |
 
-### Pokémon (58/95 built)
+### Pokémon (59/95 built)
 
 | Card | Attacks | Ability |
 | --- | --- | --- |
@@ -220,7 +211,7 @@ regenerates this section from `data/cards.json` and the committed
 | Elgyem | [✅](src/import.rs#L1108) | — |
 | Enamorus | ❌ | — |
 | Fan Rotom | [✅](src/import.rs#L1130) | [✅](src/import.rs#L1019) |
-| Fezandipiti ex | [✅](src/import.rs#L1144) | [✅](src/import.rs#L991) |
+| Fezandipiti ex | [✅](src/import.rs#L1145) | [✅](src/import.rs#L991) |
 | Flutter Mane | ❌ | ❌ |
 | Genesect | [✅](src/import.rs#L1134) | ❌ |
 | Genesect ex | [✅](src/import.rs#L1124) | [✅](src/import.rs#L1003) |
@@ -237,13 +228,13 @@ regenerates this section from `data/cards.json` and the committed
 | Lillie's Clefairy ex | ❌ | ❌ |
 | Mega Absol ex | ❌ | — |
 | Mega Excadrill ex | ❌ | — |
-| Mega Kangaskhan ex | [✅](src/import.rs#L1140) | [✅](src/import.rs#L985) |
+| Mega Kangaskhan ex | [✅](src/import.rs#L1141) | [✅](src/import.rs#L985) |
 | Mega Lopunny ex | ❌ | — |
 | Mega Sharpedo ex | [✅](src/import.rs#L1088) | — |
 | Mega Skarmory ex | ❌ | — |
 | Mega Slowbro ex | ❌ | — |
 | Meganium | [✅](src/import.rs#L234) | ❌ |
-| Meowth ex | [✅](src/import.rs#L1143) | [✅](src/import.rs#L988) |
+| Meowth ex | [✅](src/import.rs#L1144) | [✅](src/import.rs#L988) |
 | Metagross | ❌ | — |
 | Metang | [✅](src/import.rs#L234) | ❌ |
 | Moltres | [✅](src/import.rs#L1098) | — |
@@ -265,14 +256,14 @@ regenerates this section from `data/cards.json` and the committed
 | Raging Bolt ex | ❌ | — |
 | Rellor | [✅](src/import.rs#L1044) | — |
 | Seaking | ❌ | ❌ |
-| Shaymin | [✅](src/import.rs#L234) | ❌ |
+| Shaymin | [✅](src/import.rs#L1140) | ❌ |
 | Slowking | [✅](src/import.rs#L1091) | — |
 | Slowpoke | [✅](src/import.rs#L1099) | ❌ |
 | Smoochum | ❌ | — |
 | Stunfisk | ❌ | — |
 | Tapu Bulu | [✅](src/import.rs#L1045) | — |
 | Tatsugiri | [✅](src/import.rs#L234) | ❌ |
-| Teal Mask Ogerpon ex | [✅](src/import.rs#L1145) | [✅](src/import.rs#L994) |
+| Teal Mask Ogerpon ex | [✅](src/import.rs#L1146) | [✅](src/import.rs#L994) |
 | Thwackey | [✅](src/import.rs#L234) | ❌ |
 | Torchic | [✅](src/import.rs#L1101) | — |
 | Toxel | [✅](src/import.rs#L1086) | — |
