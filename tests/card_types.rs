@@ -91,8 +91,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Forest of Vitality, and Festival Grounds. Tool Scrapper, built
     // this session (`TrainerEffect::MayDiscardUpToTwoToolsAnywhere`),
     // takes it down to 273.
-    // Tera Orb, built with the new `Marker::Tera`, takes it to 272.
-    assert_eq!(trainers, 272, "the Trainers still refused, by kind");
+    // Tera Orb took it to 272; Briar (four prints) takes it to 268.
+    assert_eq!(trainers, 268, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

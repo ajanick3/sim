@@ -1646,3 +1646,138 @@ fn janines_secret_art_is_admitted_from_the_artifact() {
         .expect("Janine's Secret Art plays");
     assert_eq!(card.effect, TrainerEffect::JaninesSecretArt);
 }
+
+// --- Beyond the map: a bonus Prize when a Tera attacker knocks out ---
+
+fn with_briar(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let briar = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-briar",
+        name: "Briar",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::OpponentPrizesExactly(2)),
+        effect: TrainerEffect::GrantsBonusPrizeIfOwnTeraAttackerKnocksOutThisTurn,
+    }));
+    (Set { db, ..set }, briar)
+}
+
+#[test]
+fn briar_grants_a_bonus_prize_when_the_own_tera_attacker_knocks_out() {
+    let (set, briar) = with_briar(build());
+    let mut db = set.db.clone();
+    let tera_attacker = db.add(CardDef::Pokemon(Pokemon {
+        markers: vec![sim::card::Marker::Ex, sim::card::Marker::Tera],
+        print_id: "test-tera-attacker",
+        name: "Testmon ex Tera",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Big Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 100,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let set = Set { db, ..set };
+
+    let mut state = game(&set, briar, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    state.players[opponent.index()].prizes.truncate(2);
+
+    // Swap the attacking player's Active for the Tera attacker.
+    let attacker_card = deal_new_card(&mut state, player, tera_attacker);
+    let attacker = state.put_into_play(player, attacker_card);
+    state.players[player.index()].active = Some(attacker);
+    let energy_card = deal_new_card(&mut state, player, set.energy);
+    state.pokemon[attacker.index()].attached.push(energy_card);
+
+    let played = ensure_in_hand(&mut state, player, briar);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    assert_eq!(state.phase, Phase::Main);
+
+    let prizes_before = state.player(player).prizes.len();
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the Tera attacker is paid for");
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(
+        state.player(player).prizes.len(),
+        prizes_before - 2,
+        "1 Prize for the Knockout, 1 more from Briar"
+    );
+}
+
+#[test]
+fn no_bonus_prize_without_briar_played_this_turn() {
+    let (set, _briar) = with_briar(build());
+    let mut db = set.db.clone();
+    let tera_attacker = db.add(CardDef::Pokemon(Pokemon {
+        markers: vec![sim::card::Marker::Ex, sim::card::Marker::Tera],
+        print_id: "test-tera-attacker-no-briar",
+        name: "Testmon ex Tera",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Big Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 100,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let set = Set { db, ..set };
+
+    let mut state = game(&set, set.mon, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    state.players[opponent.index()].prizes.truncate(2);
+
+    let attacker_card = deal_new_card(&mut state, player, tera_attacker);
+    let attacker = state.put_into_play(player, attacker_card);
+    state.players[player.index()].active = Some(attacker);
+    let energy_card = deal_new_card(&mut state, player, set.energy);
+    state.pokemon[attacker.index()].attached.push(energy_card);
+
+    let prizes_before = state.player(player).prizes.len();
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the Tera attacker is paid for");
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(state.player(player).prizes.len(), prizes_before - 1, "no Briar played this turn");
+}
+
+#[test]
+fn briar_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let card = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Briar")
+        .expect("Briar plays");
+    assert_eq!(card.effect, TrainerEffect::GrantsBonusPrizeIfOwnTeraAttackerKnocksOutThisTurn);
+}

@@ -573,6 +573,12 @@ pub struct GameState {
     /// Belt's Training`. Cleared at `begin_turn`, the same as `spent` —
     /// "this turn" ends there regardless of whose turn is starting.
     pub turn_bonus: Option<(u32, crate::card::TurnBonusTarget)>,
+    /// Set by `Briar`: this turn only, if the opponent's Active is
+    /// Knocked Out by damage from an attack used by this player's own
+    /// Tera Pokémon, that player takes one more Prize. Cleared at
+    /// `begin_turn`, the same "this turn" lifetime `turn_bonus`
+    /// already carries.
+    pub bonus_prize_if_own_tera_attacker_knocks_out: Option<PlayerId>,
     /// The defender an attack that just resolved was aimed at, if any.
     /// `settle`'s knockout check takes this — reads and clears it, every
     /// call, whether or not it matches a Pokémon that actually died —
@@ -635,6 +641,7 @@ impl GameState {
             opponent_next_turn_restriction: None,
             own_next_turn_restriction: None,
             turn_bonus: None,
+            bonus_prize_if_own_tera_attacker_knocks_out: None,
             attacking_defender: None,
             rng,
             log: Vec::new(),
@@ -1144,6 +1151,7 @@ impl GameState {
         self.spent.clear();
         // "This turn" ends here too, whoever set the bonus.
         self.turn_bonus = None;
+        self.bonus_prize_if_own_tera_attacker_knocks_out = None;
         self.played_a_team_rocket_supporter_this_turn = [false, false];
         for pokemon in &mut self.pokemon {
             pokemon.cannot_evolve_this_turn = false;

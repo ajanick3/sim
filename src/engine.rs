@@ -139,7 +139,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     | Requirement::KnockedOutDuringOpponentsLastTurn
                     | Requirement::ActiveHasAtLeastEnergy(_)
                     | Requirement::MorePrizesThanOpponent
-                    | Requirement::HandSizeIs(_),
+                    | Requirement::HandSizeIs(_)
+                    | Requirement::OpponentPrizesExactly(_),
                 ) => {
                     resolve_trainer(state, player, card, trainer.effect);
                 }
@@ -2368,6 +2369,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             state.phase = Phase::DiscardingToolsAnywhere { player, remaining: 2 };
         }
 
+        TrainerEffect::GrantsBonusPrizeIfOwnTeraAttackerKnocksOutThisTurn => {
+            state.bonus_prize_if_own_tera_attacker_knocks_out = Some(player);
+        }
+
         TrainerEffect::CoinFlipDiscardOpponentEnergy => {
             if state.rng.flip() {
                 state.phase = Phase::DiscardingOpponentEnergy {
@@ -3586,6 +3591,18 @@ fn knock_out_the_dead(state: &mut GameState) {
                 })
             {
                 count = count.saturating_sub(1);
+            }
+            // `Briar`: this turn only, and only for the player it granted
+            // the bonus to — the current player, since only the attacking
+            // player's own turn ever reaches this attack-caused branch.
+            if attacking_defender == Some(pokemon)
+                && state.bonus_prize_if_own_tera_attacker_knocks_out == Some(player.opponent())
+                && state
+                    .player(player.opponent())
+                    .active
+                    .is_some_and(|a| state.pokemon_def(a).markers.contains(&crate::card::Marker::Tera))
+            {
+                count += 1;
             }
             knock_out(state, pokemon);
             take_prizes(state, player.opponent(), count);

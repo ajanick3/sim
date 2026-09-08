@@ -455,6 +455,12 @@ pub enum TrainerEffect {
     /// either player's — and discard them, one at a time. Opens
     /// `Phase::DiscardingToolsAnywhere`. `Tool Scrapper`.
     MayDiscardUpToTwoToolsAnywhere,
+    /// Grants `GameState::bonus_prize_if_own_tera_attacker_knocks_out`
+    /// to the player for the rest of this turn: if the opponent's
+    /// Active is Knocked Out by damage from an attack used by this
+    /// player's own Tera Pokémon, they take one more Prize. Read in
+    /// `knock_out_the_dead`. `Briar`.
+    GrantsBonusPrizeIfOwnTeraAttackerKnocksOutThisTurn,
 }
 
 /// What a card demands before it may be played at all.
@@ -493,6 +499,9 @@ pub enum Requirement {
     /// play 2 Transformation Tome cards at once" — a cost paid in a
     /// second physical copy of itself, not in cards the player chooses.
     SecondCopyOfThisInHand,
+    /// The opponent holds exactly this many Prize cards — narrower
+    /// than `OpponentPrizesAtMost`, which also allows fewer. `Briar`.
+    OpponentPrizesExactly(usize),
 }
 
 /// A Trainer as printed.
