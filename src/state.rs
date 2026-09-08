@@ -868,6 +868,19 @@ impl GameState {
         })
     }
 
+    /// Whether any Pokémon in play, on either side, carries
+    /// `AbilityEffect::PassiveDisablesSelfKnockOutAbilities`.
+    /// `Psyduck`'s `Damp`.
+    pub fn self_knockout_abilities_disabled(&self) -> bool {
+        [PlayerId::One, PlayerId::Two].iter().any(|p| {
+            self.player(*p).in_play().iter().any(|pokemon| {
+                self.pokemon_def(*pokemon)
+                    .ability
+                    .is_some_and(|a| a.effect == crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities)
+            })
+        })
+    }
+
     /// The cards in one of a player's zones. A Trainer effect moves between
     /// these; a Pokémon's attachments are not one of them.
     pub fn zone(&self, player: PlayerId, zone: crate::card::Zone) -> &Vec<CardId> {

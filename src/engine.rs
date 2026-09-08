@@ -1206,7 +1206,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 }
                 crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost
                 | crate::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx
-                | crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement => {
+                | crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement
+                | crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(

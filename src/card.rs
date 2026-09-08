@@ -1047,6 +1047,14 @@ pub enum AbilityEffect {
     /// `OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent`.
     /// `Patrat`'s `Watchful Eye`.
     PassiveBlocksDamageCounterMovement,
+    /// A standing effect, not a choice: while this Pokémon is in
+    /// play, on either side, every Pokémon loses any Ability that
+    /// requires knocking itself out to use. Never offered as
+    /// `Action::UseAbility`; read directly by the eligibility check
+    /// for any such effect, such as
+    /// `OncePerTurnMayDamageOpponentThenKnockOutSelf`. `Psyduck`'s
+    /// `Damp`.
+    PassiveDisablesSelfKnockOutAbilities,
 }
 
 /// A basic Energy card as printed.

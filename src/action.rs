@@ -1265,7 +1265,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 side.active == Some(pokemon)
             }
             // Works from the Active Spot or the Bench alike.
-            crate::card::AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(_) => true,
+            crate::card::AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(_) => {
+                !state.self_knockout_abilities_disabled()
+            }
             crate::card::AbilityEffect::OncePerTurnMaySearchEvolutionPokemonOfType(kind, _) => {
                 side.library.iter().any(|c| {
                     state.matches_filter(*c, crate::card::CardFilter::EvolutionPokemonOfType(kind))
@@ -1321,6 +1323,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost => false,
             crate::card::AbilityEffect::PassiveImmuneToDamageFromOpponentEx => false,
             crate::card::AbilityEffect::PassiveBlocksDamageCounterMovement => false,
+            crate::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
                 _,
