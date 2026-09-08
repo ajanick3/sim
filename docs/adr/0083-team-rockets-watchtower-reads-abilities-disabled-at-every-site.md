@@ -59,3 +59,31 @@ single gate — it would need its own predicate threaded through the
 same set of sites. Watchtower's own scope (everyone, everything) is
 what let one flag cover every site; a narrower effect earns its own
 audit of the same list.
+
+## Errata
+
+**2026-09-08.** Two facts this record stated were wrong, both found
+by reading the printed rulings compendium after this record was
+first written.
+
+Watchtower's own printed text reads "**`{C}` Pokémon** in play (both
+yours and your opponent's) have no Abilities" — not every Pokémon,
+as the Context and Decision sections above said. The engine's first
+cut disabled Abilities stadium-wide, with no read of the carrying
+Pokémon's own type at all. Fixed: `abilities_disabled()` became
+`abilities_disabled_for(id: PokemonId)`, reading `id`'s own printed
+type; every call site now checks the specific Pokémon an Ability
+would come from, not a single flag. A Pokémon of any type but
+Colorless keeps its Ability under Watchtower.
+
+Separately, `Battle Cage`'s own `bench_damage_counters_blocked`
+blocked a placement onto *either* side's Bench, with no read of who
+was placing it. The real ruling (Gardevoir ex's `Psychic Embrace`,
+placing its own damage counters on its own Benched Psychic Pokémon)
+confirms Battle Cage blocks only a *cross-side* placement — an
+effect still places normally onto its own side's Bench. Fixed:
+`bench_damage_counters_blocked` takes the acting player (`by`) and
+reads `false` outright when `by` owns `target`. No admitted card
+this session ever placed a counter on its own side's Bench, so this
+one never changed behavior for a built card — only the general
+helper's own correctness.

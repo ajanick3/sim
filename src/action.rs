@@ -608,7 +608,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::DistributingDamageCounters { player: whose, .. } => {
             let opponent = whose.opponent();
             for pokemon in &state.player(opponent).bench {
-                if !state.bench_damage_counters_blocked(*pokemon) {
+                if !state.bench_damage_counters_blocked(whose, *pokemon) {
                     actions.push(Action::PlaceDamageCounter { target: *pokemon });
                 }
             }
@@ -1316,12 +1316,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
     // is (already true — `legal_actions` only ever builds this list
     // for `player_to_act`), which Pokémon it demands, and whether the
     // player has already used one with this name this turn. Skipped
-    // outright under `Team Rocket's Watchtower` — no Pokémon in play
-    // has an Ability while that Stadium stands.
-    for pokemon in side.in_play().into_iter().filter(|_| !state.abilities_disabled()) {
+    // outright under `Team Rocket's Watchtower`, but only for a `{C}`
+    // Pokémon — the card's own text names only Colorless.
+    for pokemon in side.in_play() {
         let Some(ability) = state.pokemon_def(pokemon).ability else {
             continue;
         };
+        if state.abilities_disabled_for(pokemon) {
+            continue;
+        }
         if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
             continue;
         }
