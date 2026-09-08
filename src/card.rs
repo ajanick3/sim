@@ -153,6 +153,8 @@ pub enum CardFilter {
     /// the Basic restriction, narrowed by type instead.
     /// `Fan Rotom`'s `Fan Call`.
     PokemonOfTypeWithHpAtMost(Type, u32),
+    /// A Basic Pokémon of this type. `Telepathic Psychic Energy`.
+    BasicPokemonOfType(Type),
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
@@ -1096,6 +1098,15 @@ pub enum EnergyEffect {
     /// only site a card ever leaves hand to attach. `Enriching
     /// Energy`.
     DrawCardsOnAttachFromHand(u32),
+    /// The moment this card is attached from hand to a Pokémon of the
+    /// first type — never when it arrives any other way, the same
+    /// gate `DrawCardsOnAttachFromHand` already reads by — search the
+    /// library for up to this many Basic Pokémon of the second type
+    /// and put them onto the Bench, then shuffle. Opens
+    /// `Phase::SearchingLibraryForBasicsOfType`. No qualifying Basic
+    /// Pokémon in the library still attaches the Energy — only the
+    /// search is skipped. `Telepathic Psychic Energy`.
+    WhenAttachedToTypeSearchesBasicPokemonOfTypeToBench(Type, Type, u32),
 }
 
 #[derive(Debug, Clone)]

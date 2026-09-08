@@ -308,6 +308,10 @@ pub enum Phase {
     /// from an attack, not a Trainer's `Decide`, so it names no card
     /// to read slots back from. `Drilbur`/`Toxel`'s `Call for Family`.
     SearchingLibraryForBasics { player: PlayerId, remaining: u32 },
+    /// `player` attached a Special Energy that searches the library
+    /// for up to `remaining` Basic Pokémon of `kind` to the Bench.
+    /// `Telepathic Psychic Energy`.
+    SearchingLibraryForBasicsOfType { player: PlayerId, kind: crate::card::Type, remaining: u32 },
     /// `player` used an attack that searches the entire library for
     /// an Item card to take into hand. `Patrat`'s `Procurement`.
     SearchingLibraryForItem { player: PlayerId },
@@ -807,7 +811,13 @@ impl GameState {
             .filter_map(|c| self.def_of(*c).as_energy())
             .map(|e| match e.effect {
                 Some(crate::card::EnergyEffect::IncreasesCarrierHp(amount)) => amount,
-                Some(crate::card::EnergyEffect::DrawCardsOnAttachFromHand(_)) | None => 0,
+                Some(
+                    crate::card::EnergyEffect::DrawCardsOnAttachFromHand(_)
+                    | crate::card::EnergyEffect::WhenAttachedToTypeSearchesBasicPokemonOfTypeToBench(
+                        ..,
+                    ),
+                )
+                | None => 0,
             })
             .sum();
         let stadium_reduction = match self.stadium_effect() {
@@ -999,6 +1009,10 @@ impl GameState {
                 .def_of(card)
                 .as_pokemon()
                 .is_some_and(|p| p.kind == kind && p.hp <= hp),
+            CardFilter::BasicPokemonOfType(kind) => self
+                .def_of(card)
+                .as_pokemon()
+                .is_some_and(|p| p.stage == crate::card::Stage::Basic && p.kind == kind),
         }
     }
 

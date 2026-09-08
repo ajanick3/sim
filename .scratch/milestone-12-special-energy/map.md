@@ -47,6 +47,13 @@ one new thing to it.
   ever leaves hand to attach, so `EnergyEffect::DrawCardsOnAttachFromHand`
   is read directly there, right after the card joins `attached`.
   Details under [the ticket's Answer](issues/02-an-attach-from-hand-trigger.md).
+- Ticket 03: the search-to-Bench trigger is a narrower sibling phase
+  of `Call for Family`'s own `Phase::SearchingLibraryForBasics`
+  (`SearchingLibraryForBasicsOfType`, a new `CardFilter::BasicPokemonOfType`),
+  not a type parameter added to the existing one — the same choice
+  `ChoosingBenchedExDamageTarget` already made against
+  `ChoosingAnyOpponentPokemonDamageTarget`. Details under [the
+  ticket's Answer](issues/03-a-search-to-the-bench-from-an-attach.md).
 
 ## Fog
 

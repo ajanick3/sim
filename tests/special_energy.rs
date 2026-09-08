@@ -133,12 +133,16 @@ fn growing_grass_energy_is_admitted_from_the_artifact() {
 /// the same shape `tests/limits.rs`'s own fixture already takes,
 /// built from a custom `CardDb` instead of the synthetic set.
 fn game_through_setup(seed: u64) -> GameState {
+    game_through_setup_of_type(seed, Type::Colorless)
+}
+
+fn game_through_setup_of_type(seed: u64, kind: Type) -> GameState {
     let mut db = CardDb::new();
     let mon_def = db.add(CardDef::Pokemon(Pokemon {
         print_id: "test-carrier",
         name: "Energymon",
         hp: 100,
-        kind: Type::Colorless,
+        kind,
         weakness: None,
         resistance: None,
         retreat_cost: 1,
@@ -217,5 +221,128 @@ fn enriching_energy_is_admitted_from_the_artifact() {
     assert!(
         import.cards.iter().any(|c| c.name == "Enriching Energy" && c.playable.is_some()),
         "at least one Enriching Energy print should play"
+    );
+}
+
+// --- Ticket 03: a search to the Bench from an attach ---
+
+#[test]
+fn searches_up_to_the_limit_of_basic_pokemon_of_type_to_the_bench() {
+    let mut state = game_through_setup_of_type(3, Type::Psychic);
+    let player = state.current;
+    let target = state.player(player).active.unwrap();
+
+    let psychic_basic_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-psychic-basic",
+        name: "Psychicmon",
+        hp: 60,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let first = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: psychic_basic_def, owner: player });
+    state.players[player.index()].library.push(first);
+    let second = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: psychic_basic_def, owner: player });
+    state.players[player.index()].library.push(second);
+    let library_len_before = state.player(player).library.len();
+
+    let telepathic_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-telepathic-psychic-energy",
+        name: "Telepathic Psychic Energy",
+        kind: Type::Psychic,
+        effect: Some(EnergyEffect::WhenAttachedToTypeSearchesBasicPokemonOfTypeToBench(
+            Type::Psychic,
+            Type::Psychic,
+            2,
+        )),
+    }));
+    let telepathic = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: telepathic_def, owner: player });
+    state.players[player.index()].hand.push(telepathic);
+
+    apply(&mut state, Action::AttachEnergy { card: telepathic, target }).unwrap();
+    assert!(matches!(state.phase, Phase::SearchingLibraryForBasicsOfType { .. }));
+
+    apply(&mut state, Action::TakeBasicPokemonOfTypeForEnergyAttach { card: first }).unwrap();
+    assert!(matches!(state.phase, Phase::SearchingLibraryForBasicsOfType { .. }), "one more to take");
+    apply(&mut state, Action::TakeBasicPokemonOfTypeForEnergyAttach { card: second }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).bench.len(), 2);
+    assert_eq!(state.player(player).library.len(), library_len_before - 2);
+    assert!(state.pokemon(target).attached.contains(&telepathic), "the Energy still attaches");
+}
+
+#[test]
+fn does_not_search_when_attached_to_the_wrong_type() {
+    let mut state = game_through_setup_of_type(3, Type::Colorless);
+    let player = state.current;
+    let target = state.player(player).active.unwrap();
+
+    let telepathic_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-telepathic-psychic-energy-wrong-type",
+        name: "Telepathic Psychic Energy",
+        kind: Type::Psychic,
+        effect: Some(EnergyEffect::WhenAttachedToTypeSearchesBasicPokemonOfTypeToBench(
+            Type::Psychic,
+            Type::Psychic,
+            2,
+        )),
+    }));
+    let telepathic = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: telepathic_def, owner: player });
+    state.players[player.index()].hand.push(telepathic);
+
+    apply(&mut state, Action::AttachEnergy { card: telepathic, target }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "the carrier is not Psychic");
+    assert!(state.pokemon(target).attached.contains(&telepathic));
+}
+
+#[test]
+fn no_qualifying_basic_still_attaches_the_energy() {
+    let mut state = game_through_setup_of_type(3, Type::Psychic);
+    let player = state.current;
+    let target = state.player(player).active.unwrap();
+
+    let telepathic_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-telepathic-psychic-energy-no-basic",
+        name: "Telepathic Psychic Energy",
+        kind: Type::Psychic,
+        effect: Some(EnergyEffect::WhenAttachedToTypeSearchesBasicPokemonOfTypeToBench(
+            Type::Psychic,
+            Type::Psychic,
+            2,
+        )),
+    }));
+    let telepathic = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: telepathic_def, owner: player });
+    state.players[player.index()].hand.push(telepathic);
+    state.players[player.index()].library.clear();
+
+    apply(&mut state, Action::AttachEnergy { card: telepathic, target }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "no Basic Psychic Pokemon anywhere in the library");
+    assert!(state.pokemon(target).attached.contains(&telepathic));
+}
+
+#[test]
+fn telepathic_psychic_energy_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Telepathic Psychic Energy" && c.playable.is_some()),
+        "at least one Telepathic Psychic Energy print should play"
     );
 }
