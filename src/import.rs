@@ -949,7 +949,10 @@ fn trainer_kind(card: &Value) -> TrainerKind {
 /// all, and two prints can share an identical name where only one is
 /// Tera (`Hydreigon ex`'s Surging Sparks print is Tera; its
 /// Black Bolt/White Flare print is not), so the name alone can never
-/// answer this one.
+/// answer this one. `Ancient` and `Future` read the same way, against
+/// `ANCIENT_PRINT_IDS`/`FUTURE_PRINT_IDS` — `Koraidon ex` prints the
+/// same within-name split Tera does: only its Temporal Forces print
+/// (`sv05-120`) is Ancient, not its me02.5 or SVP prints.
 pub fn markers_for(print_id: &str, name: &str) -> Vec<Marker> {
     let mut markers = Vec::new();
     if name.to_lowercase().ends_with(" ex") {
@@ -960,6 +963,12 @@ pub fn markers_for(print_id: &str, name: &str) -> Vec<Marker> {
     }
     if TERA_PRINT_IDS.contains(&print_id) {
         markers.push(Marker::Tera);
+    }
+    if ANCIENT_PRINT_IDS.contains(&print_id) {
+        markers.push(Marker::Ancient);
+    }
+    if FUTURE_PRINT_IDS.contains(&print_id) {
+        markers.push(Marker::Future);
     }
     markers
 }
@@ -1093,6 +1102,55 @@ const TERA_PRINT_IDS: &[&str] = &[
     "svp-176",
 ];
 
+/// Every print carrying the Paradox Ancient trait, among the six
+/// species names the sample decks actually use (`Brute Bonnet`,
+/// `Flutter Mane`, `Koraidon ex`, `Raging Bolt ex`) — cross-checked
+/// by hand against pkmncards.com's `is:ancient` listing, print by
+/// print, against every print of each of those names this artifact
+/// carries. Unlike `TERA_PRINT_IDS`, **this list is not known to be
+/// closed** — nobody has confirmed Ancient stopped being printed —
+/// and it is deliberately narrow: a Paradox name that isn't one of
+/// the four above (there are others, `Great Tusk` and `Walking Wake`
+/// among them) has simply never been checked, not confirmed absent.
+/// Extend it the same way if a future card needs a name outside this
+/// four to carry `Marker::Ancient`.
+const ANCIENT_PRINT_IDS: &[&str] = &[
+    "sv05-078", // Flutter Mane, Temporal Forces
+    "sv05-120", // Koraidon ex, Temporal Forces
+    "sv05-123", // Raging Bolt ex, Temporal Forces
+    "sv05-196", // Raging Bolt ex, Temporal Forces
+    "sv05-208", // Raging Bolt ex, Temporal Forces
+    "sv05-218", // Raging Bolt ex, Temporal Forces
+    "sv06-118", // Brute Bonnet, Twilight Masquerade
+    "sv08-096", // Flutter Mane, Surging Sparks
+    "sv08.5-043", // Flutter Mane, Prismatic Evolutions
+    "sv08.5-166", // Raging Bolt ex, Prismatic Evolutions
+    "svp-097",  // Flutter Mane, Scarlet & Violet Promos
+    "svp-145",  // Raging Bolt ex, Scarlet & Violet Promos
+];
+
+/// Every print carrying the Paradox Future trait, among the two
+/// species names the sample decks actually use (`Iron Crown ex`,
+/// `Iron Leaves ex`) — the same hand cross-check against
+/// pkmncards.com's `is:future` listing, and the same open-list,
+/// deliberately-narrow caveat `ANCIENT_PRINT_IDS` carries: a Paradox
+/// name outside these two (`Miraidon ex` and the rest of the `Iron`
+/// line among them) has never been checked here.
+const FUTURE_PRINT_IDS: &[&str] = &[
+    "sv05-025", // Iron Leaves ex, Temporal Forces
+    "sv05-081", // Iron Crown ex, Temporal Forces
+    "sv05-186", // Iron Leaves ex, Temporal Forces
+    "sv05-191", // Iron Crown ex, Temporal Forces
+    "sv05-203", // Iron Leaves ex, Temporal Forces
+    "sv05-206", // Iron Crown ex, Temporal Forces
+    "sv05-213", // Iron Leaves ex, Temporal Forces
+    "sv05-216", // Iron Crown ex, Temporal Forces
+    "sv08.5-158", // Iron Crown ex, Prismatic Evolutions
+    "sv08.5-176", // Iron Leaves ex, Prismatic Evolutions
+    "svp-128",  // Iron Leaves ex, Scarlet & Violet Promos
+    "svp-146",  // Iron Crown ex, Scarlet & Violet Promos
+];
+
 /// Whether every attack this raw print carries would read on its own,
 /// regardless of whether its Ability (if any) also reads. Milestone 11
 /// and Milestone 8 track separate progress on the same species; the
@@ -1224,6 +1282,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         }
         ("Shaymin", "Flower Curtain") => AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench,
         ("Rabsca", "Spherical Shield") => AbilityEffect::PassivePreventsAttackEffectsOnBench,
+        ("Iron Crown ex", "Cobalt Command") => {
+            AbilityEffect::PassiveFutureAttacksDoBonusDamageToActiveExceptNamed(20)
+        }
         ("Tatsugiri", "Attract Customers") => {
             AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(6)
         }
@@ -1356,6 +1417,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Rabsca", "Triple Draw") => AttackEffect::DrawCards(3),
         ("Rabsca", "Psychic") => AttackEffect::DamagePerCount(Count::DefenderEnergyAttachedCount, 30),
         ("Rabsca", "Counterturn") => AttackEffect::BonusDamageIfOwnLibraryAtMost(3, 200),
+        ("Iron Crown ex", "Twin Shotels") => AttackEffect::DamageTwoChosenOpponentPokemon(50),
         ("Celebi", "Collect") => AttackEffect::DrawCards(1),
         ("Buneary", "Run Around") => AttackEffect::SwitchOwnActive,
         ("Bayleef", "Push Down") => AttackEffect::SwitchOpponentActive,
