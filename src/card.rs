@@ -813,9 +813,9 @@ pub enum Count {
     /// Prize cards the opponent has already taken (6 minus how many
     /// remain). `Pecharunt ex`'s `Irritated Outburst`.
     OpponentPrizesTakenCount,
-    /// Grass Energy attached to the attacker itself. `Genesect`'s
-    /// `Bug's Cannon`.
-    OwnGrassEnergyAttachedCount,
+    /// Energy of this type attached to the attacker itself.
+    /// `Genesect`'s `Bug's Cannon`, `Seaking`'s `Hydro Jet`.
+    OwnEnergyOfTypeAttachedCount(Type),
     /// Cards in the attacker's owner's own hand. `Alakazam`'s
     /// `Powerful Hand`.
     OwnHandSizeCount,

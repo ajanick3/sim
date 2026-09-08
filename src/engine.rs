@@ -2939,12 +2939,12 @@ fn count_for_attack(
         crate::card::Count::OpponentPrizesTakenCount => {
             6 - state.player(opponent).prizes.len() as u32
         }
-        crate::card::Count::OwnGrassEnergyAttachedCount => state
+        crate::card::Count::OwnEnergyOfTypeAttachedCount(kind) => state
             .pokemon(attacker)
             .attached
             .iter()
             .filter(|c| match state.def_of(**c) {
-                crate::card::CardDef::Energy(energy) => energy.kind == crate::card::Type::Grass,
+                crate::card::CardDef::Energy(energy) => energy.kind == kind,
                 crate::card::CardDef::Pokemon(_) | crate::card::CardDef::Trainer(_) => false,
             })
             .count() as u32,
