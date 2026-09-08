@@ -988,6 +988,7 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Latias ex", "Skyliner") => AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost,
         ("Crustle", "Mysterious Rock Inn") => AbilityEffect::PassiveImmuneToDamageFromOpponentEx,
         ("Patrat", "Watchful Eye") => AbilityEffect::PassiveBlocksDamageCounterMovement,
+        ("Psyduck", "Damp") => AbilityEffect::PassiveDisablesSelfKnockOutAbilities,
         ("Tatsugiri", "Attract Customers") => {
             AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(6)
         }

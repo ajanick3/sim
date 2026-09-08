@@ -1749,3 +1749,57 @@ fn patrat_is_admitted_from_the_artifact() {
         "at least one Patrat print should play"
     );
 }
+
+// --- Beyond the map: a standing Ability that disables self-knockout Abilities everywhere ---
+
+#[test]
+fn damp_disables_a_self_knockout_ability_even_from_the_opponents_side() {
+    let ability = Ability {
+        name: "Cursed Blast",
+        effect: sim::card::AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(5),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let active = state.player(player).active.unwrap();
+
+    let damp_def = state.db.add(CardDef::Pokemon(Pokemon {
+        print_id: "test-damp",
+        name: "Psyduck",
+        hp: 60,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability { name: "Damp", effect: sim::card::AbilityEffect::PassiveDisablesSelfKnockOutAbilities }),
+        attacks: vec![Attack {
+            name: "Ram",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let damp_card = deal_new_card(&mut state, opponent, damp_def);
+    let damp_mon = state.put_into_play(opponent, damp_card);
+    state.players[opponent.index()].bench.push(damp_mon);
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(result.is_err(), "Damp disables Cursed Blast on either side");
+}
+
+#[test]
+fn psyduck_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Psyduck" && c.playable.is_some()),
+        "at least one Psyduck print should play"
+    );
+}
