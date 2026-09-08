@@ -211,7 +211,7 @@ than guessed at, so the placement numbers have three gaps.
 | Elgyem | [✅](src/import.rs#L1108) | — |
 | Enamorus | ❌ | — |
 | Fan Rotom | [✅](src/import.rs#L1130) | [✅](src/import.rs#L1019) |
-| Fezandipiti ex | [✅](src/import.rs#L1146) | [✅](src/import.rs#L991) |
+| Fezandipiti ex | [✅](src/import.rs#L1147) | [✅](src/import.rs#L991) |
 | Flutter Mane | ❌ | ❌ |
 | Genesect | [✅](src/import.rs#L1134) | ❌ |
 | Genesect ex | [✅](src/import.rs#L1124) | [✅](src/import.rs#L1003) |
@@ -228,13 +228,13 @@ than guessed at, so the placement numbers have three gaps.
 | Lillie's Clefairy ex | ❌ | ❌ |
 | Mega Absol ex | ❌ | — |
 | Mega Excadrill ex | ❌ | — |
-| Mega Kangaskhan ex | [✅](src/import.rs#L1142) | [✅](src/import.rs#L985) |
+| Mega Kangaskhan ex | [✅](src/import.rs#L1143) | [✅](src/import.rs#L985) |
 | Mega Lopunny ex | ❌ | — |
 | Mega Sharpedo ex | [✅](src/import.rs#L1088) | — |
 | Mega Skarmory ex | ❌ | — |
 | Mega Slowbro ex | ❌ | — |
 | Meganium | [✅](src/import.rs#L234) | ❌ |
-| Meowth ex | [✅](src/import.rs#L1145) | [✅](src/import.rs#L988) |
+| Meowth ex | [✅](src/import.rs#L1146) | [✅](src/import.rs#L988) |
 | Metagross | ❌ | — |
 | Metang | [✅](src/import.rs#L234) | ❌ |
 | Moltres | [✅](src/import.rs#L1098) | — |
@@ -263,7 +263,7 @@ than guessed at, so the placement numbers have three gaps.
 | Stunfisk | ❌ | — |
 | Tapu Bulu | [✅](src/import.rs#L1045) | — |
 | Tatsugiri | [✅](src/import.rs#L234) | ❌ |
-| Teal Mask Ogerpon ex | [✅](src/import.rs#L1147) | [✅](src/import.rs#L994) |
+| Teal Mask Ogerpon ex | [✅](src/import.rs#L1148) | [✅](src/import.rs#L994) |
 | Thwackey | [✅](src/import.rs#L234) | ❌ |
 | Torchic | [✅](src/import.rs#L1101) | — |
 | Toxel | [✅](src/import.rs#L1086) | — |

@@ -2504,3 +2504,66 @@ fn shaymin_send_flowers_print_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "me03-003").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Shaymin's Send Flowers print should play");
 }
+
+// --- Beyond the spec: move the attacker's own Energy to a chosen Benched Pokemon ---
+
+#[test]
+fn moves_the_attackers_own_energy_to_a_chosen_benched_pokemon() {
+    let attack = Attack {
+        name: "Reflect Energy",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 60,
+        inflicts: None,
+        effect: Some(AttackEffect::MoveOwnAttachedEnergyToChosenBenched),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let plain_bench_def = state.cards[state.pokemon(active).top_card().index()].def;
+    let plain_bench_card = deal_new_card(&mut state, player, plain_bench_def);
+    let plain_bench = state.put_into_play(player, plain_bench_card);
+    state.players[player.index()].bench.push(plain_bench);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingEnergyAndBenchedTargetToMove { .. }));
+    let attached_before = state.pokemon(active).attached.clone();
+    assert!(!attached_before.is_empty());
+    let card = attached_before[0];
+
+    let actions = legal_actions(&state);
+    assert!(actions.contains(&Action::MoveEnergyToChosenBenched { card, target: plain_bench }));
+
+    apply(&mut state, Action::MoveEnergyToChosenBenched { card, target: plain_bench }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(!state.pokemon(active).attached.contains(&card));
+    assert!(state.pokemon(plain_bench).attached.contains(&card));
+}
+
+#[test]
+fn no_bench_opens_no_phase_for_reflect_energy() {
+    let attack = Attack {
+        name: "Reflect Energy",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 60,
+        inflicts: None,
+        effect: Some(AttackEffect::MoveOwnAttachedEnergyToChosenBenched),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no own Bench to move Energy to");
+}
+
+#[test]
+fn shaymin_reflect_energy_print_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv08.5-087").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Shaymin's Reflect Energy print should play");
+}

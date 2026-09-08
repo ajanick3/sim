@@ -381,6 +381,10 @@ pub enum Phase {
     /// `player` used an attack that puts one of the attacker's own
     /// attached Energy into their hand. `Chien-Pao`'s `Icicle Loop`.
     ChoosingOwnEnergyToHand { player: PlayerId, attacker: PokemonId },
+    /// `player` used an attack that moves one of the attacker's own
+    /// attached Energy to a chosen own Benched Pokémon. `Shaymin`'s
+    /// `Reflect Energy`.
+    ChoosingEnergyAndBenchedTargetToMove { player: PlayerId, attacker: PokemonId },
     /// `player` just played `pokemon` from hand onto the Bench, and
     /// its own Ability may discard whichever Stadium is in play.
     /// `Chien-Pao`'s `Snow Sink`.

@@ -215,6 +215,9 @@ pub enum Action {
     /// Move this attached Energy to hand, as part of
     /// `Phase::ChoosingOwnEnergyToHand`.
     MoveOwnAttachedEnergyToHand { card: CardId },
+    /// Move this attached Energy to this own Benched Pokémon, as
+    /// part of `Phase::ChoosingEnergyAndBenchedTargetToMove`.
+    MoveEnergyToChosenBenched { card: CardId, target: PokemonId },
     /// Accept `Phase::DecidingToUseSnowSink`'s discard.
     AcceptSnowSink,
     /// Decline it.
@@ -288,6 +291,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => Some(player),
         Phase::DecidingToUseSeethingSpirit { player, .. } => Some(player),
         Phase::ChoosingOwnEnergyToHand { player, .. } => Some(player),
+        Phase::ChoosingEnergyAndBenchedTargetToMove { player, .. } => Some(player),
         Phase::DecidingToUseSnowSink { player, .. } => Some(player),
         Phase::DecidingToSwitchInForRapidVernier { player, .. } => Some(player),
         Phase::MovingAnyEnergyForRapidVernier { player, .. } => Some(player),
@@ -691,6 +695,16 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             for card in &state.pokemon(attacker).attached {
                 if state.def_of(*card).is_energy() {
                     actions.push(Action::MoveOwnAttachedEnergyToHand { card: *card });
+                }
+            }
+            return actions;
+        }
+        Phase::ChoosingEnergyAndBenchedTargetToMove { player: whose, attacker } => {
+            for card in &state.pokemon(attacker).attached {
+                if state.def_of(*card).is_energy() {
+                    for target in &state.player(whose).bench {
+                        actions.push(Action::MoveEnergyToChosenBenched { card: *card, target: *target });
+                    }
                 }
             }
             return actions;
@@ -1460,6 +1474,11 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::MoveOwnAttachedEnergyToHand { card } => {
             format!("Move {} to hand", state.def_of(card).name())
         }
+        Action::MoveEnergyToChosenBenched { card, target } => format!(
+            "Move {} to {}",
+            state.def_of(card).name(),
+            state.pokemon_def(target).name
+        ),
         Action::AcceptSnowSink => "Discard the Stadium (Snow Sink)".to_string(),
         Action::DeclineSnowSink => "Decline Snow Sink".to_string(),
         Action::AcceptRapidVernierSwitch => "Switch in (Rapid Vernier)".to_string(),

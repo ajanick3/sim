@@ -765,6 +765,12 @@ pub enum AttackEffect {
     /// `Phase::ChoosingOwnEnergyToHand`. No Energy attached opens no
     /// phase. `Chien-Pao`'s `Icicle Loop`.
     MoveOwnAttachedEnergyToHand,
+    /// Move an Energy attached to the attacker to a chosen own
+    /// Benched Pokémon, choosing which Energy if more than one is
+    /// attached — opens `Phase::ChoosingEnergyAndBenchedTargetToMove`.
+    /// No Energy attached, or no own Bench, opens no phase.
+    /// `Shaymin`'s `Reflect Energy`.
+    MoveOwnAttachedEnergyToChosenBenched,
     /// "If there is no Stadium in play, this attack does nothing" —
     /// the whole attack fizzles outright, checked at the top of
     /// `attack`, the same short-circuit shape
