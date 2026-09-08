@@ -1418,3 +1418,78 @@ fn drakloak_is_admitted_from_the_artifact() {
         "at least one Drakloak print should play"
     );
 }
+
+// --- Beyond the map: peek at the top of the library, attach found Energy one card at a time ---
+
+#[test]
+fn attaches_found_energy_and_buries_everything_else() {
+    let ability = Ability {
+        name: "Metal Maker",
+        effect: sim::card::AbilityEffect::OncePerTurnMayLookAtTopCardsAttachFoundBasicEnergyOfType(
+            2,
+            Type::Metal,
+        ),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let metal_energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-metal-energy",
+        name: "Metal Energy",
+        kind: Type::Metal,
+    }));
+    let metal_energy = deal_new_card(&mut state, player, metal_energy_def);
+    let library_len_before = state.player(player).library.len();
+    let other_top_card = *state.player(player).library.last().unwrap();
+    state.players[player.index()].library.push(metal_energy);
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+    assert!(matches!(state.phase, Phase::ResolvingEnergyFoundInTopPeek { .. }));
+
+    let actions = legal_actions(&state);
+    assert!(actions.contains(&Action::AttachFoundEnergyTo { card: metal_energy, target: active }));
+    assert!(actions.contains(&Action::PutFoundCardOnBottom { card: metal_energy }));
+    assert!(actions.contains(&Action::PutFoundCardOnBottom { card: other_top_card }));
+    assert!(!actions.contains(&Action::AttachFoundEnergyTo { card: other_top_card, target: active }));
+
+    apply(&mut state, Action::AttachFoundEnergyTo { card: metal_energy, target: active }).unwrap();
+    assert!(matches!(state.phase, Phase::ResolvingEnergyFoundInTopPeek { .. }), "one card left to resolve");
+
+    apply(&mut state, Action::PutFoundCardOnBottom { card: other_top_card }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(active).attached.contains(&metal_energy));
+    assert_eq!(state.player(player).library[0], other_top_card, "buried at the bottom");
+    assert_eq!(state.player(player).library.len(), library_len_before);
+}
+
+#[test]
+fn metal_maker_not_offered_with_an_empty_library() {
+    let ability = Ability {
+        name: "Metal Maker",
+        effect: sim::card::AbilityEffect::OncePerTurnMayLookAtTopCardsAttachFoundBasicEnergyOfType(
+            4,
+            Type::Metal,
+        ),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    state.players[player.index()].library.clear();
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(result.is_err(), "an empty library has nothing to peek at");
+}
+
+#[test]
+fn metang_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Metang" && c.playable.is_some()),
+        "at least one Metang print should play"
+    );
+}

@@ -1011,6 +1011,15 @@ pub enum AbilityEffect {
     /// `Phase::LookingAtTopCardsToTakeOne`. An empty library opens no
     /// phase. `Drakloak`'s `Recon Directive`.
     OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(u32),
+    /// Once during the player's own turn, the player may look at the
+    /// top this-many cards of their own library and attach any number
+    /// of Basic Energy of this type found there to their own
+    /// Pokémon, in any way they like — resolved one seen card at a
+    /// time: attach it to a chosen own Pokémon, or leave it, either
+    /// way it leaves the top of the library. Opens
+    /// `Phase::ResolvingEnergyFoundInTopPeek`. An empty library opens
+    /// no phase. `Metang`'s `Metal Maker`.
+    OncePerTurnMayLookAtTopCardsAttachFoundBasicEnergyOfType(u32, Type),
 }
 
 /// A basic Energy card as printed.

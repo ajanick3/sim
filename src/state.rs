@@ -367,6 +367,18 @@ pub enum Phase {
     /// can change the library while this phase is open. `Drakloak`'s
     /// `Recon Directive`.
     LookingAtTopCardsToTakeOne { player: PlayerId, pokemon: PokemonId, count: u32 },
+    /// `player` opened `pokemon`'s own Ability that peeks at the top
+    /// of the library and may attach found Energy of `kind` one card
+    /// at a time; `remaining` is how many of the original peek are
+    /// still unresolved — read fresh from the library's own top
+    /// slice, the same way `LookingAtTopCardsToTakeOne` is.
+    /// `Metang`'s `Metal Maker`.
+    ResolvingEnergyFoundInTopPeek {
+        player: PlayerId,
+        pokemon: PokemonId,
+        kind: crate::card::Type,
+        remaining: u32,
+    },
     /// `player` opened `pokemon`'s own Ability that attaches Energy
     /// from hand as the effect itself. `Teal Mask Ogerpon ex`'s
     /// `Teal Dance`.

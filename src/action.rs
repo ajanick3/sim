@@ -226,6 +226,13 @@ pub enum Action {
     /// Take this card, seen among the top of the library, as part of
     /// `Phase::LookingAtTopCardsToTakeOne`. The rest go to the bottom.
     TakeCardFromTopPeek { card: CardId },
+    /// Attach this card, seen among the top of the library, to this
+    /// own Pokémon, as part of `Phase::ResolvingEnergyFoundInTopPeek`.
+    AttachFoundEnergyTo { card: CardId, target: PokemonId },
+    /// Leave this card, seen among the top of the library, and send
+    /// it to the bottom instead, as part of
+    /// `Phase::ResolvingEnergyFoundInTopPeek`.
+    PutFoundCardOnBottom { card: CardId },
     /// Accept `Phase::DecidingToUseSnowSink`'s discard.
     AcceptSnowSink,
     /// Decline it.
@@ -296,6 +303,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
         Phase::MovingDamageCountersFromOwnToOpponent { player, .. } => Some(player),
         Phase::LookingAtTopCardsToTakeOne { player, .. } => Some(player),
+        Phase::ResolvingEnergyFoundInTopPeek { player, .. } => Some(player),
         Phase::DecidingToUseTealDance { player, .. } => Some(player),
         Phase::DecidingCursedBlastTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => Some(player),
@@ -744,6 +752,19 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             let seen = count.min(library.len() as u32) as usize;
             for card in &library[library.len() - seen..] {
                 actions.push(Action::TakeCardFromTopPeek { card: *card });
+            }
+            return actions;
+        }
+        Phase::ResolvingEnergyFoundInTopPeek { player: whose, kind, remaining, .. } => {
+            let library = &state.player(whose).library;
+            let seen = remaining.min(library.len() as u32) as usize;
+            for card in &library[library.len() - seen..] {
+                actions.push(Action::PutFoundCardOnBottom { card: *card });
+                if state.matches_filter(*card, crate::card::CardFilter::BasicEnergyOfType(kind)) {
+                    for target in state.player(whose).in_play() {
+                        actions.push(Action::AttachFoundEnergyTo { card: *card, target });
+                    }
+                }
             }
             return actions;
         }
@@ -1281,6 +1302,10 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(_) => {
                 !side.library.is_empty()
             }
+            crate::card::AbilityEffect::OncePerTurnMayLookAtTopCardsAttachFoundBasicEnergyOfType(
+                _,
+                _,
+            ) => !side.library.is_empty(),
         };
         if eligible {
             actions.push(Action::UseAbility { pokemon });
@@ -1516,6 +1541,14 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DeclineMovingDamageCounters => "Decline moving damage counters".to_string(),
         Action::TakeCardFromTopPeek { card } => {
             format!("Take {} (Recon Directive)", state.def_of(card).name())
+        }
+        Action::AttachFoundEnergyTo { card, target } => format!(
+            "Attach {} to {} (Metal Maker)",
+            state.def_of(card).name(),
+            state.pokemon_def(target).name
+        ),
+        Action::PutFoundCardOnBottom { card } => {
+            format!("Bury {} (Metal Maker)", state.def_of(card).name())
         }
         Action::AttachEnergyForTealDance { card } => {
             format!("Attach {} (Teal Dance)", state.def_of(card).name())
