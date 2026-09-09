@@ -441,6 +441,13 @@ pub enum Phase {
         attacker: PokemonId,
         damage: u32,
     },
+    /// `player` picks which of their own Benched Pokémon loses all
+    /// its damage counters — the first of two sequential picks.
+    /// `Cofagrigus`'s `Extended Damagriiigus`.
+    ChoosingOwnBenchedSourceForDamageMove { player: PlayerId },
+    /// `player` already picked `source`; now picks which of the
+    /// opponent's Pokémon, Active or Benched, receives all of it.
+    ChoosingOpponentTargetForDamageMove { player: PlayerId, source: PokemonId },
     /// The narrower mirror of `ChoosingAnyOpponentPokemonDamageTarget`,
     /// offering only the opponent's Benched Pokémon ex. `Shaymin`'s
     /// `Pinpoint Dive`.

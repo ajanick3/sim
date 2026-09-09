@@ -3949,3 +3949,129 @@ fn mega_skarmory_exs_sonic_ripper_is_admitted_from_the_artifact() {
         "at least one Mega Skarmory ex print should play"
     );
 }
+
+// --- Beyond the spec: damage every Pokemon with an Ability, both sides ---
+
+#[test]
+fn damages_every_pokemon_with_an_ability_both_sides() {
+    let attack = Attack {
+        name: "Law of the Underworld",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DamagesEveryPokemonWithAnAbility(60)),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    // Neither side's Active carries an Ability in this fixture, so
+    // bench a copy of each with one added directly.
+    let ability_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-law-of-the-underworld-ability-mon",
+        name: "Abilitymon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(sim::card::Ability {
+            name: "Some Ability",
+            effect: sim::card::AbilityEffect::PassiveImmuneToAsleep,
+        }),
+        attacks: vec![],
+    }));
+    let own_bench_card = deal_new_card(&mut state, player, ability_def);
+    let own_bench = state.put_into_play(player, own_bench_card);
+    state.players[player.index()].bench.push(own_bench);
+    let opp_bench_card = deal_new_card(&mut state, opponent, ability_def);
+    let opp_bench = state.put_into_play(opponent, opp_bench_card);
+    state.players[opponent.index()].bench.push(opp_bench);
+    let plain_bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let plain_bench = state.put_into_play(opponent, plain_bench_card);
+    state.players[opponent.index()].bench.push(plain_bench);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(own_bench).damage, 60, "the player's own Ability-carrying Bench mon");
+    assert_eq!(state.pokemon(opp_bench).damage, 60, "the opponent's Ability-carrying Bench mon");
+    assert_eq!(state.pokemon(plain_bench).damage, 0, "no Ability, untouched");
+    assert_eq!(state.pokemon(attacker).damage, 0, "the attacker itself has no Ability in this fixture");
+    assert_eq!(state.pokemon(defender).damage, 0, "the defender itself has no Ability in this fixture");
+}
+
+#[test]
+fn cofagriguss_law_of_the_underworld_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv08-083").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Cofagrigus's Law of the Underworld print should play");
+}
+
+// --- Beyond the spec: move all damage from a chosen own Benched Pokemon to a chosen opponent ---
+
+#[test]
+fn moves_all_damage_from_a_chosen_own_benched_pokemon_to_a_chosen_opponent() {
+    let attack = Attack {
+        name: "Extended Damagriiigus",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::MovesAllDamageFromChosenOwnBenchedToChosenOpponentPokemon),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let bench_card = deal_new_card(&mut state, player, defender_ex);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+    state.pokemon[bench_mon.index()].damage = 90;
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingOwnBenchedSourceForDamageMove { .. }));
+    apply(&mut state, Action::ChooseOwnBenchedSourceForDamageMove { source: bench_mon }).unwrap();
+    assert!(matches!(state.phase, Phase::ChoosingOpponentTargetForDamageMove { .. }));
+    apply(&mut state, Action::MoveDamageToChosenOpponentPokemon { target: defender }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(bench_mon).damage, 0, "all of it left the source");
+    assert_eq!(state.pokemon(defender).damage, 90, "all of it landed on the chosen target");
+}
+
+#[test]
+fn no_move_available_with_an_empty_own_bench() {
+    let attack = Attack {
+        name: "Extended Damagriiigus",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::MovesAllDamageFromChosenOwnBenchedToChosenOpponentPokemon),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no own Bench at all, so nothing opens");
+}
+
+#[test]
+fn cofagriguss_extended_damagriiigus_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Cofagrigus" && c.playable.is_some()),
+        "at least one Cofagrigus print should play"
+    );
+}
