@@ -270,6 +270,11 @@ pub enum Action {
     AttachEnergyForSeethingSpirit { card: CardId, target: PokemonId },
     /// Decline it.
     DeclineSeethingSpirit,
+    /// Attach this Basic Energy from the hand to this Pokémon, then
+    /// heal it, as part of `Phase::DecidingToUseRipeningCharge`.
+    AttachEnergyForRipeningCharge { card: CardId, target: PokemonId },
+    /// Decline it.
+    DeclineRipeningCharge,
     /// Move this attached Energy to hand, as part of
     /// `Phase::ChoosingOwnEnergyToHand`.
     MoveOwnAttachedEnergyToHand { card: CardId },
@@ -379,6 +384,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingCursedBlastTarget { player, .. } => Some(player),
         Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => Some(player),
         Phase::DecidingToUseSeethingSpirit { player, .. } => Some(player),
+        Phase::DecidingToUseRipeningCharge { player, .. } => Some(player),
         Phase::ChoosingOwnEnergyToHand { player, .. } => Some(player),
         Phase::ChoosingEnergyAndBenchedTargetToMove { player, .. } => Some(player),
         Phase::DecidingToUseSnowSink { player, .. } => Some(player),
@@ -836,6 +842,26 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::DeclineSeethingSpirit);
+            return actions;
+        }
+        Phase::DecidingToUseRipeningCharge { player: whose, pokemon } => {
+            let crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeFromHandToChosenThenHeal(
+                kind,
+                _,
+            ) = state.pokemon_def(pokemon).ability.expect("named only when carried").effect
+            else {
+                unreachable!("this phase only ever opens for this effect");
+            };
+            let side = state.player(whose);
+            for card in &side.hand {
+                if !state.matches_filter(*card, crate::card::CardFilter::BasicEnergyOfType(kind)) {
+                    continue;
+                }
+                for target in side.in_play() {
+                    actions.push(Action::AttachEnergyForRipeningCharge { card: *card, target });
+                }
+            }
+            actions.push(Action::DeclineRipeningCharge);
             return actions;
         }
         Phase::ChoosingOwnEnergyToHand { attacker, .. } => {
@@ -1495,6 +1521,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyFromDiscardToChosen => {
                 side.discard.iter().any(|c| state.def_of(*c).is_energy())
             }
+            crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeFromHandToChosenThenHeal(
+                kind,
+                _,
+            ) => side
+                .hand
+                .iter()
+                .any(|c| state.matches_filter(*c, crate::card::CardFilter::BasicEnergyOfType(kind))),
             crate::card::AbilityEffect::OncePerTurnMaySearchBasicEnergyOfTypeAttachToBenchedThenDamage(
                 kind,
                 _,
@@ -1881,6 +1914,12 @@ pub fn describe(state: &GameState, action: Action) -> String {
             state.pokemon_def(target).name
         ),
         Action::DeclineSeethingSpirit => "Decline Seething Spirit".to_string(),
+        Action::AttachEnergyForRipeningCharge { card, target } => format!(
+            "Attach {} to {} (Ripening Charge)",
+            state.def_of(card).name(),
+            state.pokemon_def(target).name
+        ),
+        Action::DeclineRipeningCharge => "Decline Ripening Charge".to_string(),
         Action::MoveOwnAttachedEnergyToHand { card } => {
             format!("Move {} to hand", state.def_of(card).name())
         }

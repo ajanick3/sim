@@ -1266,6 +1266,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     // only actually attaching is.
                     state.phase = Phase::DecidingToUseSeethingSpirit { player, pokemon };
                 }
+                crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeFromHandToChosenThenHeal(
+                    ..,
+                ) => {
+                    // Not spent here: opening the choice is not using it —
+                    // only actually attaching is.
+                    state.phase = Phase::DecidingToUseRipeningCharge { player, pokemon };
+                }
                 crate::card::AbilityEffect::OncePerTurnMaySearchBasicEnergyOfTypeAttachToBenchedThenDamage(
                     kind,
                     damage,
@@ -1650,6 +1657,39 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         Action::DeclineSeethingSpirit => {
             match state.phase {
                 Phase::DecidingToUseSeethingSpirit { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::AttachEnergyForRipeningCharge { card, target } => {
+            let (player, pokemon) = match state.phase {
+                Phase::DecidingToUseRipeningCharge { player, pokemon } => (player, pokemon),
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            let crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeFromHandToChosenThenHeal(
+                _,
+                heal,
+            ) = ability.effect
+            else {
+                unreachable!("this phase only ever opens for this effect");
+            };
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.remove_from_hand(player, card);
+            state.pokemon[target.index()].attached.push(card);
+            state.pokemon[target.index()].damage = state.pokemon(target).damage.saturating_sub(heal);
+            let name = state.def_of(card).name();
+            let target_name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} attaches to {target_name}, healing {heal} (Ripening Charge)."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DeclineRipeningCharge => {
+            match state.phase {
+                Phase::DecidingToUseRipeningCharge { .. } => {}
                 _ => return Err(IllegalAction),
             };
             state.phase = Phase::Main;
@@ -3617,6 +3657,22 @@ fn count_for_attack(
         }
         crate::card::Count::DefenderEnergyAttachedCount => state.energy_attached(defender) as u32,
         crate::card::Count::DefenderDamageCounters => state.pokemon(defender).damage / 10,
+        crate::card::Count::OwnEnergyOfTypeAttachedAcrossSideCount(kind) => state
+            .player(owner)
+            .in_play()
+            .iter()
+            .map(|p| {
+                state
+                    .pokemon(*p)
+                    .attached
+                    .iter()
+                    .filter(|c| match state.def_of(**c) {
+                        crate::card::CardDef::Energy(energy) => energy.kind == kind,
+                        crate::card::CardDef::Pokemon(_) | crate::card::CardDef::Trainer(_) => false,
+                    })
+                    .count() as u32
+            })
+            .sum(),
     }
 }
 

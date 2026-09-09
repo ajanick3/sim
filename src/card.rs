@@ -986,6 +986,11 @@ pub enum Count {
     /// Damage counters already on the defender. `Brute Bonnet`'s
     /// `Relentless Punches`.
     DefenderDamageCounters,
+    /// Energy of this type attached to every one of the attacker's
+    /// own Pokémon in play, not only the attacker itself — unlike
+    /// `OwnEnergyOfTypeAttachedCount`, which reads the attacker
+    /// alone. `Hydrapple ex`'s `Syrup Storm`.
+    OwnEnergyOfTypeAttachedAcrossSideCount(Type),
 }
 
 /// How far along its evolution line a Pokémon card is printed. The artifact
@@ -1171,6 +1176,15 @@ pub enum AbilityEffect {
     /// the discard pile opens no phase. `Blaziken ex`'s
     /// `Seething Spirit`.
     OncePerTurnMayAttachBasicEnergyFromDiscardToChosen,
+    /// Once during the player's own turn, the player may attach a
+    /// Basic Energy card of this type from their hand to any of
+    /// their own Pokémon, their choice of both — the same combined
+    /// card-and-target choice
+    /// `OncePerTurnMayAttachBasicEnergyFromDiscardToChosen` already
+    /// takes, but from the hand rather than the discard pile. If
+    /// they do, heal this many damage from whichever Pokémon
+    /// received it. `Hydrapple ex`'s `Ripening Charge`.
+    OncePerTurnMayAttachBasicEnergyOfTypeFromHandToChosenThenHeal(Type, u32),
     /// Once during the player's own turn, the moment this Pokémon is
     /// played from hand onto the Bench, the player may discard
     /// whichever Stadium is in play — opens

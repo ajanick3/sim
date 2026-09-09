@@ -1042,6 +1042,78 @@ fn seething_spirit_not_offered_with_no_energy_in_discard() {
     assert!(result.is_err(), "no Basic Energy in the discard pile");
 }
 
+// --- Beyond the map: attaching Energy from hand to a chosen own Pokemon, then healing it ---
+
+#[test]
+fn ripening_charge_attaches_from_hand_to_a_chosen_pokemon_then_heals_it() {
+    let ability = Ability {
+        name: "Ripening Charge",
+        effect: sim::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeFromHandToChosenThenHeal(
+            Type::Grass,
+            30,
+        ),
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    state.pokemon[active.index()].damage = 50;
+    let bench_card = deal_new_card(&mut state, player, carrier_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    let grass_energy_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-ripening-charge-grass-energy",
+        name: "Grass Energy",
+        kind: Type::Grass,
+        effect: None,
+    }));
+    let grass_energy = deal_new_card(&mut state, player, grass_energy_def);
+    state.players[player.index()].hand.push(grass_energy);
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+
+    assert!(matches!(state.phase, Phase::DecidingToUseRipeningCharge { .. }));
+    apply(
+        &mut state,
+        Action::AttachEnergyForRipeningCharge { card: grass_energy, target: active },
+    )
+    .unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(active).attached.contains(&grass_energy));
+    assert!(!state.player(player).hand.contains(&grass_energy));
+    assert_eq!(state.pokemon(active).damage, 20, "healed 30 from the 50 already on it");
+}
+
+#[test]
+fn ripening_charge_not_offered_with_no_grass_energy_in_hand() {
+    let ability = Ability {
+        name: "Ripening Charge",
+        effect: sim::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeFromHandToChosenThenHeal(
+            Type::Grass,
+            30,
+        ),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+
+    let result = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(result.is_err(), "no Basic Grass Energy in hand");
+}
+
+#[test]
+fn hydrapple_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Hydrapple ex" && c.playable.is_some()),
+        "at least one Hydrapple ex print should play"
+    );
+}
+
 #[test]
 fn blaziken_ex_is_admitted_from_the_artifact() {
     let import = sim::import::load(
