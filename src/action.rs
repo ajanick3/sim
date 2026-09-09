@@ -239,6 +239,9 @@ pub enum Action {
     TakePokemonOfTypeOrStadiumFromLibrary { card: CardId },
     /// Stop that search before its limit is reached.
     FinishSearchingPokemonOfTypeOrStadium,
+    /// Discard this card from the opponent's hand, as part of
+    /// `Phase::ChoosingCardFromOpponentsHandToDiscard`.
+    DiscardCardFromOpponentsHand { card: CardId },
     /// Stop `Phase::SearchingLibraryForTrainerCards` before its
     /// limit is reached.
     FinishSearchingTrainerCards,
@@ -396,6 +399,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToUseJewelSeeker { player, .. } => Some(player),
         Phase::SearchingLibraryForTrainerCards { player, .. } => Some(player),
         Phase::SearchingLibraryForPokemonOfTypeOrStadium { player, .. } => Some(player),
+        Phase::ChoosingCardFromOpponentsHandToDiscard { player } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive { player, .. } => Some(player),
         Phase::ChoosingOwnBenchedSourceForDamageMove { player } => Some(player),
@@ -803,6 +807,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::FinishSearchingPokemonOfTypeOrStadium);
+            return actions;
+        }
+        Phase::ChoosingCardFromOpponentsHandToDiscard { player: whose } => {
+            for card in &state.player(whose.opponent()).hand {
+                actions.push(Action::DiscardCardFromOpponentsHand { card: *card });
+            }
             return actions;
         }
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player: whose, .. } => {
@@ -1938,6 +1948,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Take {}", state.def_of(card).name())
         }
         Action::FinishSearchingPokemonOfTypeOrStadium => "Stop searching".to_string(),
+        Action::DiscardCardFromOpponentsHand { card } => {
+            format!("Discard {} from the opponent's hand", state.def_of(card).name())
+        }
         Action::DamageChosenOpponentPokemon { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
         }

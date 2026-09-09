@@ -433,6 +433,9 @@ pub enum Phase {
     /// `CardFilter::PokemonOfTypeOrStadium(kind)`. `Celebi`'s
     /// `Traverse Time`.
     SearchingLibraryForPokemonOfTypeOrStadium { player: PlayerId, kind: crate::card::Type, remaining: u32 },
+    /// `player` picks one card out of the opponent's hand to discard.
+    /// `Mega Absol ex`'s `Claw of Darkness`.
+    ChoosingCardFromOpponentsHandToDiscard { player: PlayerId },
     /// `player` used an attack that deals flat damage to one of the
     /// opponent's Pokémon of their choosing, Active or Benched alike.
     /// `Fezandipiti ex`'s `Cruel Arrow`.

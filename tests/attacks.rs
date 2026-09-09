@@ -4270,3 +4270,125 @@ fn celebis_traverse_time_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "me01-012").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Celebi's Traverse Time print should play");
 }
+
+// --- Beyond the spec: Knockout the defender outright at an exact damage-counter count ---
+
+#[test]
+fn knocks_out_the_defender_at_exactly_the_named_counters() {
+    let attack = Attack {
+        name: "Terminal Period",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::KnocksOutDefenderIfExactDamageCounters(6)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    state.pokemon[defender.index()].damage = 60; // exactly 6 counters
+
+    pay_and_attack(&mut state);
+
+    assert!(
+        state.pokemon(defender).knocked_out,
+        "exactly 6 damage counters Knocks the defender out outright"
+    );
+}
+
+#[test]
+fn no_knockout_off_by_one_counter() {
+    let attack = Attack {
+        name: "Terminal Period",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::KnocksOutDefenderIfExactDamageCounters(6)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    state.pokemon[defender.index()].damage = 50; // 5 counters, not 6
+
+    pay_and_attack(&mut state);
+
+    assert!(!state.pokemon(defender).knocked_out, "an exact reading, not at least");
+}
+
+#[test]
+fn mega_absol_exs_terminal_period_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Mega Absol ex" && c.playable.is_some()),
+        "at least one Mega Absol ex print should play"
+    );
+}
+
+// --- Beyond the spec: the opponent's hand is revealed, then the player discards from it ---
+
+#[test]
+fn claw_of_darkness_discards_a_chosen_card_from_the_opponents_hand() {
+    let attack = Attack {
+        name: "Claw of Darkness",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsChosenFromOpponentsHand),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let opponent_card = *state.player(opponent).hand.first().expect("the opponent has a hand");
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingCardFromOpponentsHandToDiscard { .. }));
+    let offered: Vec<_> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::DiscardCardFromOpponentsHand { card } => Some(card),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(offered.len(), state.player(opponent).hand.len(), "every card in the opponent's hand");
+    apply(&mut state, Action::DiscardCardFromOpponentsHand { card: opponent_card }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(!state.player(opponent).hand.contains(&opponent_card));
+    assert!(state.player(opponent).discard.contains(&opponent_card));
+}
+
+#[test]
+fn claw_of_darkness_opens_no_choice_with_an_empty_opponent_hand() {
+    let attack = Attack {
+        name: "Claw of Darkness",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsChosenFromOpponentsHand),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    state.players[opponent.index()].hand.clear();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no cards in the opponent's hand, so nothing opens");
+}
+
+#[test]
+fn mega_absol_exs_claw_of_darkness_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Mega Absol ex" && c.playable.is_some()),
+        "at least one Mega Absol ex print should play"
+    );
+}
