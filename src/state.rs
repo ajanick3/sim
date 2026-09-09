@@ -1031,6 +1031,26 @@ impl GameState {
             })
     }
 
+    /// Whether `player` cannot play any ACE SPEC card from hand, because
+    /// the opponent has a Pokémon in play carrying
+    /// `AbilityEffect::PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool`
+    /// with a Pokémon Tool attached and its own Ability not disabled.
+    /// `Genesect`'s `ACE Nullifier`; the card names no Spot, so this
+    /// checks the opponent's whole side, Active and Bench alike.
+    pub fn opponent_ace_specs_blocked(&self, player: PlayerId) -> bool {
+        self.player(player.opponent()).in_play().iter().any(|p| {
+            !self.abilities_disabled_for(*p)
+                && self.pokemon_def(*p).ability.is_some_and(|a| {
+                    a.effect == crate::card::AbilityEffect::PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool
+                })
+                && self.pokemon(*p).attached.iter().any(|c| {
+                    self.def_of(*c)
+                        .as_trainer()
+                        .is_some_and(|t| t.kind == crate::card::TrainerKind::Tool)
+                })
+        })
+    }
+
     /// The Weakness type `id` actually has: the printed value, unless
     /// an opponent's in-play Pokémon carries
     /// `AbilityEffect::PassiveSetsOpponentTypeWeaknessTo(from, to)`

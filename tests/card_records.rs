@@ -234,5 +234,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // counted board fact, bypassing the ordinary damage order
     // entirely — the same shape DamageCountersToOpponentBenchAnyWay
     // already takes) completes all 3 Alakazam prints.
-    assert_eq!(admitted, 773, "coverage moves only on purpose");
+    // Genesect's ACE Nullifier (the one Ability slot ACE SPEC
+    // classification unlocked) admits its one print.
+    assert_eq!(admitted, 774, "coverage moves only on purpose");
 }

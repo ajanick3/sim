@@ -9,11 +9,10 @@
 //! Total Cards: 60
 //! ```
 //!
-//! The checker reads rules 1, 2, and 4 — sixty cards, four by name, a Standard
-//! regulation mark. Rule 3, one ACE SPEC per deck, is not in the data, and the
-//! report says so rather than guessing.
+//! The checker reads all four rules: sixty cards, four by name, one ACE SPEC
+//! total, a Standard regulation mark.
 
-use crate::import::{CardRef, Import};
+use crate::import::{self, CardRef, Import};
 
 /// The nine basic Energy. Rule 2 exempts them from the four-copy limit, and
 /// they carry no regulation mark, so the artifact holds none of them.
@@ -92,6 +91,8 @@ pub enum Problem {
     TooManyCopies { name: String, held: u32 },
     /// Rule 4: the card must carry a Standard regulation mark.
     NotStandard { name: String, mark: String },
+    /// Rule 3: at most one ACE SPEC card, of any kind, in the whole deck.
+    TooManyAceSpecs { held: u32 },
     /// No card in the artifact matches the line.
     NoSuchCard { line: Line },
     /// The line's set and number name one card, and its printed name another.
@@ -177,9 +178,6 @@ fn read_line(line: &str) -> Option<Line> {
 pub fn check(list: &Decklist, import: &Import) -> Report {
     let mut report = Report {
         total: list.total(),
-        uncheckable: vec![
-            "Rule 3, one ACE SPEC per deck: the card data carries no ACE SPEC field.".to_string(),
-        ],
         ..Report::default()
     };
 
@@ -247,6 +245,19 @@ pub fn check(list: &Decklist, import: &Import) -> Report {
                 .problems
                 .push(Problem::NoSuchCard { line: line.clone() }),
         }
+    }
+
+    // Rule 3: at most one ACE SPEC card, of any kind, in the whole deck.
+    let ace_specs: u32 = report
+        .matched
+        .iter()
+        .filter(|matched| import::is_ace_spec(&matched.card.id))
+        .map(|matched| matched.line.count)
+        .sum();
+    if ace_specs > 1 {
+        report
+            .problems
+            .push(Problem::TooManyAceSpecs { held: ace_specs });
     }
 
     report

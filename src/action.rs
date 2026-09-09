@@ -1302,7 +1302,10 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         // not through PlayTrainer, which never names one. Unlike Energy,
         // a Pokémon carries at most one: rule text every Tool print
         // shares, not read from any one card's own effect.
-        if def.as_trainer().is_some_and(|t| t.kind == TrainerKind::Tool) {
+        if def.as_trainer().is_some_and(|t| t.kind == TrainerKind::Tool)
+            && !(crate::import::is_ace_spec(def.print_id())
+                && state.opponent_ace_specs_blocked(player))
+        {
             for target in side.in_play() {
                 let carries_a_tool = state.pokemon(target).attached.iter().any(|c| {
                     state
@@ -1318,7 +1321,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
         }
-        if def.is_energy() && !state.is_spent(Limit::EnergyAttached(player)) {
+        if def.is_energy()
+            && !state.is_spent(Limit::EnergyAttached(player))
+            && !(crate::import::is_ace_spec(def.print_id())
+                && state.opponent_ace_specs_blocked(player))
+        {
             for target in side.in_play() {
                 actions.push(Action::AttachEnergy {
                     card: *card,
@@ -1364,7 +1371,8 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                         && !state.is_first_turn_of_game()
                 }
                 TrainerKind::Stadium => !state.is_spent(Limit::StadiumPlayed(player)),
-            };
+            } && !(crate::import::is_ace_spec(def.print_id())
+                && state.opponent_ace_specs_blocked(player));
             // A card that switches the opponent's Active needs somewhere to
             // switch to; every other effect built so far can always be
             // attempted, even where it turns up nothing to move.
@@ -1665,6 +1673,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassiveBonusDamageToActiveIfSelfDamaged(_) => false,
             crate::card::AbilityEffect::PassiveImmuneToAsleep => false,
             crate::card::AbilityEffect::PassiveDisablesOpponentActiveAbilityExceptSelf => false,
+            crate::card::AbilityEffect::PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool => false,
             crate::card::AbilityEffect::PassiveNamedAttackCostsLessPerOpponentPrizeTaken(_) => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,

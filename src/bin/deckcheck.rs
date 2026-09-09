@@ -68,6 +68,9 @@ fn describe(problem: &Problem) -> String {
         Problem::NotStandard { name, mark } => {
             format!("Rule 4: {name} carries mark {mark}, which is not Standard")
         }
+        Problem::TooManyAceSpecs { held } => {
+            format!("Rule 3: {held} ACE SPEC cards, the limit is 1")
+        }
         Problem::NameMismatch { printed, found } => {
             format!("{printed} does not match the card at that number, {found}")
         }
