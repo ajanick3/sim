@@ -3862,3 +3862,90 @@ fn hydrapple_exs_syrup_storm_is_admitted_from_the_artifact() {
         "at least one Hydrapple ex print should play"
     );
 }
+
+// --- Beyond the spec: shuffle own Energy into the deck, then flat damage — Weakness if Active only ---
+
+#[test]
+fn sonic_ripper_applies_weakness_against_the_opponents_active() {
+    let attack = Attack {
+        name: "Sonic Ripper",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::ShufflesOwnEnergyThenDamagesChosenOpponentPokemonWeaknessIfActive(220)),
+    };
+    let mut state = game_with_weak_defender(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let attached_before = state.pokemon(attacker).attached.len();
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(
+        state.phase,
+        Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive { .. }
+    ));
+    assert_eq!(state.pokemon(attacker).attached.len(), 0, "the attacker's own Energy shuffled away");
+    assert!(state.player(player).library.len() >= attached_before, "the deck grew back");
+    apply(&mut state, Action::DamageChosenOpponentPokemonWeaknessIfActive { target: defender }).unwrap();
+
+    // 440 Knocks the 200 HP defender out outright; this fixture's deck
+    // has no Bench to fall back to, so the game ends rather than
+    // opening Promoting — either way, the doubled damage landed.
+    assert_eq!(state.pokemon(defender).damage, 440, "220 doubled by Weakness against the Active");
+    assert!(matches!(state.phase, Phase::Promoting { .. }) || state.is_over());
+}
+
+#[test]
+fn sonic_ripper_skips_weakness_against_a_benched_target() {
+    let attack = Attack {
+        name: "Sonic Ripper",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::ShufflesOwnEnergyThenDamagesChosenOpponentPokemonWeaknessIfActive(220)),
+    };
+    let mut state = game_with_weak_defender(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let bench_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-sonic-ripper-bench",
+        name: "Benchmon",
+        hp: 300,
+        kind: Type::Colorless,
+        weakness: Some(Type::Colorless),
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let bench_card = deal_new_card(&mut state, opponent, bench_def);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    apply(&mut state, Action::DamageChosenOpponentPokemonWeaknessIfActive { target: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(bench_mon).damage, 220, "no Weakness doubling against a Benched target");
+}
+
+#[test]
+fn mega_skarmory_exs_sonic_ripper_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Mega Skarmory ex" && c.playable.is_some()),
+        "at least one Mega Skarmory ex print should play"
+    );
+}

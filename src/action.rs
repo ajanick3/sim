@@ -240,6 +240,10 @@ pub enum Action {
     /// Deal `Phase::ChoosingAnyOpponentPokemonDamageTarget`'s flat
     /// damage to this Pokémon, Active or Benched.
     DamageChosenOpponentPokemon { target: PokemonId },
+    /// Deal `Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive`'s
+    /// flat damage to this Pokémon, applying Weakness and Resistance
+    /// if it turns out to be the opponent's Active.
+    DamageChosenOpponentPokemonWeaknessIfActive { target: PokemonId },
     /// Pick one of `Phase::ChoosingTwoOpponentPokemonDamageTargets`'s
     /// two targets — the first call reopens the same phase excluding
     /// this pick, the second resolves it.
@@ -373,6 +377,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToUseJewelSeeker { player, .. } => Some(player),
         Phase::SearchingLibraryForTrainerCards { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
+        Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive { player, .. } => Some(player),
         Phase::ChoosingTwoOpponentPokemonDamageTargets { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
@@ -770,6 +775,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player: whose, .. } => {
             for pokemon in state.player(whose.opponent()).in_play() {
                 actions.push(Action::DamageChosenOpponentPokemon { target: pokemon });
+            }
+            return actions;
+        }
+        Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive { player: whose, .. } => {
+            for pokemon in state.player(whose.opponent()).in_play() {
+                actions.push(Action::DamageChosenOpponentPokemonWeaknessIfActive { target: pokemon });
             }
             return actions;
         }
@@ -1864,6 +1875,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::TakeTrainerCardFromLibrary { card } => format!("Take {}", state.def_of(card).name()),
         Action::FinishSearchingTrainerCards => "Stop searching".to_string(),
         Action::DamageChosenOpponentPokemon { target } => {
+            format!("Damage {}", state.pokemon_def(target).name)
+        }
+        Action::DamageChosenOpponentPokemonWeaknessIfActive { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
         }
         Action::DamageOneOfTwoChosenOpponentPokemon { target } => {

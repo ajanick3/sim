@@ -430,6 +430,17 @@ pub enum Phase {
     /// opponent's Pokémon of their choosing, Active or Benched alike.
     /// `Fezandipiti ex`'s `Cruel Arrow`.
     ChoosingAnyOpponentPokemonDamageTarget { player: PlayerId, damage: u32 },
+    /// The narrower mirror of `ChoosingAnyOpponentPokemonDamageTarget`:
+    /// the same flat damage and the same choice of any opponent
+    /// Pokémon, Active or Benched, but Weakness and Resistance apply
+    /// once the target is chosen, only if it turns out to be the
+    /// opponent's Active. `attacker` is carried so the applying side
+    /// can read its own type. `Mega Skarmory ex`'s `Sonic Ripper`.
+    ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive {
+        player: PlayerId,
+        attacker: PokemonId,
+        damage: u32,
+    },
     /// The narrower mirror of `ChoosingAnyOpponentPokemonDamageTarget`,
     /// offering only the opponent's Benched Pokémon ex. `Shaymin`'s
     /// `Pinpoint Dive`.
