@@ -1487,6 +1487,20 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             finish_searching_library_for_pokemon_of_type_or_stadium(state, player);
         }
 
+        Action::DiscardCardFromOpponentsHand { card } => {
+            let player = match state.phase {
+                Phase::ChoosingCardFromOpponentsHandToDiscard { player } => player,
+                _ => return Err(IllegalAction),
+            };
+            let opponent = player.opponent();
+            state.players[opponent.index()].hand.retain(|c| *c != card);
+            state.players[opponent.index()].discard.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} is discarded from the opponent's hand."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::DamageChosenOpponentPokemon { target } => {
             let damage = match state.phase {
                 Phase::ChoosingAnyOpponentPokemonDamageTarget { damage, .. } => damage,
@@ -3729,6 +3743,22 @@ fn resolve_attack_effect(
                     kind,
                     remaining: count,
                 };
+            }
+        }
+        crate::card::AttackEffect::KnocksOutDefenderIfExactDamageCounters(counters) => {
+            if state.pokemon(defender).damage == counters * 10 {
+                let name = state.pokemon_def(defender).name;
+                state.log.push(format!("{name} is Knocked Out outright (exactly {counters} counters)."));
+                let effective_hp = state.effective_hp(defender);
+                state.pokemon[defender.index()].damage =
+                    state.pokemon[defender.index()].damage.max(effective_hp);
+            }
+        }
+        crate::card::AttackEffect::DiscardsChosenFromOpponentsHand => {
+            let owner = state.pokemon(attacker).owner;
+            let opponent = owner.opponent();
+            if !state.player(opponent).hand.is_empty() {
+                state.phase = Phase::ChoosingCardFromOpponentsHandToDiscard { player: owner };
             }
         }
     }

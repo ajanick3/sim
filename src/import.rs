@@ -1488,6 +1488,10 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::BonusDamagePerCount(Count::OwnEnergyOfTypeAttachedAcrossSideCount(Type::Grass), 30)
         }
         ("Mega Excadrill ex", "Undermine") => AttackEffect::DiscardsTopOfOpponentsLibrary(2),
+        ("Mega Absol ex", "Terminal Period") => {
+            AttackEffect::KnocksOutDefenderIfExactDamageCounters(6)
+        }
+        ("Mega Absol ex", "Claw of Darkness") => AttackEffect::DiscardsChosenFromOpponentsHand,
         ("Celebi", "Traverse Time") => {
             AttackEffect::SearchLibraryForUpToPokemonOfTypeOrStadiumToHand(Type::Grass, 3)
         }

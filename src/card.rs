@@ -889,6 +889,23 @@ pub enum AttackEffect {
     /// shuffle. An empty library opens no phase. `Celebi`'s
     /// `Traverse Time`.
     SearchLibraryForUpToPokemonOfTypeOrStadiumToHand(Type, u32),
+    /// If the defender carries exactly this many damage counters, it
+    /// is Knocked Out outright — modeled the same way `Cursed Blast`'s
+    /// own forced Knockout already is, by raising its own damage to
+    /// its effective HP rather than a separate forced-knockout
+    /// primitive, so the ordinary `knock_out_the_dead` sweep still
+    /// awards the Prize. An "at least" reading would be wrong here —
+    /// the card says exactly. `Mega Absol ex`'s `Terminal Period`.
+    KnocksOutDefenderIfExactDamageCounters(u32),
+    /// The opponent reveals their hand; the player picks one card
+    /// from it to discard. Opens
+    /// `Phase::ChoosingCardFromOpponentsHandToDiscard` — the first
+    /// effect in the engine that lets a player choose from the
+    /// *opponent's* hand rather than their own; the engine already
+    /// tracks every zone in full, so "reveals" itself changes no
+    /// state, the same way `RevealOpponentsHand` doesn't. No cards
+    /// in hand opens no phase. `Mega Absol ex`'s `Claw of Darkness`.
+    DiscardsChosenFromOpponentsHand,
     /// This much more damage, but only if the attacker has at least
     /// this many Energy cards attached beyond its own printed
     /// attack cost — a threshold read against the cost, unlike every
