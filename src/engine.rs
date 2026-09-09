@@ -1267,6 +1267,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     // only actually attaching is.
                     state.phase = Phase::DecidingToUseSeethingSpirit { player, pokemon };
                 }
+                crate::card::AbilityEffect::OncePerTurnMayDiscardFromHandThenDrawCards(draw) => {
+                    // Spent here, unlike the choices above: the card's own
+                    // text makes the discard the cost of using this Ability
+                    // at all, not an optional follow-up once it is open.
+                    state.spend(Limit::AbilityUsed(player, ability.name));
+                    state.phase = Phase::DiscardingHandCardThenDrawing { player, pokemon, draw };
+                }
                 crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeFromHandToChosenThenHeal(
                     ..,
                 ) => {
@@ -1659,6 +1666,47 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 state.phase = Phase::Main;
                 settle(state);
             }
+        }
+
+        Action::CopyBenchedPokemonAttack { pokemon, index } => {
+            let player = match state.phase {
+                Phase::ChoosingBenchedPokemonAttackToCopy { player, .. } => player,
+                _ => return Err(IllegalAction),
+            };
+            let attacker = state
+                .player(player)
+                .active
+                .expect("Night Joker was used, so its own Pokémon is still Active");
+            let Some(defender) = state.player(player.opponent()).active else {
+                state.phase = Phase::Main;
+                settle(state);
+                return Ok(());
+            };
+            let attack = state.pokemon_def(pokemon).attacks[index].clone();
+            state.phase = Phase::Main;
+            attack_with(state, attacker, defender, attack);
+            state.pending_end_turn = true;
+            if state.phase == Phase::Main {
+                settle(state);
+            }
+        }
+
+        Action::DiscardHandCardThenDraw { card } => {
+            let (player, pokemon, draw) = match state.phase {
+                Phase::DiscardingHandCardThenDrawing { player, pokemon, draw } => {
+                    (player, pokemon, draw)
+                }
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].hand.retain(|c| *c != card);
+            state.players[player.index()].discard.push(card);
+            let name = state.pokemon_def(pokemon).name;
+            state.log.push(format!("{player:?} uses {name}'s Trade."));
+            for _ in 0..draw {
+                state.draw(player);
+            }
+            state.phase = Phase::Main;
+            settle(state);
         }
 
         Action::DamageBenchedEx { target } => {
@@ -3089,6 +3137,33 @@ fn attack(state: &mut GameState, index: usize) {
     }
 
     let attack = state.pokemon_def(attacker).attacks[index].clone();
+    // `Night Joker` names no damage or effect of its own: it borrows
+    // a Benched Pokémon's own attack outright, so this opens a choice
+    // instead of continuing through the ordinary dispatch below —
+    // `attack_with` runs once that choice names a real `Attack` to
+    // read `.effect` and `.base_damage` from. `N's Zoroark ex`.
+    if let Some(crate::card::AttackEffect::CopiesChosenBenchedPokemonAttackByNamePrefix(prefix)) =
+        attack.effect
+    {
+        let any_candidate = state
+            .player(player)
+            .bench
+            .iter()
+            .any(|p| state.pokemon_def(*p).name.starts_with(prefix));
+        if any_candidate {
+            state.phase = Phase::ChoosingBenchedPokemonAttackToCopy { player, prefix };
+        }
+        return;
+    }
+    attack_with(state, attacker, defender, attack);
+}
+
+/// The dispatch every attack's own `Attack` value runs through, once
+/// it is known — the attacker's own printed attack, ordinarily, or a
+/// Benched Pokémon's attack `Night Joker` copied. Both call sites
+/// share this so the damage and effect logic below reads only the
+/// `Attack` value itself, never which Pokémon it was printed on.
+fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, attack: crate::card::Attack) {
     if matches!(attack.effect, Some(crate::card::AttackEffect::FizzlesWithNoStadiumInPlay))
         && state.stadium.is_none()
     {
@@ -3758,6 +3833,14 @@ fn resolve_attack_effect(
         // Already done, at the top of `attack` — before damage, not
         // after, and unconditional, so there is nothing left to do.
         crate::card::AttackEffect::DiscardsDefendersTools => {}
+        // Already handled outright at the top of `attack` — this
+        // effect never reaches `attack_with` (never mind
+        // `resolve_attack_effect`), since Night Joker deals no damage
+        // and reads no `effect` of its own; the copied `Attack`'s own
+        // effect is what runs through this dispatch instead.
+        crate::card::AttackEffect::CopiesChosenBenchedPokemonAttackByNamePrefix(_) => {
+            unreachable!("attack() opens a choice for this effect and never calls attack_with")
+        }
         crate::card::AttackEffect::MoveOwnAttachedEnergyToHand => {
             let owner = state.pokemon(attacker).owner;
             let any_energy = state.pokemon(attacker).attached.iter().any(|c| state.def_of(*c).is_energy());

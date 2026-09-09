@@ -1,6 +1,6 @@
 # `N's Zoroark ex` is refused for its own attack, not its Ability
 
-**Status:** Accepted — 2026-09-07
+**Status:** Superseded by [0089](0089-night-joker-runs-attack_with-on-a-second-cards-attack.md) — 2026-09-09
 
 Ticket 02 named `N's Zoroark ex`'s Ability, `Trade` (a cost paid to
 use an Ability — discard a card, then may draw 2), as the milestone's

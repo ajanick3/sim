@@ -493,6 +493,14 @@ pub enum Phase {
         damage: u32,
         excluding: [Option<PokemonId>; 2],
     },
+    /// `player` used an attack that copies one of a Benched Pokémon's
+    /// own attacks, whose name carries this prefix. `N's Zoroark
+    /// ex`'s `Night Joker`.
+    ChoosingBenchedPokemonAttackToCopy { player: PlayerId, prefix: &'static str },
+    /// `player` used `pokemon`'s own Ability that discards a card
+    /// from hand as its own cost, then draws this many. `N's Zoroark
+    /// ex`'s `Trade`.
+    DiscardingHandCardThenDrawing { player: PlayerId, pokemon: PokemonId, draw: u32 },
     /// `player` used an attack that searches the deck for an Energy
     /// card to attach to a chosen own Benched Pokémon of this type.
     /// `Shaymin`'s `Send Flowers`.
