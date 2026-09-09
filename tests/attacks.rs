@@ -3461,6 +3461,100 @@ fn stunfisks_paralyzing_crackle_is_admitted_from_the_artifact() {
     assert!(card.playable.is_some(), "Stunfisk's Paralyzing Crackle print should play");
 }
 
+// --- Pouncing Trap: one restriction record, two consequences ---
+
+#[test]
+fn pouncing_trap_blocks_retreat_and_adds_bonus_damage_next_turn() {
+    let attack = Attack {
+        name: "Pouncing Trap",
+        cost: vec![Type::Colorless],
+        base_damage: 30,
+        inflicts: None,
+        effect: Some(AttackEffect::DefenderCannotRetreatAndTakesMoreDamageNextTurn(100)),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let energy_card = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.pokemon[defender.index()].attached.push(energy_card);
+    let bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    assert!(
+        !legal_actions(&state).into_iter().any(|a| matches!(a, Action::Retreat { .. })),
+        "the Defending Pokémon cannot retreat during this turn"
+    );
+
+    // The opponent's turn ends; now it's the attacker's own next turn,
+    // and the same Pokémon (still Active — it never retreated) takes
+    // the bonus damage from an ordinary attack.
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    assert_eq!(state.current, player, "back to the attacker's own turn");
+    let damage_before = state.pokemon(defender).damage;
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage - damage_before, 130, "30 base plus the 100 bonus");
+}
+
+#[test]
+fn pouncing_traps_bonus_does_not_carry_past_its_one_turn() {
+    let attack = Attack {
+        name: "Pouncing Trap",
+        cost: vec![Type::Colorless],
+        base_damage: 30,
+        inflicts: None,
+        effect: Some(AttackEffect::DefenderCannotRetreatAndTakesMoreDamageNextTurn(100)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let defender = state.player(player.opponent()).active.unwrap();
+
+    pay_and_attack(&mut state);
+    // 3 more EndTurns, none of them an attack: opponent's turn (the
+    // retreat lock's own turn) ends, then the attacker's own next
+    // turn (the bonus's one armed turn) passes without attacking,
+    // then the opponent's turn after that ends too, un-arming it.
+    for _ in 0..3 {
+        apply(&mut state, Action::EndTurn).unwrap();
+        while state.phase != Phase::Main && !state.is_over() {
+            let first = legal_actions(&state)[0];
+            apply(&mut state, first).unwrap();
+        }
+    }
+    assert_eq!(state.current, player, "back to the attacker's own turn, one turn too late for the bonus");
+    let damage_before = state.pokemon(defender).damage;
+    pay_and_attack(&mut state);
+    assert_eq!(
+        state.pokemon(defender).damage - damage_before,
+        30,
+        "the restriction's one turn has passed, so only the base 30 lands"
+    );
+}
+
+#[test]
+fn stunfisks_pouncing_trap_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me02.5-062").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Stunfisk's Pouncing Trap print should play");
+}
+
 // --- Beyond the spec: discard a fixed number of own Energy, chosen by the player ---
 
 #[test]

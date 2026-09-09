@@ -241,6 +241,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // copying, and Trade's discard-then-draw — takes it to 783.
     // Slowking's Seek Inspiration, reusing that same shape, takes it
     // to 784. Chi-Yu's three prints (Scorching Earth, Allure/Ground
-    // Melter, Whirling Envy) take it to 787.
-    assert_eq!(admitted, 787, "coverage moves only on purpose");
+    // Melter, Whirling Envy) take it to 787. Stunfisk's Pouncing
+    // Trap (a second restriction record, for a bonus one turn later
+    // than its own retreat lock) takes it to 788.
+    assert_eq!(admitted, 788, "coverage moves only on purpose");
 }

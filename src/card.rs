@@ -663,6 +663,18 @@ pub enum AttackEffect {
     /// The defending Pokémon cannot retreat during the opponent's very
     /// next turn. `Yveltal`, `Wellspring Mask Ogerpon ex`.
     DefenderCannotRetreatNextTurn,
+    /// The same retreat lock `DefenderCannotRetreatNextTurn` grants
+    /// ("during your opponent's next turn"), combined with this much
+    /// more damage from any attack the granting player deals to that
+    /// same Pokémon during their own very next turn — one turn later
+    /// than the retreat lock, since "during your next turn" and
+    /// "during your opponent's next turn" name different turns.
+    /// `Attack` holds only one `AttackEffect`, so both consequences
+    /// read from this one variant: the retreat lock reuses
+    /// `opponent_next_turn_restriction`, and the bonus damage sets
+    /// its own `bonus_damage_to_pokemon_on_granting_players_next_turn`.
+    /// `Stunfisk`'s `Pouncing Trap`.
+    DefenderCannotRetreatAndTakesMoreDamageNextTurn(u32),
     /// The attacker cannot use any attack during their own very next
     /// turn. `N's Zekrom`'s `Rampaging Thunder`.
     AttackerCannotAttackNextTurn,

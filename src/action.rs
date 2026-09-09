@@ -1568,6 +1568,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             state.opponent_next_turn_restriction,
             Some((target, crate::card::AttackEffect::DefenderCannotRetreatNextTurn, _))
                 if target == active
+        ) || matches!(
+            state.opponent_next_turn_restriction,
+            Some((
+                target,
+                crate::card::AttackEffect::DefenderCannotRetreatAndTakesMoreDamageNextTurn(_),
+                _
+            )) if target == active
         );
         if !state.is_spent(Limit::Retreated(player))
             && !held(active)

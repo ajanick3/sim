@@ -3514,6 +3514,16 @@ fn resolve_attack_effect(
                 state.log.push(format!("{name} cannot retreat next turn."));
             }
         }
+        crate::card::AttackEffect::DefenderCannotRetreatAndTakesMoreDamageNextTurn(amount) => {
+            if !state.attack_effects_on_it_prevented(defender) {
+                state.opponent_next_turn_restriction = Some((defender, effect, state.current));
+                let granting_player = state.pokemon(attacker).owner;
+                state.bonus_damage_to_pokemon_on_granting_players_next_turn =
+                    Some((defender, amount, granting_player, false));
+                let name = state.pokemon_def(defender).name;
+                state.log.push(format!("{name} cannot retreat, and takes more damage, next turn."));
+            }
+        }
         crate::card::AttackEffect::MayShuffleFixedEnergyThenDamageChosenBenched { count, damage } => {
             let owner = state.pokemon(attacker).owner;
             let energy_count = state
@@ -4364,6 +4374,22 @@ fn damage_dealt_with(
         && target == defender
     {
         damage = damage.saturating_sub(amount);
+    }
+    // `Pouncing Trap`'s own bonus half — a separate record from its
+    // retreat lock, since "during your next turn" names the granting
+    // player's own next turn, one turn later than the retreat lock's
+    // "during your opponent's next turn." Read after Weakness and
+    // Resistance per the printed text, only while `damage` is still
+    // positive (a fizzled attack takes no bonus either, matching Step
+    // 32's own 0-damage stop), and only once armed — the turn it was
+    // granted must not see it.
+    if damage > 0
+        && let Some((target, amount, granting_player, true)) =
+            state.bonus_damage_to_pokemon_on_granting_players_next_turn
+        && target == defender
+        && state.current == granting_player
+    {
+        damage += amount;
     }
     if !ignore_defenders_effects
         && !state.abilities_disabled_for(defender)
