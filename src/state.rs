@@ -483,6 +483,16 @@ pub enum Phase {
     /// opponent's Pokémon" with only one to name. `Iron Crown ex`'s
     /// `Twin Shotels`.
     ChoosingTwoOpponentPokemonDamageTargets { player: PlayerId, damage: u32, excluding: Option<PokemonId> },
+    /// The same shape `ChoosingTwoOpponentPokemonDamageTargets` takes,
+    /// widened to 3 distinct picks. `excluding` holds the picks made
+    /// so far — at most 2, since a 3rd pick always finishes the
+    /// choice — as a fixed array rather than a `Vec`, since `Phase`
+    /// stays `Copy`. `Kyurem`'s `Trifrost`.
+    ChoosingThreeOpponentPokemonDamageTargets {
+        player: PlayerId,
+        damage: u32,
+        excluding: [Option<PokemonId>; 2],
+    },
     /// `player` used an attack that searches the deck for an Energy
     /// card to attach to a chosen own Benched Pokémon of this type.
     /// `Shaymin`'s `Send Flowers`.
@@ -1296,6 +1306,7 @@ impl GameState {
             // effect is what tells the two apart, the same field a
             // Special Energy needed once one could be admitted at all.
             CardFilter::BasicEnergy => self.def_of(card).as_energy().is_some_and(|e| e.effect.is_none()),
+            CardFilter::AnyEnergy => self.def_of(card).is_energy(),
             CardFilter::PokemonEx => self.def_of(card).as_pokemon().is_some_and(|p| p.prizes > 1),
             CardFilter::BasicPokemonWithHpAtMost(hp) => self
                 .def_of(card)

@@ -1327,7 +1327,10 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 | crate::card::AbilityEffect::PassiveImmuneToAsleep
                 | crate::card::AbilityEffect::PassiveDisablesOpponentActiveAbilityExceptSelf
                 | crate::card::AbilityEffect::PassiveNamedAttackCostsLessPerOpponentPrizeTaken(_)
-                | crate::card::AbilityEffect::PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool => {
+                | crate::card::AbilityEffect::PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool
+                | crate::card::AbilityEffect::PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(
+                    ..,
+                ) => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
@@ -1623,6 +1626,35 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     damage,
                     excluding: Some(target),
                 };
+            } else {
+                state.phase = Phase::Main;
+                settle(state);
+            }
+        }
+
+        Action::DamageOneOfThreeChosenOpponentPokemon { target } => {
+            let (player, damage, excluding) = match state.phase {
+                Phase::ChoosingThreeOpponentPokemonDamageTargets { player, damage, excluding } => {
+                    (player, damage, excluding)
+                }
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[target.index()].damage += damage;
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} takes {damage}."));
+            let first_open = excluding.iter().position(|slot| slot.is_none());
+            let more_targets = state
+                .player(player.opponent())
+                .in_play()
+                .iter()
+                .any(|p| *p != target && !excluding.contains(&Some(*p)));
+            if let Some(slot) = first_open
+                && more_targets
+            {
+                let mut excluding = excluding;
+                excluding[slot] = Some(target);
+                state.phase =
+                    Phase::ChoosingThreeOpponentPokemonDamageTargets { player, damage, excluding };
             } else {
                 state.phase = Phase::Main;
                 settle(state);
@@ -3673,6 +3705,29 @@ fn resolve_attack_effect(
                 .any(|p| state.pokemon_def(*p).prizes > 1);
             if any_benched_ex {
                 state.phase = Phase::ChoosingBenchedExDamageTarget { player: owner, damage };
+            }
+        }
+        crate::card::AttackEffect::DiscardsOwnEnergyThenDamagesThreeChosenOpponentPokemon(damage) => {
+            let owner = state.pokemon(attacker).owner;
+            let energy: Vec<CardId> = state
+                .pokemon(attacker)
+                .attached
+                .iter()
+                .copied()
+                .filter(|c| state.def_of(*c).is_energy())
+                .collect();
+            for card in energy {
+                state.pokemon[attacker.index()].attached.retain(|c| *c != card);
+                state.players[owner.index()].discard.push(card);
+            }
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} discards all its Energy."));
+            if !state.player(owner.opponent()).in_play().is_empty() {
+                state.phase = Phase::ChoosingThreeOpponentPokemonDamageTargets {
+                    player: owner,
+                    damage,
+                    excluding: [None, None],
+                };
             }
         }
         crate::card::AttackEffect::SearchEnergyAttachToBenchedOfType(kind) => {

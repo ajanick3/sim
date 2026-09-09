@@ -93,8 +93,9 @@ fn the_kinds_add_up_to_the_pool() {
     // (four prints) took it to 262; Nighttime Mine took it to 261;
     // Area Zero Underdepths (three prints) took it to 258; Battle
     // Cage (two prints) took it to 256; Team Rocket's Watchtower
-    // (two prints) takes it to 254.
-    assert_eq!(trainers, 254, "the Trainers still refused, by kind");
+    // (two prints) took it to 254; Colress's Tenacity (two prints)
+    // takes it to 252.
+    assert_eq!(trainers, 252, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

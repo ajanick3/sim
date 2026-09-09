@@ -545,6 +545,29 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             },
         ),
+        "Colress's Tenacity" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![
+                    Slot {
+                        filter: CardFilter::TrainerOfKind(TrainerKind::Stadium),
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    },
+                    Slot {
+                        filter: CardFilter::AnyEnergy,
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    },
+                ],
+                then: None,
+            },
+        ),
         "Dawn" => (
             free,
             TrainerEffect::Decide {
@@ -1366,6 +1389,11 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Genesect", "ACE Nullifier") => {
             AbilityEffect::PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool
         }
+        ("Kyurem", "Plasma Bane") => {
+            AbilityEffect::PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(
+                "Trifrost", "Colress",
+            )
+        }
         ("Blaziken ex", "Seething Spirit") => {
             AbilityEffect::OncePerTurnMayAttachBasicEnergyFromDiscardToChosen
         }
@@ -1558,6 +1586,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Fan Rotom", "Assault Landing") => AttackEffect::FizzlesWithNoStadiumInPlay,
         ("Pecharunt ex", "Irritated Outburst") => {
             AttackEffect::DamagePerCount(Count::OpponentPrizesTakenCount, 60)
+        }
+        ("Kyurem", "Trifrost") => {
+            AttackEffect::DiscardsOwnEnergyThenDamagesThreeChosenOpponentPokemon(110)
         }
         ("Genesect", "Bug's Cannon") => AttackEffect::DamagePerCountToChosenOpponentPokemon(
             Count::OwnEnergyOfTypeAttachedCount(Type::Grass),

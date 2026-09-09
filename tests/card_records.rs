@@ -235,6 +235,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // entirely — the same shape DamageCountersToOpponentBenchAnyWay
     // already takes) completes all 3 Alakazam prints.
     // Genesect's ACE Nullifier (the one Ability slot ACE SPEC
-    // classification unlocked) admits its one print.
-    assert_eq!(admitted, 774, "coverage moves only on purpose");
+    // classification unlocked) admits its one print. Colress's
+    // Tenacity (both prints) and Kyurem's Plasma Bane/Trifrost add 3
+    // more.
+    assert_eq!(admitted, 777, "coverage moves only on purpose");
 }
