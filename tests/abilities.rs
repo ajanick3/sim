@@ -4128,3 +4128,217 @@ fn boom_boom_groove_is_not_offered_without_a_festival_lead_active() {
         "the Active itself carries this Ability, not Festival Lead, so it is not offered"
     );
 }
+
+// --- Wild Growth: each Basic Grass Energy pays as if it were two ---
+
+fn wild_growth_game() -> (GameState, sim::ids::PokemonId) {
+    let mut db = CardDb::new();
+    let carrier = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-wild-growth-carrier",
+        name: "Meganium",
+        hp: 160,
+        kind: Type::Grass,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Wild Growth",
+            effect: sim::card::AbilityEffect::PassiveDoublesBasicGrassEnergyForCost,
+        }),
+        attacks: vec![Attack {
+            name: "Solar Beam",
+            cost: vec![Type::Grass, Type::Grass, Type::Grass, Type::Grass],
+            base_damage: 140,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-wild-growth-defender",
+        name: "Defendmon",
+        hp: 300,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let grass_energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-wild-growth-grass-energy",
+        name: "Grass Energy",
+        kind: Type::Grass,
+        effect: None,
+    }));
+    let mut carrier_deck = vec![carrier; 4];
+    while carrier_deck.len() < 60 {
+        carrier_deck.push(grass_energy);
+    }
+    let mut defender_deck = vec![defender_mon; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(grass_energy);
+    }
+    let mut state =
+        GameState::new(db, [carrier_deck, defender_deck], Box::new(SeededRng::new(3)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    (state, active)
+}
+
+#[test]
+fn wild_growth_pays_a_four_grass_cost_with_only_two_grass_energy() {
+    let (mut state, active) = wild_growth_game();
+    let player = state.current;
+    for _ in 0..2 {
+        let energy = *state
+            .player(player)
+            .library
+            .iter()
+            .find(|c| state.def_of(**c).is_energy())
+            .unwrap();
+        state.players[player.index()].library.retain(|c| *c != energy);
+        state.pokemon[active.index()].attached.push(energy);
+    }
+
+    assert!(
+        legal_actions(&state).iter().any(|a| matches!(a, Action::Attack { .. })),
+        "Wild Growth doubles each of the 2 attached Grass Energy, covering the 4-cost"
+    );
+}
+
+#[test]
+fn without_wild_growth_two_grass_energy_falls_short_of_a_four_cost() {
+    let ability = Ability {
+        name: "Overgrow",
+        effect: sim::card::AbilityEffect::PassiveImmuneToAsleep,
+    };
+    let (mut state, active) = {
+        let attack = Attack {
+            name: "Solar Beam",
+            cost: vec![Type::Grass, Type::Grass, Type::Grass, Type::Grass],
+            base_damage: 140,
+            inflicts: None,
+            effect: None,
+        };
+        let mut db = CardDb::new();
+        let carrier = db.add(CardDef::Pokemon(Pokemon {
+            markers: Vec::new(),
+            print_id: "test-no-wild-growth-carrier",
+            name: "Meganium",
+            hp: 160,
+            kind: Type::Grass,
+            weakness: None,
+            resistance: None,
+            retreat_cost: 2,
+            prizes: 1,
+            stage: Stage::Basic,
+            evolve_from: None,
+            evolves_from_basic: None,
+            ability: Some(ability),
+            attacks: vec![attack],
+        }));
+        let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+            markers: Vec::new(),
+            print_id: "test-no-wild-growth-defender",
+            name: "Defendmon",
+            hp: 300,
+            kind: Type::Colorless,
+            weakness: None,
+            resistance: None,
+            retreat_cost: 1,
+            prizes: 1,
+            stage: Stage::Basic,
+            evolve_from: None,
+            evolves_from_basic: None,
+            ability: None,
+            attacks: vec![Attack {
+                name: "Tackle",
+                cost: vec![Type::Colorless],
+                base_damage: 10,
+                inflicts: None,
+                effect: None,
+            }],
+        }));
+        let grass_energy = db.add(CardDef::Energy(Energy {
+            print_id: "test-no-wild-growth-grass-energy",
+            name: "Grass Energy",
+            kind: Type::Grass,
+            effect: None,
+        }));
+        let mut carrier_deck = vec![carrier; 4];
+        while carrier_deck.len() < 60 {
+            carrier_deck.push(grass_energy);
+        }
+        let mut defender_deck = vec![defender_mon; 4];
+        while defender_deck.len() < 60 {
+            defender_deck.push(grass_energy);
+        }
+        let mut state =
+            GameState::new(db, [carrier_deck, defender_deck], Box::new(SeededRng::new(3)));
+        while state.phase != Phase::Main && !state.is_over() {
+            let first = legal_actions(&state)[0];
+            apply(&mut state, first).unwrap();
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
+        while state.phase != Phase::Main && !state.is_over() {
+            let first = legal_actions(&state)[0];
+            apply(&mut state, first).unwrap();
+        }
+        let player = state.current;
+        let active = state.player(player).active.unwrap();
+        (state, active)
+    };
+    let player = state.current;
+    for _ in 0..2 {
+        let energy = *state
+            .player(player)
+            .library
+            .iter()
+            .find(|c| state.def_of(**c).is_energy())
+            .unwrap();
+        state.players[player.index()].library.retain(|c| *c != energy);
+        state.pokemon[active.index()].attached.push(energy);
+    }
+
+    assert!(
+        !legal_actions(&state).iter().any(|a| matches!(a, Action::Attack { .. })),
+        "without Wild Growth, 2 Grass Energy alone falls short of a 4-cost"
+    );
+}
+
+#[test]
+fn meganium_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Meganium" && c.playable.is_some()),
+        "at least one Meganium print should play"
+    );
+}

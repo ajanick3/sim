@@ -1789,6 +1789,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             ) => false,
             crate::card::AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp => false,
             crate::card::AbilityEffect::PassiveFestivalLead => false,
+            crate::card::AbilityEffect::PassiveDoublesBasicGrassEnergyForCost => false,
             crate::card::AbilityEffect::OncePerTurnMaySearchAnyCardIfActiveHasNamedAbility(name) => {
                 side.active.is_some_and(|a| {
                     state.pokemon_def(a).ability.is_some_and(|active_ability| active_ability.name == name)

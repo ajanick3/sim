@@ -253,6 +253,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // ordinary settle sweep) takes it to 791. Festival Lead — the
     // first Ability granting a genuine second attack in one turn —
     // and Boom Boom Groove close out Goldeen, Seaking, Thwackey, and
-    // Dipplin's remaining prints, taking it to 799.
-    assert_eq!(admitted, 799, "coverage moves only on purpose");
+    // Dipplin's remaining prints, taking it to 799. Wild Growth
+    // (each Basic Grass Energy pays as if it were two, read directly
+    // in pays_cost) closes both Meganium prints, taking it to 801.
+    assert_eq!(admitted, 801, "coverage moves only on purpose");
 }
