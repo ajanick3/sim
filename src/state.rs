@@ -730,6 +730,17 @@ pub struct GameState {
     /// `Koraidon ex`'s and `Annihilape`'s own `Impact Blow`. Armed
     /// and cleared the same way `own_next_turn_restriction` is.
     pub locked_attack_next_turn: Option<(PokemonId, &'static str, bool)>,
+    /// A restriction on a specific Pokémon, applied during the
+    /// *granting player's own* very next turn — the mirror of
+    /// `own_next_turn_restriction`, but keyed by the granting
+    /// player rather than the target's owner, since the target here
+    /// is the opponent's own Pokémon, not the granting player's.
+    /// `armed`/clearing follow the same delayed-arm shape:
+    /// `armed` flips `true` the first `begin_turn` after granting
+    /// (the target owner's own turn, which must not see the bonus
+    /// yet), and the field clears once the granting player's one
+    /// restricted turn ends. `Stunfisk`'s `Pouncing Trap`.
+    pub bonus_damage_to_pokemon_on_granting_players_next_turn: Option<(PokemonId, u32, PlayerId, bool)>,
     /// A bonus this turn's attacks carry, set by a card such as `Black
     /// Belt's Training`. Cleared at `begin_turn`, the same as `spent` —
     /// "this turn" ends there regardless of whose turn is starting.
@@ -803,6 +814,7 @@ impl GameState {
             opponent_next_turn_restriction: None,
             own_next_turn_restriction: None,
             locked_attack_next_turn: None,
+            bonus_damage_to_pokemon_on_granting_players_next_turn: None,
             turn_bonus: None,
             bonus_prize_if_own_tera_attacker_knocks_out: None,
             attacking_defender: None,
@@ -1512,6 +1524,17 @@ impl GameState {
                 self.own_next_turn_restriction = None;
             } else if !armed && !is_targets_turn {
                 self.own_next_turn_restriction = Some((target, effect, true));
+            }
+        }
+        if let Some((target, amount, granting_player, armed)) =
+            self.bonus_damage_to_pokemon_on_granting_players_next_turn
+        {
+            let is_granting_players_turn = self.current == granting_player;
+            if armed && !is_granting_players_turn {
+                self.bonus_damage_to_pokemon_on_granting_players_next_turn = None;
+            } else if !armed && !is_granting_players_turn {
+                self.bonus_damage_to_pokemon_on_granting_players_next_turn =
+                    Some((target, amount, granting_player, true));
             }
         }
         if let Some((target, name, armed)) = self.locked_attack_next_turn {

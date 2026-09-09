@@ -1590,6 +1590,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Pecharunt ex", "Irritated Outburst") => {
             AttackEffect::DamagePerCount(Count::OpponentPrizesTakenCount, 60)
         }
+        ("Stunfisk", "Pouncing Trap") => {
+            AttackEffect::DefenderCannotRetreatAndTakesMoreDamageNextTurn(100)
+        }
         ("Chi-Yu", "Scorching Earth") => {
             AttackEffect::DiscardsOpponentsStadiumThenOpponentCannotPlayStadiumsNextTurn
         }
