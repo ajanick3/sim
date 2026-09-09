@@ -244,6 +244,12 @@ pub enum Action {
     /// flat damage to this Pokémon, applying Weakness and Resistance
     /// if it turns out to be the opponent's Active.
     DamageChosenOpponentPokemonWeaknessIfActive { target: PokemonId },
+    /// Pick this own Benched Pokémon as `Phase::ChoosingOwnBenchedSourceForDamageMove`'s
+    /// source.
+    ChooseOwnBenchedSourceForDamageMove { source: PokemonId },
+    /// Pick this opponent Pokémon as `Phase::ChoosingOpponentTargetForDamageMove`'s
+    /// target, moving all the source's damage counters onto it.
+    MoveDamageToChosenOpponentPokemon { target: PokemonId },
     /// Pick one of `Phase::ChoosingTwoOpponentPokemonDamageTargets`'s
     /// two targets — the first call reopens the same phase excluding
     /// this pick, the second resolves it.
@@ -378,6 +384,8 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::SearchingLibraryForTrainerCards { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive { player, .. } => Some(player),
+        Phase::ChoosingOwnBenchedSourceForDamageMove { player } => Some(player),
+        Phase::ChoosingOpponentTargetForDamageMove { player, .. } => Some(player),
         Phase::ChoosingTwoOpponentPokemonDamageTargets { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
@@ -781,6 +789,18 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive { player: whose, .. } => {
             for pokemon in state.player(whose.opponent()).in_play() {
                 actions.push(Action::DamageChosenOpponentPokemonWeaknessIfActive { target: pokemon });
+            }
+            return actions;
+        }
+        Phase::ChoosingOwnBenchedSourceForDamageMove { player: whose } => {
+            for pokemon in &state.player(whose).bench {
+                actions.push(Action::ChooseOwnBenchedSourceForDamageMove { source: *pokemon });
+            }
+            return actions;
+        }
+        Phase::ChoosingOpponentTargetForDamageMove { player: whose, .. } => {
+            for pokemon in state.player(whose.opponent()).in_play() {
+                actions.push(Action::MoveDamageToChosenOpponentPokemon { target: pokemon });
             }
             return actions;
         }
@@ -1879,6 +1899,12 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::DamageChosenOpponentPokemonWeaknessIfActive { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
+        }
+        Action::ChooseOwnBenchedSourceForDamageMove { source } => {
+            format!("Move damage from {}", state.pokemon_def(source).name)
+        }
+        Action::MoveDamageToChosenOpponentPokemon { target } => {
+            format!("Move damage to {}", state.pokemon_def(target).name)
         }
         Action::DamageOneOfTwoChosenOpponentPokemon { target } => {
             format!("Damage {}", state.pokemon_def(target).name)

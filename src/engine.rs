@@ -1493,6 +1493,29 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::ChooseOwnBenchedSourceForDamageMove { source } => {
+            let player = match state.phase {
+                Phase::ChoosingOwnBenchedSourceForDamageMove { player } => player,
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::ChoosingOpponentTargetForDamageMove { player, source };
+        }
+
+        Action::MoveDamageToChosenOpponentPokemon { target } => {
+            let source = match state.phase {
+                Phase::ChoosingOpponentTargetForDamageMove { source, .. } => source,
+                _ => return Err(IllegalAction),
+            };
+            let amount = state.pokemon(source).damage;
+            state.pokemon[source.index()].damage = 0;
+            state.pokemon[target.index()].damage += amount;
+            let source_name = state.pokemon_def(source).name;
+            let target_name = state.pokemon_def(target).name;
+            state.log.push(format!("{amount} damage moves from {source_name} to {target_name}."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::DamageOneOfTwoChosenOpponentPokemon { target } => {
             let (player, damage, excluding) = match state.phase {
                 Phase::ChoosingTwoOpponentPokemonDamageTargets { player, damage, excluding } => {
@@ -3399,6 +3422,22 @@ fn resolve_attack_effect(
                 attacker,
                 damage,
             };
+        }
+        crate::card::AttackEffect::DamagesEveryPokemonWithAnAbility(amount) => {
+            for player in [PlayerId::One, PlayerId::Two] {
+                for pokemon in state.player(player).in_play() {
+                    if state.pokemon_def(pokemon).ability.is_some() {
+                        state.pokemon[pokemon.index()].damage += amount;
+                    }
+                }
+            }
+            state.log.push(format!("every Pokemon with an Ability takes {amount}."));
+        }
+        crate::card::AttackEffect::MovesAllDamageFromChosenOwnBenchedToChosenOpponentPokemon => {
+            let owner = state.pokemon(attacker).owner;
+            if !state.player(owner).bench.is_empty() {
+                state.phase = Phase::ChoosingOwnBenchedSourceForDamageMove { player: owner };
+            }
         }
         crate::card::AttackEffect::DrawCards(count) => {
             let owner = state.pokemon(attacker).owner;

@@ -856,6 +856,18 @@ pub enum AttackEffect {
     /// `damage_dealt_with`'s own one pass too. `Mega Skarmory ex`'s
     /// `Sonic Ripper`.
     ShufflesOwnEnergyThenDamagesChosenOpponentPokemonWeaknessIfActive(u32),
+    /// Put this many damage counters on every Pokémon in play, both
+    /// sides, that is printed with an Ability — carried regardless
+    /// of whether that Ability is currently disabled (`Team Rocket's
+    /// Watchtower`, `Midnight Fluttering`); the card's own text reads
+    /// "has an Ability," not "can use one." No choice involved.
+    /// `Cofagrigus`'s `Law of the Underworld`.
+    DamagesEveryPokemonWithAnAbility(u32),
+    /// Move all damage counters from 1 of the player's own Benched
+    /// Pokémon (their choice) to 1 of the opponent's Pokémon, Active
+    /// or Benched (their choice too) — two sequential picks, one
+    /// phase each. `Cofagrigus`'s `Extended Damagriiigus`.
+    MovesAllDamageFromChosenOwnBenchedToChosenOpponentPokemon,
     /// This much more damage, but only if the attacker has at least
     /// this many Energy cards attached beyond its own printed
     /// attack cost — a threshold read against the cost, unlike every

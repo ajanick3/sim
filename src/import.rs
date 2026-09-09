@@ -1488,6 +1488,10 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::BonusDamagePerCount(Count::OwnEnergyOfTypeAttachedAcrossSideCount(Type::Grass), 30)
         }
         ("Mega Excadrill ex", "Undermine") => AttackEffect::DiscardsTopOfOpponentsLibrary(2),
+        ("Cofagrigus", "Law of the Underworld") => AttackEffect::DamagesEveryPokemonWithAnAbility(60),
+        ("Cofagrigus", "Extended Damagriiigus") => {
+            AttackEffect::MovesAllDamageFromChosenOwnBenchedToChosenOpponentPokemon
+        }
         ("Mega Skarmory ex", "Sonic Ripper") => {
             AttackEffect::ShufflesOwnEnergyThenDamagesChosenOpponentPokemonWeaknessIfActive(220)
         }
