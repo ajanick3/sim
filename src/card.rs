@@ -868,6 +868,15 @@ pub enum AttackEffect {
     /// or Benched (their choice too) — two sequential picks, one
     /// phase each. `Cofagrigus`'s `Extended Damagriiigus`.
     MovesAllDamageFromChosenOwnBenchedToChosenOpponentPokemon,
+    /// The player picks 1 of their own Benched Pokémon first, then
+    /// searches the deck for up to this many Basic Energy cards of
+    /// this type and attaches all of them to that one chosen
+    /// Pokémon, then shuffles — target chosen before the search,
+    /// unlike `SearchEnergyAttachToBenchedOfType`, which restricts
+    /// the target to a Pokémon already matching the Energy's own
+    /// type and so never really chooses. `Smoochum`'s `Delightful
+    /// Kiss`.
+    SearchesBasicEnergyOfTypeAttachToChosenBenched(Type, u32),
     /// This much more damage, but only if the attacker has at least
     /// this many Energy cards attached beyond its own printed
     /// attack cost — a threshold read against the cost, unlike every

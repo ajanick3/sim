@@ -448,6 +448,18 @@ pub enum Phase {
     /// `player` already picked `source`; now picks which of the
     /// opponent's Pokémon, Active or Benched, receives all of it.
     ChoosingOpponentTargetForDamageMove { player: PlayerId, source: PokemonId },
+    /// `player` picks 1 of their own Benched Pokémon to receive the
+    /// search below — the first of two sequential picks. No qualifying
+    /// Bench opens no phase. `Smoochum`'s `Delightful Kiss`.
+    ChoosingBenchedTargetForEnergySearch { player: PlayerId, kind: crate::card::Type, max: u32 },
+    /// `player` already picked `target`; now taking up to `remaining`
+    /// Basic Energy of `kind` from the library to attach to it.
+    SearchingEnergyOfTypeToAttachToChosen {
+        player: PlayerId,
+        kind: crate::card::Type,
+        target: PokemonId,
+        remaining: u32,
+    },
     /// The narrower mirror of `ChoosingAnyOpponentPokemonDamageTarget`,
     /// offering only the opponent's Benched Pokémon ex. `Shaymin`'s
     /// `Pinpoint Dive`.

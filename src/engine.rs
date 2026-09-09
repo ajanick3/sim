@@ -1516,6 +1516,47 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::ChooseBenchedTargetForEnergySearch { target } => {
+            let (player, kind, max) = match state.phase {
+                Phase::ChoosingBenchedTargetForEnergySearch { player, kind, max } => (player, kind, max),
+                _ => return Err(IllegalAction),
+            };
+            state.phase =
+                Phase::SearchingEnergyOfTypeToAttachToChosen { player, kind, target, remaining: max };
+        }
+
+        Action::TakeEnergyOfTypeToAttachToChosen { card } => {
+            let (player, kind, target, remaining) = match state.phase {
+                Phase::SearchingEnergyOfTypeToAttachToChosen { player, kind, target, remaining } => {
+                    (player, kind, target, remaining)
+                }
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.pokemon[target.index()].attached.push(card);
+            let name = state.def_of(card).name();
+            let target_name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} attaches to {target_name}."));
+            if remaining <= 1 {
+                finish_searching_energy_of_type_to_attach_to_chosen(state, player);
+            } else {
+                state.phase = Phase::SearchingEnergyOfTypeToAttachToChosen {
+                    player,
+                    kind,
+                    target,
+                    remaining: remaining - 1,
+                };
+            }
+        }
+
+        Action::FinishSearchingEnergyOfTypeToAttachToChosen => {
+            let player = match state.phase {
+                Phase::SearchingEnergyOfTypeToAttachToChosen { player, .. } => player,
+                _ => return Err(IllegalAction),
+            };
+            finish_searching_energy_of_type_to_attach_to_chosen(state, player);
+        }
+
         Action::DamageOneOfTwoChosenOpponentPokemon { target } => {
             let (player, damage, excluding) = match state.phase {
                 Phase::ChoosingTwoOpponentPokemonDamageTargets { player, damage, excluding } => {
@@ -3439,6 +3480,17 @@ fn resolve_attack_effect(
                 state.phase = Phase::ChoosingOwnBenchedSourceForDamageMove { player: owner };
             }
         }
+        crate::card::AttackEffect::SearchesBasicEnergyOfTypeAttachToChosenBenched(kind, max) => {
+            let owner = state.pokemon(attacker).owner;
+            let has_energy = state
+                .player(owner)
+                .library
+                .iter()
+                .any(|c| state.matches_filter(*c, crate::card::CardFilter::BasicEnergyOfType(kind)));
+            if !state.player(owner).bench.is_empty() && has_energy {
+                state.phase = Phase::ChoosingBenchedTargetForEnergySearch { player: owner, kind, max };
+            }
+        }
         crate::card::AttackEffect::DrawCards(count) => {
             let owner = state.pokemon(attacker).owner;
             for _ in 0..count {
@@ -3673,6 +3725,13 @@ fn finish_searching_library_for_any_cards(state: &mut GameState, player: PlayerI
 }
 
 fn finish_searching_library_for_trainer_cards(state: &mut GameState, player: PlayerId) {
+    let library = &mut state.players[player.index()].library;
+    shuffle(state.rng.as_mut(), library);
+    state.phase = Phase::Main;
+    settle(state);
+}
+
+fn finish_searching_energy_of_type_to_attach_to_chosen(state: &mut GameState, player: PlayerId) {
     let library = &mut state.players[player.index()].library;
     shuffle(state.rng.as_mut(), library);
     state.phase = Phase::Main;

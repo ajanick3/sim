@@ -4075,3 +4075,117 @@ fn cofagriguss_extended_damagriiigus_is_admitted_from_the_artifact() {
         "at least one Cofagrigus print should play"
     );
 }
+
+// --- Beyond the spec: choose a Bench target first, then search Energy to attach to it ---
+
+#[test]
+fn delightful_kiss_attaches_up_to_two_searched_energy_to_the_chosen_target() {
+    let attack = Attack {
+        name: "Delightful Kiss",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchesBasicEnergyOfTypeAttachToChosenBenched(Type::Psychic, 2)),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let psychic_energy = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-delightful-kiss-energy",
+        name: "Psychic Energy",
+        kind: Type::Psychic,
+        effect: None,
+    }));
+    let bench_card = deal_new_card(&mut state, player, defender_ex);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+    for _ in 0..2 {
+        let card = deal_new_card(&mut state, player, psychic_energy);
+        state.players[player.index()].library.push(card);
+    }
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingBenchedTargetForEnergySearch { .. }));
+    apply(&mut state, Action::ChooseBenchedTargetForEnergySearch { target: bench_mon }).unwrap();
+
+    assert!(matches!(state.phase, Phase::SearchingEnergyOfTypeToAttachToChosen { remaining: 2, .. }));
+    let first = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).name() == "Psychic Energy")
+        .unwrap();
+    apply(&mut state, Action::TakeEnergyOfTypeToAttachToChosen { card: first }).unwrap();
+    assert!(matches!(state.phase, Phase::SearchingEnergyOfTypeToAttachToChosen { remaining: 1, .. }));
+    let second = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).name() == "Psychic Energy")
+        .unwrap();
+    apply(&mut state, Action::TakeEnergyOfTypeToAttachToChosen { card: second }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(bench_mon).attached.contains(&first));
+    assert!(state.pokemon(bench_mon).attached.contains(&second));
+}
+
+#[test]
+fn delightful_kiss_may_stop_after_one() {
+    let attack = Attack {
+        name: "Delightful Kiss",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchesBasicEnergyOfTypeAttachToChosenBenched(Type::Psychic, 2)),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let psychic_energy = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-delightful-kiss-stop-energy",
+        name: "Psychic Energy",
+        kind: Type::Psychic,
+        effect: None,
+    }));
+    let bench_card = deal_new_card(&mut state, player, defender_ex);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+    let card = deal_new_card(&mut state, player, psychic_energy);
+    state.players[player.index()].library.push(card);
+
+    pay_and_attack(&mut state);
+
+    apply(&mut state, Action::ChooseBenchedTargetForEnergySearch { target: bench_mon }).unwrap();
+    apply(&mut state, Action::FinishSearchingEnergyOfTypeToAttachToChosen).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.pokemon(bench_mon).attached.is_empty(), "declined before taking any");
+}
+
+#[test]
+fn no_search_opens_with_no_own_bench() {
+    let attack = Attack {
+        name: "Delightful Kiss",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchesBasicEnergyOfTypeAttachToChosenBenched(Type::Psychic, 2)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no own Bench, so nothing opens");
+}
+
+#[test]
+fn smoochums_delightful_kiss_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Smoochum" && c.playable.is_some()),
+        "at least one Smoochum print should play"
+    );
+}
