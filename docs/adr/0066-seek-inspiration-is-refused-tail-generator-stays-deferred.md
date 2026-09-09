@@ -36,3 +36,16 @@ and admitted the rest of `Dedenne`'s own coverage (`sv08-087`) through
 one of those instead. **Deferred**, not refused: a future ticket that
 needs a computed-limit distribute-and-attach shape should build
 `Tail Generator` against it rather than starting from nothing.
+
+## Errata
+
+- 2026-09-09: `Seek Inspiration`'s own refusal no longer holds — see
+  [0089](0089-night-joker-runs-attack_with-on-a-second-cards-attack.md),
+  which built `N's Zoroark ex`'s `Night Joker` on the same
+  read-a-second-card's-`Attack`-at-resolution-time shape this record
+  called structurally impossible without restructuring
+  `AttackEffect`. It turned out narrower than assumed: `attack()`
+  splitting into a thin wrapper and a shared `attack_with` was enough,
+  no `AttackEffect` variant needed to change shape. `Seek Inspiration`
+  itself is now built the same way. `Tail Generator`'s own deferral is
+  unaffected.

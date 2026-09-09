@@ -1709,6 +1709,34 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::CopyDiscardedPokemonAttack { index } => {
+            let (player, card) = match state.phase {
+                Phase::ChoosingDiscardedPokemonAttackToCopy { player, card } => (player, card),
+                _ => return Err(IllegalAction),
+            };
+            let attacker = state
+                .player(player)
+                .active
+                .expect("Seek Inspiration was used, so its own Pokémon is still Active");
+            let Some(defender) = state.player(player.opponent()).active else {
+                state.phase = Phase::Main;
+                settle(state);
+                return Ok(());
+            };
+            let attack = state
+                .def_of(card)
+                .as_pokemon()
+                .expect("only opened for a Pokémon")
+                .attacks[index]
+                .clone();
+            state.phase = Phase::Main;
+            attack_with(state, attacker, defender, attack);
+            state.pending_end_turn = true;
+            if state.phase == Phase::Main {
+                settle(state);
+            }
+        }
+
         Action::DamageBenchedEx { target } => {
             let (player, damage) = match state.phase {
                 Phase::ChoosingBenchedExDamageTarget { player, damage } => (player, damage),
@@ -3155,6 +3183,32 @@ fn attack(state: &mut GameState, index: usize) {
         }
         return;
     }
+    // `Seek Inspiration` discards the top of the library outright,
+    // then — only if that card turns out to be a Pokémon without a
+    // Rule Box — copies one of its own attacks, the same
+    // choose-and-run-`attack_with` shape `Night Joker` already takes,
+    // just found by discarding rather than a player's own choice
+    // among the Bench. `Slowking`.
+    if matches!(
+        attack.effect,
+        Some(crate::card::AttackEffect::DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox)
+    ) {
+        let owner = state.pokemon(attacker).owner;
+        let Some(top) = state.players[owner.index()].library.pop() else {
+            return;
+        };
+        state.players[owner.index()].discard.push(top);
+        let card_name = state.def_of(top).name();
+        state.log.push(format!("{player:?} discards {card_name} for Seek Inspiration."));
+        let copies = state
+            .def_of(top)
+            .as_pokemon()
+            .is_some_and(|p| p.prizes == 1 && !p.attacks.is_empty());
+        if copies {
+            state.phase = Phase::ChoosingDiscardedPokemonAttackToCopy { player, card: top };
+        }
+        return;
+    }
     attack_with(state, attacker, defender, attack);
 }
 
@@ -3840,6 +3894,9 @@ fn resolve_attack_effect(
         // effect is what runs through this dispatch instead.
         crate::card::AttackEffect::CopiesChosenBenchedPokemonAttackByNamePrefix(_) => {
             unreachable!("attack() opens a choice for this effect and never calls attack_with")
+        }
+        crate::card::AttackEffect::DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox => {
+            unreachable!("attack() handles this effect outright and never calls attack_with")
         }
         crate::card::AttackEffect::MoveOwnAttachedEnergyToHand => {
             let owner = state.pokemon(attacker).owner;

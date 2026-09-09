@@ -1590,6 +1590,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Pecharunt ex", "Irritated Outburst") => {
             AttackEffect::DamagePerCount(Count::OpponentPrizesTakenCount, 60)
         }
+        ("Slowking", "Seek Inspiration") => {
+            AttackEffect::DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox
+        }
         ("N's Zoroark ex", "Night Joker") => {
             AttackEffect::CopiesChosenBenchedPokemonAttackByNamePrefix("N's ")
         }

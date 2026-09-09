@@ -497,6 +497,11 @@ pub enum Phase {
     /// own attacks, whose name carries this prefix. `N's Zoroark
     /// ex`'s `Night Joker`.
     ChoosingBenchedPokemonAttackToCopy { player: PlayerId, prefix: &'static str },
+    /// `player` used an attack that discarded the top of the
+    /// library, which turned out to be a Pokémon without a Rule Box:
+    /// choose 1 of `card`'s own attacks to copy. `Slowking`'s `Seek
+    /// Inspiration`.
+    ChoosingDiscardedPokemonAttackToCopy { player: PlayerId, card: CardId },
     /// `player` used `pokemon`'s own Ability that discards a card
     /// from hand as its own cost, then draws this many. `N's Zoroark
     /// ex`'s `Trade`.
