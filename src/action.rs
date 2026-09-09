@@ -250,6 +250,14 @@ pub enum Action {
     /// Pick this opponent Pokémon as `Phase::ChoosingOpponentTargetForDamageMove`'s
     /// target, moving all the source's damage counters onto it.
     MoveDamageToChosenOpponentPokemon { target: PokemonId },
+    /// Pick this own Benched Pokémon as `Phase::ChoosingBenchedTargetForEnergySearch`'s
+    /// target.
+    ChooseBenchedTargetForEnergySearch { target: PokemonId },
+    /// Take this Energy card as part of
+    /// `Phase::SearchingEnergyOfTypeToAttachToChosen`.
+    TakeEnergyOfTypeToAttachToChosen { card: CardId },
+    /// Stop that search before its limit is spent.
+    FinishSearchingEnergyOfTypeToAttachToChosen,
     /// Pick one of `Phase::ChoosingTwoOpponentPokemonDamageTargets`'s
     /// two targets — the first call reopens the same phase excluding
     /// this pick, the second resolves it.
@@ -386,6 +394,8 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive { player, .. } => Some(player),
         Phase::ChoosingOwnBenchedSourceForDamageMove { player } => Some(player),
         Phase::ChoosingOpponentTargetForDamageMove { player, .. } => Some(player),
+        Phase::ChoosingBenchedTargetForEnergySearch { player, .. } => Some(player),
+        Phase::SearchingEnergyOfTypeToAttachToChosen { player, .. } => Some(player),
         Phase::ChoosingTwoOpponentPokemonDamageTargets { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
@@ -802,6 +812,21 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             for pokemon in state.player(whose.opponent()).in_play() {
                 actions.push(Action::MoveDamageToChosenOpponentPokemon { target: pokemon });
             }
+            return actions;
+        }
+        Phase::ChoosingBenchedTargetForEnergySearch { player: whose, .. } => {
+            for pokemon in &state.player(whose).bench {
+                actions.push(Action::ChooseBenchedTargetForEnergySearch { target: *pokemon });
+            }
+            return actions;
+        }
+        Phase::SearchingEnergyOfTypeToAttachToChosen { player: whose, kind, .. } => {
+            for card in &state.player(whose).library {
+                if state.matches_filter(*card, crate::card::CardFilter::BasicEnergyOfType(kind)) {
+                    actions.push(Action::TakeEnergyOfTypeToAttachToChosen { card: *card });
+                }
+            }
+            actions.push(Action::FinishSearchingEnergyOfTypeToAttachToChosen);
             return actions;
         }
         Phase::ChoosingTwoOpponentPokemonDamageTargets { player: whose, excluding, .. } => {
@@ -1906,6 +1931,13 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::MoveDamageToChosenOpponentPokemon { target } => {
             format!("Move damage to {}", state.pokemon_def(target).name)
         }
+        Action::ChooseBenchedTargetForEnergySearch { target } => {
+            format!("Search Energy to attach to {}", state.pokemon_def(target).name)
+        }
+        Action::TakeEnergyOfTypeToAttachToChosen { card } => {
+            format!("Take {}", state.def_of(card).name())
+        }
+        Action::FinishSearchingEnergyOfTypeToAttachToChosen => "Stop searching".to_string(),
         Action::DamageOneOfTwoChosenOpponentPokemon { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
         }
