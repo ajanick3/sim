@@ -1595,6 +1595,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             state.opponent_next_turn_restriction,
             Some((
                 target,
+                crate::card::AttackEffect::InflictsConditionAndDefenderCannotRetreatNextTurn(_),
+                _
+            )) if target == active
+        ) || matches!(
+            state.opponent_next_turn_restriction,
+            Some((
+                target,
                 crate::card::AttackEffect::DefenderCannotRetreatAndTakesMoreDamageNextTurn(_),
                 _
             )) if target == active
@@ -1790,6 +1797,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp => false,
             crate::card::AbilityEffect::PassiveFestivalLead => false,
             crate::card::AbilityEffect::PassiveDoublesBasicGrassEnergyForCost => false,
+            crate::card::AbilityEffect::PassiveBonusCheckupDamageToOpponentsPoisonedWhileActive(_) => {
+                false
+            }
             crate::card::AbilityEffect::OncePerTurnMaySearchAnyCardIfActiveHasNamedAbility(name) => {
                 side.active.is_some_and(|a| {
                     state.pokemon_def(a).ability.is_some_and(|active_ability| active_ability.name == name)

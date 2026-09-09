@@ -1393,6 +1393,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
             AbilityEffect::OncePerTurnMayDiscardFromHandThenDrawCards(2)
         }
         ("Meganium", "Wild Growth") => AbilityEffect::PassiveDoublesBasicGrassEnergyForCost,
+        ("Pecharunt", "Toxic Subjugation") => {
+            AbilityEffect::PassiveBonusCheckupDamageToOpponentsPoisonedWhileActive(50)
+        }
         ("Goldeen", "Festival Lead") => AbilityEffect::PassiveFestivalLead,
         ("Seaking", "Festival Lead") => AbilityEffect::PassiveFestivalLead,
         ("Dipplin", "Festival Lead") => AbilityEffect::PassiveFestivalLead,
@@ -1599,6 +1602,11 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Fan Rotom", "Assault Landing") => AttackEffect::FizzlesWithNoStadiumInPlay,
         ("Pecharunt ex", "Irritated Outburst") => {
             AttackEffect::DamagePerCount(Count::OpponentPrizesTakenCount, 60)
+        }
+        ("Pecharunt", "Poison Chain") => {
+            AttackEffect::InflictsConditionAndDefenderCannotRetreatNextTurn(
+                crate::card::Condition::Poisoned,
+            )
         }
         ("Goldeen", "Whirlpool") => AttackEffect::CoinFlipDiscardsDefenderEnergy,
         ("Seaking", "Rapid Draw") => AttackEffect::DrawCards(2),

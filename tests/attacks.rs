@@ -5512,3 +5512,54 @@ fn goldeen_seaking_and_dipplin_festival_lead_prints_are_admitted() {
         assert!(card.playable.is_some(), "{id} should play");
     }
 }
+
+// --- Poison Chain: Poison plus a retreat lock, one restriction record ---
+
+#[test]
+fn poison_chain_poisons_and_locks_out_retreat_next_turn() {
+    let attack = Attack {
+        name: "Poison Chain",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 10,
+        inflicts: None,
+        effect: Some(AttackEffect::InflictsConditionAndDefenderCannotRetreatNextTurn(
+            sim::card::Condition::Poisoned,
+        )),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let energy_card = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.pokemon[defender.index()].attached.push(energy_card);
+    let bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 10);
+    assert!(state.has_condition(defender, sim::card::Condition::Poisoned));
+    assert!(
+        !legal_actions(&state).into_iter().any(|a| matches!(a, Action::Retreat { .. })),
+        "the Poisoned Pokémon cannot retreat during the opponent's own next turn"
+    );
+}
+
+#[test]
+fn pecharunts_poison_chain_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for id in ["svp-129", "svp-149"] {
+        let card = import.cards.iter().find(|c| c.id == id).expect("the artifact holds this print");
+        assert!(card.playable.is_some(), "{id} should play");
+    }
+}

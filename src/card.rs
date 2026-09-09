@@ -657,6 +657,13 @@ pub enum AttackEffect {
     /// attacker itself rather than the defender — this attack's own
     /// printed text names its own Pokémon. `Annihilape`'s `Tantrum`.
     InflictsConditionOnSelf(Condition),
+    /// Inflict this Condition on the defender, then it cannot retreat
+    /// during the opponent's very next turn — the same lifetime
+    /// `DefenderCannotRetreatNextTurn` already carries, checked at
+    /// the same retreat-offering site, but combined with an
+    /// infliction the way `Attack` holding only one `AttackEffect`
+    /// requires. `Pecharunt`'s `Poison Chain`.
+    InflictsConditionAndDefenderCannotRetreatNextTurn(Condition),
     /// Both Active Pokémon are Knocked Out outright, no damage
     /// involved — modeled by raising both to their own effective HP
     /// and letting the ordinary `settle` sweep (`knock_out_the_dead`)
@@ -1599,6 +1606,12 @@ pub enum AbilityEffect {
     /// single board-wide fact, not once per carrier. `Meganium`'s
     /// `Wild Growth`.
     PassiveDoublesBasicGrassEnergyForCost,
+    /// A standing effect, not a choice: while this Pokémon is in the
+    /// Active Spot, the opponent's own Poisoned Pokémon take this
+    /// many more damage counters (as raw damage) at Pokémon Checkup
+    /// — read directly in `resolve_checkup`, added to the ordinary
+    /// Poison damage. `Pecharunt`'s `Toxic Subjugation`.
+    PassiveBonusCheckupDamageToOpponentsPoisonedWhileActive(u32),
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for

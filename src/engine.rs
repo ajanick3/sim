@@ -1368,7 +1368,10 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 )
                 | crate::card::AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp
                 | crate::card::AbilityEffect::PassiveFestivalLead
-                | crate::card::AbilityEffect::PassiveDoublesBasicGrassEnergyForCost => {
+                | crate::card::AbilityEffect::PassiveDoublesBasicGrassEnergyForCost
+                | crate::card::AbilityEffect::PassiveBonusCheckupDamageToOpponentsPoisonedWhileActive(
+                    _,
+                ) => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
@@ -3541,6 +3544,14 @@ fn resolve_attack_effect(
                 state.log.push(format!("{name} is now {condition:?}."));
             }
         }
+        crate::card::AttackEffect::InflictsConditionAndDefenderCannotRetreatNextTurn(condition) => {
+            if !state.attack_effects_on_it_prevented(defender) {
+                state.inflict(defender, condition);
+                let name = state.pokemon_def(defender).name;
+                state.log.push(format!("{name} is now {condition:?} and cannot retreat next turn."));
+                state.opponent_next_turn_restriction = Some((defender, effect, state.current));
+            }
+        }
         crate::card::AttackEffect::InflictsConditionOnSelf(condition) => {
             state.inflict(attacker, condition);
             let name = state.pokemon_def(attacker).name;
@@ -4828,7 +4839,25 @@ fn next_checkup_player(state: &GameState) -> Option<PlayerId> {
 }
 
 fn resolve_checkup(state: &mut GameState, pokemon: PokemonId, condition: Condition) {
-    let damage = checkup_damage(condition);
+    let mut damage = checkup_damage(condition);
+    // `Toxic Subjugation`: the opponent's own Active, not any
+    // Pokémon in play, and only while Poisoned is the condition
+    // actually resolving — read here rather than in `checkup_damage`,
+    // since that function knows nothing about who else is in play.
+    if condition == Condition::Poisoned {
+        let owner = state.pokemon(pokemon).owner;
+        if let Some(opponent_active) = state.player(owner.opponent()).active
+            && !state.abilities_disabled_for(opponent_active)
+            && let Some(bonus) = state.pokemon_def(opponent_active).ability.and_then(|a| match a.effect {
+                crate::card::AbilityEffect::PassiveBonusCheckupDamageToOpponentsPoisonedWhileActive(
+                    bonus,
+                ) => Some(bonus),
+                _ => None,
+            })
+        {
+            damage += bonus;
+        }
+    }
     if damage > 0 {
         state.pokemon[pokemon.index()].damage += damage;
         let name = state.pokemon_def(pokemon).name;
