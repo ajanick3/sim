@@ -474,6 +474,10 @@ pub enum Phase {
     /// offering only the opponent's Benched Pokémon ex. `Shaymin`'s
     /// `Pinpoint Dive`.
     ChoosingBenchedExDamageTarget { player: PlayerId, damage: u32 },
+    /// The same shape `ChoosingBenchedExDamageTarget` takes, widened
+    /// to any Benched Pokémon rather than only a Benched ex.
+    /// `Annihilape`'s `Ghostly Blow`.
+    ChoosingAnyBenchedDamageTarget { player: PlayerId, damage: u32 },
     /// `player` used an attack that deals this much flat damage to
     /// two distinct opponent Pokémon of their choosing, Active or
     /// Benched — `excluding`, once the first is picked, holding it

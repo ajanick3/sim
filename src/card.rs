@@ -675,6 +675,15 @@ pub enum AttackEffect {
     /// its own `bonus_damage_to_pokemon_on_granting_players_next_turn`.
     /// `Stunfisk`'s `Pouncing Trap`.
     DefenderCannotRetreatAndTakesMoreDamageNextTurn(u32),
+    /// During the opponent's very next turn, if this Pokémon is
+    /// damaged by an attack — even if that attack Knocks it Out —
+    /// this many damage counters (as raw damage) go on the Attacking
+    /// Pokémon. The same "even if Knocked Out" ordering
+    /// `trigger_defenders_tool` already reads before `settle` decides
+    /// a knockout, granted by `opponent_next_turn_restriction` for
+    /// one turn rather than a permanently attached Tool. `Mega
+    /// Slowbro ex`'s `Shellnado Spin`.
+    GrantsSelfCountersAttackerIfDamagedNextTurn(u32),
     /// The attacker cannot use any attack during their own very next
     /// turn. `N's Zekrom`'s `Rampaging Thunder`.
     AttackerCannotAttackNextTurn,
@@ -1021,6 +1030,13 @@ pub enum AttackEffect {
     /// `Phase::ChoosingBenchedExDamageTarget`. No Benched Pokémon ex
     /// opens no phase. `Shaymin`'s `Pinpoint Dive`.
     DamageChosenOpponentBenchedEx(u32),
+    /// Place this many damage counters (10 damage each) on one of the
+    /// opponent's Benched Pokémon, the player's choice of which — the
+    /// same shape `DamageChosenOpponentBenchedEx` takes, widened from
+    /// only a Benched ex to any Benched Pokémon. Opens
+    /// `Phase::ChoosingAnyBenchedDamageTarget`. No Benched Pokémon
+    /// opens no phase. `Annihilape`'s `Ghostly Blow`.
+    PlacesDamageCountersOnChosenOpponentBenched(u32),
     /// Discard all Energy from the attacker, then the same flat
     /// damage `DamageChosenOpponentBenchedEx` deals — the same
     /// discard-then-damage shape `DiscardsOwnEnergyThenDamages-
@@ -1525,6 +1541,16 @@ pub enum AbilityEffect {
     /// directly in `legal_actions`' own attack-cost loop, alongside
     /// that discount. `Kyurem`'s `Plasma Bane`, on `Trifrost`.
     PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(&'static str, &'static str),
+    /// A standing effect, not a choice: if this Pokémon would be
+    /// Knocked Out by damage from an attack (not a checkup — read
+    /// from the same `attacking_defender` flag `Lillie's Pearl`
+    /// already reads to tell the two apart), flip a coin; on heads,
+    /// it is not Knocked Out, and its remaining HP becomes 10 — read
+    /// directly in `knock_out_the_dead`, before a Prize is ever
+    /// taken, the first Ability in this engine that can prevent a
+    /// Knockout outright rather than only redirect or reduce its
+    /// damage. `Annihilape`'s `Durable Body`.
+    PassiveCoinFlipPreventsAttackKnockOutAtTenHp,
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for

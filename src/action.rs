@@ -287,6 +287,9 @@ pub enum Action {
     /// Deal `Phase::ChoosingBenchedExDamageTarget`'s flat damage to
     /// this Benched Pokémon ex.
     DamageBenchedEx { target: PokemonId },
+    /// Deal `Phase::ChoosingAnyBenchedDamageTarget`'s flat damage to
+    /// this Benched Pokémon.
+    DamageAnyBenched { target: PokemonId },
     /// Attach `Phase::SearchingForEnergyToAttachToBenchedOfType`'s
     /// Energy to this Benched Pokémon of the matching type.
     AttachSearchedEnergyTo { target: PokemonId },
@@ -426,6 +429,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingDiscardedPokemonAttackToCopy { player, .. } => Some(player),
         Phase::DiscardingHandCardThenDrawing { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
+        Phase::ChoosingAnyBenchedDamageTarget { player, .. } => Some(player),
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
         Phase::MovingDamageCountersFromOwnToOpponent { player, .. } => Some(player),
         Phase::LookingAtTopCardsToTakeOne { player, .. } => Some(player),
@@ -917,6 +921,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 if state.pokemon_def(*pokemon).prizes > 1 {
                     actions.push(Action::DamageBenchedEx { target: *pokemon });
                 }
+            }
+            return actions;
+        }
+        Phase::ChoosingAnyBenchedDamageTarget { player: whose, .. } => {
+            for pokemon in &state.player(whose.opponent()).bench {
+                actions.push(Action::DamageAnyBenched { target: *pokemon });
             }
             return actions;
         }
@@ -1764,6 +1774,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(
                 ..,
             ) => false,
+            crate::card::AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp => false,
             crate::card::AbilityEffect::PassiveNamedAttackCostsLessPerOpponentPrizeTaken(_) => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
@@ -2092,6 +2103,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Copy {}'s {}", def.name, def.attacks[index].name)
         }
         Action::DamageBenchedEx { target } => {
+            format!("Damage {}", state.pokemon_def(target).name)
+        }
+        Action::DamageAnyBenched { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
         }
         Action::AttachSearchedEnergyTo { target } => {

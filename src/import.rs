@@ -1392,6 +1392,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("N's Zoroark ex", "Trade") => {
             AbilityEffect::OncePerTurnMayDiscardFromHandThenDrawCards(2)
         }
+        ("Annihilape", "Durable Body") => {
+            AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp
+        }
         ("Kyurem", "Plasma Bane") => {
             AbilityEffect::PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(
                 "Trifrost", "Colress",
@@ -1589,6 +1592,12 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Fan Rotom", "Assault Landing") => AttackEffect::FizzlesWithNoStadiumInPlay,
         ("Pecharunt ex", "Irritated Outburst") => {
             AttackEffect::DamagePerCount(Count::OpponentPrizesTakenCount, 60)
+        }
+        ("Annihilape", "Ghostly Blow") => {
+            AttackEffect::PlacesDamageCountersOnChosenOpponentBenched(50)
+        }
+        ("Mega Slowbro ex", "Shellnado Spin") => {
+            AttackEffect::GrantsSelfCountersAttackerIfDamagedNextTurn(120)
         }
         ("Stunfisk", "Pouncing Trap") => {
             AttackEffect::DefenderCannotRetreatAndTakesMoreDamageNextTurn(100)

@@ -243,6 +243,11 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // to 784. Chi-Yu's three prints (Scorching Earth, Allure/Ground
     // Melter, Whirling Envy) take it to 787. Stunfisk's Pouncing
     // Trap (a second restriction record, for a bonus one turn later
-    // than its own retreat lock) takes it to 788.
-    assert_eq!(admitted, 788, "coverage moves only on purpose");
+    // than its own retreat lock) takes it to 788. Mega Slowbro ex's
+    // Shellnado Spin (a self-granted counter, read even when its own
+    // carrier is Knocked Out by the hit that triggers it) takes it
+    // to 789. Annihilape's Ghostly Blow and Durable Body — the first
+    // Ability able to prevent a Knockout outright — close out its
+    // last print, taking it to 790.
+    assert_eq!(admitted, 790, "coverage moves only on purpose");
 }

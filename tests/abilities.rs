@@ -8,7 +8,7 @@ use sim::card::{
     TrainerKind, Type,
 };
 use sim::engine::apply;
-use sim::rng::SeededRng;
+use sim::rng::{ScriptedRng, SeededRng};
 use sim::state::{GameState, Phase};
 
 /// A game where the first player's Active carries the Ability under
@@ -3757,5 +3757,158 @@ fn bloodmoon_ursaluna_ex_is_admitted_from_the_artifact() {
     assert!(
         import.cards.iter().any(|c| c.name == "Bloodmoon Ursaluna ex" && c.playable.is_some()),
         "at least one Bloodmoon Ursaluna ex print should play"
+    );
+}
+
+// --- Durable Body: a coin flip that prevents a Knockout outright ---
+
+fn durable_body_game(coin: u32) -> (GameState, sim::ids::PokemonId) {
+    let mut db = CardDb::new();
+    let carrier = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-durable-body-carrier",
+        name: "Annihilape",
+        hp: 150,
+        kind: Type::Fighting,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Durable Body",
+            effect: sim::card::AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp,
+        }),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-durable-body-defender",
+        name: "Defendmon",
+        hp: 300,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Lethal Strike",
+            cost: vec![Type::Colorless],
+            base_damage: 200,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-durable-body-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let mut carrier_deck = vec![carrier; 4];
+    while carrier_deck.len() < 60 {
+        carrier_deck.push(energy);
+    }
+    let mut defender_deck = vec![defender_mon; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(energy);
+    }
+    // The turn-order coin flip, and every shuffle, share this same
+    // stream — a `ScriptedRng` of one value repeats it for every
+    // call — so which side goes first is not fixed by `coin` alone.
+    // Rather than assume an order, the loop below drives turns until
+    // it actually is the *other* side's turn, whichever side that
+    // turns out to be.
+    let mut state = GameState::new(
+        db,
+        [carrier_deck, defender_deck],
+        Box::new(ScriptedRng::new(vec![coin])),
+    );
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    let carrier_side = if state.pokemon_def(state.player(state.current).active.unwrap()).name
+        == "Annihilape"
+    {
+        state.current
+    } else {
+        state.current.opponent()
+    };
+    while state.current == carrier_side || state.is_first_turn_of_game() {
+        apply(&mut state, Action::EndTurn).unwrap();
+        while state.phase != Phase::Main && !state.is_over() {
+            let first = legal_actions(&state)[0];
+            apply(&mut state, first).unwrap();
+        }
+    }
+    let carrier_active = state.player(carrier_side).active.unwrap();
+    (state, carrier_active)
+}
+
+/// Pay the current player's own Active's only attack cost, then attack.
+fn pay_and_attack_current(state: &mut GameState) {
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let cost_len = state.pokemon_def(active).attacks[0].cost.len();
+    for _ in 0..cost_len {
+        let energy = *state
+            .player(player)
+            .library
+            .iter()
+            .find(|c| state.def_of(**c).is_energy())
+            .unwrap();
+        state.players[player.index()].library.retain(|c| *c != energy);
+        state.pokemon[active.index()].attached.push(energy);
+    }
+    let attack = legal_actions(state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("a paid-for Active can attack");
+    apply(state, attack).unwrap();
+}
+
+#[test]
+fn durable_body_survives_a_lethal_hit_on_heads() {
+    let (mut state, carrier) = durable_body_game(1); // heads
+    let opponent = state.current;
+    let opponent_prizes_before = state.player(opponent).prizes.len();
+
+    pay_and_attack_current(&mut state);
+
+    assert!(!state.pokemon(carrier).knocked_out, "Durable Body prevented the Knockout");
+    assert_eq!(state.pokemon(carrier).damage, 140, "150 HP, remaining HP becomes 10");
+    assert_eq!(
+        state.player(opponent).prizes.len(),
+        opponent_prizes_before,
+        "no Knockout, so no Prize is taken"
+    );
+}
+
+#[test]
+fn durable_body_does_nothing_on_tails() {
+    let (mut state, carrier) = durable_body_game(0); // tails
+    let opponent = state.current;
+    let opponent_prizes_before = state.player(opponent).prizes.len();
+
+    pay_and_attack_current(&mut state);
+
+    assert!(state.pokemon(carrier).knocked_out, "the coin landed tails, so the Knockout proceeds");
+    assert_eq!(
+        state.player(opponent).prizes.len(),
+        opponent_prizes_before - 1,
+        "a Knockout takes its Prize as normal"
     );
 }
