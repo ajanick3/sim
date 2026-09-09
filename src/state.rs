@@ -1475,6 +1475,14 @@ impl GameState {
     /// deeper.
     pub fn pays_cost(&self, id: PokemonId, cost: &[Type]) -> bool {
         let carrier_is_basic = self.pokemon_def(id).stage == crate::card::Stage::Basic;
+        // `Wild Growth`: a single board-wide fact, read once, not once
+        // per carrier — that is what "doesn't stack" means here.
+        let wild_growth = self.player(self.pokemon(id).owner).in_play().iter().any(|p| {
+            !self.abilities_disabled_for(*p)
+                && self.pokemon_def(*p).ability.is_some_and(|a| {
+                    a.effect == crate::card::AbilityEffect::PassiveDoublesBasicGrassEnergyForCost
+                })
+        });
         let mut available = Vec::new();
         let mut wildcards = 0u32;
         for card in &self.pokemon(id).attached {
@@ -1487,6 +1495,9 @@ impl GameState {
                 wildcards += 1;
             } else {
                 available.push(energy.kind);
+                if wild_growth && energy.kind == Type::Grass && energy.effect.is_none() {
+                    available.push(Type::Grass);
+                }
             }
         }
         for required in cost.iter().filter(|t| **t != Type::Colorless) {

@@ -1590,6 +1590,15 @@ pub enum AbilityEffect {
     /// `Phase::SearchingLibraryForAnyCard`. `Thwackey`'s `Boom Boom
     /// Groove`, on `"Festival Lead"`.
     OncePerTurnMaySearchAnyCardIfActiveHasNamedAbility(&'static str),
+    /// A standing effect, not a choice: while any of the player's own
+    /// Pokémon carries this Ability, undisabled, every Basic Grass
+    /// Energy attached to any of their own Pokémon pays as if it
+    /// were two — read directly in `pays_cost`, per Pokémon, rather
+    /// than moving or duplicating any card. Doesn't stack: a second
+    /// carrier in play changes nothing, since this is read as a
+    /// single board-wide fact, not once per carrier. `Meganium`'s
+    /// `Wild Growth`.
+    PassiveDoublesBasicGrassEnergyForCost,
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for

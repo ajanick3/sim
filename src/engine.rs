@@ -1367,7 +1367,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     ..,
                 )
                 | crate::card::AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp
-                | crate::card::AbilityEffect::PassiveFestivalLead => {
+                | crate::card::AbilityEffect::PassiveFestivalLead
+                | crate::card::AbilityEffect::PassiveDoublesBasicGrassEnergyForCost => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(

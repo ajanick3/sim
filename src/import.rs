@@ -1392,6 +1392,7 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("N's Zoroark ex", "Trade") => {
             AbilityEffect::OncePerTurnMayDiscardFromHandThenDrawCards(2)
         }
+        ("Meganium", "Wild Growth") => AbilityEffect::PassiveDoublesBasicGrassEnergyForCost,
         ("Goldeen", "Festival Lead") => AbilityEffect::PassiveFestivalLead,
         ("Seaking", "Festival Lead") => AbilityEffect::PassiveFestivalLead,
         ("Dipplin", "Festival Lead") => AbilityEffect::PassiveFestivalLead,
