@@ -256,5 +256,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Dipplin's remaining prints, taking it to 799. Wild Growth
     // (each Basic Grass Energy pays as if it were two, read directly
     // in pays_cost) closes both Meganium prints, taking it to 801.
-    assert_eq!(admitted, 801, "coverage moves only on purpose");
+    // Toxic Subjugation and Poison Chain close Pecharunt's own last
+    // two prints, taking it to 803 — every sample-deck slot the
+    // engine can play, it now does.
+    assert_eq!(admitted, 803, "coverage moves only on purpose");
 }

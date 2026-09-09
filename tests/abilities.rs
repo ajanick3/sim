@@ -4342,3 +4342,158 @@ fn meganium_is_admitted_from_the_artifact() {
         "at least one Meganium print should play"
     );
 }
+
+// --- Toxic Subjugation: 5 more damage counters at the checkup, only while Active ---
+
+fn toxic_subjugation_game() -> (GameState, sim::ids::PokemonId, sim::ids::PokemonId) {
+    let mut db = CardDb::new();
+    let carrier = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-toxic-subjugation-carrier",
+        name: "Pecharunt",
+        hp: 80,
+        kind: Type::Darkness,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Toxic Subjugation",
+            effect: sim::card::AbilityEffect::PassiveBonusCheckupDamageToOpponentsPoisonedWhileActive(
+                50,
+            ),
+        }),
+        attacks: vec![Attack {
+            name: "Poison Chain",
+            cost: vec![Type::Colorless],
+            base_damage: 0,
+            inflicts: Some(sim::card::Condition::Poisoned),
+            effect: None,
+        }],
+    }));
+    let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-toxic-subjugation-defender",
+        name: "Defendmon",
+        hp: 300,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-toxic-subjugation-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let mut carrier_deck = vec![carrier; 4];
+    while carrier_deck.len() < 60 {
+        carrier_deck.push(energy);
+    }
+    let mut defender_deck = vec![defender_mon; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(energy);
+    }
+    let mut state =
+        GameState::new(db, [carrier_deck, defender_deck], Box::new(SeededRng::new(3)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    // The carrier's deck is always player One's, but the turn-order
+    // coin flip decides who actually goes first — and whoever goes
+    // first has no attack step (rule 17), so drive to player One's
+    // own next turn regardless of which side that turns out to be.
+    let player = sim::ids::PlayerId::One;
+    while state.current != player {
+        apply(&mut state, Action::EndTurn).unwrap();
+        while state.phase != Phase::Main && !state.is_over() {
+            let first = legal_actions(&state)[0];
+            apply(&mut state, first).unwrap();
+        }
+    }
+    let carrier_active = state.player(player).active.unwrap();
+    let defender_active = state.player(player.opponent()).active.unwrap();
+    (state, carrier_active, defender_active)
+}
+
+/// Play out every `Action::ResolveCheckup` and `Action::EndTurn` the
+/// phase machinery offers, without attacking, until back in `Main`.
+fn drive_to_main(state: &mut GameState) {
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(state)[0];
+        apply(state, first).unwrap();
+    }
+}
+
+#[test]
+fn toxic_subjugation_adds_five_more_damage_counters_at_the_checkup() {
+    let (mut state, carrier, defender) = toxic_subjugation_game();
+    let player = state.current;
+
+    let energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != energy);
+    state.pokemon[carrier.index()].attached.push(energy);
+    let attack = legal_actions(&state).into_iter().find(|a| matches!(a, Action::Attack { .. })).unwrap();
+    apply(&mut state, attack).unwrap();
+    assert!(state.has_condition(defender, sim::card::Condition::Poisoned));
+
+    drive_to_main(&mut state);
+
+    assert_eq!(
+        state.pokemon(defender).damage,
+        60,
+        "10 (1 counter) plus Toxic Subjugation's own 50 (5 more)"
+    );
+}
+
+#[test]
+fn toxic_subjugation_does_nothing_once_benched() {
+    let (mut state, carrier, defender) = toxic_subjugation_game();
+    let player = state.current;
+
+    let energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != energy);
+    state.pokemon[carrier.index()].attached.push(energy);
+    let attack = legal_actions(&state).into_iter().find(|a| matches!(a, Action::Attack { .. })).unwrap();
+    apply(&mut state, attack).unwrap();
+
+    // Bench the carrier itself, so it no longer qualifies — "as long
+    // as this Pokémon is in the Active Spot."
+    state.players[player.index()].active = None;
+    state.players[player.index()].bench.push(carrier);
+
+    drive_to_main(&mut state);
+
+    assert_eq!(
+        state.pokemon(defender).damage,
+        10,
+        "the carrier is Benched, so only the ordinary 1 Poison counter lands"
+    );
+}
