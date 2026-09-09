@@ -1337,7 +1337,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 | crate::card::AbilityEffect::PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool
                 | crate::card::AbilityEffect::PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(
                     ..,
-                ) => {
+                )
+                | crate::card::AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
@@ -1747,6 +1748,22 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 // `Rabsca`'s `Spherical Shield`: a Benched ex has no
                 // Rule Box exemption from Flower Curtain, but Spherical
                 // Shield names every Benched Pokemon regardless.
+                state.log.push(format!("{name} would take {damage}, but Spherical Shield stops it landing."));
+            } else {
+                state.pokemon[target.index()].damage += damage;
+                state.log.push(format!("{name} takes {damage}."));
+            }
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::DamageAnyBenched { target } => {
+            let (player, damage) = match state.phase {
+                Phase::ChoosingAnyBenchedDamageTarget { player, damage } => (player, damage),
+                _ => return Err(IllegalAction),
+            };
+            let name = state.pokemon_def(target).name;
+            if state.bench_attack_effect_blocked(player, target) {
                 state.log.push(format!("{name} would take {damage}, but Spherical Shield stops it landing."));
             } else {
                 state.pokemon[target.index()].damage += damage;
@@ -3389,6 +3406,20 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
     state.attacking_defender = Some(defender);
     if damage > 0 {
         trigger_defenders_tool(state, attacker, defender);
+        // `Shellnado Spin`'s own granted counter, "even if Knocked
+        // Out" — read before `settle` decides that, the same as
+        // `trigger_defenders_tool`.
+        if let Some((
+            target,
+            crate::card::AttackEffect::GrantsSelfCountersAttackerIfDamagedNextTurn(amount),
+            _,
+        )) = state.opponent_next_turn_restriction
+            && target == defender
+        {
+            state.pokemon[attacker.index()].damage += amount;
+            let name = state.pokemon_def(defender).name;
+            state.log.push(format!("{name} counters its attacker for {amount}."));
+        }
         if let Some(crate::card::EnergyEffect::CountersAttackerOnDamageTakenWhileActive(amount)) =
             state.pokemon(defender).attached.iter().find_map(|c| {
                 state.def_of(*c).as_energy().and_then(|e| e.effect)
@@ -3523,6 +3554,11 @@ fn resolve_attack_effect(
                 let name = state.pokemon_def(defender).name;
                 state.log.push(format!("{name} cannot retreat, and takes more damage, next turn."));
             }
+        }
+        crate::card::AttackEffect::GrantsSelfCountersAttackerIfDamagedNextTurn(_) => {
+            state.opponent_next_turn_restriction = Some((attacker, effect, state.current));
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} counters its attacker next turn if damaged."));
         }
         crate::card::AttackEffect::MayShuffleFixedEnergyThenDamageChosenBenched { count, damage } => {
             let owner = state.pokemon(attacker).owner;
@@ -3861,6 +3897,13 @@ fn resolve_attack_effect(
                 .any(|p| state.pokemon_def(*p).prizes > 1);
             if any_benched_ex {
                 state.phase = Phase::ChoosingBenchedExDamageTarget { player: owner, damage };
+            }
+        }
+        crate::card::AttackEffect::PlacesDamageCountersOnChosenOpponentBenched(damage) => {
+            let owner = state.pokemon(attacker).owner;
+            let any_benched = !state.player(owner.opponent()).bench.is_empty();
+            if any_benched {
+                state.phase = Phase::ChoosingAnyBenchedDamageTarget { player: owner, damage };
             }
         }
         crate::card::AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenchedEx(damage) => {
@@ -4742,6 +4785,24 @@ fn knock_out_the_dead(state: &mut GameState) {
     for player in [PlayerId::One, PlayerId::Two] {
         for pokemon in state.player(player).in_play() {
             if state.remaining_hp(pokemon) > 0 {
+                continue;
+            }
+            // `Durable Body`: only an attack's own damage — not a
+            // checkup's — can be flipped away, and the flip must
+            // land before any Prize is taken. `attacking_defender`
+            // is the same flag `Lillie's Pearl` already reads to
+            // tell an attack-caused Knockout apart from a checkup's.
+            if attacking_defender == Some(pokemon)
+                && !state.abilities_disabled_for(pokemon)
+                && state.pokemon_def(pokemon).ability.is_some_and(|a| {
+                    a.effect == crate::card::AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp
+                })
+                && state.rng.flip()
+            {
+                let effective_hp = state.effective_hp(pokemon);
+                state.pokemon[pokemon.index()].damage = effective_hp.saturating_sub(10);
+                let name = state.pokemon_def(pokemon).name;
+                state.log.push(format!("{name} survives Durable Body at 10 HP."));
                 continue;
             }
             // Rule 39: the opponent of the knocked-out player takes a Prize.

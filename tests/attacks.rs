@@ -5173,3 +5173,181 @@ fn chi_yus_attacks_are_admitted_from_the_artifact() {
     let admitted = import.cards.iter().filter(|c| c.name == "Chi-Yu" && c.playable.is_some()).count();
     assert_eq!(admitted, 3, "all 3 Chi-Yu prints should play");
 }
+
+// --- Shellnado Spin: a self-granted counter, even if Knocked Out ---
+
+#[test]
+fn shellnado_spin_counters_whoever_damages_it_next_turn() {
+    let attack = Attack {
+        name: "Shellnado Spin",
+        cost: vec![Type::Colorless, Type::Colorless, Type::Colorless],
+        base_damage: 180,
+        inflicts: None,
+        effect: Some(AttackEffect::GrantsSelfCountersAttackerIfDamagedNextTurn(120)),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let slowbro = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+
+    pay_and_attack(&mut state);
+    assert_eq!(state.current, opponent, "the attack ended the attacker's own turn");
+
+    // The opponent's own Tackle hits back during their turn — exactly
+    // when the granted counter is armed. It already carries 180
+    // damage from Shellnado Spin's own attack in turn 1.
+    let opponent_attacker = state.player(opponent).active.unwrap();
+    let attacker_damage_before = state.pokemon(opponent_attacker).damage;
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(slowbro).damage, 10, "the opponent's own 10 damage landed as normal");
+    assert_eq!(
+        state.pokemon(opponent_attacker).damage - attacker_damage_before,
+        120,
+        "the counter landed on the attacker"
+    );
+}
+
+#[test]
+fn shellnado_spins_counter_lands_even_when_the_hit_is_lethal() {
+    let attack = Attack {
+        name: "Shellnado Spin",
+        cost: vec![Type::Colorless, Type::Colorless, Type::Colorless],
+        base_damage: 180,
+        inflicts: None,
+        effect: Some(AttackEffect::GrantsSelfCountersAttackerIfDamagedNextTurn(120)),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let slowbro = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+
+    pay_and_attack(&mut state);
+    // Bring Slowbro to the brink by hand, so the opponent's ordinary
+    // Tackle (10 damage) finishes it off — confirming the counter
+    // still lands even though its own carrier is Knocked Out by the
+    // very attack that triggers it.
+    let slowbro_hp = state.pokemon_def(slowbro).hp;
+    state.pokemon[slowbro.index()].damage = slowbro_hp - 10;
+
+    let opponent_attacker = state.player(opponent).active.unwrap();
+    let attacker_damage_before = state.pokemon(opponent_attacker).damage;
+    pay_and_attack(&mut state);
+
+    assert!(
+        state.player(player).active.is_none() || state.pokemon(slowbro).knocked_out,
+        "Slowbro was Knocked Out by this very attack"
+    );
+    assert_eq!(
+        state.pokemon(opponent_attacker).damage - attacker_damage_before,
+        120,
+        "the counter lands even though its own carrier was just Knocked Out"
+    );
+}
+
+#[test]
+fn shellnado_spins_counter_does_not_carry_past_its_one_turn() {
+    let attack = Attack {
+        name: "Shellnado Spin",
+        cost: vec![Type::Colorless, Type::Colorless, Type::Colorless],
+        base_damage: 180,
+        inflicts: None,
+        effect: Some(AttackEffect::GrantsSelfCountersAttackerIfDamagedNextTurn(120)),
+    };
+    let (mut state, defender_def) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+
+    pay_and_attack(&mut state);
+    // The opponent's own turn ends without attacking (a fresh Bench
+    // mon promoted instead), so the granted counter's one turn passes
+    // unused.
+    let bench_card = deal_new_card(&mut state, opponent, defender_def);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    assert_eq!(state.current, opponent, "the opponent's own next turn, one turn too late");
+
+    let opponent_attacker = state.player(opponent).active.unwrap();
+    let attacker_damage_before = state.pokemon(opponent_attacker).damage;
+    pay_and_attack(&mut state);
+
+    assert_eq!(
+        state.pokemon(opponent_attacker).damage - attacker_damage_before,
+        0,
+        "the counter's one turn has already passed"
+    );
+}
+
+#[test]
+fn mega_slowbro_exs_shellnado_spin_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Mega Slowbro ex" && c.playable.is_some()),
+        "Mega Slowbro ex should play"
+    );
+}
+
+// --- Ghostly Blow: placing counters on a chosen Benched Pokémon ---
+
+#[test]
+fn ghostly_blow_places_counters_on_the_chosen_benched_pokemon() {
+    let attack = Attack {
+        name: "Ghostly Blow",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 100,
+        inflicts: None,
+        effect: Some(AttackEffect::PlacesDamageCountersOnChosenOpponentBenched(50)),
+    };
+    let (mut state, defender_def) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let bench_card = deal_new_card(&mut state, opponent, defender_def);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+    assert!(matches!(state.phase, Phase::ChoosingAnyBenchedDamageTarget { .. }));
+
+    apply(&mut state, Action::DamageAnyBenched { target: bench_mon }).unwrap();
+
+    assert_eq!(state.pokemon(bench_mon).damage, 50, "5 damage counters, placed directly");
+}
+
+#[test]
+fn ghostly_blow_does_nothing_with_an_empty_bench() {
+    let attack = Attack {
+        name: "Ghostly Blow",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 100,
+        inflicts: None,
+        effect: Some(AttackEffect::PlacesDamageCountersOnChosenOpponentBenched(50)),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.phase, Phase::Main, "no Benched Pokémon, so no phase opens");
+}
+
+#[test]
+fn annihilapes_ghostly_blow_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me05-041").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Annihilape's Ghostly Blow/Durable Body print should play");
+}
