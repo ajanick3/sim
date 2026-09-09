@@ -12,20 +12,22 @@
 //! The checker reads all four rules: sixty cards, four by name, one ACE SPEC
 //! total, a Standard regulation mark.
 
+use crate::card::Type;
+use crate::ids::CardDefId;
 use crate::import::{self, CardRef, Import};
 
 /// The nine basic Energy. Rule 2 exempts them from the four-copy limit, and
 /// they carry no regulation mark, so the artifact holds none of them.
-const BASIC_ENERGY: [&str; 9] = [
-    "Grass",
-    "Fire",
-    "Water",
-    "Lightning",
-    "Psychic",
-    "Fighting",
-    "Darkness",
-    "Metal",
-    "Dragon",
+const BASIC_ENERGY: [(&str, Type); 9] = [
+    ("Grass", Type::Grass),
+    ("Fire", Type::Fire),
+    ("Water", Type::Water),
+    ("Lightning", Type::Lightning),
+    ("Psychic", Type::Psychic),
+    ("Fighting", Type::Fighting),
+    ("Darkness", Type::Darkness),
+    ("Metal", Type::Metal),
+    ("Dragon", Type::Dragon),
 ];
 
 /// One line of a decklist.
@@ -40,10 +42,16 @@ pub struct Line {
 impl Line {
     /// Whether this line is a basic Energy, which the four-copy limit exempts.
     pub fn is_basic_energy(&self) -> bool {
+        self.basic_energy_type().is_some()
+    }
+
+    /// This line's own basic Energy type, if it is one.
+    pub fn basic_energy_type(&self) -> Option<Type> {
         let name = self.name.trim_start_matches("Basic ");
         BASIC_ENERGY
             .iter()
-            .any(|kind| name == format!("{kind} Energy"))
+            .find(|(kind, _)| name == format!("{kind} Energy"))
+            .map(|(_, kind)| *kind)
     }
 }
 
@@ -116,6 +124,17 @@ pub struct Report {
 impl Report {
     pub fn is_legal(&self) -> bool {
         self.problems.is_empty()
+    }
+
+    /// Whether every card in the decklist both matched and plays — not only
+    /// `is_legal`'s own deck-construction rules, but the engine's own
+    /// coverage. A set the artifact does not hold, or a card the engine
+    /// refuses, never becomes a `Problem` (`check`'s own module doc calls
+    /// that "the same kind of fact... something the data cannot answer"),
+    /// so `is_legal` alone would pass a decklist [`to_deck`] cannot build in
+    /// full.
+    pub fn is_playable(&self) -> bool {
+        self.playable == self.total
     }
 }
 
@@ -200,7 +219,11 @@ pub fn check(list: &Decklist, import: &Import) -> Report {
         }
 
         if line.is_basic_energy() {
-            // Basic Energy is not in the artifact and the engine supplies it.
+            // Basic Energy is not in the artifact, and never resolves to a
+            // matched card, but the engine always supplies and plays it —
+            // "playable" undercounted every deck that carries any until
+            // this counted it too.
+            report.playable += line.count;
             continue;
         }
 
@@ -288,6 +311,33 @@ fn fold(c: char) -> char {
         'ú' | 'ù' | 'û' => 'u',
         other => other,
     }
+}
+
+/// Build the deck a checked decklist plays with — one [`CardDefId`] per
+/// physical card. Basic Energy lines never reach `report.matched` (`check`
+/// resolves them against `import` directly, not the artifact), so this
+/// reads `list`'s own lines for those and `report.matched` for everything
+/// else.
+///
+/// Only sound to call once `report.is_legal() && report.is_playable()`: a
+/// line with no matched card, or a matched card the engine refuses, has
+/// nothing to push and is silently skipped — callers that have not checked
+/// both first get back a deck short of the cards that didn't resolve, with
+/// no signal of which.
+pub fn to_deck(list: &Decklist, report: &Report, import: &mut Import) -> Vec<CardDefId> {
+    let mut deck = Vec::new();
+    for line in &list.lines {
+        if let Some(kind) = line.basic_energy_type() {
+            let id = import.basic_energy(kind);
+            deck.extend(std::iter::repeat_n(id, line.count as usize));
+        }
+    }
+    for matched in &report.matched {
+        if let Some(id) = matched.card.playable {
+            deck.extend(std::iter::repeat_n(id, matched.line.count as usize));
+        }
+    }
+    deck
 }
 
 /// Find the card a line names, by its set abbreviation and its number.

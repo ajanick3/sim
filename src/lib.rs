@@ -11,6 +11,7 @@ pub mod ids;
 pub mod import;
 pub mod rng;
 pub mod state;
+pub mod strategy;
 pub mod view;
 
 pub mod cards;

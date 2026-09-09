@@ -3241,10 +3241,24 @@ fn attack(state: &mut GameState, index: usize) {
     }
 
     let attack = state.pokemon_def(attacker).attacks[index].clone();
+    attack_with(state, attacker, defender, attack);
+}
+
+/// The dispatch every attack's own `Attack` value runs through, once
+/// it is known — the attacker's own printed attack, ordinarily, or a
+/// Benched or discarded Pokémon's attack `Night Joker` or `Seek
+/// Inspiration` copied. Every call site shares this, including the
+/// actions that resolve those two copies themselves
+/// (`Action::CopyBenchedPokemonAttack`, `Action::CopyDiscardedPokemonAttack`),
+/// so a copied attack that is itself one of these two copying effects
+/// — copying a copy — opens its own choice correctly rather than
+/// reaching the dispatch below with nothing to read.
+fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, attack: crate::card::Attack) {
+    let player = state.pokemon(attacker).owner;
     // `Night Joker` names no damage or effect of its own: it borrows
     // a Benched Pokémon's own attack outright, so this opens a choice
-    // instead of continuing through the ordinary dispatch below —
-    // `attack_with` runs once that choice names a real `Attack` to
+    // instead of continuing through the ordinary dispatch below — this
+    // function runs again once that choice names a real `Attack` to
     // read `.effect` and `.base_damage` from. `N's Zoroark ex`.
     if let Some(crate::card::AttackEffect::CopiesChosenBenchedPokemonAttackByNamePrefix(prefix)) =
         attack.effect
@@ -3262,18 +3276,17 @@ fn attack(state: &mut GameState, index: usize) {
     // `Seek Inspiration` discards the top of the library outright,
     // then — only if that card turns out to be a Pokémon without a
     // Rule Box — copies one of its own attacks, the same
-    // choose-and-run-`attack_with` shape `Night Joker` already takes,
-    // just found by discarding rather than a player's own choice
-    // among the Bench. `Slowking`.
+    // choose-and-run-this-function-again shape `Night Joker` already
+    // takes, just found by discarding rather than a player's own
+    // choice among the Bench. `Slowking`.
     if matches!(
         attack.effect,
         Some(crate::card::AttackEffect::DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox)
     ) {
-        let owner = state.pokemon(attacker).owner;
-        let Some(top) = state.players[owner.index()].library.pop() else {
+        let Some(top) = state.players[player.index()].library.pop() else {
             return;
         };
-        state.players[owner.index()].discard.push(top);
+        state.players[player.index()].discard.push(top);
         let card_name = state.def_of(top).name();
         state.log.push(format!("{player:?} discards {card_name} for Seek Inspiration."));
         let copies = state
@@ -3285,15 +3298,6 @@ fn attack(state: &mut GameState, index: usize) {
         }
         return;
     }
-    attack_with(state, attacker, defender, attack);
-}
-
-/// The dispatch every attack's own `Attack` value runs through, once
-/// it is known — the attacker's own printed attack, ordinarily, or a
-/// Benched Pokémon's attack `Night Joker` copied. Both call sites
-/// share this so the damage and effect logic below reads only the
-/// `Attack` value itself, never which Pokémon it was printed on.
-fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, attack: crate::card::Attack) {
     if matches!(attack.effect, Some(crate::card::AttackEffect::FizzlesWithNoStadiumInPlay))
         && state.stadium.is_none()
     {
