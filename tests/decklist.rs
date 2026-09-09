@@ -136,16 +136,31 @@ fn the_report_says_how_much_of_the_deck_the_engine_can_play() {
 }
 
 #[test]
-fn the_uncheckable_rule_is_named() {
+fn a_deck_may_hold_one_ace_spec() {
     let import = load(&artifact()).unwrap();
-    let list = parse(LIST);
+    let list = parse("1 Prime Catcher TEF 157\n");
+    let report = check(&list, &import);
+    assert!(
+        !report
+            .problems
+            .iter()
+            .any(|p| matches!(p, Problem::TooManyAceSpecs { .. })),
+        "one ACE SPEC is legal: {:?}",
+        report.problems
+    );
+}
+
+#[test]
+fn two_ace_specs_of_different_names_still_break_rule_3() {
+    let import = load(&artifact()).unwrap();
+    let list = parse("1 Prime Catcher TEF 157\n1 Unfair Stamp TWM 165\n");
     let report = check(&list, &import);
     assert!(
         report
-            .uncheckable
-            .iter()
-            .any(|note| note.contains("ACE SPEC")),
-        "rule 3 cannot be checked from this data, and the report says so"
+            .problems
+            .contains(&Problem::TooManyAceSpecs { held: 2 }),
+        "rule 3 counts every ACE SPEC together, not one limit per name: {:?}",
+        report.problems
     );
 }
 

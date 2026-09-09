@@ -1151,6 +1151,34 @@ const FUTURE_PRINT_IDS: &[&str] = &[
     "svp-146",  // Iron Crown ex, Scarlet & Violet Promos
 ];
 
+/// Whether `print_id` carries ACE SPEC — a classification of its own,
+/// not a `Marker`, since `Marker` lives on `Pokemon` alone and ACE
+/// SPEC spans two `CardDef` variants instead: `Trainer` (an Item,
+/// Tool, or Stadium — never a Supporter) and `Energy` (a Special
+/// Energy). Read at exactly two sites — Rule 3's one-per-deck limit
+/// in `decklist::check`, and `Genesect`'s `ACE Nullifier` — so this
+/// is a lookup function against `ACE_SPEC_PRINT_IDS`, not a stored
+/// field threaded through both structs' own construction sites.
+/// Cross-checked by hand against pkmncards.com's `is:ace-spec`
+/// listing, scoped to the five names the sample decks actually use
+/// (`Prime Catcher`, `Unfair Stamp`, `Enriching Energy`, `Hero's
+/// Cape`, `Secret Box`); open, not closed, the same caveat
+/// `ANCIENT_PRINT_IDS` and `FUTURE_PRINT_IDS` carry — ACE SPEC is
+/// still being printed, and a name outside this five has simply
+/// never been checked here.
+pub fn is_ace_spec(print_id: &str) -> bool {
+    ACE_SPEC_PRINT_IDS.contains(&print_id)
+}
+
+const ACE_SPEC_PRINT_IDS: &[&str] = &[
+    "sv05-152",   // Hero's Cape, Temporal Forces
+    "sv05-157",   // Prime Catcher, Temporal Forces
+    "sv06-163",   // Secret Box, Twilight Masquerade
+    "sv06-165",   // Unfair Stamp, Twilight Masquerade
+    "sv08-191",   // Enriching Energy, Surging Sparks
+    "sv08.5-119", // Prime Catcher, Prismatic Evolutions
+];
+
 /// Whether every attack this raw print carries would read on its own,
 /// regardless of whether its Ability (if any) also reads. Milestone 11
 /// and Milestone 8 track separate progress on the same species; the
@@ -1334,6 +1362,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Dusknoir", "Cursed Blast") => AbilityEffect::OncePerTurnMayDamageOpponentThenKnockOutSelf(13),
         ("Genesect ex", "Metallic Signal") => {
             AbilityEffect::OncePerTurnMaySearchEvolutionPokemonOfType(Type::Metal, 2)
+        }
+        ("Genesect", "ACE Nullifier") => {
+            AbilityEffect::PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool
         }
         ("Blaziken ex", "Seething Spirit") => {
             AbilityEffect::OncePerTurnMayAttachBasicEnergyFromDiscardToChosen

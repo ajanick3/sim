@@ -3454,6 +3454,107 @@ fn seasoned_skill_never_discounts_past_the_full_cost() {
     );
 }
 
+fn ace_nullifier_carrier(print_id: &'static str) -> Pokemon {
+    Pokemon {
+        markers: Vec::new(),
+        print_id,
+        name: "Genesect",
+        hp: 110,
+        kind: Type::Metal,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "ACE Nullifier",
+            effect: sim::card::AbilityEffect::PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool,
+        }),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }
+}
+
+fn ace_nullifier_game() -> (GameState, sim::ids::CardDefId) {
+    let ability = Ability {
+        name: "Draw Power",
+        effect: sim::card::AbilityEffect::OncePerTurnWhileActiveMayDrawCards(1),
+    };
+    game(ability, 7)
+}
+
+#[test]
+fn ace_nullifier_blocks_an_ace_spec_item_while_the_carrier_has_a_tool() {
+    let (mut state, _carrier_def) = ace_nullifier_game();
+    let carrier_side = state.current;
+    let nullifier_side = carrier_side.opponent();
+
+    let genesect = state.db.add(CardDef::Pokemon(ace_nullifier_carrier("test-genesect-with-tool")));
+    let card = deal_new_card(&mut state, nullifier_side, genesect);
+    let genesect_active = state.put_into_play(nullifier_side, card);
+    state.players[nullifier_side.index()].bench.push(genesect_active);
+
+    let tool = state.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tool",
+        name: "Test Tool",
+        kind: TrainerKind::Tool,
+        effect: TrainerEffect::Nothing,
+        requirement: None,
+    }));
+    let tool_card = deal_new_card(&mut state, nullifier_side, tool);
+    state.pokemon[genesect_active.index()].attached.push(tool_card);
+
+    let ace_spec = state.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-ace-spec-item",
+        name: "Test Ace Spec",
+        kind: TrainerKind::Item,
+        effect: TrainerEffect::Nothing,
+        requirement: None,
+    }));
+    let _ = deal_new_card(&mut state, carrier_side, ace_spec);
+
+    assert!(
+        state.opponent_ace_specs_blocked(carrier_side),
+        "ACE Nullifier blocks ACE SPEC plays while its carrier holds a Tool"
+    );
+}
+
+#[test]
+fn ace_nullifier_does_nothing_without_a_tool_attached() {
+    let (mut state, _carrier_def) = ace_nullifier_game();
+    let carrier_side = state.current;
+    let nullifier_side = carrier_side.opponent();
+
+    let genesect = state.db.add(CardDef::Pokemon(ace_nullifier_carrier("test-genesect-no-tool")));
+    let card = deal_new_card(&mut state, nullifier_side, genesect);
+    let genesect_active = state.put_into_play(nullifier_side, card);
+    state.players[nullifier_side.index()].bench.push(genesect_active);
+
+    assert!(
+        !state.opponent_ace_specs_blocked(carrier_side),
+        "the card's own text requires a Tool attached, which this carrier has none of"
+    );
+}
+
+#[test]
+fn genesect_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Genesect" && c.playable.is_some()),
+        "at least one Genesect print should play"
+    );
+}
+
 #[test]
 fn bloodmoon_ursaluna_ex_is_admitted_from_the_artifact() {
     let import = sim::import::load(

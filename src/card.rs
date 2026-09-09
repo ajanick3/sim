@@ -1429,6 +1429,16 @@ pub enum AbilityEffect {
     /// touching a non-Colorless requirement. `Bloodmoon Ursaluna
     /// ex`'s `Seasoned Skill`, on `Blood Moon`.
     PassiveNamedAttackCostsLessPerOpponentPrizeTaken(&'static str),
+    /// A standing effect, not a choice: while this Pokémon has a
+    /// Pokémon Tool attached, the opponent cannot play any ACE SPEC
+    /// card from their hand — an Item, Tool, Stadium, or Special
+    /// Energy carrying that classification (never a Supporter).
+    /// Read at every site that offers playing or attaching one:
+    /// `PlayTrainer`'s own timing check and the Energy-attach
+    /// offering, both in `legal_actions`. This Pokémon need not be
+    /// Active — the card's own text names no Spot. `Genesect`'s `ACE
+    /// Nullifier`.
+    PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool,
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for
