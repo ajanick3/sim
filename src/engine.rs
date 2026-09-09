@@ -82,8 +82,16 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state.clear_conditions(target);
             let name = state.pokemon_def(target).name;
             state.log.push(format!("{player:?} evolves into {name}."));
-            trigger_psychic_draw(state, player, target);
-            trigger_jewel_seeker(state, player, target);
+            // The ruling on Jewel Seeker: if the evolution's own carried-
+            // over damage now exceeds its new HP, the Knockout takes
+            // effect before any evolve-triggered Ability could fire —
+            // settle() here, checked before either trigger, is what
+            // gives that Knockout its own chance to happen first.
+            settle(state);
+            if !state.pokemon(target).knocked_out {
+                trigger_psychic_draw(state, player, target);
+                trigger_jewel_seeker(state, player, target);
+            }
         }
 
         Action::PlayTrainer { card } => {
