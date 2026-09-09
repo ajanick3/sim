@@ -496,6 +496,12 @@ pub enum Phase {
     /// Energy from the discard pile to a Pokémon of the player's
     /// choosing. `Blaziken ex`'s `Seething Spirit`.
     DecidingToUseSeethingSpirit { player: PlayerId, pokemon: PokemonId },
+    /// The same combined card-and-target choice
+    /// `DecidingToUseSeethingSpirit` already takes, but from the
+    /// hand rather than the discard pile, and healing whichever
+    /// Pokémon receives the Energy. `Hydrapple ex`'s `Ripening
+    /// Charge`.
+    DecidingToUseRipeningCharge { player: PlayerId, pokemon: PokemonId },
     /// `player` used an attack that puts one of the attacker's own
     /// attached Energy into their hand. `Chien-Pao`'s `Icicle Loop`.
     ChoosingOwnEnergyToHand { player: PlayerId, attacker: PokemonId },

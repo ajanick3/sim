@@ -1287,6 +1287,12 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         }
         ("Annihilape", "Lose Cool") => AbilityEffect::PassiveBonusDamageToActiveIfSelfDamaged(120),
         ("Hoothoot", "Insomnia") => AbilityEffect::PassiveImmuneToAsleep,
+        ("Hydrapple ex", "Ripening Charge") => {
+            AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeFromHandToChosenThenHeal(
+                Type::Grass,
+                30,
+            )
+        }
         ("Bloodmoon Ursaluna ex", "Seasoned Skill") => {
             AbilityEffect::PassiveNamedAttackCostsLessPerOpponentPrizeTaken("Blood Moon")
         }
@@ -1478,6 +1484,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::BonusDamageIfOwnEnergyOfTypeAttached(Type::Fighting, 20)
         }
         ("Bloodmoon Ursaluna ex", "Blood Moon") => AttackEffect::AttackerCannotAttackNextTurn,
+        ("Hydrapple ex", "Syrup Storm") => {
+            AttackEffect::BonusDamagePerCount(Count::OwnEnergyOfTypeAttachedAcrossSideCount(Type::Grass), 30)
+        }
         ("Mega Excadrill ex", "Undermine") => AttackEffect::DiscardsTopOfOpponentsLibrary(2),
         ("Mega Excadrill ex", "Maximum Drilling") => {
             AttackEffect::BonusDamageIfExtraEnergyAttached(2, 130)

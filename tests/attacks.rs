@@ -3810,3 +3810,55 @@ fn no_bonus_damage_without_enough_extra_energy() {
 
     assert_eq!(state.pokemon(defender).damage, 200, "only the cost's own 1 Energy attached, no bonus");
 }
+
+// --- Beyond the spec: bonus damage per Energy of a type across the whole side, not only the attacker ---
+
+#[test]
+fn bonus_damage_per_own_energy_of_type_across_the_whole_side() {
+    let attack = Attack {
+        name: "Syrup Storm",
+        cost: vec![Type::Colorless],
+        base_damage: 30,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamagePerCount(
+            sim::card::Count::OwnEnergyOfTypeAttachedAcrossSideCount(Type::Grass),
+            30,
+        )),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let grass_energy = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-syrup-storm-grass-energy",
+        name: "Grass Energy",
+        kind: Type::Grass,
+        effect: None,
+    }));
+    // One Grass Energy on the attacker, one on a Benched Pokemon —
+    // both count, since Syrup Storm reads the whole side.
+    let card = deal_new_card(&mut state, player, grass_energy);
+    state.pokemon[attacker.index()].attached.push(card);
+    let bench_card = deal_new_card(&mut state, player, defender_ex);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+    let card = deal_new_card(&mut state, player, grass_energy);
+    state.pokemon[bench_mon.index()].attached.push(card);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 90, "30 base plus 2 Grass Energy (attacker plus bench) times 30");
+}
+
+#[test]
+fn hydrapple_exs_syrup_storm_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Hydrapple ex" && c.playable.is_some()),
+        "at least one Hydrapple ex print should play"
+    );
+}
