@@ -157,6 +157,12 @@ pub enum CardFilter {
     BasicPokemonOfType(Type),
     /// A Pokémon carrying `Marker::Tera`. `Tera Orb`.
     TeraPokemon,
+    /// A Pokémon of this type, or a Stadium card — the same "one
+    /// filter, two kinds of card" shape `PokemonOrBasicEnergy` and
+    /// `PokemonOfTypeOrBasicEnergyOfType` already are, but the second
+    /// kind is a Trainer kind rather than Energy. `Celebi`'s
+    /// `Traverse Time`.
+    PokemonOfTypeOrStadium(Type),
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
@@ -877,6 +883,12 @@ pub enum AttackEffect {
     /// type and so never really chooses. `Smoochum`'s `Delightful
     /// Kiss`.
     SearchesBasicEnergyOfTypeAttachToChosenBenched(Type, u32),
+    /// Search the deck for up to this many cards, each independently
+    /// a Pokémon of this type or a Stadium (`CardFilter::PokemonOf-
+    /// TypeOrStadium`), reveal them, and put them into hand, then
+    /// shuffle. An empty library opens no phase. `Celebi`'s
+    /// `Traverse Time`.
+    SearchLibraryForUpToPokemonOfTypeOrStadiumToHand(Type, u32),
     /// This much more damage, but only if the attacker has at least
     /// this many Energy cards attached beyond its own printed
     /// attack cost — a threshold read against the cost, unlike every

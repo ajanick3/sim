@@ -234,6 +234,11 @@ pub enum Action {
     /// Take this Trainer card as part of
     /// `Phase::SearchingLibraryForTrainerCards`.
     TakeTrainerCardFromLibrary { card: CardId },
+    /// Take this card as part of
+    /// `Phase::SearchingLibraryForPokemonOfTypeOrStadium`.
+    TakePokemonOfTypeOrStadiumFromLibrary { card: CardId },
+    /// Stop that search before its limit is reached.
+    FinishSearchingPokemonOfTypeOrStadium,
     /// Stop `Phase::SearchingLibraryForTrainerCards` before its
     /// limit is reached.
     FinishSearchingTrainerCards,
@@ -390,6 +395,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DecidingToUsePsychicDraw { player, .. } => Some(player),
         Phase::DecidingToUseJewelSeeker { player, .. } => Some(player),
         Phase::SearchingLibraryForTrainerCards { player, .. } => Some(player),
+        Phase::SearchingLibraryForPokemonOfTypeOrStadium { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive { player, .. } => Some(player),
         Phase::ChoosingOwnBenchedSourceForDamageMove { player } => Some(player),
@@ -788,6 +794,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
             }
             actions.push(Action::FinishSearchingTrainerCards);
+            return actions;
+        }
+        Phase::SearchingLibraryForPokemonOfTypeOrStadium { player: whose, kind, .. } => {
+            for card in &state.player(whose).library {
+                if state.matches_filter(*card, crate::card::CardFilter::PokemonOfTypeOrStadium(kind)) {
+                    actions.push(Action::TakePokemonOfTypeOrStadiumFromLibrary { card: *card });
+                }
+            }
+            actions.push(Action::FinishSearchingPokemonOfTypeOrStadium);
             return actions;
         }
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player: whose, .. } => {
@@ -1919,6 +1934,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DeclineJewelSeeker => "Decline Jewel Seeker".to_string(),
         Action::TakeTrainerCardFromLibrary { card } => format!("Take {}", state.def_of(card).name()),
         Action::FinishSearchingTrainerCards => "Stop searching".to_string(),
+        Action::TakePokemonOfTypeOrStadiumFromLibrary { card } => {
+            format!("Take {}", state.def_of(card).name())
+        }
+        Action::FinishSearchingPokemonOfTypeOrStadium => "Stop searching".to_string(),
         Action::DamageChosenOpponentPokemon { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
         }

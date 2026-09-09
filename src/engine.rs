@@ -1457,6 +1457,36 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             finish_searching_library_for_trainer_cards(state, player);
         }
 
+        Action::TakePokemonOfTypeOrStadiumFromLibrary { card } => {
+            let (player, kind, remaining) = match state.phase {
+                Phase::SearchingLibraryForPokemonOfTypeOrStadium { player, kind, remaining } => {
+                    (player, kind, remaining)
+                }
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} joins the hand."));
+            if remaining <= 1 {
+                finish_searching_library_for_pokemon_of_type_or_stadium(state, player);
+            } else {
+                state.phase = Phase::SearchingLibraryForPokemonOfTypeOrStadium {
+                    player,
+                    kind,
+                    remaining: remaining - 1,
+                };
+            }
+        }
+
+        Action::FinishSearchingPokemonOfTypeOrStadium => {
+            let player = match state.phase {
+                Phase::SearchingLibraryForPokemonOfTypeOrStadium { player, .. } => player,
+                _ => return Err(IllegalAction),
+            };
+            finish_searching_library_for_pokemon_of_type_or_stadium(state, player);
+        }
+
         Action::DamageChosenOpponentPokemon { target } => {
             let damage = match state.phase {
                 Phase::ChoosingAnyOpponentPokemonDamageTarget { damage, .. } => damage,
@@ -3691,6 +3721,16 @@ fn resolve_attack_effect(
                 state.phase = Phase::SearchingLibraryForAnyCards { player: owner, remaining: count };
             }
         }
+        crate::card::AttackEffect::SearchLibraryForUpToPokemonOfTypeOrStadiumToHand(kind, count) => {
+            let owner = state.pokemon(attacker).owner;
+            if !state.player(owner).library.is_empty() {
+                state.phase = Phase::SearchingLibraryForPokemonOfTypeOrStadium {
+                    player: owner,
+                    kind,
+                    remaining: count,
+                };
+            }
+        }
     }
 }
 
@@ -3732,6 +3772,13 @@ fn finish_searching_library_for_trainer_cards(state: &mut GameState, player: Pla
 }
 
 fn finish_searching_energy_of_type_to_attach_to_chosen(state: &mut GameState, player: PlayerId) {
+    let library = &mut state.players[player.index()].library;
+    shuffle(state.rng.as_mut(), library);
+    state.phase = Phase::Main;
+    settle(state);
+}
+
+fn finish_searching_library_for_pokemon_of_type_or_stadium(state: &mut GameState, player: PlayerId) {
     let library = &mut state.players[player.index()].library;
     shuffle(state.rng.as_mut(), library);
     state.phase = Phase::Main;
