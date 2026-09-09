@@ -367,6 +367,61 @@ fn evolving_offers_the_draw() {
 // --- Beyond the map: the same trigger, gated on an own Tera Pokemon, searching Trainers ---
 
 #[test]
+fn evolving_into_a_lethal_carryover_ko_s_before_any_evolve_triggered_ability() {
+    // The ruling on Jewel Seeker: if the evolution's own carried-over
+    // damage now exceeds its new HP, the Knockout takes effect before
+    // any evolve-triggered Ability (Psychic Draw included) could fire.
+    let ability = Ability {
+        name: "Psychic Draw",
+        effect: sim::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(2),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let basic = state.player(player).active.unwrap();
+    let basic_name = state.pokemon_def(basic).name;
+    // 120 damage already on the Basic — more than the low-HP
+    // evolution below can carry.
+    state.pokemon[basic.index()].damage = 120;
+
+    let evolution_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-lethal-carryover-evolution",
+        name: "Fragilemon",
+        hp: 80,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Stage1,
+        evolve_from: Some(basic_name),
+        evolves_from_basic: None,
+        ability: Some(ability),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let evolution = deal_new_card(&mut state, player, evolution_def);
+    state.players[player.index()].hand.push(evolution);
+
+    apply(&mut state, Action::Evolve { card: evolution, target: basic }).unwrap();
+
+    assert_ne!(
+        state.phase,
+        Phase::DecidingToUsePsychicDraw { player, name: "Psychic Draw", count: 2 },
+        "the Knockout takes effect before Psychic Draw could be activated"
+    );
+    assert!(
+        matches!(state.phase, Phase::Promoting { .. }) || state.is_over(),
+        "the Active was Knocked Out on evolving — Promoting if there's a Bench to fall back to, Over otherwise (this fixture's deck has none)"
+    );
+}
+
+#[test]
 fn jewel_seeker_offers_the_search_only_with_an_own_tera_pokemon_in_play() {
     let ability = Ability {
         name: "Jewel Seeker",
