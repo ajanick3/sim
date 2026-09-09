@@ -842,6 +842,20 @@ pub enum AttackEffect {
     /// library — fewer if their library holds fewer. `Mega Excadrill
     /// ex`'s `Undermine`.
     DiscardsTopOfOpponentsLibrary(u32),
+    /// Shuffle every Energy attached to the attacker into its
+    /// owner's deck, then deal this much flat damage to one of the
+    /// opponent's Pokémon, the player's choice of which — Weakness
+    /// and Resistance apply only if the chosen target is the
+    /// opponent's Active, never if it's Benched (the card's own
+    /// parenthetical). Opens
+    /// `Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive`.
+    /// A Tool bonus, a turn bonus, and `Cobalt Command` never reach
+    /// this damage even against an Active target, the same
+    /// documented gap `MayDiscardAnyOwnBasicEnergyForDamagePerCard`
+    /// already carries (ADR 0085) — this damage is computed outside
+    /// `damage_dealt_with`'s own one pass too. `Mega Skarmory ex`'s
+    /// `Sonic Ripper`.
+    ShufflesOwnEnergyThenDamagesChosenOpponentPokemonWeaknessIfActive(u32),
     /// This much more damage, but only if the attacker has at least
     /// this many Energy cards attached beyond its own printed
     /// attack cost — a threshold read against the cost, unlike every

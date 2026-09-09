@@ -1469,6 +1469,30 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
+        Action::DamageChosenOpponentPokemonWeaknessIfActive { target } => {
+            let (attacker, mut damage) = match state.phase {
+                Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive { attacker, damage, .. } => {
+                    (attacker, damage)
+                }
+                _ => return Err(IllegalAction),
+            };
+            let owner = state.pokemon(target).owner;
+            if state.player(owner).active == Some(target) {
+                let attacker_type = state.pokemon_def(attacker).kind;
+                if state.effective_weakness(target) == Some(attacker_type) {
+                    damage *= 2;
+                }
+                if state.pokemon_def(target).resistance == Some(attacker_type) {
+                    damage = damage.saturating_sub(30);
+                }
+            }
+            state.pokemon[target.index()].damage += damage;
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} takes {damage}."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::DamageOneOfTwoChosenOpponentPokemon { target } => {
             let (player, damage, excluding) = match state.phase {
                 Phase::ChoosingTwoOpponentPokemonDamageTargets { player, damage, excluding } => {
@@ -3356,6 +3380,25 @@ fn resolve_attack_effect(
                 state.players[opponent.index()].discard.push(*card);
             }
             state.log.push(format!("{} card(s) discarded from the opponent's library.", taken.len()));
+        }
+        crate::card::AttackEffect::ShufflesOwnEnergyThenDamagesChosenOpponentPokemonWeaknessIfActive(
+            damage,
+        ) => {
+            let owner = state.pokemon(attacker).owner;
+            let energy: Vec<_> =
+                state.pokemon(attacker).attached.iter().copied().filter(|c| state.def_of(*c).is_energy()).collect();
+            for card in &energy {
+                state.pokemon[attacker.index()].attached.retain(|c| c != card);
+            }
+            state.players[owner.index()].library.extend(energy);
+            shuffle(state.rng.as_mut(), &mut state.players[owner.index()].library);
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} shuffles its Energy into the deck."));
+            state.phase = Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive {
+                player: owner,
+                attacker,
+                damage,
+            };
         }
         crate::card::AttackEffect::DrawCards(count) => {
             let owner = state.pokemon(attacker).owner;

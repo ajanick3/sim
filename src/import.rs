@@ -1488,6 +1488,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::BonusDamagePerCount(Count::OwnEnergyOfTypeAttachedAcrossSideCount(Type::Grass), 30)
         }
         ("Mega Excadrill ex", "Undermine") => AttackEffect::DiscardsTopOfOpponentsLibrary(2),
+        ("Mega Skarmory ex", "Sonic Ripper") => {
+            AttackEffect::ShufflesOwnEnergyThenDamagesChosenOpponentPokemonWeaknessIfActive(220)
+        }
         ("Mega Excadrill ex", "Maximum Drilling") => {
             AttackEffect::BonusDamageIfExtraEnergyAttached(2, 130)
         }
