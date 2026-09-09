@@ -240,6 +240,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // more. N's Zoroark ex (all 6 prints) — Night Joker's own attack
     // copying, and Trade's discard-then-draw — takes it to 783.
     // Slowking's Seek Inspiration, reusing that same shape, takes it
-    // to 784.
-    assert_eq!(admitted, 784, "coverage moves only on purpose");
+    // to 784. Chi-Yu's three prints (Scorching Earth, Allure/Ground
+    // Melter, Whirling Envy) take it to 787.
+    assert_eq!(admitted, 787, "coverage moves only on purpose");
 }
