@@ -238,7 +238,7 @@ than guessed at, so the placement numbers have three gaps.
 | [Koraidon ex](src/import.rs#L1448) | [✅](src/import.rs#L1448) | — |
 | Kyurem | ❌ | ❌ |
 | [Latias ex](src/import.rs#L1545) | [✅](src/import.rs#L1545) | [✅](src/import.rs#L1276) |
-| [Lillie's Clefairy ex](src/import.rs#L1566) | [✅](src/import.rs#L1566) | [✅](src/import.rs#L1280) |
+| [Lillie's Clefairy ex](src/import.rs#L1569) | [✅](src/import.rs#L1569) | [✅](src/import.rs#L1280) |
 | [Mega Absol ex](src/import.rs#L1494) | [✅](src/import.rs#L1494) | — |
 | [Mega Excadrill ex](src/import.rs#L1490) | [✅](src/import.rs#L1490) | — |
 | [Mega Kangaskhan ex](src/import.rs#L1555) | [✅](src/import.rs#L1555) | [✅](src/import.rs#L1273) |

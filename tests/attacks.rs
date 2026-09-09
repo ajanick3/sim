@@ -4498,3 +4498,42 @@ fn mega_lopunny_exs_gale_thrust_is_admitted_from_the_artifact() {
         "at least one Mega Lopunny ex print should play"
     );
 }
+
+// --- Beyond the spec: discard all own Energy, then flat damage to a chosen Benched ex ---
+
+#[test]
+fn thunder_raid_discards_all_energy_then_damages_a_chosen_benched_ex() {
+    let attack = Attack {
+        name: "Thunder Raid",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenchedEx(210)),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let bench_card = deal_new_card(&mut state, opponent, defender_ex);
+    let bench_mon = state.put_into_play(opponent, bench_card);
+    state.players[opponent.index()].bench.push(bench_mon);
+
+    pay_and_attack(&mut state);
+
+    assert!(state.pokemon(attacker).attached.is_empty(), "all of the attacker's own Energy discarded");
+    assert!(matches!(state.phase, Phase::ChoosingBenchedExDamageTarget { .. }));
+    apply(&mut state, Action::DamageBenchedEx { target: bench_mon }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(bench_mon).damage, 210);
+}
+
+#[test]
+fn zeraoras_thunder_raid_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv10-078").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Zeraora's Thunder Raid print should play");
+}

@@ -1560,6 +1560,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Teal Mask Ogerpon ex", "Myriad Leaf Shower") => {
             AttackEffect::DamagePerCount(Count::EnergyOnBothActivesCount, 30)
         }
+        ("Zeraora", "Thunder Raid") => {
+            AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenchedEx(210)
+        }
         ("Zeraora", "Combat Thunder") => {
             AttackEffect::DamagePerCount(Count::OpponentBenchedPokemonCount, 20)
         }

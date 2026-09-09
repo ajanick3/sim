@@ -979,6 +979,13 @@ pub enum AttackEffect {
     /// `Phase::ChoosingBenchedExDamageTarget`. No Benched Pokémon ex
     /// opens no phase. `Shaymin`'s `Pinpoint Dive`.
     DamageChosenOpponentBenchedEx(u32),
+    /// Discard all Energy from the attacker, then the same flat
+    /// damage `DamageChosenOpponentBenchedEx` deals — the same
+    /// discard-then-damage shape `DiscardsOwnEnergyThenDamages-
+    /// ChosenBenched` already takes, narrowed to a Benched Pokémon
+    /// ex the same way `DamageChosenOpponentBenchedEx` narrows
+    /// `DamageChosenOpponentPokemon`. `Zeraora`'s `Thunder Raid`.
+    DiscardsOwnEnergyThenDamagesChosenBenchedEx(u32),
     /// Search the deck for an Energy card and attach it to one of the
     /// player's own Benched Pokémon of this type, then shuffle the
     /// deck. No qualifying Energy or no qualifying Bench target opens

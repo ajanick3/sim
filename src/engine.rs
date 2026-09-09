@@ -3650,6 +3650,30 @@ fn resolve_attack_effect(
                 state.phase = Phase::ChoosingBenchedExDamageTarget { player: owner, damage };
             }
         }
+        crate::card::AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenchedEx(damage) => {
+            let owner = state.pokemon(attacker).owner;
+            let energy: Vec<CardId> = state
+                .pokemon(attacker)
+                .attached
+                .iter()
+                .copied()
+                .filter(|c| state.def_of(*c).is_energy())
+                .collect();
+            for card in energy {
+                state.pokemon[attacker.index()].attached.retain(|c| *c != card);
+                state.players[owner.index()].discard.push(card);
+            }
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} discards all its Energy."));
+            let any_benched_ex = state
+                .player(owner.opponent())
+                .bench
+                .iter()
+                .any(|p| state.pokemon_def(*p).prizes > 1);
+            if any_benched_ex {
+                state.phase = Phase::ChoosingBenchedExDamageTarget { player: owner, damage };
+            }
+        }
         crate::card::AttackEffect::SearchEnergyAttachToBenchedOfType(kind) => {
             let owner = state.pokemon(attacker).owner;
             let has_energy =
