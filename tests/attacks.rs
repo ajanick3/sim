@@ -4885,3 +4885,197 @@ fn slowkings_seek_inspiration_is_admitted_from_the_artifact() {
         "at least one Slowking print should play"
     );
 }
+
+// --- Chi-Yu: three prints, three different attacks ---
+
+#[test]
+fn ground_melter_deals_bonus_damage_and_discards_the_stadium() {
+    let attack = Attack {
+        name: "Ground Melter",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 60,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfStadiumInPlayThenDiscardsIt(60)),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let defender = state.player(player.opponent()).active.unwrap();
+    let stadium_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-ground-melter-stadium",
+        name: "Test Stadium",
+        kind: sim::card::TrainerKind::Stadium,
+        requirement: None,
+        effect: sim::card::TrainerEffect::Nothing,
+    }));
+    let stadium = deal_new_card(&mut state, player, stadium_def);
+    state.stadium = Some((player, stadium));
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 120, "60 base plus 60 bonus");
+    assert!(state.stadium.is_none(), "the Stadium is discarded");
+    assert!(state.player(player).discard.contains(&stadium));
+}
+
+#[test]
+fn ground_melter_deals_only_base_damage_with_no_stadium() {
+    let attack = Attack {
+        name: "Ground Melter",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 60,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfStadiumInPlayThenDiscardsIt(60)),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let defender = state.player(player.opponent()).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 60, "no Stadium, no bonus");
+}
+
+#[test]
+fn scorching_earth_discards_the_opponents_stadium_and_locks_out_their_next_turn() {
+    let attack = Attack {
+        name: "Scorching Earth",
+        cost: vec![Type::Colorless],
+        base_damage: 40,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsOpponentsStadiumThenOpponentCannotPlayStadiumsNextTurn),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let stadium_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-scorching-earth-stadium",
+        name: "Test Stadium",
+        kind: sim::card::TrainerKind::Stadium,
+        requirement: None,
+        effect: sim::card::TrainerEffect::Nothing,
+    }));
+    let stadium = deal_new_card(&mut state, opponent, stadium_def);
+    state.stadium = Some((opponent, stadium));
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 40);
+    assert!(state.stadium.is_none(), "the opponent's Stadium is discarded");
+    assert!(state.player(opponent).discard.contains(&stadium));
+
+    // The opponent's own next turn: a Stadium in hand cannot be played.
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    let another_stadium_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-scorching-earth-stadium-2",
+        name: "Another Stadium",
+        kind: sim::card::TrainerKind::Stadium,
+        requirement: None,
+        effect: sim::card::TrainerEffect::Nothing,
+    }));
+    let in_hand = deal_new_card(&mut state, opponent, another_stadium_def);
+    assert!(
+        !legal_actions(&state).iter().any(|a| matches!(a, Action::PlayTrainer { card } if *card == in_hand)),
+        "no Stadium cards can be played this turn"
+    );
+}
+
+#[test]
+fn scorching_earth_does_not_touch_the_players_own_stadium() {
+    let attack = Attack {
+        name: "Scorching Earth",
+        cost: vec![Type::Colorless],
+        base_damage: 40,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsOpponentsStadiumThenOpponentCannotPlayStadiumsNextTurn),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let stadium_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-own-stadium",
+        name: "Own Stadium",
+        kind: sim::card::TrainerKind::Stadium,
+        requirement: None,
+        effect: sim::card::TrainerEffect::Nothing,
+    }));
+    let stadium = deal_new_card(&mut state, player, stadium_def);
+    state.stadium = Some((player, stadium));
+
+    pay_and_attack(&mut state);
+
+    assert!(state.stadium.is_some(), "the attacker's own Stadium is left alone");
+}
+
+#[test]
+fn whirling_envy_deals_bonus_damage_ignoring_weakness_once_damaged_enough() {
+    let attack = Attack {
+        name: "Whirling Envy",
+        cost: vec![Type::Colorless],
+        base_damage: 20,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfOwnDamageCountersAtLeastIgnoringWeakness(2, 90)),
+    };
+    // `game_with_weak_defender` prints the defender's own Weakness to
+    // Colorless, the attacker's own type, so a normal attack would
+    // double — Whirling Envy's own text says it never does.
+    let mut state = game_with_weak_defender(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let defender = state.player(player.opponent()).active.unwrap();
+    state.pokemon[attacker.index()].damage = 20; // 2 damage counters
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 110, "20 base + 90 bonus, never doubled by Weakness");
+}
+
+#[test]
+fn whirling_envy_deals_only_base_damage_under_two_counters() {
+    let attack = Attack {
+        name: "Whirling Envy",
+        cost: vec![Type::Colorless],
+        base_damage: 20,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfOwnDamageCountersAtLeastIgnoringWeakness(2, 90)),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let defender = state.player(player.opponent()).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 20, "no damage counters yet, so no bonus");
+}
+
+#[test]
+fn allure_draws_two_cards() {
+    let attack = Attack {
+        name: "Allure",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DrawCards(2)),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let hand_before = state.player(player).hand.len();
+
+    pay_and_attack(&mut state);
+
+    // -1 for the Colorless Energy Allure's own cost spent, +2 drawn.
+    assert_eq!(state.player(player).hand.len(), hand_before + 1);
+}
+
+#[test]
+fn chi_yus_attacks_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let admitted = import.cards.iter().filter(|c| c.name == "Chi-Yu" && c.playable.is_some()).count();
+    assert_eq!(admitted, 3, "all 3 Chi-Yu prints should play");
+}

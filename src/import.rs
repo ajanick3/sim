@@ -1590,6 +1590,16 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Pecharunt ex", "Irritated Outburst") => {
             AttackEffect::DamagePerCount(Count::OpponentPrizesTakenCount, 60)
         }
+        ("Chi-Yu", "Scorching Earth") => {
+            AttackEffect::DiscardsOpponentsStadiumThenOpponentCannotPlayStadiumsNextTurn
+        }
+        ("Chi-Yu", "Allure") => AttackEffect::DrawCards(2),
+        ("Chi-Yu", "Whirling Envy") => {
+            AttackEffect::BonusDamageIfOwnDamageCountersAtLeastIgnoringWeakness(2, 90)
+        }
+        ("Chi-Yu", "Ground Melter") => {
+            AttackEffect::BonusDamageIfStadiumInPlayThenDiscardsIt(60)
+        }
         ("Slowking", "Seek Inspiration") => {
             AttackEffect::DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox
         }

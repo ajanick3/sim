@@ -720,6 +720,15 @@ pub enum AttackEffect {
     /// `damage_dealt_with` runs, the same as `CoinFlipBonusDamage`.
     /// `Mega Sharpedo ex`'s `Hungry Jaws`.
     BonusDamageIfOwnDamaged(u32),
+    /// This much more damage, but only if the attacker already
+    /// carries at least this many damage counters, and — unlike
+    /// every other bonus-damage variant — this attack's damage is
+    /// never affected by Weakness (Resistance still applies). Read
+    /// in two places: the bonus itself in the `base` match, same as
+    /// `BonusDamageIfOwnDamaged`, and the Weakness skip inside
+    /// `damage_dealt_with`, which every other variant leaves alone.
+    /// `Chi-Yu`'s `Whirling Envy`.
+    BonusDamageIfOwnDamageCountersAtLeastIgnoringWeakness(u32, u32),
     /// The player may put up to this many Energy attached to the
     /// opponent's Active Pokémon into the opponent's hand, choosing
     /// which — opens `Phase::MovingOpponentsActiveEnergyToHand`. No
@@ -778,6 +787,16 @@ pub enum AttackEffect {
     /// the Item-offering site in `legal_actions` rather than at
     /// retreat's. `Budew`'s `Itchy Pollen`.
     OpponentCannotPlayItemsNextTurn,
+    /// If the opponent has a Stadium in play, discard it; if that
+    /// happens, the opponent cannot play any Stadium card from hand
+    /// during their very next turn — the same
+    /// `opponent_next_turn_restriction` lifetime
+    /// `OpponentCannotPlayItemsNextTurn` already carries, read at
+    /// the Stadium-offering site instead of the Item one. Read in
+    /// `attack_with` rather than `resolve_attack_effect`, since it
+    /// runs no matter what — flat 40 damage, unaffected by whether a
+    /// Stadium was there to discard. `Chi-Yu`'s `Scorching Earth`.
+    DiscardsOpponentsStadiumThenOpponentCannotPlayStadiumsNextTurn,
     /// The player may shuffle exactly `count` Energy attached to the
     /// attacker into their own library; if they do, this attack also
     /// deals `damage` (flat) to one Benched Pokémon they choose. Opens
@@ -817,6 +836,12 @@ pub enum AttackEffect {
     /// Pokémon in play share a type with any of the opponent's
     /// Pokémon in play. `Enamorus`'s `Love Resonance`.
     BonusDamageIfSharedTypeInPlay(u32),
+    /// This much more damage, but only if a Stadium is in play,
+    /// either player's; if it landed, the Stadium is then discarded
+    /// — read in `resolve_attack_effect`, after damage, matching the
+    /// card's own "Then, discard that Stadium." `Chi-Yu`'s `Ground
+    /// Melter`.
+    BonusDamageIfStadiumInPlayThenDiscardsIt(u32),
     /// This much more damage, but only if the attacker has any
     /// Energy of this type attached — a threshold check, unlike
     /// `Count::OwnEnergyOfTypeAttachedCount`'s own per-unit

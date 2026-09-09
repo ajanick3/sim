@@ -1413,6 +1413,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 Some((target, crate::card::AttackEffect::OpponentCannotPlayItemsNextTurn, _))
                     if state.pokemon(target).owner == player
             );
+            let cannot_play_stadiums = matches!(
+                state.opponent_next_turn_restriction,
+                Some((
+                    target,
+                    crate::card::AttackEffect::DiscardsOpponentsStadiumThenOpponentCannotPlayStadiumsNextTurn,
+                    _
+                )) if state.pokemon(target).owner == player
+            );
             let timing = match trainer.kind {
                 TrainerKind::Item => !cannot_play_items,
                 TrainerKind::Tool => unreachable!("filtered out above"),
@@ -1420,7 +1428,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     !state.is_spent(Limit::SupporterPlayed(player))
                         && !state.is_first_turn_of_game()
                 }
-                TrainerKind::Stadium => !state.is_spent(Limit::StadiumPlayed(player)),
+                TrainerKind::Stadium => {
+                    !state.is_spent(Limit::StadiumPlayed(player)) && !cannot_play_stadiums
+                }
             } && !(crate::import::is_ace_spec(def.print_id())
                 && state.opponent_ace_specs_blocked(player));
             // A card that switches the opponent's Active needs somewhere to

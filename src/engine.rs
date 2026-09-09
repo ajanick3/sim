@@ -3268,6 +3268,16 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
                 attack.base_damage
             }
         }
+        Some(crate::card::AttackEffect::BonusDamageIfOwnDamageCountersAtLeastIgnoringWeakness(
+            threshold,
+            bonus,
+        )) => {
+            if state.pokemon(attacker).damage / 10 >= threshold {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
         Some(crate::card::AttackEffect::BonusDamageIfDefenderIsEx(bonus)) => {
             if state.pokemon_def(defender).prizes > 1 {
                 attack.base_damage + bonus
@@ -3326,6 +3336,13 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
                 attack.base_damage
             }
         }
+        Some(crate::card::AttackEffect::BonusDamageIfStadiumInPlayThenDiscardsIt(bonus)) => {
+            if state.stadium.is_some() {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
         Some(crate::card::AttackEffect::BonusDamageIfOwnEnergyOfTypeAttached(kind, bonus)) => {
             let count = count_for_attack(
                 state,
@@ -3359,7 +3376,12 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
     };
     let ignore_defenders_effects =
         matches!(attack.effect, Some(crate::card::AttackEffect::IgnoresDefendersEffects));
-    let damage = damage_dealt_with(state, attacker, defender, base, ignore_defenders_effects);
+    let ignore_weakness = matches!(
+        attack.effect,
+        Some(crate::card::AttackEffect::BonusDamageIfOwnDamageCountersAtLeastIgnoringWeakness(..))
+    );
+    let damage =
+        damage_dealt_with(state, attacker, defender, base, ignore_defenders_effects, ignore_weakness);
 
     state.pokemon[defender.index()].damage += damage;
     // `Lillie's Pearl` tells this knockout apart from one a checkup
@@ -3529,6 +3551,24 @@ fn resolve_attack_effect(
             let owner = state.pokemon(defender).owner;
             state.log.push(format!("{owner:?} cannot play Item cards next turn."));
         }
+        crate::card::AttackEffect::DiscardsOpponentsStadiumThenOpponentCannotPlayStadiumsNextTurn => {
+            let opponent = state.pokemon(defender).owner;
+            if state.stadium.is_some_and(|(owner, _)| owner == opponent) {
+                let (owner, card) = state.stadium.take().unwrap();
+                state.players[owner.index()].discard.push(card);
+                let name = state.def_of(card).name();
+                state.log.push(format!("{name} is discarded."));
+                state.opponent_next_turn_restriction = Some((defender, effect, state.current));
+                state.log.push(format!("{opponent:?} cannot play Stadium cards next turn."));
+            }
+        }
+        crate::card::AttackEffect::BonusDamageIfStadiumInPlayThenDiscardsIt(_) => {
+            if let Some((owner, card)) = state.stadium.take() {
+                state.players[owner.index()].discard.push(card);
+                let name = state.def_of(card).name();
+                state.log.push(format!("{name} is discarded."));
+            }
+        }
         crate::card::AttackEffect::CoinFlipSelfInvulnerableNextTurn => {
             if state.rng.flip() {
                 state.opponent_next_turn_restriction = Some((attacker, effect, state.current));
@@ -3627,6 +3667,7 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::BonusDamageIfOwnDamaged(_) => {}
+        crate::card::AttackEffect::BonusDamageIfOwnDamageCountersAtLeastIgnoringWeakness(..) => {}
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::BonusDamageIfDefenderIsEx(_) => {}
@@ -4190,7 +4231,7 @@ fn trigger_defenders_tool(state: &mut GameState, attacker: PokemonId, defender: 
 /// damage, so steps 32 and 34 are the identity — the shape is here so a card
 /// that does have one has a place to act.
 pub fn damage_dealt(state: &GameState, attacker: PokemonId, defender: PokemonId, base: u32) -> u32 {
-    damage_dealt_with(state, attacker, defender, base, false)
+    damage_dealt_with(state, attacker, defender, base, false, false)
 }
 
 /// `damage_dealt`'s own order, with step 33 (Weakness, Resistance, and
@@ -4203,6 +4244,7 @@ fn damage_dealt_with(
     defender: PokemonId,
     base: u32,
     ignore_defenders_effects: bool,
+    ignore_weakness: bool,
 ) -> u32 {
     let mut damage = base;
 
@@ -4304,7 +4346,7 @@ fn damage_dealt_with(
     // Stadium bonus.
     if !ignore_defenders_effects {
         let attacker_type = state.pokemon_def(attacker).kind;
-        if state.effective_weakness(defender) == Some(attacker_type) {
+        if !ignore_weakness && state.effective_weakness(defender) == Some(attacker_type) {
             damage *= 2;
         }
         if state.pokemon_def(defender).resistance == Some(attacker_type) {
