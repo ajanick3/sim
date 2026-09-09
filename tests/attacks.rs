@@ -4537,3 +4537,78 @@ fn zeraoras_thunder_raid_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv10-078").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Zeraora's Thunder Raid print should play");
 }
+
+#[test]
+fn trifrost_discards_all_energy_then_damages_three_chosen_opponent_pokemon() {
+    let attack = Attack {
+        name: "Trifrost",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsOwnEnergyThenDamagesThreeChosenOpponentPokemon(110)),
+    };
+    let (mut state, defender_def) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender_active = state.player(opponent).active.unwrap();
+
+    let bench_card_1 = deal_new_card(&mut state, opponent, defender_def);
+    let bench_mon_1 = state.put_into_play(opponent, bench_card_1);
+    state.players[opponent.index()].bench.push(bench_mon_1);
+    let bench_card_2 = deal_new_card(&mut state, opponent, defender_def);
+    let bench_mon_2 = state.put_into_play(opponent, bench_card_2);
+    state.players[opponent.index()].bench.push(bench_mon_2);
+
+    pay_and_attack(&mut state);
+
+    assert!(state.pokemon(attacker).attached.is_empty(), "all of the attacker's own Energy discarded");
+    assert!(matches!(state.phase, Phase::ChoosingThreeOpponentPokemonDamageTargets { .. }));
+    apply(&mut state, Action::DamageOneOfThreeChosenOpponentPokemon { target: defender_active }).unwrap();
+    assert!(matches!(state.phase, Phase::ChoosingThreeOpponentPokemonDamageTargets { .. }));
+    apply(&mut state, Action::DamageOneOfThreeChosenOpponentPokemon { target: bench_mon_1 }).unwrap();
+    assert!(matches!(state.phase, Phase::ChoosingThreeOpponentPokemonDamageTargets { .. }));
+    apply(&mut state, Action::DamageOneOfThreeChosenOpponentPokemon { target: bench_mon_2 }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.pokemon(defender_active).damage, 110);
+    assert_eq!(state.pokemon(bench_mon_1).damage, 110);
+    assert_eq!(state.pokemon(bench_mon_2).damage, 110);
+}
+
+#[test]
+fn trifrost_stops_early_with_fewer_than_three_opponent_pokemon() {
+    let attack = Attack {
+        name: "Trifrost",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsOwnEnergyThenDamagesThreeChosenOpponentPokemon(110)),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender_active = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(state.phase, Phase::ChoosingThreeOpponentPokemonDamageTargets { .. }));
+    apply(&mut state, Action::DamageOneOfThreeChosenOpponentPokemon { target: defender_active }).unwrap();
+
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "only one opponent Pokémon in play, so the choice ends after one pick"
+    );
+    assert_eq!(state.pokemon(defender_active).damage, 110);
+}
+
+#[test]
+fn kyurems_trifrost_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv06.5-047").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Kyurem's print should play");
+}

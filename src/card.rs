@@ -103,6 +103,11 @@ pub enum CardFilter {
     /// A basic Energy card. Every admitted Energy is basic, since a special
     /// Energy carries rules text and is refused.
     BasicEnergy,
+    /// Any Energy card, basic or special. `Colress's Tenacity` prints it
+    /// as "an Energy card" — the special-Energy prints this engine does
+    /// admit (`Enriching Energy` among them) count too, unlike
+    /// `BasicEnergy`.
+    AnyEnergy,
     /// A Pokémon ex, which is a Pokémon worth more than 1 Prize —
     /// `prizes > 1`, computed from `Marker::Ex`/`Marker::Mega` (ADR
     /// 0010).
@@ -986,6 +991,14 @@ pub enum AttackEffect {
     /// ex the same way `DamageChosenOpponentBenchedEx` narrows
     /// `DamageChosenOpponentPokemon`. `Zeraora`'s `Thunder Raid`.
     DiscardsOwnEnergyThenDamagesChosenBenchedEx(u32),
+    /// Discard all Energy from the attacker, then this much flat
+    /// damage (no Weakness or Resistance) to 3 of the opponent's
+    /// Pokémon, chosen one at a time — the same discard-then-damage
+    /// shape `DiscardsOwnEnergyThenDamagesChosenBenchedEx` takes,
+    /// widened from a single Benched Pokémon ex to any 3 distinct
+    /// Pokémon the opponent has, Active or Benched. `Kyurem`'s
+    /// `Trifrost`.
+    DiscardsOwnEnergyThenDamagesThreeChosenOpponentPokemon(u32),
     /// Search the deck for an Energy card and attach it to one of the
     /// player's own Benched Pokémon of this type, then shuffle the
     /// deck. No qualifying Energy or no qualifying Bench target opens
@@ -1439,6 +1452,14 @@ pub enum AbilityEffect {
     /// Active — the card's own text names no Spot. `Genesect`'s `ACE
     /// Nullifier`.
     PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool,
+    /// A standing effect, not a choice: while any card in the
+    /// opponent's discard pile carries this substring in its name,
+    /// the named attack costs just one `{C}` — an override of the
+    /// whole printed cost, not a per-count reduction the way
+    /// `PassiveNamedAttackCostsLessPerOpponentPrizeTaken` is. Read
+    /// directly in `legal_actions`' own attack-cost loop, alongside
+    /// that discount. `Kyurem`'s `Plasma Bane`, on `Trifrost`.
+    PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(&'static str, &'static str),
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for

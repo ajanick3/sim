@@ -270,6 +270,11 @@ pub enum Action {
     /// two targets — the first call reopens the same phase excluding
     /// this pick, the second resolves it.
     DamageOneOfTwoChosenOpponentPokemon { target: PokemonId },
+    /// Pick one of `Phase::ChoosingThreeOpponentPokemonDamageTargets`'s
+    /// remaining targets — each call reopens the same phase with this
+    /// pick added to `excluding`, until 3 picks are made or none are
+    /// left.
+    DamageOneOfThreeChosenOpponentPokemon { target: PokemonId },
     /// Deal `Phase::ChoosingBenchedExDamageTarget`'s flat damage to
     /// this Benched Pokémon ex.
     DamageBenchedEx { target: PokemonId },
@@ -407,6 +412,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingBenchedTargetForEnergySearch { player, .. } => Some(player),
         Phase::SearchingEnergyOfTypeToAttachToChosen { player, .. } => Some(player),
         Phase::ChoosingTwoOpponentPokemonDamageTargets { player, .. } => Some(player),
+        Phase::ChoosingThreeOpponentPokemonDamageTargets { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
         Phase::MovingDamageCountersFromOwnToOpponent { player, .. } => Some(player),
@@ -858,6 +864,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             for pokemon in state.player(whose.opponent()).in_play() {
                 if Some(pokemon) != excluding {
                     actions.push(Action::DamageOneOfTwoChosenOpponentPokemon { target: pokemon });
+                }
+            }
+            return actions;
+        }
+        Phase::ChoosingThreeOpponentPokemonDamageTargets { player: whose, excluding, .. } => {
+            for pokemon in state.player(whose.opponent()).in_play() {
+                if !excluding.contains(&Some(pokemon)) {
+                    actions.push(Action::DamageOneOfThreeChosenOpponentPokemon { target: pokemon });
                 }
             }
             return actions;
@@ -1539,11 +1553,28 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
                 _ => None,
             });
+            let colorless_override = state.pokemon_def(active).ability.and_then(|a| match a.effect {
+                crate::card::AbilityEffect::PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(
+                    attack_name,
+                    word,
+                ) if state
+                    .player(player.opponent())
+                    .discard
+                    .iter()
+                    .any(|c| state.def_of(*c).name().contains(word)) =>
+                {
+                    Some(attack_name)
+                }
+                _ => None,
+            });
             for (index, attack) in state.pokemon_def(active).attacks.iter().enumerate() {
                 if Some(attack.name) == locked_attack_name {
                     continue;
                 }
                 let mut cost = attack.cost.clone();
+                if Some(attack.name) == colorless_override {
+                    cost = vec![crate::card::Type::Colorless];
+                }
                 if tera_surcharge {
                     cost.push(crate::card::Type::Colorless);
                 }
@@ -1674,6 +1705,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassiveImmuneToAsleep => false,
             crate::card::AbilityEffect::PassiveDisablesOpponentActiveAbilityExceptSelf => false,
             crate::card::AbilityEffect::PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool => false,
+            crate::card::AbilityEffect::PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(
+                ..,
+            ) => false,
             crate::card::AbilityEffect::PassiveNamedAttackCostsLessPerOpponentPrizeTaken(_) => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
@@ -1980,6 +2014,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::FinishSearchingEnergyOfTypeToAttachToChosen => "Stop searching".to_string(),
         Action::DamageOneOfTwoChosenOpponentPokemon { target } => {
+            format!("Damage {}", state.pokemon_def(target).name)
+        }
+        Action::DamageOneOfThreeChosenOpponentPokemon { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
         }
         Action::DamageBenchedEx { target } => {

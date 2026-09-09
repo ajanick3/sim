@@ -3454,6 +3454,153 @@ fn seasoned_skill_never_discounts_past_the_full_cost() {
     );
 }
 
+fn plasma_bane_game() -> GameState {
+    let mut db = CardDb::new();
+    let carrier = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-kyurem",
+        name: "Kyurem",
+        hp: 130,
+        kind: Type::Dragon,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Plasma Bane",
+            effect: sim::card::AbilityEffect::PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(
+                "Trifrost",
+                "Colress",
+            ),
+        }),
+        attacks: vec![Attack {
+            name: "Trifrost",
+            cost: vec![Type::Water, Type::Water, Type::Metal, Type::Metal, Type::Colorless],
+            base_damage: 0,
+            inflicts: None,
+            effect: Some(sim::card::AttackEffect::DiscardsOwnEnergyThenDamagesThreeChosenOpponentPokemon(110)),
+        }],
+    }));
+    let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-plasma-bane-defender",
+        name: "Defendmon",
+        hp: 300,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-plasma-bane-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let mut carrier_deck = vec![carrier; 4];
+    while carrier_deck.len() < 60 {
+        carrier_deck.push(energy);
+    }
+    let mut defender_deck = vec![defender_mon; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(energy);
+    }
+    let mut state =
+        GameState::new(db, [carrier_deck, defender_deck], Box::new(SeededRng::new(3)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    state
+}
+
+#[test]
+fn plasma_bane_lets_trifrost_cost_just_one_colorless_when_the_opponent_discarded_a_colress() {
+    let mut state = plasma_bane_game();
+    let player = state.current;
+    let opponent = player.opponent();
+
+    let colress = state.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-a-colress",
+        name: "Colress's Tenacity",
+        kind: TrainerKind::Supporter,
+        effect: TrainerEffect::Nothing,
+        requirement: None,
+    }));
+    let card = deal_new_card(&mut state, opponent, colress);
+    state.players[opponent.index()].discard.push(card);
+
+    // Only 1 Colorless attached — 4 short of the printed cost, but
+    // exactly enough once Plasma Bane overrides it entirely.
+    let active = state.player(player).active.unwrap();
+    let energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != energy);
+    state.pokemon[active.index()].attached.push(energy);
+
+    assert!(
+        legal_actions(&state).iter().any(|a| matches!(a, Action::Attack { .. })),
+        "the opponent's discard carries a Colress card, so Trifrost costs just {{C}}"
+    );
+}
+
+#[test]
+fn plasma_bane_does_nothing_without_a_colress_in_the_opponents_discard() {
+    let state = plasma_bane_game();
+    let player = state.current;
+    let mut state = state;
+    let active = state.player(player).active.unwrap();
+    let energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != energy);
+    state.pokemon[active.index()].attached.push(energy);
+
+    assert!(
+        !legal_actions(&state).iter().any(|a| matches!(a, Action::Attack { .. })),
+        "no Colress card in the opponent's discard, so the full 5-cost still applies"
+    );
+}
+
+#[test]
+fn kyurem_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Kyurem" && c.playable.is_some()),
+        "at least one Kyurem print should play"
+    );
+}
+
 fn ace_nullifier_carrier(print_id: &'static str) -> Pokemon {
     Pokemon {
         markers: Vec::new(),
