@@ -4392,3 +4392,109 @@ fn mega_absol_exs_claw_of_darkness_is_admitted_from_the_artifact() {
         "at least one Mega Absol ex print should play"
     );
 }
+
+// --- Beyond the spec: bonus damage only if the attacker itself promoted from Bench this turn ---
+
+#[test]
+fn gale_thrust_bonus_applies_after_retreating_in_this_turn() {
+    let attack = Attack {
+        name: "Gale Thrust",
+        cost: vec![Type::Colorless],
+        base_damage: 60,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfSelfPromotedThisTurn(170)),
+    };
+    let (mut state, _defender_ex) = game(attack.clone(), 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let old_active = state.player(player).active.unwrap();
+    // Retreating costs Energy equal to the current Active's own
+    // Retreat Cost (1 in this fixture), paid from what's attached.
+    let retreat_energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != retreat_energy);
+    state.pokemon[old_active.index()].attached.push(retreat_energy);
+    let bench_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-gale-thrust-bench",
+        name: "Mega Lopunny ex",
+        hp: 220,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 0,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![attack],
+    }));
+    let bench_card = deal_new_card(&mut state, player, bench_def);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    let retreat = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Retreat { to } if *to == bench_mon))
+        .expect("no Retreat cost, and it's this player's own turn");
+    apply(&mut state, retreat).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    assert_eq!(state.player(player).active, Some(bench_mon));
+
+    let attack_energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != attack_energy);
+    state.pokemon[bench_mon.index()].attached.push(attack_energy);
+
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the newly Active Pokemon is paid for");
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(state.pokemon(defender).damage, 230, "60 base plus the 170 bonus, just retreated in");
+}
+
+#[test]
+fn no_gale_thrust_bonus_without_promoting_this_turn() {
+    let attack = Attack {
+        name: "Gale Thrust",
+        cost: vec![Type::Colorless],
+        base_damage: 60,
+        inflicts: None,
+        effect: Some(AttackEffect::BonusDamageIfSelfPromotedThisTurn(170)),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 60, "the Active the whole turn, no promotion");
+}
+
+#[test]
+fn mega_lopunny_exs_gale_thrust_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Mega Lopunny ex" && c.playable.is_some()),
+        "at least one Mega Lopunny ex print should play"
+    );
+}
