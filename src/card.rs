@@ -653,6 +653,20 @@ pub enum AttackEffect {
     /// The defender is given this Special Condition outright, no flip.
     /// `Brute Bonnet`'s Poison.
     InflictsCondition(Condition),
+    /// The same infliction `InflictsCondition` grants, but on the
+    /// attacker itself rather than the defender — this attack's own
+    /// printed text names its own Pokémon. `Annihilape`'s `Tantrum`.
+    InflictsConditionOnSelf(Condition),
+    /// Both Active Pokémon are Knocked Out outright, no damage
+    /// involved — modeled by raising both to their own effective HP
+    /// and letting the ordinary `settle` sweep (`knock_out_the_dead`)
+    /// take it from there, the same way
+    /// `OncePerTurnMayDamageOpponentThenKnockOutSelf` raises its own
+    /// carrier's damage rather than a separate forced-knockout
+    /// primitive — so Prizes, and any Ability that reads a Knockout,
+    /// still run through the one ordinary path. `Annihilape`'s
+    /// `Destined Fight`.
+    KnocksOutBothActivePokemon,
     /// Flip a coin; on heads, the defender is given this Special
     /// Condition. `Zeraora`, `Dedenne`.
     CoinFlipInflicts(Condition),

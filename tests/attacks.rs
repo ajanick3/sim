@@ -5351,3 +5351,72 @@ fn annihilapes_ghostly_blow_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "me05-041").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Annihilape's Ghostly Blow/Durable Body print should play");
 }
+
+// --- Tantrum and Destined Fight: self-inflicted and mutual ---
+
+#[test]
+fn tantrum_confuses_the_attacker_itself() {
+    let attack = Attack {
+        name: "Tantrum",
+        cost: vec![Type::Colorless],
+        base_damage: 130,
+        inflicts: None,
+        effect: Some(AttackEffect::InflictsConditionOnSelf(sim::card::Condition::Confused)),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let defender = state.player(player.opponent()).active.unwrap();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 130, "the attack's own damage lands as normal");
+    assert!(
+        state.has_condition(attacker, sim::card::Condition::Confused),
+        "the attacker itself is Confused, not the defender"
+    );
+    assert!(!state.has_condition(defender, sim::card::Condition::Confused));
+}
+
+#[test]
+fn destined_fight_knocks_out_both_actives() {
+    let attack = Attack {
+        name: "Destined Fight",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::KnocksOutBothActivePokemon),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let attacker = state.player(player).active.unwrap();
+    let defender = state.player(opponent).active.unwrap();
+    let attacker_prizes_before = state.player(player).prizes.len();
+    let defender_prizes_before = state.player(opponent).prizes.len();
+
+    pay_and_attack(&mut state);
+
+    assert!(state.pokemon(attacker).knocked_out, "the attacker itself is Knocked Out too");
+    assert!(state.pokemon(defender).knocked_out);
+    assert_eq!(
+        state.player(player).prizes.len(),
+        attacker_prizes_before - 1,
+        "the opponent's Prize for Knocking out the attacker"
+    );
+    assert_eq!(
+        state.player(opponent).prizes.len(),
+        defender_prizes_before - 1,
+        "the attacker's own Prize for Knocking out the defender"
+    );
+}
+
+#[test]
+fn annihilapes_tantrum_and_destined_fight_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "sv08-100").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Annihilape's Tantrum/Destined Fight print should play");
+}

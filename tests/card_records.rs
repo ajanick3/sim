@@ -248,6 +248,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // carrier is Knocked Out by the hit that triggers it) takes it
     // to 789. Annihilape's Ghostly Blow and Durable Body — the first
     // Ability able to prevent a Knockout outright — close out its
-    // last print, taking it to 790.
-    assert_eq!(admitted, 790, "coverage moves only on purpose");
+    // last print, taking it to 790. Its Tantrum/Destined Fight print
+    // (self-inflicted Confusion, and a mutual Knockout reusing the
+    // ordinary settle sweep) takes it to 791.
+    assert_eq!(admitted, 791, "coverage moves only on purpose");
 }
