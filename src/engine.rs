@@ -3485,6 +3485,18 @@ fn resolve_attack_effect(
                 state.log.push(format!("{name} is now {condition:?}."));
             }
         }
+        crate::card::AttackEffect::InflictsConditionOnSelf(condition) => {
+            state.inflict(attacker, condition);
+            let name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{name} is now {condition:?}."));
+        }
+        crate::card::AttackEffect::KnocksOutBothActivePokemon => {
+            let attacker_hp = state.effective_hp(attacker);
+            let defender_hp = state.effective_hp(defender);
+            state.pokemon[attacker.index()].damage = attacker_hp;
+            state.pokemon[defender.index()].damage = defender_hp;
+            state.attacking_defender = Some(defender);
+        }
         crate::card::AttackEffect::CoinFlipInflicts(condition) => {
             if state.rng.flip() && !state.attack_effects_on_it_prevented(defender) {
                 state.inflict(defender, condition);

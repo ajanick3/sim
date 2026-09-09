@@ -1593,6 +1593,10 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Pecharunt ex", "Irritated Outburst") => {
             AttackEffect::DamagePerCount(Count::OpponentPrizesTakenCount, 60)
         }
+        ("Annihilape", "Tantrum") => {
+            AttackEffect::InflictsConditionOnSelf(crate::card::Condition::Confused)
+        }
+        ("Annihilape", "Destined Fight") => AttackEffect::KnocksOutBothActivePokemon,
         ("Annihilape", "Ghostly Blow") => {
             AttackEffect::PlacesDamageCountersOnChosenOpponentBenched(50)
         }
