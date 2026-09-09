@@ -290,6 +290,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             if let Some(displaced) = displaced {
                 side.bench.push(displaced);
             }
+            state.promoted_from_bench_this_turn[of.index()] = Some(pokemon);
             state.phase = Phase::Main;
             let name = state.pokemon_def(pokemon).name;
             if of == chooser {
@@ -2016,6 +2017,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             side.active = Some(pokemon);
             side.bench.retain(|p| *p != pokemon);
             side.bench.push(old_active);
+            state.promoted_from_bench_this_turn[player.index()] = Some(pokemon);
             let name = state.pokemon_def(pokemon).name;
             state.log.push(format!("{name} switches in (Rapid Vernier)."));
             state.phase = Phase::MovingAnyEnergyForRapidVernier { player, pokemon };
@@ -2129,6 +2131,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             side.active = Some(target);
             side.bench.retain(|p| *p != target);
             side.bench.push(old_active);
+            state.promoted_from_bench_this_turn[player.index()] = Some(target);
             state.inflict(target, Condition::Poisoned);
             let target_name = state.pokemon_def(target).name;
             state.log.push(format!("{target_name} switches in and is Poisoned (Subjugating Chains)."));
@@ -3011,6 +3014,7 @@ fn promote_from_retreat(state: &mut GameState, player: PlayerId, to: PokemonId) 
     side.bench.retain(|p| *p != to);
     side.bench.push(active);
     side.active = Some(to);
+    state.promoted_from_bench_this_turn[player.index()] = Some(to);
     state.spend(Limit::Retreated(player));
     state.phase = Phase::Main;
 
@@ -3168,6 +3172,14 @@ fn attack(state: &mut GameState, index: usize) {
                 crate::card::Count::OwnEnergyOfTypeAttachedCount(kind),
             );
             if count > 0 {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
+        Some(crate::card::AttackEffect::BonusDamageIfSelfPromotedThisTurn(bonus)) => {
+            let owner = state.pokemon(attacker).owner;
+            if state.promoted_from_bench_this_turn[owner.index()] == Some(attacker) {
                 attack.base_damage + bonus
             } else {
                 attack.base_damage
@@ -3477,6 +3489,9 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::BonusDamageIfOwnEnergyOfTypeAttached(..) => {}
+        // Already spent, before `damage_dealt_with` ran — see `attack`'s
+        // own `base` computation.
+        crate::card::AttackEffect::BonusDamageIfSelfPromotedThisTurn(_) => {}
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::BonusDamageIfExtraEnergyAttached(..) => {}

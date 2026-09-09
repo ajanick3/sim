@@ -897,6 +897,13 @@ pub enum AttackEffect {
     /// awards the Prize. An "at least" reading would be wrong here —
     /// the card says exactly. `Mega Absol ex`'s `Terminal Period`.
     KnocksOutDefenderIfExactDamageCounters(u32),
+    /// This much more damage, but only if the attacker itself moved
+    /// from its own owner's Bench to the Active Spot this turn —
+    /// read from `GameState::promoted_from_bench_this_turn`, set at
+    /// every site that promotes a Pokémon from the Bench (a
+    /// Knockout, a forced switch, retreating, a switch-in Ability).
+    /// `Mega Lopunny ex`'s `Gale Thrust`.
+    BonusDamageIfSelfPromotedThisTurn(u32),
     /// The opponent reveals their hand; the player picks one card
     /// from it to discard. Opens
     /// `Phase::ChoosingCardFromOpponentsHandToDiscard` — the first

@@ -665,6 +665,14 @@ pub struct GameState {
     /// after the knockout and never again. `Unfair Stamp` is the only
     /// reader.
     pub knocked_out_last_turn: [bool; 2],
+    /// The Pokémon, if any, that most recently moved from this
+    /// player's own Bench to their Active Spot this turn — cleared
+    /// at `begin_turn`, the same "this turn" lifetime `turn_bonus`
+    /// already takes. Set at every site that promotes from the
+    /// Bench: `Action::Promote` (a Knockout or a forced switch),
+    /// retreating, and any Ability that switches in a Benched
+    /// Pokémon. `Mega Lopunny ex`'s `Gale Thrust`.
+    pub promoted_from_bench_this_turn: [Option<PokemonId>; 2],
     /// Whether this player played a Supporter whose name holds "Team
     /// Rocket" from their hand, this turn. Cleared at `begin_turn`, the
     /// same "this turn" lifetime `turn_bonus` already carries.
@@ -767,6 +775,7 @@ impl GameState {
             stadium: None,
             spent: Vec::new(),
             knocked_out_last_turn: [false, false],
+            promoted_from_bench_this_turn: [None, None],
             played_a_team_rocket_supporter_this_turn: [false, false],
             opponent_next_turn_restriction: None,
             own_next_turn_restriction: None,
@@ -1432,6 +1441,7 @@ impl GameState {
         self.spent.clear();
         // "This turn" ends here too, whoever set the bonus.
         self.turn_bonus = None;
+        self.promoted_from_bench_this_turn = [None, None];
         self.bonus_prize_if_own_tera_attacker_knocks_out = None;
         self.played_a_team_rocket_supporter_this_turn = [false, false];
         for pokemon in &mut self.pokemon {

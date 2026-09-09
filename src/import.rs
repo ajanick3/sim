@@ -1488,6 +1488,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::BonusDamagePerCount(Count::OwnEnergyOfTypeAttachedAcrossSideCount(Type::Grass), 30)
         }
         ("Mega Excadrill ex", "Undermine") => AttackEffect::DiscardsTopOfOpponentsLibrary(2),
+        ("Mega Lopunny ex", "Gale Thrust") => {
+            AttackEffect::BonusDamageIfSelfPromotedThisTurn(170)
+        }
         ("Mega Absol ex", "Terminal Period") => {
             AttackEffect::KnocksOutDefenderIfExactDamageCounters(6)
         }
