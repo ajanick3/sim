@@ -888,6 +888,11 @@ pub enum AttackEffect {
     /// if the defender carries any, no discard otherwise.
     /// `Stunfisk`'s `Paralyzing Crackle`.
     CoinFlipInflictsAndDiscardsDefenderEnergy(Condition),
+    /// The same coin flip and discard
+    /// `CoinFlipInflictsAndDiscardsDefenderEnergy` grants, without
+    /// the inflicted Condition — just a discard, on heads.
+    /// `Goldeen`'s `Whirlpool`.
+    CoinFlipDiscardsDefenderEnergy,
     /// Discard exactly this many Energy cards attached to the
     /// attacker, the player's choice of which — the attack's own
     /// listed cost already guarantees at least this many are
@@ -1170,6 +1175,10 @@ pub enum Count {
     /// `OwnEnergyOfTypeAttachedCount`, which reads the attacker
     /// alone. `Hydrapple ex`'s `Syrup Storm`.
     OwnEnergyOfTypeAttachedAcrossSideCount(Type),
+    /// The player's own Benched Pokémon, unlike
+    /// `OpponentBenchedPokemonCount` and `BothBenchedPokemonCount`.
+    /// `Dipplin`'s `Do the Wave`.
+    OwnBenchedPokemonCount,
 }
 
 /// How far along its evolution line a Pokémon card is printed. The artifact
@@ -1565,6 +1574,22 @@ pub enum AbilityEffect {
     /// Knockout outright rather than only redirect or reduce its
     /// damage. `Annihilape`'s `Durable Body`.
     PassiveCoinFlipPreventsAttackKnockOutAtTenHp,
+    /// A standing effect, not a choice: while `Festival Grounds` is
+    /// in play, this Pokémon may use an attack it has a second time
+    /// this turn — read at `Action::Attack`'s own site, right after
+    /// the first attack resolves, rather than through `UseAbility`:
+    /// nothing here is a separate action, only whether the ordinary
+    /// end-of-turn that follows any attack is skipped once. Guarded
+    /// by `festival_lead_extra_swing_used` so the door opens only
+    /// once per turn, no matter how many further attacks that then
+    /// allows. `Goldeen`'s and `Seaking`'s `Festival Lead`.
+    PassiveFestivalLead,
+    /// Once during the player's own turn, if their Active Pokémon
+    /// carries an Ability by this name, search the library for any
+    /// one card into hand. Opens
+    /// `Phase::SearchingLibraryForAnyCard`. `Thwackey`'s `Boom Boom
+    /// Groove`, on `"Festival Lead"`.
+    OncePerTurnMaySearchAnyCardIfActiveHasNamedAbility(&'static str),
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for
