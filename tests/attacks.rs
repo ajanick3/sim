@@ -4747,3 +4747,141 @@ fn ns_zoroark_ex_is_admitted_from_the_artifact() {
         "at least one N's Zoroark ex print should play"
     );
 }
+
+// --- Seek Inspiration: discarding into a copied attack ---
+
+#[test]
+fn seek_inspiration_copies_the_discarded_pokemons_attack() {
+    let seek_inspiration = Attack {
+        name: "Seek Inspiration",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox),
+    };
+    let (mut state, _defender_def) = game(seek_inspiration, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender_active = state.player(opponent).active.unwrap();
+
+    let no_rule_box_mon = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-no-rule-box",
+        name: "Inspiremon",
+        hp: 90,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Borrowed Bolt",
+            cost: vec![Type::Colorless],
+            base_damage: 70,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let top_card = deal_new_card(&mut state, player, no_rule_box_mon);
+    state.players[player.index()].library.retain(|c| *c != top_card);
+    state.players[player.index()].library.push(top_card);
+
+    // Pay Seek Inspiration's own cost.
+    for _ in 0..2 {
+        let energy = *state
+            .player(player)
+            .library
+            .iter()
+            .rev()
+            .find(|c| state.def_of(**c).is_energy())
+            .unwrap();
+        state.players[player.index()].library.retain(|c| *c != energy);
+        state.pokemon[attacker.index()].attached.push(energy);
+    }
+
+    apply(&mut state, Action::Attack { index: 0 }).unwrap();
+    assert!(state.player(player).discard.contains(&top_card), "the top card discarded outright");
+    assert!(matches!(state.phase, Phase::ChoosingDiscardedPokemonAttackToCopy { card, .. } if card == top_card));
+
+    apply(&mut state, Action::CopyDiscardedPokemonAttack { index: 0 }).unwrap();
+
+    assert_eq!(state.pokemon(defender_active).damage, 70, "Borrowed Bolt's own 70 damage landed");
+}
+
+#[test]
+fn seek_inspiration_does_nothing_more_when_the_discard_is_not_a_plain_pokemon() {
+    let seek_inspiration = Attack {
+        name: "Seek Inspiration",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox),
+    };
+    let (mut state, _defender_def) = game(seek_inspiration, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+
+    let ex_mon = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-rule-box",
+        name: "Rulemon ex",
+        hp: 200,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Big Bolt",
+            cost: vec![Type::Colorless],
+            base_damage: 200,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let top_card = deal_new_card(&mut state, player, ex_mon);
+    state.players[player.index()].library.retain(|c| *c != top_card);
+    state.players[player.index()].library.push(top_card);
+
+    for _ in 0..2 {
+        let energy = *state
+            .player(player)
+            .library
+            .iter()
+            .rev()
+            .find(|c| state.def_of(**c).is_energy())
+            .unwrap();
+        state.players[player.index()].library.retain(|c| *c != energy);
+        state.pokemon[attacker.index()].attached.push(energy);
+    }
+
+    apply(&mut state, Action::Attack { index: 0 }).unwrap();
+
+    assert!(state.player(player).discard.contains(&top_card), "still discarded outright");
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "a Pokémon ex carries a Rule Box, so nothing is copied"
+    );
+}
+
+#[test]
+fn slowkings_seek_inspiration_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Slowking" && c.playable.is_some()),
+        "at least one Slowking print should play"
+    );
+}

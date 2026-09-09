@@ -1009,6 +1009,17 @@ pub enum AttackEffect {
     /// printed one — the same dispatch, reading a different `Attack`.
     /// `N's Zoroark ex`'s `Night Joker`, prefixed on `"N's "`.
     CopiesChosenBenchedPokemonAttackByNamePrefix(&'static str),
+    /// Discard the top card of the library outright; if it turns out
+    /// to be a Pokémon without a Rule Box (1 Prize), choose 1 of its
+    /// own attacks and use it as this attack — the same
+    /// choose-a-second-card's-`Attack`-and-run-it shape
+    /// `CopiesChosenBenchedPokemonAttackByNamePrefix` already takes,
+    /// with the card found by discarding rather than a player's own
+    /// choice among the Bench. Opens
+    /// `Phase::ChoosingDiscardedPokemonAttackToCopy`; any other kind
+    /// of card, or a Pokémon with a Rule Box, discards and does
+    /// nothing more. `Slowking`'s `Seek Inspiration`.
+    DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox,
     /// Search the deck for an Energy card and attach it to one of the
     /// player's own Benched Pokémon of this type, then shuffle the
     /// deck. No qualifying Energy or no qualifying Bench target opens

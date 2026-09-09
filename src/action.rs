@@ -278,6 +278,9 @@ pub enum Action {
     /// Pick which of `Phase::ChoosingBenchedPokemonAttackToCopy`'s
     /// candidates, and which of its own attacks, to copy.
     CopyBenchedPokemonAttack { pokemon: PokemonId, index: usize },
+    /// Pick which of `Phase::ChoosingDiscardedPokemonAttackToCopy`'s
+    /// card's own attacks to copy.
+    CopyDiscardedPokemonAttack { index: usize },
     /// Discard this hand card as `Phase::DiscardingHandCardThenDrawing`'s
     /// own cost, then draw its count.
     DiscardHandCardThenDraw { card: CardId },
@@ -420,6 +423,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingTwoOpponentPokemonDamageTargets { player, .. } => Some(player),
         Phase::ChoosingThreeOpponentPokemonDamageTargets { player, .. } => Some(player),
         Phase::ChoosingBenchedPokemonAttackToCopy { player, .. } => Some(player),
+        Phase::ChoosingDiscardedPokemonAttackToCopy { player, .. } => Some(player),
         Phase::DiscardingHandCardThenDrawing { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
@@ -898,6 +902,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         Phase::DiscardingHandCardThenDrawing { player: whose, .. } => {
             for card in &state.player(whose).hand {
                 actions.push(Action::DiscardHandCardThenDraw { card: *card });
+            }
+            return actions;
+        }
+        Phase::ChoosingDiscardedPokemonAttackToCopy { card, .. } => {
+            let attacks = state.def_of(card).as_pokemon().expect("only opened for a Pokémon").attacks.len();
+            for index in 0..attacks {
+                actions.push(Action::CopyDiscardedPokemonAttack { index });
             }
             return actions;
         }
@@ -2054,6 +2065,14 @@ pub fn describe(state: &GameState, action: Action) -> String {
         ),
         Action::DiscardHandCardThenDraw { card } => {
             format!("Discard {}", state.def_of(card).name())
+        }
+        Action::CopyDiscardedPokemonAttack { index } => {
+            let card = match state.phase {
+                Phase::ChoosingDiscardedPokemonAttackToCopy { card, .. } => card,
+                _ => return "Copy an attack".to_string(),
+            };
+            let def = state.def_of(card).as_pokemon().expect("only opened for a Pokémon");
+            format!("Copy {}'s {}", def.name, def.attacks[index].name)
         }
         Action::DamageBenchedEx { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
