@@ -999,6 +999,16 @@ pub enum AttackEffect {
     /// Pokémon the opponent has, Active or Benched. `Kyurem`'s
     /// `Trifrost`.
     DiscardsOwnEnergyThenDamagesThreeChosenOpponentPokemon(u32),
+    /// Choose one of a Benched Pokémon's own attacks, whose name
+    /// starts with this prefix, and use it as this attack — no
+    /// damage or effect of its own, since it borrows a second card's
+    /// entirely. Opens `Phase::ChoosingBenchedPokemonAttackToCopy`;
+    /// no Benched Pokémon matching the prefix opens no phase, so
+    /// nothing happens. Once chosen, `engine::attack_with` runs the
+    /// copied `Attack` value exactly as it would the attacker's own
+    /// printed one — the same dispatch, reading a different `Attack`.
+    /// `N's Zoroark ex`'s `Night Joker`, prefixed on `"N's "`.
+    CopiesChosenBenchedPokemonAttackByNamePrefix(&'static str),
     /// Search the deck for an Energy card and attach it to one of the
     /// player's own Benched Pokémon of this type, then shuffle the
     /// deck. No qualifying Energy or no qualifying Bench target opens
@@ -1267,6 +1277,13 @@ pub enum AbilityEffect {
     /// the discard pile opens no phase. `Blaziken ex`'s
     /// `Seething Spirit`.
     OncePerTurnMayAttachBasicEnergyFromDiscardToChosen,
+    /// Once during the player's own turn, discard a card from hand —
+    /// the cost this Ability itself asks to be paid, not a "may" —
+    /// then draw this many cards. Opens
+    /// `Phase::DiscardingHandCardThenDrawing`. An empty hand offers
+    /// nothing to discard, so the Ability itself is not offered.
+    /// `N's Zoroark ex`'s `Trade`.
+    OncePerTurnMayDiscardFromHandThenDrawCards(u32),
     /// Once during the player's own turn, the player may attach a
     /// Basic Energy card of this type from their hand to any of
     /// their own Pokémon, their choice of both — the same combined

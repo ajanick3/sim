@@ -275,6 +275,12 @@ pub enum Action {
     /// pick added to `excluding`, until 3 picks are made or none are
     /// left.
     DamageOneOfThreeChosenOpponentPokemon { target: PokemonId },
+    /// Pick which of `Phase::ChoosingBenchedPokemonAttackToCopy`'s
+    /// candidates, and which of its own attacks, to copy.
+    CopyBenchedPokemonAttack { pokemon: PokemonId, index: usize },
+    /// Discard this hand card as `Phase::DiscardingHandCardThenDrawing`'s
+    /// own cost, then draw its count.
+    DiscardHandCardThenDraw { card: CardId },
     /// Deal `Phase::ChoosingBenchedExDamageTarget`'s flat damage to
     /// this Benched Pokémon ex.
     DamageBenchedEx { target: PokemonId },
@@ -413,6 +419,8 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::SearchingEnergyOfTypeToAttachToChosen { player, .. } => Some(player),
         Phase::ChoosingTwoOpponentPokemonDamageTargets { player, .. } => Some(player),
         Phase::ChoosingThreeOpponentPokemonDamageTargets { player, .. } => Some(player),
+        Phase::ChoosingBenchedPokemonAttackToCopy { player, .. } => Some(player),
+        Phase::DiscardingHandCardThenDrawing { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
         Phase::MovingDamageCountersFromOwnToOpponent { player, .. } => Some(player),
@@ -873,6 +881,23 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 if !excluding.contains(&Some(pokemon)) {
                     actions.push(Action::DamageOneOfThreeChosenOpponentPokemon { target: pokemon });
                 }
+            }
+            return actions;
+        }
+        Phase::ChoosingBenchedPokemonAttackToCopy { player: whose, prefix } => {
+            for pokemon in &state.player(whose).bench {
+                if !state.pokemon_def(*pokemon).name.starts_with(prefix) {
+                    continue;
+                }
+                for index in 0..state.pokemon_def(*pokemon).attacks.len() {
+                    actions.push(Action::CopyBenchedPokemonAttack { pokemon: *pokemon, index });
+                }
+            }
+            return actions;
+        }
+        Phase::DiscardingHandCardThenDrawing { player: whose, .. } => {
+            for card in &state.player(whose).hand {
+                actions.push(Action::DiscardHandCardThenDraw { card: *card });
             }
             return actions;
         }
@@ -1641,6 +1666,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyFromDiscardToChosen => {
                 side.discard.iter().any(|c| state.def_of(*c).is_energy())
             }
+            crate::card::AbilityEffect::OncePerTurnMayDiscardFromHandThenDrawCards(_) => {
+                !side.hand.is_empty()
+            }
             crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeFromHandToChosenThenHeal(
                 kind,
                 _,
@@ -2018,6 +2046,14 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::DamageOneOfThreeChosenOpponentPokemon { target } => {
             format!("Damage {}", state.pokemon_def(target).name)
+        }
+        Action::CopyBenchedPokemonAttack { pokemon, index } => format!(
+            "Copy {}'s {}",
+            state.pokemon_def(pokemon).name,
+            state.pokemon_def(pokemon).attacks[index].name
+        ),
+        Action::DiscardHandCardThenDraw { card } => {
+            format!("Discard {}", state.def_of(card).name())
         }
         Action::DamageBenchedEx { target } => {
             format!("Damage {}", state.pokemon_def(target).name)

@@ -3601,6 +3601,52 @@ fn kyurem_is_admitted_from_the_artifact() {
     );
 }
 
+#[test]
+fn trade_discards_a_hand_card_then_draws_two() {
+    let ability = Ability {
+        name: "Trade",
+        effect: sim::card::AbilityEffect::OncePerTurnMayDiscardFromHandThenDrawCards(2),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let carrier = state.player(player).active.unwrap();
+    let to_discard = state.player(player).hand[0];
+    let hand_before = state.player(player).hand.len();
+    let library_before = state.player(player).library.len();
+
+    apply(&mut state, Action::UseAbility { pokemon: carrier }).unwrap();
+    assert!(matches!(state.phase, Phase::DiscardingHandCardThenDrawing { .. }));
+
+    apply(&mut state, Action::DiscardHandCardThenDraw { card: to_discard }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).discard.contains(&to_discard));
+    // -1 discarded, +2 drawn.
+    assert_eq!(state.player(player).hand.len(), hand_before + 1);
+    assert_eq!(state.player(player).library.len(), library_before - 2);
+}
+
+#[test]
+fn trade_is_not_offered_with_an_empty_hand() {
+    let ability = Ability {
+        name: "Trade",
+        effect: sim::card::AbilityEffect::OncePerTurnMayDiscardFromHandThenDrawCards(2),
+    };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let carrier = state.player(player).active.unwrap();
+    let hand: Vec<_> = state.player(player).hand.clone();
+    for card in hand {
+        state.players[player.index()].hand.retain(|c| *c != card);
+        state.players[player.index()].discard.push(card);
+    }
+
+    assert!(
+        !legal_actions(&state).iter().any(|a| matches!(a, Action::UseAbility { pokemon } if *pokemon == carrier)),
+        "no card to discard, so Trade's own cost cannot be paid"
+    );
+}
+
 fn ace_nullifier_carrier(print_id: &'static str) -> Pokemon {
     Pokemon {
         markers: Vec::new(),

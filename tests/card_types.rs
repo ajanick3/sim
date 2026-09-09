@@ -39,10 +39,10 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
         "Ignition Energy is a special Energy"
     );
     assert_eq!(
-        reason_for("me02.5-137"),
+        reason_for("me02.5-072"),
         Some(Refusal::HasAnAbility),
-        "N's Zoroark ex's Ability cost is deferred (no sample-deck card \
-         pairs one with a buildable attack yet — ADR 0070)"
+        "Iono's Kilowattrel's Flashing Draw is the same cost-gated \
+         Ability shape ADR 0070 deferred, still unbuilt"
     );
 }
 

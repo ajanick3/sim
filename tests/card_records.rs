@@ -237,6 +237,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Genesect's ACE Nullifier (the one Ability slot ACE SPEC
     // classification unlocked) admits its one print. Colress's
     // Tenacity (both prints) and Kyurem's Plasma Bane/Trifrost add 3
-    // more.
-    assert_eq!(admitted, 777, "coverage moves only on purpose");
+    // more. N's Zoroark ex (all 6 prints) — Night Joker's own attack
+    // copying, and Trade's discard-then-draw — takes it to 783.
+    assert_eq!(admitted, 783, "coverage moves only on purpose");
 }

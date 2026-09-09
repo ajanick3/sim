@@ -4612,3 +4612,138 @@ fn kyurems_trifrost_is_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv06.5-047").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Kyurem's print should play");
 }
+
+// --- Night Joker: copying a Benched "N's" Pokémon's own attack ---
+
+#[test]
+fn night_joker_copies_a_benched_ns_pokemons_chosen_attack() {
+    let night_joker = Attack {
+        name: "Night Joker",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::CopiesChosenBenchedPokemonAttackByNamePrefix("N's ")),
+    };
+    let (mut state, _defender_def) = game(night_joker, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+    let opponent = player.opponent();
+    let defender_active = state.player(opponent).active.unwrap();
+
+    let ns_mon = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-ns-mon",
+        name: "N's Purrloin",
+        hp: 90,
+        kind: Type::Darkness,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Scratch",
+            cost: vec![Type::Colorless],
+            base_damage: 60,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let bench_card = deal_new_card(&mut state, player, ns_mon);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    // Pay Night Joker's own cost (2 Darkness) — the copied attack's
+    // printed cost is never paid, only Night Joker's own.
+    for _ in 0..2 {
+        let energy = *state
+            .player(player)
+            .library
+            .iter()
+            .find(|c| state.def_of(**c).is_energy())
+            .unwrap();
+        state.players[player.index()].library.retain(|c| *c != energy);
+        state.pokemon[attacker.index()].attached.push(energy);
+    }
+
+    apply(&mut state, Action::Attack { index: 0 }).unwrap();
+    assert!(matches!(state.phase, Phase::ChoosingBenchedPokemonAttackToCopy { .. }));
+
+    apply(&mut state, Action::CopyBenchedPokemonAttack { pokemon: bench_mon, index: 0 }).unwrap();
+
+    assert_eq!(state.pokemon(defender_active).damage, 60, "Scratch's own 60 damage landed");
+}
+
+#[test]
+fn night_joker_ignores_a_benched_pokemon_outside_the_ns_family() {
+    let night_joker = Attack {
+        name: "Night Joker",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::CopiesChosenBenchedPokemonAttackByNamePrefix("N's ")),
+    };
+    let (mut state, _defender_def) = game(night_joker, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+
+    let plain_mon = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-plain-mon",
+        name: "Plainmon",
+        hp: 90,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 60,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let bench_card = deal_new_card(&mut state, player, plain_mon);
+    let bench_mon = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_mon);
+
+    for _ in 0..2 {
+        let energy = *state
+            .player(player)
+            .library
+            .iter()
+            .find(|c| state.def_of(**c).is_energy())
+            .unwrap();
+        state.players[player.index()].library.retain(|c| *c != energy);
+        state.pokemon[attacker.index()].attached.push(energy);
+    }
+
+    apply(&mut state, Action::Attack { index: 0 }).unwrap();
+
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "no Benched \"N's\" Pokémon, so the choice never opens and the attack does nothing"
+    );
+}
+
+#[test]
+fn ns_zoroark_ex_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "N's Zoroark ex" && c.playable.is_some()),
+        "at least one N's Zoroark ex print should play"
+    );
+}

@@ -1389,6 +1389,9 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("Genesect", "ACE Nullifier") => {
             AbilityEffect::PassiveBlocksOpponentAceSpecPlaysIfSelfHasTool
         }
+        ("N's Zoroark ex", "Trade") => {
+            AbilityEffect::OncePerTurnMayDiscardFromHandThenDrawCards(2)
+        }
         ("Kyurem", "Plasma Bane") => {
             AbilityEffect::PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(
                 "Trifrost", "Colress",
@@ -1586,6 +1589,9 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Fan Rotom", "Assault Landing") => AttackEffect::FizzlesWithNoStadiumInPlay,
         ("Pecharunt ex", "Irritated Outburst") => {
             AttackEffect::DamagePerCount(Count::OpponentPrizesTakenCount, 60)
+        }
+        ("N's Zoroark ex", "Night Joker") => {
+            AttackEffect::CopiesChosenBenchedPokemonAttackByNamePrefix("N's ")
         }
         ("Kyurem", "Trifrost") => {
             AttackEffect::DiscardsOwnEnergyThenDamagesThreeChosenOpponentPokemon(110)
