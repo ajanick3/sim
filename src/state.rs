@@ -426,6 +426,13 @@ pub enum Phase {
     /// the narrower mirror of `SearchingLibraryForAnyCards`, offering
     /// only Trainer cards. `Noctowl`'s `Jewel Seeker`.
     SearchingLibraryForTrainerCards { player: PlayerId, remaining: u32 },
+    /// `player` may take up to `remaining` more cards, each their own
+    /// choice of a Pokémon of `kind` or a Stadium, revealing them,
+    /// then shuffles — the narrower mirror of
+    /// `SearchingLibraryForAnyCards`, offering only
+    /// `CardFilter::PokemonOfTypeOrStadium(kind)`. `Celebi`'s
+    /// `Traverse Time`.
+    SearchingLibraryForPokemonOfTypeOrStadium { player: PlayerId, kind: crate::card::Type, remaining: u32 },
     /// `player` used an attack that deals flat damage to one of the
     /// opponent's Pokémon of their choosing, Active or Benched alike.
     /// `Fezandipiti ex`'s `Cruel Arrow`.
@@ -1305,6 +1312,11 @@ impl GameState {
                 .def_of(card)
                 .as_pokemon()
                 .is_some_and(|p| p.markers.contains(&crate::card::Marker::Tera)),
+            CardFilter::PokemonOfTypeOrStadium(kind) => match self.def_of(card) {
+                CardDef::Pokemon(p) => p.kind == kind,
+                CardDef::Trainer(t) => t.kind == crate::card::TrainerKind::Stadium,
+                CardDef::Energy(_) => false,
+            },
         }
     }
 

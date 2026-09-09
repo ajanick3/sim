@@ -4189,3 +4189,84 @@ fn smoochums_delightful_kiss_is_admitted_from_the_artifact() {
         "at least one Smoochum print should play"
     );
 }
+
+// --- Beyond the spec: search up to N, any combination of a type and Stadiums ---
+
+#[test]
+fn traverse_time_takes_any_combination_of_grass_pokemon_and_stadiums() {
+    let attack = Attack {
+        name: "Traverse Time",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::SearchLibraryForUpToPokemonOfTypeOrStadiumToHand(Type::Grass, 3)),
+    };
+    let (mut state, defender_ex) = game(attack, 3);
+    let player = state.current;
+    let grass_mon = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-traverse-time-grass",
+        name: "Grassmon",
+        hp: 100,
+        kind: Type::Grass,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let stadium_def = state.db.add(CardDef::Trainer(sim::card::Trainer {
+        print_id: "test-traverse-time-stadium",
+        name: "Test Stadium",
+        kind: sim::card::TrainerKind::Stadium,
+        requirement: None,
+        effect: sim::card::TrainerEffect::MayDiscardUpToTwoToolsAnywhere,
+    }));
+    let grass_card = deal_new_card(&mut state, player, grass_mon);
+    state.players[player.index()].library.push(grass_card);
+    let stadium_card = deal_new_card(&mut state, player, stadium_def);
+    state.players[player.index()].library.push(stadium_card);
+    // A non-matching card (the punching-bag defender_ex, Colorless) to
+    // confirm it's never offered.
+    let plain_card = deal_new_card(&mut state, player, defender_ex);
+    state.players[player.index()].library.push(plain_card);
+
+    pay_and_attack(&mut state);
+
+    assert!(matches!(
+        state.phase,
+        Phase::SearchingLibraryForPokemonOfTypeOrStadium { remaining: 3, .. }
+    ));
+    let offered: Vec<_> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::TakePokemonOfTypeOrStadiumFromLibrary { card } => Some(card),
+            _ => None,
+        })
+        .collect();
+    assert!(offered.contains(&grass_card));
+    assert!(offered.contains(&stadium_card));
+    assert!(!offered.contains(&plain_card), "not Grass and not a Stadium");
+
+    apply(&mut state, Action::TakePokemonOfTypeOrStadiumFromLibrary { card: grass_card }).unwrap();
+    apply(&mut state, Action::TakePokemonOfTypeOrStadiumFromLibrary { card: stadium_card }).unwrap();
+    apply(&mut state, Action::FinishSearchingPokemonOfTypeOrStadium).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert!(state.player(player).hand.contains(&grass_card));
+    assert!(state.player(player).hand.contains(&stadium_card));
+}
+
+#[test]
+fn celebis_traverse_time_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import.cards.iter().find(|c| c.id == "me01-012").expect("the artifact holds this print");
+    assert!(card.playable.is_some(), "Celebi's Traverse Time print should play");
+}
