@@ -311,6 +311,11 @@ pub enum Action {
     /// Attach this Energy from the discard pile to this Pokémon, as
     /// part of `Phase::DecidingToUseSeethingSpirit`.
     AttachEnergyForSeethingSpirit { card: CardId, target: PokemonId },
+    /// Take this card from the library into hand, as part of
+    /// `Phase::SearchingLibraryForAnyCardAbility`.
+    TakeAnyCardFromLibraryForAbility { card: CardId },
+    /// Decline that search.
+    FinishSearchingLibraryForAnyCardAbility,
     /// Decline it.
     DeclineSeethingSpirit,
     /// Attach this Basic Energy from the hand to this Pokémon, then
@@ -428,6 +433,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingBenchedPokemonAttackToCopy { player, .. } => Some(player),
         Phase::ChoosingDiscardedPokemonAttackToCopy { player, .. } => Some(player),
         Phase::DiscardingHandCardThenDrawing { player, .. } => Some(player),
+        Phase::SearchingLibraryForAnyCardAbility { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
         Phase::ChoosingAnyBenchedDamageTarget { player, .. } => Some(player),
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
@@ -907,6 +913,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             for card in &state.player(whose).hand {
                 actions.push(Action::DiscardHandCardThenDraw { card: *card });
             }
+            return actions;
+        }
+        Phase::SearchingLibraryForAnyCardAbility { player: whose, .. } => {
+            for card in &state.player(whose).library {
+                actions.push(Action::TakeAnyCardFromLibraryForAbility { card: *card });
+            }
+            actions.push(Action::FinishSearchingLibraryForAnyCardAbility);
             return actions;
         }
         Phase::ChoosingDiscardedPokemonAttackToCopy { card, .. } => {
@@ -1775,6 +1788,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 ..,
             ) => false,
             crate::card::AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp => false,
+            crate::card::AbilityEffect::PassiveFestivalLead => false,
+            crate::card::AbilityEffect::OncePerTurnMaySearchAnyCardIfActiveHasNamedAbility(name) => {
+                side.active.is_some_and(|a| {
+                    state.pokemon_def(a).ability.is_some_and(|active_ability| active_ability.name == name)
+                })
+            }
             crate::card::AbilityEffect::PassiveNamedAttackCostsLessPerOpponentPrizeTaken(_) => false,
             crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
                 kind,
@@ -2094,6 +2113,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DiscardHandCardThenDraw { card } => {
             format!("Discard {}", state.def_of(card).name())
         }
+        Action::TakeAnyCardFromLibraryForAbility { card } => {
+            format!("Take {}", state.def_of(card).name())
+        }
+        Action::FinishSearchingLibraryForAnyCardAbility => "Stop searching".to_string(),
         Action::CopyDiscardedPokemonAttack { index } => {
             let card = match state.phase {
                 Phase::ChoosingDiscardedPokemonAttackToCopy { card, .. } => card,

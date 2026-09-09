@@ -3912,3 +3912,219 @@ fn durable_body_does_nothing_on_tails() {
         "a Knockout takes its Prize as normal"
     );
 }
+
+// --- Festival Lead: a second attack, in the one turn, while its own Stadium is in play ---
+
+fn festival_grounds_stadium() -> Trainer {
+    Trainer {
+        print_id: "test-festival-grounds",
+        name: "Festival Grounds",
+        kind: TrainerKind::Stadium,
+        effect: TrainerEffect::EnergizedPokemonImmuneToSpecialConditions,
+        requirement: None,
+    }
+}
+
+#[test]
+fn festival_lead_grants_a_second_attack_with_its_own_stadium_in_play() {
+    let ability = Ability { name: "Festival Lead", effect: sim::card::AbilityEffect::PassiveFestivalLead };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+
+    let stadium_def = state.db.add(CardDef::Trainer(festival_grounds_stadium()));
+    let stadium_card = deal_new_card(&mut state, player, stadium_def);
+    state.stadium = Some((player, stadium_card));
+
+    for _ in 0..2 {
+        let energy = *state
+            .player(player)
+            .library
+            .iter()
+            .find(|c| state.def_of(**c).is_energy())
+            .unwrap();
+        state.players[player.index()].library.retain(|c| *c != energy);
+        state.pokemon[attacker.index()].attached.push(energy);
+    }
+
+    let first_attack =
+        legal_actions(&state).into_iter().find(|a| matches!(a, Action::Attack { .. })).unwrap();
+    apply(&mut state, first_attack).unwrap();
+
+    assert_eq!(state.current, player, "the first attack does not end the turn");
+    assert_eq!(state.phase, Phase::Main);
+
+    let second_attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("Festival Lead offers a second attack");
+    apply(&mut state, second_attack).unwrap();
+
+    assert_eq!(state.current, player.opponent(), "the second attack ends the turn as usual");
+}
+
+#[test]
+fn festival_lead_does_nothing_without_its_own_stadium_in_play() {
+    let ability = Ability { name: "Festival Lead", effect: sim::card::AbilityEffect::PassiveFestivalLead };
+    let (mut state, _carrier_def) = game(ability, 3);
+    let player = state.current;
+    let attacker = state.player(player).active.unwrap();
+
+    let energy = *state
+        .player(player)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[player.index()].library.retain(|c| *c != energy);
+    state.pokemon[attacker.index()].attached.push(energy);
+
+    let attack = legal_actions(&state).into_iter().find(|a| matches!(a, Action::Attack { .. })).unwrap();
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(state.current, player.opponent(), "no Festival Grounds in play, so the turn ends as usual");
+}
+
+#[test]
+fn boom_boom_groove_searches_the_library_while_the_active_carries_festival_lead() {
+    let mut db = CardDb::new();
+    let festival_lead_ability =
+        Ability { name: "Festival Lead", effect: sim::card::AbilityEffect::PassiveFestivalLead };
+    let goldeen = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-goldeen",
+        name: "Goldeen",
+        hp: 50,
+        kind: Type::Water,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(festival_lead_ability),
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let thwackey = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-thwackey",
+        name: "Thwackey",
+        hp: 100,
+        kind: Type::Grass,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(Ability {
+            name: "Boom Boom Groove",
+            effect: sim::card::AbilityEffect::OncePerTurnMaySearchAnyCardIfActiveHasNamedAbility(
+                "Festival Lead",
+            ),
+        }),
+        attacks: vec![Attack {
+            name: "Beat",
+            cost: vec![Type::Colorless, Type::Colorless],
+            base_damage: 50,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let defender_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-boom-boom-groove-defender",
+        name: "Defendmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-boom-boom-groove-energy",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let mut deck = vec![goldeen, thwackey];
+    while deck.len() < 60 {
+        deck.push(energy);
+    }
+    let mut defender_deck = vec![defender_mon; 4];
+    while defender_deck.len() < 60 {
+        defender_deck.push(energy);
+    }
+    let mut state = GameState::new(db, [deck, defender_deck], Box::new(SeededRng::new(3)));
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    // The turn-order coin flip decides which side goes first, not
+    // which deck this is, so find the Goldeen side directly.
+    let player = [sim::ids::PlayerId::One, sim::ids::PlayerId::Two]
+        .into_iter()
+        .find(|p| state.pokemon_def(state.player(*p).active.unwrap()).name == "Goldeen")
+        .unwrap();
+    while state.current != player {
+        apply(&mut state, Action::EndTurn).unwrap();
+        while state.phase != Phase::Main && !state.is_over() {
+            let first = legal_actions(&state)[0];
+            apply(&mut state, first).unwrap();
+        }
+    }
+    let goldeen_active = state.player(player).active.unwrap();
+    let thwackey_card = deal_new_card(&mut state, player, thwackey);
+    let thwackey_bench = state.put_into_play(player, thwackey_card);
+    state.players[player.index()].bench.push(thwackey_bench);
+
+    assert_eq!(state.pokemon_def(goldeen_active).name, "Goldeen", "the Active carries Festival Lead");
+    let hand_before = state.player(player).hand.len();
+
+    apply(&mut state, Action::UseAbility { pokemon: thwackey_bench }).unwrap();
+    assert!(matches!(state.phase, Phase::SearchingLibraryForAnyCardAbility { .. }));
+
+    let card = state.player(player).library[0];
+    apply(&mut state, Action::TakeAnyCardFromLibraryForAbility { card }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).hand.len(), hand_before + 1);
+    assert!(state.player(player).hand.contains(&card));
+}
+
+#[test]
+fn boom_boom_groove_is_not_offered_without_a_festival_lead_active() {
+    let ability = Ability {
+        name: "Boom Boom Groove",
+        effect: sim::card::AbilityEffect::OncePerTurnMaySearchAnyCardIfActiveHasNamedAbility(
+            "Festival Lead",
+        ),
+    };
+    let (state, _carrier_def) = game(ability, 3);
+    let carrier = state.player(state.current).active.unwrap();
+
+    assert!(
+        !legal_actions(&state).iter().any(|a| matches!(a, Action::UseAbility { pokemon } if *pokemon == carrier)),
+        "the Active itself carries this Ability, not Festival Lead, so it is not offered"
+    );
+}

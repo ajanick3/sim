@@ -1392,6 +1392,12 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
         ("N's Zoroark ex", "Trade") => {
             AbilityEffect::OncePerTurnMayDiscardFromHandThenDrawCards(2)
         }
+        ("Goldeen", "Festival Lead") => AbilityEffect::PassiveFestivalLead,
+        ("Seaking", "Festival Lead") => AbilityEffect::PassiveFestivalLead,
+        ("Dipplin", "Festival Lead") => AbilityEffect::PassiveFestivalLead,
+        ("Thwackey", "Boom Boom Groove") => {
+            AbilityEffect::OncePerTurnMaySearchAnyCardIfActiveHasNamedAbility("Festival Lead")
+        }
         ("Annihilape", "Durable Body") => {
             AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp
         }
@@ -1592,6 +1598,11 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Fan Rotom", "Assault Landing") => AttackEffect::FizzlesWithNoStadiumInPlay,
         ("Pecharunt ex", "Irritated Outburst") => {
             AttackEffect::DamagePerCount(Count::OpponentPrizesTakenCount, 60)
+        }
+        ("Goldeen", "Whirlpool") => AttackEffect::CoinFlipDiscardsDefenderEnergy,
+        ("Seaking", "Rapid Draw") => AttackEffect::DrawCards(2),
+        ("Dipplin", "Do the Wave") => {
+            AttackEffect::DamagePerCount(Count::OwnBenchedPokemonCount, 20)
         }
         ("Annihilape", "Tantrum") => {
             AttackEffect::InflictsConditionOnSelf(crate::card::Condition::Confused)

@@ -563,6 +563,10 @@ pub enum Phase {
     /// Energy from the discard pile to a Pokémon of the player's
     /// choosing. `Blaziken ex`'s `Seething Spirit`.
     DecidingToUseSeethingSpirit { player: PlayerId, pokemon: PokemonId },
+    /// `player` used `pokemon`'s own Ability that searches the
+    /// library for any one card into hand. `Thwackey`'s `Boom Boom
+    /// Groove`.
+    SearchingLibraryForAnyCardAbility { player: PlayerId, pokemon: PokemonId },
     /// The same combined card-and-target choice
     /// `DecidingToUseSeethingSpirit` already takes, but from the
     /// hand rather than the discard pile, and healing whichever
@@ -749,6 +753,11 @@ pub struct GameState {
     /// Belt's Training`. Cleared at `begin_turn`, the same as `spent` —
     /// "this turn" ends there regardless of whose turn is starting.
     pub turn_bonus: Option<(u32, crate::card::TurnBonusTarget)>,
+    /// Whether this turn's one `Festival Lead` extra swing has
+    /// already been granted — the only thing stopping a third,
+    /// fourth, ... attack once the first has opened the door. Cleared
+    /// at `begin_turn`, the same as `spent`.
+    pub festival_lead_extra_swing_used: bool,
     /// Set by `Briar`: this turn only, if the opponent's Active is
     /// Knocked Out by damage from an attack used by this player's own
     /// Tera Pokémon, that player takes one more Prize. Cleared at
@@ -820,6 +829,7 @@ impl GameState {
             locked_attack_next_turn: None,
             bonus_damage_to_pokemon_on_granting_players_next_turn: None,
             turn_bonus: None,
+            festival_lead_extra_swing_used: false,
             bonus_prize_if_own_tera_attacker_knocks_out: None,
             attacking_defender: None,
             rng,
@@ -1501,6 +1511,7 @@ impl GameState {
         self.spent.clear();
         // "This turn" ends here too, whoever set the bonus.
         self.turn_bonus = None;
+        self.festival_lead_extra_swing_used = false;
         self.promoted_from_bench_this_turn = [None, None];
         self.bonus_prize_if_own_tera_attacker_knocks_out = None;
         self.played_a_team_rocket_supporter_this_turn = [false, false];

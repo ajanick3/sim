@@ -254,8 +254,31 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::Attack { index } => {
+            let player = state.current;
             attack(state, index);
-            state.pending_end_turn = true;
+            // `Festival Lead`: the first attack this turn from a
+            // carrier, with `Festival Grounds` in play, opens the
+            // door to a second attack instead of ending the turn —
+            // read here, not through `UseAbility`, since nothing
+            // about it is a separate action. Read the attacker fresh,
+            // after the attack: some attacks (`Dudunsparce`'s own
+            // shuffle-self-into-deck shape) leave it no longer in
+            // play at all.
+            let attacker = state.player(player).active;
+            let grants_extra_swing = !state.festival_lead_extra_swing_used
+                && attacker.is_some_and(|a| {
+                    !state.abilities_disabled_for(a)
+                        && state.pokemon_def(a).ability.is_some_and(|ability| {
+                            ability.effect == crate::card::AbilityEffect::PassiveFestivalLead
+                        })
+                })
+                && state.stadium_effect()
+                    == Some(crate::card::TrainerEffect::EnergizedPokemonImmuneToSpecialConditions);
+            if grants_extra_swing {
+                state.festival_lead_extra_swing_used = true;
+            } else {
+                state.pending_end_turn = true;
+            }
             // Handheld Fan can open a phase of its own, mid-attack, that
             // needs the chooser's own action before anything else moves
             // on — settle waits for that the same way it already waits
@@ -1267,6 +1290,11 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     // only actually attaching is.
                     state.phase = Phase::DecidingToUseSeethingSpirit { player, pokemon };
                 }
+                crate::card::AbilityEffect::OncePerTurnMaySearchAnyCardIfActiveHasNamedAbility(_) => {
+                    // Not spent here: opening the choice is not using it —
+                    // only actually taking a card is.
+                    state.phase = Phase::SearchingLibraryForAnyCardAbility { player, pokemon };
+                }
                 crate::card::AbilityEffect::OncePerTurnMayDiscardFromHandThenDrawCards(draw) => {
                     // Spent here, unlike the choices above: the card's own
                     // text makes the discard the cost of using this Ability
@@ -1338,7 +1366,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 | crate::card::AbilityEffect::PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(
                     ..,
                 )
-                | crate::card::AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp => {
+                | crate::card::AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp
+                | crate::card::AbilityEffect::PassiveFestivalLead => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
@@ -1884,6 +1913,32 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     remaining: remaining - 1,
                 };
             }
+        }
+
+        Action::TakeAnyCardFromLibraryForAbility { card } => {
+            let (player, pokemon) = match state.phase {
+                Phase::SearchingLibraryForAnyCardAbility { player, pokemon } => (player, pokemon),
+                _ => return Err(IllegalAction),
+            };
+            let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
+            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].hand.push(card);
+            let name = state.def_of(card).name();
+            state.log.push(format!("{name} joins the hand."));
+            let library = &mut state.players[player.index()].library;
+            shuffle(state.rng.as_mut(), library);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
+        Action::FinishSearchingLibraryForAnyCardAbility => {
+            match state.phase {
+                Phase::SearchingLibraryForAnyCardAbility { .. } => {}
+                _ => return Err(IllegalAction),
+            };
+            state.phase = Phase::Main;
+            settle(state);
         }
 
         Action::FinishSearchingEvolutionPokemonOfType => {
@@ -3518,6 +3573,13 @@ fn resolve_attack_effect(
                 }
             }
         }
+        crate::card::AttackEffect::CoinFlipDiscardsDefenderEnergy => {
+            if state.rng.flip() && !state.pokemon(defender).attached.is_empty() {
+                let owner = state.pokemon(attacker).owner;
+                state.phase =
+                    Phase::DiscardingDefenderEnergyForAttack { chooser: owner, target: defender };
+            }
+        }
         crate::card::AttackEffect::DiscardsFixedOwnEnergyChosen(count) => {
             let owner = state.pokemon(attacker).owner;
             state.phase = Phase::ChoosingOwnEnergyToDiscardForAttack {
@@ -4232,6 +4294,7 @@ fn count_for_attack(
                     .count() as u32
             })
             .sum(),
+        crate::card::Count::OwnBenchedPokemonCount => state.player(owner).bench.len() as u32,
     }
 }
 

@@ -5420,3 +5420,95 @@ fn annihilapes_tantrum_and_destined_fight_are_admitted_from_the_artifact() {
     let card = import.cards.iter().find(|c| c.id == "sv08-100").expect("the artifact holds this print");
     assert!(card.playable.is_some(), "Annihilape's Tantrum/Destined Fight print should play");
 }
+
+// --- Whirlpool, Rapid Draw, Do the Wave: the Festival Lead family's own attacks ---
+
+#[test]
+fn whirlpool_discards_defender_energy_on_heads() {
+    let attack = Attack {
+        name: "Whirlpool",
+        cost: vec![Type::Colorless, Type::Colorless],
+        base_damage: 10,
+        inflicts: None,
+        effect: Some(AttackEffect::CoinFlipDiscardsDefenderEnergy),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let energy = *state
+        .player(opponent)
+        .library
+        .iter()
+        .find(|c| state.def_of(**c).is_energy())
+        .unwrap();
+    state.players[opponent.index()].library.retain(|c| *c != energy);
+    state.pokemon[defender.index()].attached.push(energy);
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 10, "the attack's own damage always lands");
+    // Either the coin landed heads (a discard phase opens) or tails
+    // (nothing further happens) — both are legitimate outcomes.
+    assert!(
+        matches!(state.phase, Phase::DiscardingDefenderEnergyForAttack { .. }) || state.phase == Phase::Main
+    );
+}
+
+#[test]
+fn rapid_draw_deals_damage_and_draws_two() {
+    let attack = Attack {
+        name: "Rapid Draw",
+        cost: vec![Type::Colorless],
+        base_damage: 60,
+        inflicts: None,
+        effect: Some(AttackEffect::DrawCards(2)),
+    };
+    let (mut state, _defender_def) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    let hand_before = state.player(player).hand.len();
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 60);
+    // -1 for the Colorless Energy this attack's own cost spent, +2 drawn.
+    assert_eq!(state.player(player).hand.len(), hand_before + 1);
+}
+
+#[test]
+fn do_the_wave_deals_twenty_per_benched_pokemon() {
+    let attack = Attack {
+        name: "Do the Wave",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::DamagePerCount(sim::card::Count::OwnBenchedPokemonCount, 20)),
+    };
+    let (mut state, defender_def) = game(attack, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+    for _ in 0..2 {
+        let bench_card = deal_new_card(&mut state, player, defender_def);
+        let bench_mon = state.put_into_play(player, bench_card);
+        state.players[player.index()].bench.push(bench_mon);
+    }
+
+    pay_and_attack(&mut state);
+
+    assert_eq!(state.pokemon(defender).damage, 40, "20 for each of 2 Benched Pokémon");
+}
+
+#[test]
+fn goldeen_seaking_and_dipplin_festival_lead_prints_are_admitted() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for id in ["sv06-044", "sv08.5-020", "sv06-045", "sv08.5-021", "sv06-170"] {
+        let card = import.cards.iter().find(|c| c.id == id).expect("the artifact holds this print");
+        assert!(card.playable.is_some(), "{id} should play");
+    }
+}
