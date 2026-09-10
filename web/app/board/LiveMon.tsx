@@ -2,13 +2,14 @@
 
 import type { WirePokemon } from "../view";
 import { EnergyIcon, energyKind } from "./EnergyIcon";
+import { PlayingCard } from "./PlayingCard";
 import { CARD_SIZE } from "./sizes";
 import { damageSpot, type Art } from "./shared";
 
-/** One Pokémon in play — Active or Bench — as a card showing the top
- *  slice of its print, with HP, damage counter, attached Energy and any
- *  Special Conditions laid over it. `mon = null` draws an empty slot,
- *  which a held card can be tapped onto when `placeHere` is set. */
+/** One Pokémon in play — Active or Bench — as a tray card showing the
+ *  top slice of its print, with HP, damage counter, attached Energy and
+ *  any Special Conditions laid over it. `mon = null` draws an empty
+ *  slot a held card can be tapped onto when `placeHere` is set. */
 export function LiveMon({
   mon,
   active = false,
@@ -34,7 +35,7 @@ export function LiveMon({
   /** Empty slot: a selected hand card can be placed here. */
   placeHere?: () => void;
 }) {
-  const size = active ? CARD_SIZE.active : small ? CARD_SIZE.benchSmall : CARD_SIZE.bench;
+  const size = active ? "active" : small ? "benchSmall" : "bench";
   if (!mon) {
     return (
       <button
@@ -43,7 +44,7 @@ export function LiveMon({
         data-drop-id={placeHere ? (active ? "slot:active" : "slot:bench") : undefined}
         disabled={!placeHere}
         onClick={placeHere}
-        className={`${size} flex flex-none items-center justify-center rounded-card border border-dashed text-[9px] disabled:cursor-default ${
+        className={`${CARD_SIZE[size]} flex flex-none items-center justify-center rounded-card border border-dashed text-[9px] disabled:cursor-default ${
           placeHere
             ? "border-accent bg-accent/10 text-accent animate-pulse"
             : "border-white/15 text-dim"
@@ -53,50 +54,37 @@ export function LiveMon({
       </button>
     );
   }
-  const src = art(mon.print_id);
   const interactive = selectable && !!onSelect;
-  const ring = selected
-    ? "z-20 ring-2 ring-accent border-accent"
-    : dropTarget
-      ? hovered
-        ? "z-30 border-white ring-4 ring-white shadow-[0_0_0_3px_#fff,0_0_28px_10px_rgba(255,255,255,0.95)]"
-        : "z-20 border-white ring-2 ring-white shadow-[0_0_0_2px_#fff,0_0_18px_5px_rgba(255,255,255,0.7)]"
-      : active
-        ? "border-accent"
-        : "border-edge";
   const energies = mon.attached.filter((c) => c.energy_type);
+  const tiny = !active;
+
   return (
-    <button
-      type="button"
-      data-keep-selection
-      data-drop-id={`mon:${mon.id}`}
+    <PlayingCard
+      surface="tray"
+      size={size}
+      crop="top"
+      src={art(mon.print_id)}
+      name={mon.name}
+      selected={selected}
+      dropTarget={dropTarget}
+      hovered={hovered}
+      interactive={interactive}
+      restingBorder={active ? "border-accent" : "border-edge"}
       disabled={!interactive}
       onClick={onSelect}
-      className={`deal-in ${size} ${
-        selected ? "card-tap" : ""
-      } relative flex flex-none flex-col overflow-hidden rounded-card border bg-panel transition-colors disabled:cursor-default disabled:opacity-100 ${ring} ${
-        interactive ? "hover:border-accent" : ""
-      }`}
+      data-keep-selection
+      data-drop-id={`mon:${mon.id}`}
+      className={`deal-in ${selected ? "card-tap" : ""}`}
     >
-      {/* Every card on the board — Active and Bench alike — shows the top
-          slice of the print, cropped from the top edge. No scrim: the
-          only thing laid over a card is the dimming of an illegal one. */}
-      {src ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={src}
-          alt={mon.name}
-          loading="lazy"
-          className="absolute inset-0 size-full object-cover object-top"
-        />
-      ) : (
-        <span className="relative z-10 p-1 text-[9px] font-semibold leading-tight">{mon.name}</span>
-      )}
-
       {/* HP pill — top-right, where a card prints it. */}
-      <span className="absolute right-0.5 top-0.5 z-10 rounded bg-black/75 px-1 text-[9px] font-bold">
+      <span
+        className={`absolute right-0.5 top-0.5 z-10 rounded bg-black/75 px-1 font-bold ${
+          tiny ? "text-[8px]" : "text-[9px]"
+        }`}
+      >
         {mon.hp}
       </span>
+
       {/* Damage counter: a coin dropped on the illustration, its spot
           fixed per Pokémon so it does not jump between renders. */}
       {mon.damage > 0 && (
@@ -117,7 +105,7 @@ export function LiveMon({
           {energies.map((c) => {
             const kind = energyKind(c.energy_type);
             return kind ? (
-              <EnergyIcon key={c.id} kind={kind} size={14} decorative />
+              <EnergyIcon key={c.id} kind={kind} size={tiny ? 12 : 14} decorative />
             ) : (
               <span
                 key={c.id}
@@ -134,6 +122,6 @@ export function LiveMon({
           {mon.conditions.join(", ")}
         </span>
       )}
-    </button>
+    </PlayingCard>
   );
 }
