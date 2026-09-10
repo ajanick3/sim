@@ -101,11 +101,23 @@ export function LiveBoard({
       : new Map<number, number>();
   const onPokemon = (id: number) => {
     const landing = dropTargets.get(id);
-    if (landing !== undefined) onAct(landing);
-    else
-      onSelect(
-        selection?.kind === "pokemon" && selection.id === id ? null : { kind: "pokemon", id },
-      );
+    if (landing !== undefined) {
+      onAct(landing);
+      return;
+    }
+    // Second tap on an already-selected Pokémon whose only move names it
+    // — promoting a Benched Pokémon after a Knockout, above all — plays
+    // that move. First tap just selects it.
+    if (selection?.kind === "pokemon" && selection.id === id) {
+      const mv = movesForSelection(meta, selection);
+      if (mv.length === 1) {
+        onAct(mv[0]);
+        return;
+      }
+      onSelect(null);
+      return;
+    }
+    onSelect({ kind: "pokemon", id });
   };
   const onHand = (card: number) =>
     onSelect(selection?.kind === "hand" && selection.card === card ? null : { kind: "hand", card });
@@ -144,6 +156,8 @@ export function LiveBoard({
   // A yes/no Ability prompt ("Use Psychic Draw" / "Decline Psychic
   // Draw") — surfaced as its own bar, not left in the All-actions list.
   const prompt = decision ? null : asPrompt(actions);
+  // After a Knockout the player must pick a new Active from the Bench.
+  const promoting = actions.length > 0 && actions.every((a) => /^Promote /.test(a));
   // The coin-flip winner picks who starts — a full-board modal, not two
   // buttons in a list.
   const firstTurn =
@@ -354,6 +368,11 @@ export function LiveBoard({
           </div>
 
           {prompt && !firstTurn && <PromptBar prompt={prompt} busy={busy} onAct={onAct} />}
+          {promoting && (
+            <div className="mt-1 rounded-lg border border-warn/60 bg-warn/10 p-2 text-center text-[12px] font-semibold text-warn">
+              Choose a new Active — tap a Benched Pokémon, tap again to promote it
+            </div>
+          )}
 
           <HandStrip
             hand={view.your_hand}
@@ -736,7 +755,9 @@ function LiveMon({
       data-drop-id={`mon:${mon.id}`}
       disabled={!interactive}
       onClick={onSelect}
-      className={`deal-in ${size} relative flex flex-none flex-col overflow-hidden rounded-md border bg-panel transition-colors disabled:cursor-default disabled:opacity-100 ${ring} ${
+      className={`deal-in ${size} ${
+        selected ? "card-tap" : ""
+      } relative flex flex-none flex-col overflow-hidden rounded-md border bg-panel transition-colors disabled:cursor-default disabled:opacity-100 ${ring} ${
         interactive ? "hover:border-accent" : ""
       }`}
     >
