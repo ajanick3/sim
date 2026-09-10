@@ -1622,7 +1622,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 crate::card::AttackEffect::DefenderCannotRetreatAndTakesMoreDamageNextTurn(_),
                 _
             )) if target == active
-        );
+        ) || matches!(
+            state.side_shield_next_turn,
+            Some((granted_by, crate::card::SideShield::OpponentPoisonedCannotRetreat))
+                if granted_by != player
+        ) && state.has_condition(active, Condition::Poisoned);
         if !state.is_spent(Limit::Retreated(player))
             && !held(active)
             && !cannot_retreat

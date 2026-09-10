@@ -760,6 +760,10 @@ pub struct GameState {
     /// would clear those the instant the granting turn ends, one turn
     /// too early.
     pub opponent_next_turn_restriction: Option<(PokemonId, crate::card::AttackEffect, PlayerId)>,
+    /// A side-wide shield a Supporter granted for the opponent's next
+    /// turn: the player who granted it, and what it does. Same lifetime
+    /// as `opponent_next_turn_restriction`. See ADR 0098.
+    pub side_shield_next_turn: Option<(PlayerId, crate::card::SideShield)>,
     /// The mirror of `opponent_next_turn_restriction`: a restriction on
     /// the *attacker's own* very next turn, granted mid-turn (so it must
     /// not apply to the turn granting it). `armed` becomes `true` the
@@ -860,6 +864,7 @@ impl GameState {
             promoted_from_bench_this_turn: [None, None],
             played_a_team_rocket_supporter_this_turn: [false, false],
             opponent_next_turn_restriction: None,
+            side_shield_next_turn: None,
             own_next_turn_restriction: None,
             locked_attack_next_turn: None,
             bonus_damage_to_pokemon_on_granting_players_next_turn: None,
@@ -1639,6 +1644,11 @@ impl GameState {
         // target's owner (a self-targeted restriction names the
         // granting player's own Pokémon, so that inference would clear
         // it one turn too early).
+        if let Some((granted_by, _)) = self.side_shield_next_turn
+            && self.current == granted_by
+        {
+            self.side_shield_next_turn = None;
+        }
         if let Some((_, _, granted_by)) = self.opponent_next_turn_restriction
             && self.current == granted_by
         {

@@ -383,6 +383,22 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Sacred Charm" => (free, TrainerEffect::ReducesDamageFromAbilityHolders(30)),
         "Lively Stadium" => (free, TrainerEffect::StadiumBoostsBasicHp(30)),
         "Rescue Board" => (free, TrainerEffect::ReducesRetreatCost(1)),
+        "Jasmine's Gaze" => (
+            free,
+            TrainerEffect::GrantSideShieldNextTurn(crate::card::SideShield::DamageReduction(30)),
+        ),
+        "Iron Defender" => (
+            free,
+            TrainerEffect::GrantSideShieldNextTurn(
+                crate::card::SideShield::DamageReductionForType(Type::Metal, 30),
+            ),
+        ),
+        "Roxie's Performance" => (
+            free,
+            TrainerEffect::GrantSideShieldNextTurn(
+                crate::card::SideShield::OpponentPoisonedCannotRetreat,
+            ),
+        ),
         "Awakening Drum" => (
             free,
             TrainerEffect::DrawPerOwnPokemonWithMarker(crate::card::Marker::Ancient),

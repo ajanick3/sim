@@ -116,7 +116,8 @@ fn the_kinds_add_up_to_the_pool() {
     // The name-prefix cards take it to 164.
     // Poké Ball, Rescue Board, and Gravity Gemstone take it to 159.
     // Awakening Drum, Reboot Pod, and Perilous Jungle take it to 156.
-    assert_eq!(trainers, 156, "the Trainers still refused, by kind");
+    // Jasmine's Gaze, Iron Defender, and Roxie's Performance take it to 148.
+    assert_eq!(trainers, 148, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and
