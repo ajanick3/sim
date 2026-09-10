@@ -416,6 +416,13 @@ pub enum TrainerEffect {
     /// by an opponent's Pokémon that has an Ability, after Weakness and
     /// Resistance. `Sacred Charm`.
     ReducesDamageFromAbilityHolders(u32),
+    /// A Stadium: every Basic Pokémon in play, both sides, gets this much
+    /// more HP. `Lively Stadium`.
+    StadiumBoostsBasicHp(u32),
+    /// A Stadium: a Pokémon of `kind`, either side, takes `amount` less
+    /// damage from the opponent's attacks, after Weakness and Resistance.
+    /// `Full Metal Lab`.
+    StadiumReducesDamageToType { kind: Type, amount: u32 },
     /// Confuse both Active Pokémon that are not of this type. `Dark Bell`
     /// spares a Darkness Active on either side.
     ConfuseBothActivesExceptType(Type),

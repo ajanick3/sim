@@ -112,7 +112,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Dangerous Laser and Dark Bell take it to 182.
     // The six "-Berry" Tools take it to 176.
     // Maximum Belt and Sacred Charm take it to 172.
-    assert_eq!(trainers, 172, "the Trainers still refused, by kind");
+    // Lively Stadium and Full Metal Lab take it to 170.
+    assert_eq!(trainers, 170, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

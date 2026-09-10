@@ -3215,6 +3215,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::TeraAttacksCostMore
         | TrainerEffect::TeraPokemonRaisesBenchLimit
         | TrainerEffect::PreventsDamageCountersOnBench
+        | TrainerEffect::StadiumBoostsBasicHp(_)
+        | TrainerEffect::StadiumReducesDamageToType { .. }
         | TrainerEffect::AbilitiesDisabled => {}
 
         // "Recovers from all Special Conditions" reads as an immediate
@@ -4713,7 +4715,16 @@ fn damage_dealt_with(
         }
     }
 
-    // Step 33b: a Tool on the defender that softens attacks from one
+    // Step 33b: a Stadium that softens attacks against one type — read
+    // for either side, after Weakness and Resistance. `Full Metal Lab`.
+    if let Some(crate::card::TrainerEffect::StadiumReducesDamageToType { kind, amount }) =
+        state.stadium_effect()
+        && state.pokemon_def(defender).kind == kind
+    {
+        damage = damage.saturating_sub(amount);
+    }
+
+    // Step 33c: a Tool on the defender that softens attacks from one
     // attacker type — the "-Berry" Tools. After Weakness and Resistance,
     // per the printed text. `Jamming Tower` turns Tool reads off.
     if !state.tools_disabled() {
