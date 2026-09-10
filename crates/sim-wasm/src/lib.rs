@@ -266,7 +266,22 @@ fn action_handles(action: Action) -> (Option<usize>, Option<usize>) {
         | Action::TakeCard { card: c }
         | Action::DiscardEnergy { card: c }
         | Action::PayWithCard { card: c }
-        | Action::MoveEnergyToActive { card: c } => (card(c), None),
+        | Action::MoveEnergyToActive { card: c }
+        | Action::TakeBasicPokemonForCallForFamily { card: c }
+        | Action::TakeBasicPokemonOfTypeForEnergyAttach { card: c }
+        | Action::TakeItemFromLibrary { card: c }
+        | Action::TakeAnyCardFromLibrary { card: c }
+        | Action::TakeTrainerCardFromLibrary { card: c }
+        | Action::TakePokemonOfTypeOrStadiumFromLibrary { card: c }
+        | Action::TakeEvolutionPokemonOfType { card: c }
+        | Action::TakeCardForFanCall { card: c }
+        | Action::TakeFromBottomOfLibrary { card: c }
+        | Action::TakeTrainerFromDiscard { card: c }
+        | Action::TakePokemonFromDiscard { card: c }
+        | Action::TakeNamedFromDiscardToBench { card: c }
+        | Action::TakeCardFromTopPeek { card: c }
+        | Action::TakeSupporterFromTopPeek { card: c }
+        | Action::TakeSupporterForLastDitchCatch { card: c } => (card(c), None),
         Action::Evolve { card: c, target: t }
         | Action::AttachEnergy { card: c, target: t }
         | Action::PlayTool { card: c, target: t }

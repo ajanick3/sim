@@ -993,6 +993,7 @@ function asDecision(actions: string[]): { kind: DecisionKind; verb: string } | n
   if (body.length === 0) return null;
   const test = (re: RegExp) => body.every((l) => re.test(l));
   if (test(/^Take /)) return { kind: "take", verb: "Choose cards to take" };
+  if (test(/^Bench /)) return { kind: "take", verb: "Choose Pokémon to Bench" };
   if (test(/^Discard /)) return { kind: "discard", verb: "Choose cards to discard" };
   if (test(/^Choose /)) return { kind: "choose", verb: "Make a choice" };
   if (test(/^Discard .* to pay/)) return { kind: "pay", verb: "Discard to pay the cost" };
@@ -1111,7 +1112,7 @@ function DecisionBar({
                 <span className="relative block h-full w-[132px] overflow-hidden rounded-[8px] border border-black/10 bg-white text-neutral-800 shadow-[0_1px_2px_rgba(28,16,8,0.55),0_5px_10px_rgba(28,16,8,0.4),0_16px_30px_-4px_rgba(28,16,8,0.4)]">
                   <CardFace
                     src={null}
-                    name={face?.name ?? label.replace(/^Take /, "")}
+                    name={face?.name ?? label.replace(/^(Take|Bench) /, "")}
                     energyType={face?.energy_type ?? null}
                   />
                 </span>
