@@ -106,6 +106,16 @@ export function LiveBoard({
   const onHand = (card: number) =>
     onSelect(selection?.kind === "hand" && selection.card === card ? null : { kind: "hand", card });
 
+  // Attacks name no target on the wire — the attacker is always your
+  // Active — so pair them with your Active by hand. Tapping the Active
+  // card then shows them right on it.
+  const attackMoves = meta
+    .map((m, i) => ({ m, i }))
+    .filter(({ m }) => m.kind === "Attack")
+    .map(({ i }) => ({ index: i, label: actions[i].replace(/^Attack:?\s*/, "") }));
+  const activeSelected =
+    selection?.kind === "pokemon" && mine.active != null && selection.id === mine.active.id;
+
   const decision = asDecision(actions);
   // The coin-flip winner picks who starts — a full-board modal, not two
   // buttons in a list.
@@ -183,13 +193,41 @@ export function LiveBoard({
                 {...monHooks(opp.active, meta, selection, dropTargets, onPokemon)}
               />
               <div className="h-px w-24 bg-white/15" aria-hidden />
-              <LiveMon
-                mon={mine.active}
-                active
-                art={art}
-                placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
-                {...monHooks(mine.active, meta, selection, dropTargets, onPokemon)}
-              />
+              <div className="relative">
+                <LiveMon
+                  mon={mine.active}
+                  active
+                  art={art}
+                  placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
+                  {...monHooks(
+                    mine.active,
+                    meta,
+                    selection,
+                    dropTargets,
+                    onPokemon,
+                    attackMoves.length > 0,
+                  )}
+                />
+                {activeSelected && attackMoves.length > 0 && (
+                  <div
+                    className="absolute inset-x-1 bottom-1 z-30 flex flex-col gap-1"
+                    data-keep-selection
+                  >
+                    {attackMoves.map((a) => (
+                      <button
+                        key={a.index}
+                        type="button"
+                        data-keep-selection
+                        disabled={busy}
+                        onClick={() => onAct(a.index)}
+                        className="rounded bg-accent px-2 py-1 text-[11px] font-bold text-black shadow-[0_2px_6px_rgba(0,0,0,0.5)] hover:brightness-110 disabled:opacity-50"
+                      >
+                        {a.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <StadiumSlot ghost />
           </div>
@@ -270,11 +308,13 @@ export function LiveBoard({
                 {selectedName ?? "Selected"}
               </span>
               <span className="text-dim">
-                {only && only.length === 0
-                  ? "no move from here — tap away to cancel"
-                  : confirmIndex !== undefined
-                    ? "tap ✅ on the card to play it"
-                    : "tap a highlighted spot on the board"}
+                {activeSelected && attackMoves.length > 0
+                  ? "tap an attack on your Active"
+                  : only && only.length === 0
+                    ? "no move from here — tap away to cancel"
+                    : confirmIndex !== undefined
+                      ? "tap ✅ on the card to play it"
+                      : "tap a highlighted spot on the board"}
               </span>
             </div>
           )}
@@ -327,11 +367,12 @@ function monHooks(
   selection: Selection,
   dropTargets: Map<number, number>,
   onPokemon: (id: number) => void,
+  extraSelectable = false,
 ) {
   if (!m) return {};
   return {
     onSelect: () => onPokemon(m.id),
-    selectable: meta.some((x) => x.target === m.id) || dropTargets.has(m.id),
+    selectable: extraSelectable || meta.some((x) => x.target === m.id) || dropTargets.has(m.id),
     selected: selection?.kind === "pokemon" && selection.id === m.id,
     dropTarget: dropTargets.has(m.id),
   };
