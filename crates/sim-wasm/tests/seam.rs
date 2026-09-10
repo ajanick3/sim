@@ -36,3 +36,22 @@ fn the_view_reports_both_sides_and_the_viewer() {
     assert!(view["you"].is_number());
     assert!(view["phase"].is_string());
 }
+#[test]
+fn a_card_in_view_carries_its_energy_type_slot() {
+    let game = Game::synthetic(1);
+    let view: serde_json::Value = serde_json::from_str(&game.view()).unwrap();
+    let hand = view["your_hand"].as_array().unwrap();
+    assert!(!hand.is_empty(), "the opening hand is not empty");
+    for card in hand {
+        assert!(
+            card.get("energy_type").is_some(),
+            "every card object has an energy_type field (string or null)"
+        );
+    }
+    // The synthetic starter deck is Basic Energy plus three Basics, so at
+    // least one hand card names a type.
+    assert!(
+        hand.iter().any(|c| c["energy_type"].is_string()),
+        "some hand card is an Energy with a named type"
+    );
+}
