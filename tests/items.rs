@@ -1537,3 +1537,121 @@ fn the_condition_items_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: name-prefix searches and modifiers ---
+
+#[test]
+fn team_rockets_proton_pulls_named_basics_to_hand() {
+    let mut set = build();
+    let tr_mon = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-tr-grunt-mon",
+        name: "Team Rocket's Grunt Rattata",
+        hp: 60,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack { name: "Nip", cost: vec![Type::Colorless], base_damage: 10, inflicts: None, effect: None }],
+    }));
+    let proton = plain_item(
+        &mut set.db,
+        "test-tr-proton",
+        "Team Rocket's Proton",
+        TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::BasicPokemonNameContains("Team Rocket's"),
+                to: Destination::Zone(Zone::Hand),
+                limit: 3,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    );
+    let mut state = game(&set, proton, 3);
+    let player = state.current;
+    for _ in 0..2 {
+        let c = deal_new_card(&mut state, player, tr_mon);
+        state.players[player.index()].library.push(c);
+    }
+    // A non-matching Basic must not be offered.
+    let plain = deal_new_card(&mut state, player, set.mon);
+    state.players[player.index()].library.push(plain);
+    let card = ensure_in_hand(&mut state, player, proton);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let mut took = 0;
+    while let Some(t) = legal_actions(&state).into_iter().find_map(|a| match a {
+        Action::TakeCard { card } => Some(card),
+        _ => None,
+    }) {
+        assert!(state.def_of(t).as_pokemon().unwrap().name.contains("Team Rocket's"));
+        apply(&mut state, Action::TakeCard { card: t }).unwrap();
+        took += 1;
+    }
+    apply(&mut state, Action::FinishDeciding).unwrap();
+    assert_eq!(took, 2);
+}
+
+#[test]
+fn cynthias_power_weight_adds_hp_only_to_a_cynthias_pokemon() {
+    let mut set = build();
+    let cynthia_mon = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-cynthias-mon",
+        name: "Cynthia's Garchomp",
+        hp: 150,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack { name: "Slash", cost: vec![Type::Colorless], base_damage: 30, inflicts: None, effect: None }],
+    }));
+    let weight = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-cynthias-power-weight",
+        name: "Cynthia's Power Weight",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::IncreasesHpForNamePrefix { word: "Cynthia's", amount: 70 },
+    }));
+    let mut state = game(&set, weight, 3);
+    let player = state.current;
+    let cyn_card = deal_new_card(&mut state, player, cynthia_mon);
+    let cyn = state.put_into_play(player, cyn_card);
+    state.players[player.index()].bench.push(cyn);
+    let plain = state.player(player).active.unwrap();
+
+    let tool_a = deal_new_card(&mut state, player, weight);
+    state.pokemon[cyn.index()].attached.push(tool_a);
+    let tool_b = deal_new_card(&mut state, player, weight);
+    state.pokemon[plain.index()].attached.push(tool_b);
+
+    assert_eq!(state.effective_hp(cyn), 150 + 70);
+    assert_eq!(state.effective_hp(plain), state.pokemon_def(plain).hp, "not a Cynthia's Pokemon");
+}
+
+#[test]
+fn the_name_prefix_cards_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Team Rocket's Proton", "Hop's Bag", "Cynthia's Power Weight", "Granite Cave"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}

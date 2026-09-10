@@ -3188,6 +3188,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::DamagesAttackerWhenDefenderIsHit(_)
         | TrainerEffect::DrawsWhenDefenderIsHit(_)
         | TrainerEffect::ReducesDamageFromType { .. }
+        | TrainerEffect::IncreasesHpForNamePrefix { .. }
         | TrainerEffect::BonusDamageVsActiveEx(_)
         | TrainerEffect::ReducesDamageFromAbilityHolders(_)
         | TrainerEffect::MovesEnergyFromAttackerToTheirBench
@@ -3217,6 +3218,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::PreventsDamageCountersOnBench
         | TrainerEffect::StadiumBoostsBasicHp(_)
         | TrainerEffect::StadiumReducesDamageToType { .. }
+        | TrainerEffect::StadiumReducesDamageForNamePrefix { .. }
         | TrainerEffect::AbilitiesDisabled => {}
 
         // "Recovers from all Special Conditions" reads as an immediate
@@ -4720,6 +4722,12 @@ fn damage_dealt_with(
     if let Some(crate::card::TrainerEffect::StadiumReducesDamageToType { kind, amount }) =
         state.stadium_effect()
         && state.pokemon_def(defender).kind == kind
+    {
+        damage = damage.saturating_sub(amount);
+    }
+    if let Some(crate::card::TrainerEffect::StadiumReducesDamageForNamePrefix { word, amount }) =
+        state.stadium_effect()
+        && state.pokemon_def(defender).name.contains(word)
     {
         damage = damage.saturating_sub(amount);
     }

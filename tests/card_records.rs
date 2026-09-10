@@ -301,5 +301,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Lively Stadium (`StadiumBoostsBasicHp`) and Full Metal Lab
     // (`StadiumReducesDamageToType`) — static Stadium reads in
     // `effective_hp` and `damage_dealt_with` — take it to 888.
-    assert_eq!(admitted, 888, "coverage moves only on purpose");
+    // Name-prefix searches and modifiers: Team Rocket's Proton, Hop's Bag
+    // (a new `CardFilter::BasicPokemonNameContains`), Cynthia's Power
+    // Weight (`IncreasesHpForNamePrefix`), Granite Cave
+    // (`StadiumReducesDamageForNamePrefix`) take it to 894.
+    assert_eq!(admitted, 894, "coverage moves only on purpose");
 }

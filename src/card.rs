@@ -165,6 +165,9 @@ pub enum CardFilter {
     BasicPokemonOfType(Type),
     /// A Pokémon of this type, any stage. `Canari`.
     PokemonOfType(Type),
+    /// A Basic Pokémon whose printed name contains this word.
+    /// `Team Rocket's Proton`, `Hop's Bag`.
+    BasicPokemonNameContains(&'static str),
     /// A Pokémon carrying `Marker::Tera`. `Tera Orb`.
     TeraPokemon,
     /// A Pokémon of this type, or a Stadium card — the same "one
@@ -419,6 +422,13 @@ pub enum TrainerEffect {
     /// A Stadium: every Basic Pokémon in play, both sides, gets this much
     /// more HP. `Lively Stadium`.
     StadiumBoostsBasicHp(u32),
+    /// A Tool: the carrier gets this much more HP, but only when its
+    /// printed name contains the word. `Cynthia's Power Weight`.
+    IncreasesHpForNamePrefix { word: &'static str, amount: u32 },
+    /// A Stadium: a Pokémon whose name contains the word, either side,
+    /// takes `amount` less damage from the opponent's attacks, after
+    /// Weakness and Resistance. `Granite Cave`.
+    StadiumReducesDamageForNamePrefix { word: &'static str, amount: u32 },
     /// A Stadium: a Pokémon of `kind`, either side, takes `amount` less
     /// damage from the opponent's attacks, after Weakness and Resistance.
     /// `Full Metal Lab`.

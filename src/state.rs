@@ -1073,7 +1073,25 @@ impl GameState {
             }
             _ => 0,
         };
-        (printed + bonus + energy_bonus + stadium_bonus).saturating_sub(stadium_reduction)
+        let tool_name_bonus: u32 = if self.tools_disabled() {
+            0
+        } else {
+            self.pokemon(id)
+                .attached
+                .iter()
+                .filter_map(|c| self.def_of(*c).as_trainer())
+                .map(|t| match t.effect {
+                    crate::card::TrainerEffect::IncreasesHpForNamePrefix { word, amount }
+                        if self.pokemon_def(id).name.contains(word) =>
+                    {
+                        amount
+                    }
+                    _ => 0,
+                })
+                .sum()
+        };
+        (printed + bonus + energy_bonus + stadium_bonus + tool_name_bonus)
+            .saturating_sub(stadium_reduction)
     }
 
     pub fn remaining_hp(&self, id: PokemonId) -> u32 {
@@ -1448,6 +1466,11 @@ impl GameState {
                 .def_of(card)
                 .as_pokemon()
                 .is_some_and(|p| p.kind == kind),
+            CardFilter::BasicPokemonNameContains(word) => {
+                self.def_of(card).as_pokemon().is_some_and(|p| {
+                    p.stage == crate::card::Stage::Basic && p.name.contains(word)
+                })
+            }
             CardFilter::TeraPokemon => self
                 .def_of(card)
                 .as_pokemon()
