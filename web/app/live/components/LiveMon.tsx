@@ -109,16 +109,22 @@ export function LiveMon({
         </span>
       )}
 
-      {/* Energy row, bottom-centre. */}
-      <span className="absolute inset-x-0 bottom-0.5 z-10 flex justify-center gap-0.5">
-        {energies.map((c) => (
-          <span
-            key={c.id}
-            title={`${c.energy_type} Energy`}
-            className="size-2 rounded-full border border-black/40"
-            style={{ background: ENERGY_COLOR[c.energy_type as string] ?? "var(--color-dim)" }}
-          />
-        ))}
+      {/* Energy row, bottom-centre — a glossy bead per attached Energy,
+          in its printed type colour. */}
+      <span className="absolute inset-x-0 bottom-0.5 z-10 flex justify-center gap-[3px]">
+        {energies.map((c) => {
+          const colour = ENERGY_COLOR[c.energy_type as string] ?? "var(--color-dim)";
+          return (
+            <span
+              key={c.id}
+              title={`${c.energy_type} Energy`}
+              className="size-2 rounded-full border border-black/50 shadow-[0_1px_1.5px_rgba(0,0,0,0.55)]"
+              style={{
+                background: `radial-gradient(circle at 32% 28%, rgba(255,255,255,0.75), ${colour} 62%)`,
+              }}
+            />
+          );
+        })}
       </span>
 
       {mon.conditions.length > 0 && (

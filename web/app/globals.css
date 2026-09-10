@@ -14,18 +14,19 @@
   --color-warn: #f0a24b;
   --color-felt: #17251c;
 
-  /* The type colours a card's Energy and copy badges use. */
-  --color-energy-grass: #63b95b;
-  --color-energy-fire: #e4593e;
-  --color-energy-water: #5aa7e4;
-  --color-energy-lightning: #f4d023;
-  --color-energy-psychic: #a461c2;
-  --color-energy-fighting: #c4622d;
-  --color-energy-darkness: #5b5466;
-  --color-energy-metal: #a8a8b5;
-  --color-energy-fairy: #e993d0;
-  --color-energy-dragon: #7b6c4e;
-  --color-energy-colorless: #c6c0b7;
+  /* The type colours a card's Energy and copy badges use, matched to the
+     printed basic Energy cards of the Mega Evolution era. */
+  --color-energy-grass: #4ca858;
+  --color-energy-fire: #e84b32;
+  --color-energy-water: #3f9be0;
+  --color-energy-lightning: #f7ce14;
+  --color-energy-psychic: #9b4fb5;
+  --color-energy-fighting: #c05a28;
+  --color-energy-darkness: #3b4a5a;
+  --color-energy-metal: #9aa6b2;
+  --color-energy-fairy: #e96bae;
+  --color-energy-dragon: #c6a63b;
+  --color-energy-colorless: #d8d3c7;
 
   /* A physical card: white stock, near-black ink. Tokenised so one place
      owns them, though nothing should theme a card away from paper. */

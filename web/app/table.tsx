@@ -683,18 +683,20 @@ export function Mon({
   );
 }
 
+// Kept in step with the --color-energy-* tokens in globals.css; matched
+// to the printed basic Energy cards of the Mega Evolution era.
 export const ENERGY_COLOR: Record<string, string> = {
-  Grass: "#63B95B",
-  Fire: "#E4593E",
-  Water: "#5AA7E4",
-  Lightning: "#F4D023",
-  Psychic: "#A461C2",
-  Fighting: "#C4622D",
-  Darkness: "#5B5466",
-  Metal: "#A8A8B5",
-  Fairy: "#E993D0",
-  Dragon: "#7B6C4E",
-  Colorless: "#C6C0B7",
+  Grass: "#4CA858",
+  Fire: "#E84B32",
+  Water: "#3F9BE0",
+  Lightning: "#F7CE14",
+  Psychic: "#9B4FB5",
+  Fighting: "#C05A28",
+  Darkness: "#3B4A5A",
+  Metal: "#9AA6B2",
+  Fairy: "#E96BAE",
+  Dragon: "#C6A63B",
+  Colorless: "#D8D3C7",
 };
 
 export function Attachments({ cards }: { cards: WireCard[] }) {
