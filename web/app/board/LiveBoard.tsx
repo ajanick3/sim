@@ -312,7 +312,18 @@ export function LiveBoard({
                   )}
                 </div>
               </div>
-              <StadiumSlot ghost />
+              {finishPlacing >= 0 ? (
+                <button
+                  type="button"
+                  onClick={() => onAct(finishPlacing)}
+                  disabled={busy}
+                  className="h-[118px] w-[96px] flex-none rounded-lg border-2 border-accent bg-accent/15 px-2 text-sm font-bold leading-tight text-accent hover:bg-accent/25 disabled:opacity-50"
+                >
+                  ✓ Done placing
+                </button>
+              ) : (
+                <StadiumSlot ghost />
+              )}
             </div>
 
             <SideRow
@@ -333,19 +344,6 @@ export function LiveBoard({
           {promoting && (
             <div className="mt-1 rounded-lg border border-warn/60 bg-warn/10 p-2 text-center text-[12px] font-semibold text-warn">
               Choose a new Active — tap a Benched Pokémon, tap again to promote it
-            </div>
-          )}
-          {finishPlacing >= 0 && (
-            <div className="mt-1 flex items-center justify-center gap-3 rounded-lg border border-accent/60 bg-accent/10 p-2">
-              <span className="text-[12px] font-semibold text-dim">Fill your Bench, then</span>
-              <button
-                type="button"
-                onClick={() => onAct(finishPlacing)}
-                disabled={busy}
-                className="rounded-md border-accent bg-accent px-4 py-1.5 text-[13px] font-bold text-black disabled:opacity-50"
-              >
-                ✓ Done placing
-              </button>
             </div>
           )}
 
