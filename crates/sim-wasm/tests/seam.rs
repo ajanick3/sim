@@ -102,3 +102,65 @@ fn a_card_in_view_carries_its_energy_type_slot() {
         "some hand card is an Energy with a named type"
     );
 }
+
+#[test]
+fn action_meta_carries_a_face_for_every_card_it_names() {
+    // Drive the synthetic game so `Place` / `Bench` actions — which name
+    // a hand card — appear, and check each carries its face.
+    let mut game = Game::synthetic(1);
+    for step in 0..20 {
+        let meta: Vec<serde_json::Value> = serde_json::from_str(&game.action_meta()).unwrap();
+        for entry in &meta {
+            if entry["card"].is_number() {
+                let face = &entry["card_face"];
+                assert!(
+                    face.is_object(),
+                    "step {step}: an action that names a card carries a card_face: {entry}"
+                );
+                assert!(
+                    face["print_id"].as_str().is_some_and(|s| !s.is_empty()),
+                    "step {step}: the face has a print id"
+                );
+                assert!(
+                    face["name"].as_str().is_some_and(|s| !s.is_empty()),
+                    "step {step}: the face has a name"
+                );
+                assert!(face.get("category").is_some(), "the face has a category slot");
+            }
+        }
+        if game.apply(0).is_err() || game.is_over() {
+            break;
+        }
+    }
+}
+
+#[test]
+fn a_targeted_action_names_a_pokemon_in_view() {
+    let targeted = ["Retreat", "Promote", "UseAbility", "Evolve", "AttachEnergy", "HealTarget"];
+    let mut game = Game::synthetic(3);
+    for _ in 0..60 {
+        let meta: Vec<serde_json::Value> = serde_json::from_str(&game.action_meta()).unwrap();
+        let view: serde_json::Value = serde_json::from_str(&game.view()).unwrap();
+        let mut ids: Vec<u64> = Vec::new();
+        for s in view["sides"].as_array().unwrap() {
+            for slot in [&s["active"]].into_iter().chain(s["bench"].as_array().unwrap()) {
+                if let Some(id) = slot["id"].as_u64() {
+                    ids.push(id);
+                }
+            }
+        }
+        for entry in &meta {
+            if targeted.contains(&entry["kind"].as_str().unwrap_or("")) {
+                let target = entry["target"].as_u64();
+                assert!(target.is_some(), "a {} action names a target: {entry}", entry["kind"]);
+                assert!(
+                    ids.contains(&target.unwrap()),
+                    "the target is a Pokémon in view: {entry}"
+                );
+            }
+        }
+        if game.apply(0).is_err() || game.is_over() {
+            break;
+        }
+    }
+}
