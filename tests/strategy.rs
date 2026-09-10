@@ -212,7 +212,6 @@ fn prefers_playing_a_basic_over_everything_below_it() {
 fn ranks_a_drawing_item_above_a_drawing_supporter_above_search_above_other() {
     let mut state = game();
     let player = state.current;
-    let active = state.player(player).active.unwrap();
     // Fill the Bench so PlayBasic and UseAbility both fall away, leaving
     // only the Trainer tiers (and Retreat/random) to choose from.
     let basicmon_cards: Vec<_> = state
@@ -223,7 +222,8 @@ fn ranks_a_drawing_item_above_a_drawing_supporter_above_search_above_other() {
         .filter(|c| matches!(state.def_of(*c).as_pokemon(), Some(p) if p.name == "Basicmon"))
         .collect();
     state.players[player.index()].hand.retain(|c| !basicmon_cards.contains(c));
-    state.spend(sim::state::Limit::AbilityUsed(player, "Test Ability"));
+    let active = state.player(player).active.unwrap();
+    state.spend(sim::state::Limit::AbilityUsed(player, active, "Test Ability"));
     // Stadium outranks every Trainer tier below it (its own test covers
     // that); drop it here so this test isolates the tiers under it.
     let stadium_card = *state
@@ -260,7 +260,8 @@ fn ranks_stadium_above_the_trainer_draw_search_tiers() {
         .filter(|c| matches!(state.def_of(*c).as_pokemon(), Some(p) if p.name == "Basicmon"))
         .collect();
     state.players[player.index()].hand.retain(|c| !basicmon_cards.contains(c));
-    state.spend(sim::state::Limit::AbilityUsed(player, "Test Ability"));
+    let active = state.player(player).active.unwrap();
+    state.spend(sim::state::Limit::AbilityUsed(player, active, "Test Ability"));
     // Drop the drawing Item so the Stadium is the highest tier left.
     let drawing_item_card = *state
         .player(player)
@@ -289,7 +290,8 @@ fn falls_back_to_random_once_nothing_above_matches() {
     // Empty the hand entirely and spend the Ability, so only Retreat (no
     // Bench to retreat to, so not even that) and EndTurn remain.
     state.players[player.index()].hand.clear();
-    state.spend(sim::state::Limit::AbilityUsed(player, "Test Ability"));
+    let active = state.player(player).active.unwrap();
+    state.spend(sim::state::Limit::AbilityUsed(player, active, "Test Ability"));
 
     let legal = legal_actions(&state);
     let view = PlayerView::of(&state, player);
