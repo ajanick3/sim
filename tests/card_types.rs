@@ -107,7 +107,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Drasna, Harlequin, and Naveen take it to 205.
     // Hassel and Drayton take it to 199.
     // Potion, Poké Vital A, and Jacinthe take it to 194.
-    assert_eq!(trainers, 194, "the Trainers still refused, by kind");
+    // The six search Items take it to 188.
+    assert_eq!(trainers, 188, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and
