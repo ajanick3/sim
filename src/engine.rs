@@ -2947,6 +2947,49 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::DrawPerOwnPokemonWithMarker(marker) => {
+            let count = state
+                .player(player)
+                .in_play()
+                .iter()
+                .filter(|p| state.pokemon_def(**p).markers.contains(&marker))
+                .count();
+            for _ in 0..count {
+                state.draw(player);
+            }
+        }
+
+        TrainerEffect::AttachBasicEnergyFromDiscardToEachFuture => {
+            let futures: Vec<PokemonId> = state
+                .player(player)
+                .in_play()
+                .into_iter()
+                .filter(|p| {
+                    state
+                        .pokemon_def(*p)
+                        .markers
+                        .contains(&crate::card::Marker::Future)
+                })
+                .collect();
+            for target in futures {
+                let energy = state
+                    .player(player)
+                    .discard
+                    .iter()
+                    .copied()
+                    .find(|c| {
+                        state
+                            .def_of(*c)
+                            .as_energy()
+                            .is_some_and(|e| e.effect.is_none())
+                    });
+                if let Some(energy) = energy {
+                    state.players[player.index()].discard.retain(|c| *c != energy);
+                    state.pokemon[target.index()].attached.push(energy);
+                }
+            }
+        }
+
         TrainerEffect::DrawPerOpponentMegaEx => {
             let count = state
                 .player(player.opponent())
@@ -3224,6 +3267,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::TeraPokemonRaisesBenchLimit
         | TrainerEffect::PreventsDamageCountersOnBench
         | TrainerEffect::StadiumBoostsBasicHp(_)
+        | TrainerEffect::StadiumExtraPoisonDamage(_)
         | TrainerEffect::StadiumReducesDamageToType { .. }
         | TrainerEffect::StadiumReducesDamageForNamePrefix { .. }
         | TrainerEffect::AbilitiesDisabled => {}
@@ -5114,6 +5158,13 @@ fn resolve_checkup(state: &mut GameState, pokemon: PokemonId, condition: Conditi
     // Pokémon in play, and only while Poisoned is the condition
     // actually resolving — read here rather than in `checkup_damage`,
     // since that function knows nothing about who else is in play.
+    if condition == Condition::Poisoned
+        && let Some(crate::card::TrainerEffect::StadiumExtraPoisonDamage(extra)) =
+            state.stadium_effect()
+        && state.pokemon_def(pokemon).kind != crate::card::Type::Darkness
+    {
+        damage += extra;
+    }
     if condition == Condition::Poisoned {
         let owner = state.pokemon(pokemon).owner;
         if let Some(opponent_active) = state.player(owner.opponent()).active

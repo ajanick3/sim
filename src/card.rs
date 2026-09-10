@@ -393,6 +393,16 @@ pub enum TrainerEffect {
     /// Draw one card for each Mega Evolution Pokémon ex the opponent has
     /// in play. `Jett`.
     DrawPerOpponentMegaEx,
+    /// Draw one card for each of the player's own Pokémon in play that
+    /// carries this marker. `Awakening Drum` reads `Ancient`.
+    DrawPerOwnPokemonWithMarker(Marker),
+    /// Attach a Basic Energy from the player's discard to each of their
+    /// own Future Pokémon that has none of the deck's Basic Energy on it
+    /// yet; the engine takes the first that fits. `Reboot Pod`.
+    AttachBasicEnergyFromDiscardToEachFuture,
+    /// A Stadium: at Pokémon Checkup, a Poisoned non-Darkness Pokémon
+    /// either side takes this much more. `Perilous Jungle`.
+    StadiumExtraPoisonDamage(u32),
     /// Draw `base`, then `bonus` more when the opponent has at most this
     /// many Prizes remaining. `Emcee's Hype`.
     DrawThenBonusIfOpponentPrizesAtMost { base: u32, bonus: u32, at_most: usize },
