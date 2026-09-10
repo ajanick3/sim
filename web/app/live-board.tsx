@@ -398,7 +398,11 @@ function LiveMon({
   /** Empty slot: a selected hand card can be placed here. */
   placeHere?: () => void;
 }) {
-  const size = small ? "w-[64px] min-h-[90px]" : "w-[96px] min-h-[134px]";
+  const size = active
+    ? "w-[156px] h-[116px]"
+    : small
+      ? "w-[64px] min-h-[90px]"
+      : "w-[96px] min-h-[134px]";
   if (!mon) {
     return (
       <button
@@ -434,21 +438,44 @@ function LiveMon({
         interactive ? "hover:border-accent" : ""
       }`}
     >
-      {src && <CardArt src={src} alt={mon.name} />}
-      {!src && (
+      {/* Active: just the illustration, cropped from the top of the card.
+          Bench: the whole small card behind a scrim. */}
+      {src ? (
+        active ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={src}
+            alt={mon.name}
+            loading="lazy"
+            className="absolute inset-0 size-full object-cover object-[50%_16%]"
+          />
+        ) : (
+          <CardArt src={src} alt={mon.name} />
+        )
+      ) : (
         <span className="relative z-10 p-1 text-[9px] font-semibold leading-tight">{mon.name}</span>
       )}
 
-      {/* HP pill, top-right. */}
-      <span className="absolute right-0.5 top-0.5 z-10 rounded bg-black/70 px-1 text-[9px] font-bold">
+      {/* HP pill — top-left on the Active so it clears the damage coin. */}
+      <span
+        className={`absolute top-0.5 z-10 rounded bg-black/75 px-1 text-[9px] font-bold ${
+          active ? "left-0.5" : "right-0.5"
+        }`}
+      >
         {mon.hp}
       </span>
-      {/* Damage counter, orange, when hurt. */}
-      {mon.damage > 0 && (
-        <span className="absolute right-0.5 top-4 z-10 rounded-full bg-orange-500 px-1 text-[9px] font-bold text-black">
-          {mon.damage}
-        </span>
-      )}
+      {/* Damage: a coin at the top-right of the image on the Active,
+          a small chip on a Bench card. */}
+      {mon.damage > 0 &&
+        (active ? (
+          <span className="absolute right-0.5 top-0.5 z-10 grid size-7 place-items-center rounded-full border-2 border-black/40 bg-orange-500 text-[11px] font-black text-black shadow-md">
+            {mon.damage}
+          </span>
+        ) : (
+          <span className="absolute right-0.5 top-4 z-10 rounded-full bg-orange-500 px-1 text-[9px] font-bold text-black">
+            {mon.damage}
+          </span>
+        ))}
       {copy !== undefined && (
         <span
           className="absolute left-0.5 top-0.5 z-10 size-2 rounded-full"
