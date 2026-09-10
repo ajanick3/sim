@@ -675,7 +675,8 @@ function LiveMon({
     >
       {/* Every card on the board shows the top slice of the print — the
           name bar and the head of the illustration — cropped from the
-          top edge. A scrim at the foot keeps the overlays readable. */}
+          top edge. Bench cards get a scrim at the foot so their chips
+          stay readable; the Active is large enough to go without. */}
       {src ? (
         <>
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -685,7 +686,9 @@ function LiveMon({
             loading="lazy"
             className="absolute inset-0 size-full object-cover object-top"
           />
-          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
+          {!active && (
+            <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
+          )}
         </>
       ) : (
         <span className="relative z-10 p-1 text-[9px] font-semibold leading-tight">{mon.name}</span>
