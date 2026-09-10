@@ -2958,6 +2958,36 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::ShuffleHandThenCoinFlipDraw { heads, tails } => {
+            shuffle_hand_into_library(state, player);
+            let count = if state.rng.flip() { heads } else { tails };
+            for _ in 0..count {
+                state.draw(player);
+            }
+        }
+
+        TrainerEffect::BothShuffleHandThenCoinFlipDraw {
+            you_heads,
+            opponent_heads,
+            you_tails,
+            opponent_tails,
+        } => {
+            shuffle_hand_into_library(state, player);
+            shuffle_hand_into_library(state, player.opponent());
+            let heads = state.rng.flip();
+            let (mine, theirs) = if heads {
+                (you_heads, opponent_heads)
+            } else {
+                (you_tails, opponent_tails)
+            };
+            for _ in 0..mine {
+                state.draw(player);
+            }
+            for _ in 0..theirs {
+                state.draw(player.opponent());
+            }
+        }
+
         TrainerEffect::ShuffleHandThenDraw {
             normal,
             at_six_prizes,

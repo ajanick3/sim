@@ -274,5 +274,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // `TargetFilter::OfType`) take it to 839.
     // Emcee's Hype, Billy & O'Nare (conditional bonus draws),
     // and Emma (draw per Pokemon in the opponent's hand) take it to 844.
-    assert_eq!(admitted, 844, "coverage moves only on purpose");
+    // Drasna (`ShuffleHandThenCoinFlipDraw`), Harlequin
+    // (`BothShuffleHandThenCoinFlipDraw`), and Naveen (`DrawUpToHandSize`,
+    // its optional pre-discard skipped) take it to 850.
+    assert_eq!(admitted, 850, "coverage moves only on purpose");
 }

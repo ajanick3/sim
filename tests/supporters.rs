@@ -2610,3 +2610,102 @@ fn the_conditional_draw_supporters_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: shuffle-then-coin-flip draw Supporters ---
+
+fn with_shuffle_coin_draw(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let drasna = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-drasna",
+        name: "Drasna",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::ShuffleHandThenCoinFlipDraw { heads: 8, tails: 3 },
+    }));
+    let harlequin = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-harlequin",
+        name: "Harlequin",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::BothShuffleHandThenCoinFlipDraw {
+            you_heads: 5,
+            opponent_heads: 3,
+            you_tails: 3,
+            opponent_tails: 5,
+        },
+    }));
+    let naveen = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-naveen",
+        name: "Naveen",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::DrawUpToHandSize(5),
+    }));
+    (Set { db, ..set }, drasna, harlequin, naveen)
+}
+
+fn drive_setup_with_rng(state: &mut GameState) {
+    for _ in 0..2 {
+        while state.phase != Phase::Main && !state.is_over() {
+            let a = legal_actions(state)[0];
+            apply(state, a).unwrap();
+        }
+        if state.turn_number > 1 {
+            break;
+        }
+        apply(state, Action::EndTurn).unwrap();
+    }
+}
+
+#[test]
+fn drasna_shuffles_then_draws_eight_on_heads_and_three_on_tails() {
+    use sim::rng::ScriptedRng;
+    for (flip, expected) in [(vec![1u32], 8), (vec![0u32], 3)] {
+        let (set, drasna, ..) = with_shuffle_coin_draw(build());
+        let decklist = deck(&set, drasna);
+        let mut state = GameState::new(
+            set.db.clone(),
+            [decklist.clone(), decklist],
+            Box::new(ScriptedRng::new(flip)),
+        );
+        drive_setup_with_rng(&mut state);
+        let player = state.current;
+        let card = ensure_in_hand(&mut state, player, drasna);
+        apply(&mut state, Action::PlayTrainer { card }).unwrap();
+        assert_eq!(state.player(player).hand.len(), expected);
+    }
+}
+
+#[test]
+fn harlequin_refreshes_both_hands_by_the_flip() {
+    use sim::rng::ScriptedRng;
+    let (set, _d, harlequin, _n) = with_shuffle_coin_draw(build());
+    let decklist = deck(&set, harlequin);
+    let mut state = GameState::new(
+        set.db.clone(),
+        [decklist.clone(), decklist],
+        Box::new(ScriptedRng::new(vec![1u32])), // heads
+    );
+    drive_setup_with_rng(&mut state);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, harlequin);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), 5);
+    assert_eq!(state.player(player.opponent()).hand.len(), 3);
+}
+
+#[test]
+fn the_shuffle_coin_draw_supporters_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Drasna", "Harlequin", "Naveen"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
