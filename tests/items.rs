@@ -1444,3 +1444,96 @@ fn the_deck_manip_items_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: condition-inflicting Items ---
+
+#[test]
+fn dangerous_laser_burns_and_confuses_the_opponents_active() {
+    let mut set = build();
+    let laser = plain_item(
+        &mut set.db,
+        "test-dangerous-laser",
+        "Dangerous Laser",
+        TrainerEffect::InflictOnOpponentActive(
+            sim::card::Condition::Burned,
+            Some(sim::card::Condition::Confused),
+        ),
+    );
+    let mut state = game(&set, laser, 3);
+    let player = state.current;
+    let opp_active = state.player(player.opponent()).active.unwrap();
+    let card = ensure_in_hand(&mut state, player, laser);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    let conditions = &state.pokemon(opp_active).conditions;
+    assert!(conditions.contains(&sim::card::Condition::Burned));
+    assert!(conditions.contains(&sim::card::Condition::Confused));
+}
+
+#[test]
+fn dark_bell_confuses_both_actives_but_spares_a_darkness_one() {
+    let mut set = build();
+    let dark_mon = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-dark-mon",
+        name: "Shademon",
+        hp: 90,
+        kind: Type::Darkness,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Bite",
+            cost: vec![Type::Darkness],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let bell = plain_item(
+        &mut set.db,
+        "test-dark-bell",
+        "Dark Bell",
+        TrainerEffect::ConfuseBothActivesExceptType(Type::Darkness),
+    );
+    let mut state = game(&set, bell, 3);
+    let player = state.current;
+    let opp = player.opponent();
+    // Swap the opponent's Active for a Darkness one.
+    let dark_card = deal_new_card(&mut state, opp, dark_mon);
+    let dark = state.put_into_play(opp, dark_card);
+    state.players[opp.index()].active = Some(dark);
+    let my_active = state.player(player).active.unwrap();
+    let card = ensure_in_hand(&mut state, player, bell);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert!(
+        state.pokemon(my_active).conditions.contains(&sim::card::Condition::Confused),
+        "the non-Darkness Active is Confused",
+    );
+    assert!(
+        state.pokemon(dark).conditions.is_empty(),
+        "the Darkness Active is spared",
+    );
+}
+
+#[test]
+fn the_condition_items_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Dangerous Laser", "Dark Bell"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}

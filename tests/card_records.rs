@@ -290,5 +290,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Hole-Digging Shovel (`DiscardTopOfDeck`), Repel
     // (`SwitchOutOpponentActive` — the opponent picks the replacement),
     // and Brilliant Blender (a `Decide` to the discard) take it to 873.
-    assert_eq!(admitted, 873, "coverage moves only on purpose");
+    // Dangerous Laser (`InflictOnOpponentActive` — Burned and Confused)
+    // and Dark Bell (`ConfuseBothActivesExceptType`) take it to 876.
+    assert_eq!(admitted, 876, "coverage moves only on purpose");
 }

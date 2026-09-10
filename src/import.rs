@@ -379,6 +379,17 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Cheren" | "Friends in Paldea" | "Urbain" => (free, TrainerEffect::Draw(3)),
         "Cook" => (free, TrainerEffect::HealActive(70)),
         "Hole-Digging Shovel" => (free, TrainerEffect::DiscardTopOfDeck(2)),
+        "Dangerous Laser" => (
+            free,
+            TrainerEffect::InflictOnOpponentActive(
+                crate::card::Condition::Burned,
+                Some(crate::card::Condition::Confused),
+            ),
+        ),
+        "Dark Bell" => (
+            free,
+            TrainerEffect::ConfuseBothActivesExceptType(Type::Darkness),
+        ),
         "Repel" => (free, TrainerEffect::SwitchOutOpponentActive),
         "Brilliant Blender" => (
             free,

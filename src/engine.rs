@@ -2975,6 +2975,25 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::InflictOnOpponentActive(first, second) => {
+            if let Some(active) = state.player(player.opponent()).active {
+                state.inflict(active, first);
+                if let Some(second) = second {
+                    state.inflict(active, second);
+                }
+            }
+        }
+
+        TrainerEffect::ConfuseBothActivesExceptType(spared) => {
+            for side in [player, player.opponent()] {
+                if let Some(active) = state.player(side).active
+                    && state.pokemon_def(active).kind != spared
+                {
+                    state.inflict(active, Condition::Confused);
+                }
+            }
+        }
+
         TrainerEffect::SwitchOutOpponentActive => {
             state.phase = Phase::Promoting {
                 of: player.opponent(),

@@ -109,7 +109,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Potion, Poké Vital A, and Jacinthe take it to 194.
     // The six search Items take it to 188.
     // Hole-Digging Shovel, Repel, and Brilliant Blender take it to 185.
-    assert_eq!(trainers, 185, "the Trainers still refused, by kind");
+    // Dangerous Laser and Dark Bell take it to 182.
+    assert_eq!(trainers, 182, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

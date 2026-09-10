@@ -400,6 +400,12 @@ pub enum TrainerEffect {
     /// Discard this many cards from the top of the player's own deck.
     /// `Hole-Digging Shovel`.
     DiscardTopOfDeck(u32),
+    /// Inflict up to two Special Conditions on the opponent's Active.
+    /// `Dangerous Laser` reads Burned and Confused.
+    InflictOnOpponentActive(Condition, Option<Condition>),
+    /// Confuse both Active Pokémon that are not of this type. `Dark Bell`
+    /// spares a Darkness Active on either side.
+    ConfuseBothActivesExceptType(Type),
     /// The opponent switches their own Active to the Bench, choosing the
     /// replacement — a gust that hands the choice to them, unlike
     /// `SwitchOpponentActive` where the player chooses. `Repel`.
