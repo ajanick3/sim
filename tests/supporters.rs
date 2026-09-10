@@ -2334,3 +2334,168 @@ fn the_deck_search_supporters_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: retrieve-from-discard Supporters ---
+
+fn with_discard_retrieve(
+    set: Set,
+) -> (Set, CardDefId, CardDefId, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let tarragon = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tarragon",
+        name: "Tarragon",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Discard,
+            slots: vec![Slot {
+                filter: CardFilter::PokemonOfTypeOrBasicEnergyOfType(Type::Fighting),
+                to: Destination::Zone(Zone::Hand),
+                limit: 4,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    let philippe = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-philippe",
+        name: "Philippe",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Discard,
+            slots: vec![Slot {
+                filter: CardFilter::BasicEnergyOfType(Type::Metal),
+                to: Destination::Attach(TargetFilter::OfType(Type::Metal)),
+                limit: 2,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    let fighting_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-fighting-mon",
+        name: "Rockmon",
+        hp: 90,
+        kind: Type::Fighting,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Punch",
+            cost: vec![Type::Fighting],
+            base_damage: 20,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let metal_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-metal-mon",
+        name: "Steelmon",
+        hp: 110,
+        kind: Type::Metal,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Clang",
+            cost: vec![Type::Metal],
+            base_damage: 20,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let metal_energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-metal-energy",
+        name: "Basic Metal Energy",
+        kind: Type::Metal,
+        effect: None,
+    }));
+    (Set { db, ..set }, tarragon, philippe, fighting_mon, metal_mon, metal_energy)
+}
+
+#[test]
+fn tarragon_pulls_fighting_pokemon_and_energy_from_the_discard() {
+    let (set, tarragon, _p, fighting_mon, _m, _e) = with_discard_retrieve(build());
+    let mut state = game(&set, tarragon, 3);
+    let player = state.current;
+    for _ in 0..2 {
+        deal_to_discard_new(&mut state, player, fighting_mon);
+    }
+    let card = ensure_in_hand(&mut state, player, tarragon);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let mut took = 0;
+    while let Some(t) = offered(&state).first().copied() {
+        apply(&mut state, Action::TakeCard { card: t }).unwrap();
+        took += 1;
+    }
+    apply(&mut state, Action::FinishDeciding).unwrap();
+    assert_eq!(took, 2);
+    assert_eq!(state.player(player).hand.len(), before - 1 + 2);
+}
+
+fn deal_to_discard_new(state: &mut GameState, player: PlayerId, def: CardDefId) {
+    let c = deal_new_card(state, player, def);
+    state.players[player.index()].discard.push(c);
+}
+
+#[test]
+fn the_discard_retrieve_supporters_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Tarragon", "Philippe"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
+
+#[test]
+fn philippe_attaches_metal_energy_from_the_discard_to_a_metal_pokemon() {
+    let (set, _t, philippe, _f, metal_mon, metal_energy) = with_discard_retrieve(build());
+    let mut state = game(&set, philippe, 3);
+    let player = state.current;
+    let steel_card = deal_new_card(&mut state, player, metal_mon);
+    let steel = state.put_into_play(player, steel_card);
+    state.players[player.index()].bench.push(steel);
+    for _ in 0..2 {
+        deal_to_discard_new(&mut state, player, metal_energy);
+    }
+    let card = ensure_in_hand(&mut state, player, philippe);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let mut took = 0;
+    loop {
+        let onto = legal_actions(&state).into_iter().find_map(|a| match a {
+            Action::TakeCardOnto { card, target } => Some((card, target)),
+            _ => None,
+        });
+        let Some((c, target)) = onto else { break };
+        assert_eq!(target, steel, "the only Metal Pokemon in play");
+        apply(&mut state, Action::TakeCardOnto { card: c, target }).unwrap();
+        took += 1;
+    }
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(took, 2, "both Metal Energy offered");
+    assert_eq!(state.pokemon(steel).attached.len(), 2, "both Metal Energy landed");
+}

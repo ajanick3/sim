@@ -270,5 +270,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Cassiopeia (`Decide` from the deck) take it to 830.
     // Firebreather and Canari (deck searches; Canari adds
     // `CardFilter::PokemonOfType`) take it to 835.
-    assert_eq!(admitted, 835, "coverage moves only on purpose");
+    // Tarragon and Philippe (discard retrieval; Philippe adds
+    // `TargetFilter::OfType`) take it to 839.
+    assert_eq!(admitted, 839, "coverage moves only on purpose");
 }

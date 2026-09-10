@@ -76,6 +76,9 @@ pub enum TargetFilter {
     /// A Benched Pokémon printed as this type. `Wondrous Patch` targets
     /// only a Benched Psychic Pokémon.
     BenchedOfType(Type),
+    /// A Pokémon in play, Active or Benched, printed as this type.
+    /// `Philippe` attaches to a Metal Pokémon either way.
+    OfType(Type),
     /// A Pokémon in play, Active or Benched, printed at this stage.
     /// `Rosa's Encouragement` targets a Stage 2 either way — unlike
     /// `BenchedNameStartsWith` and `BenchedOfType`, nothing here confines

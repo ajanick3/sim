@@ -380,6 +380,34 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Cook" => (free, TrainerEffect::HealActive(70)),
         "Picnicker" => (free, TrainerEffect::CoinFlipDraw { heads: 4, tails: 2 }),
         "Carmine" => (free, TrainerEffect::DiscardHandThenDraw(5)),
+        "Tarragon" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Discard,
+                slots: vec![Slot {
+                    filter: CardFilter::PokemonOfTypeOrBasicEnergyOfType(Type::Fighting),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 4,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
+        "Philippe" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Discard,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicEnergyOfType(Type::Metal),
+                    to: Destination::Attach(TargetFilter::OfType(Type::Metal)),
+                    limit: 2,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         "Firebreather" => (
             free,
             TrainerEffect::Decide {
