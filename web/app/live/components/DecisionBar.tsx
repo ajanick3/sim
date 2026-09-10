@@ -60,10 +60,10 @@ export function DecisionBar({
                 <img
                   src={src}
                   alt={face?.name ?? label}
-                  className="block h-full w-auto rounded-[8px] bg-white object-cover shadow-[0_1px_2px_rgba(28,16,8,0.55),0_5px_10px_rgba(28,16,8,0.4),0_16px_30px_-4px_rgba(28,16,8,0.4)]"
+                  className="block h-full w-auto rounded-card bg-card object-cover shadow-card-raised"
                 />
               ) : (
-                <span className="relative block h-full w-[132px] overflow-hidden rounded-[8px] border border-black/10 bg-white text-neutral-800 shadow-[0_1px_2px_rgba(28,16,8,0.55),0_5px_10px_rgba(28,16,8,0.4),0_16px_30px_-4px_rgba(28,16,8,0.4)]">
+                <span className="relative block h-full w-[132px] overflow-hidden rounded-card border border-black/10 bg-card text-card-ink shadow-card-raised">
                   <CardFace
                     src={null}
                     name={face?.name ?? label.replace(/^(Take|Bench) /, "")}

@@ -9,7 +9,7 @@ export function PrizeStack({ count }: { count: number }) {
           <span
             key={i}
             className={`h-6 w-4 rounded-[2px] border ${
-              i < count ? "border-rose-300/60 bg-rose-400/25" : "border-white/10 bg-transparent"
+              i < count ? "border-prize/60 bg-prize/25" : "border-white/10 bg-transparent"
             }`}
           />
         ))}

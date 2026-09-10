@@ -31,7 +31,7 @@ export function SideRail({
         »
       </button>
       <div className="text-[10px] text-dim">turn {turn}</div>
-      <div className="grid h-9 w-9 place-items-center rounded bg-rose-500 text-lg font-bold">
+      <div className="grid h-9 w-9 place-items-center rounded bg-prize text-lg font-bold">
         {oppPrizes}
       </div>
       <button

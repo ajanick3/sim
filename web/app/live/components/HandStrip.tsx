@@ -5,6 +5,7 @@ import { useState } from "react";
 import type { Selection } from "../../session";
 import type { WireActionMeta, WireCard } from "../../view";
 import { CardFace } from "./CardFace";
+import { CARD_SIZE } from "./sizes";
 import { splitHandRows, type Art } from "./shared";
 
 /** The hand: cards sorted by category into one or two rows, each card
@@ -79,7 +80,7 @@ export function HandStrip({
   };
 
   return (
-    <div className="mt-1 rounded-lg border-2 border-cyan-400/60 p-1">
+    <div className="mt-1 rounded-lg border-2 border-accent/60 p-1">
       <div className="mb-1 text-[10px] uppercase tracking-widest text-dim">
         Hand ({hand.length})
       </div>
@@ -115,14 +116,14 @@ export function HandStrip({
                       )
                         onConfirm(confirmIndex);
                     }}
-                    className={`group relative h-[82px] w-[116px] flex-none touch-none overflow-hidden rounded-[7px] bg-white transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-2 hover:scale-[1.05] disabled:opacity-50 ${
+                    className={`group relative ${CARD_SIZE.hand} flex-none touch-none overflow-hidden rounded-card bg-card transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-2 hover:scale-[1.05] disabled:opacity-50 ${
                       draggingCard === c.id ? "opacity-30" : ""
                     } ${selected ? "ring-2 ring-accent" : ""} ${
                       tossing === c.id
-                        ? "card-toss z-40 shadow-[0_1px_2px_rgba(28,16,8,0.55),0_4px_8px_rgba(28,16,8,0.35)]"
+                        ? "card-toss z-40 shadow-card"
                         : selected
-                          ? "card-tap z-30 -translate-y-3 scale-[1.06] shadow-[0_2px_4px_rgba(28,16,8,0.4),0_16px_32px_rgba(28,16,8,0.45)]"
-                          : "shadow-[0_1px_2px_rgba(28,16,8,0.55),0_4px_8px_rgba(28,16,8,0.35)] group-hover:shadow-[0_2px_4px_rgba(28,16,8,0.4),0_14px_28px_rgba(28,16,8,0.45)]"
+                          ? "card-tap z-30 -translate-y-3 scale-[1.06] shadow-card-raised"
+                          : "shadow-card group-hover:shadow-card-raised"
                     }`}
                   >
                     {/* Only the top slice of the print: the name bar and

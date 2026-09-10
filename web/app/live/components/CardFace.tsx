@@ -36,7 +36,7 @@ export function CardFace({
     );
   }
   return (
-    <span className="absolute inset-0 bg-white p-1 text-left text-[10px] font-semibold leading-tight text-neutral-800">
+    <span className="absolute inset-0 bg-card p-1 text-left text-[10px] font-semibold leading-tight text-card-ink">
       {name}
     </span>
   );
