@@ -10,14 +10,19 @@
 //! a count is public.
 
 use crate::card::Condition;
-use crate::ids::{CardId, PlayerId, PokemonId};
+use crate::ids::{CardDefId, CardId, PlayerId, PokemonId};
 use crate::state::{GameState, Phase};
 
-/// A card the viewer may see, with the name they read off it.
+/// A card the viewer may see, with the name they read off it, and its own
+/// definition — a card's own identity, and what it says as printed, are
+/// never hidden information: a player already knows their own hand, and
+/// `CardDb` is the shared rules text of every card, true of every copy.
+/// What a view withholds is zone membership, not this.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CardView {
     pub id: CardId,
     pub name: &'static str,
+    pub def: CardDefId,
 }
 
 /// A Pokémon in play. Everything about it is public.
@@ -85,6 +90,7 @@ fn card_view(state: &GameState, card: CardId) -> CardView {
     CardView {
         id: card,
         name: state.def_of(card).name(),
+        def: state.cards[card.index()].def,
     }
 }
 

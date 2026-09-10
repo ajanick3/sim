@@ -32,3 +32,9 @@ One of the six cards a player sets aside at setup and takes for a knockout. Taki
 **Masked view**:
 The game as one player may see it. It hides the opponent's hand, both libraries, and both Prize piles, and keeps a count for each.
 
+**Strategy**:
+The decision a seat's own player makes each turn: which legal Action to take, reading only that seat's own masked view. One per seat, swappable independently of the other. The engine offers legal Actions; a Strategy is what picks among them.
+
+**Sequencing**:
+The order in which a Strategy takes the actions a turn allows, before or instead of attacking. A hand of legal plays says nothing about which to take first; sequencing is that choice, made new every decision.
+

@@ -1,6 +1,6 @@
 //! Ticket 01 of the decklists effort: read a decklist and check it.
 
-use sim::decklist::{Problem, check, parse};
+use sim::decklist::{Problem, check, parse, to_deck};
 use sim::import::load;
 
 const LIST: &str = "\
@@ -289,4 +289,64 @@ fn the_name_check_allows_the_punctuation_a_list_drops() {
         "an accent is not a disagreement: {:?}",
         report.problems
     );
+}
+
+#[test]
+fn basic_energy_counts_toward_playable_not_only_the_rest_of_the_deck() {
+    let import = load(&artifact()).unwrap();
+    let list = parse(LIST);
+    let report = check(&list, &import);
+    // LIST holds 48 Basic Grass Energy; Mega Venusaur ex has an Ability and
+    // is refused, Chikorita and Professor's Research both play.
+    assert_eq!(
+        report.playable,
+        4 + 48,
+        "Chikorita, Professor's Research, and every Basic Energy — not Mega Venusaur ex"
+    );
+}
+
+#[test]
+fn a_fully_playable_real_deck_reports_is_playable() {
+    let import = load(&artifact()).unwrap();
+    let text = std::fs::read_to_string("decks/2026-worlds/09-ojvind-svinhufvud.txt")
+        .expect("a committed deck");
+    let list = parse(&text);
+    let report = check(&list, &import);
+    assert!(report.is_legal(), "{:?}", report.problems);
+    assert!(
+        report.is_playable(),
+        "{} of {} play",
+        report.playable,
+        report.total
+    );
+}
+
+#[test]
+fn to_deck_builds_sixty_cards_including_basic_energy() {
+    let mut import = load(&artifact()).unwrap();
+    let text = std::fs::read_to_string("decks/2026-worlds/09-ojvind-svinhufvud.txt")
+        .expect("a committed deck");
+    let list = parse(&text);
+    let report = check(&list, &import);
+    assert!(report.is_legal() && report.is_playable());
+
+    let deck = to_deck(&list, &report, &mut import);
+    assert_eq!(deck.len(), 60, "one CardDefId per physical card");
+}
+
+#[test]
+fn to_deck_resolves_basic_energy_through_import_not_the_artifact() {
+    let mut import = load(&artifact()).unwrap();
+    // Unlike LIST, every card here plays — Mega Venusaur ex does not.
+    let list = parse(
+        "4 Chikorita MEG 8\n4 Boss's Orders MEG 114\n52 Basic Grass Energy SVE 1\n",
+    );
+    let report = check(&list, &import);
+    assert!(report.is_legal() && report.is_playable(), "{:?}", report.problems);
+
+    let deck = to_deck(&list, &report, &mut import);
+    assert_eq!(deck.len(), 60);
+    let grass = import.basic_energy(sim::card::Type::Grass);
+    let grass_count = deck.iter().filter(|id| **id == grass).count();
+    assert_eq!(grass_count, 52, "this list's own 52 Basic Grass Energy");
 }
