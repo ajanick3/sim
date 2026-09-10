@@ -1857,6 +1857,13 @@ pub enum EnergyEffect {
     /// attached. Read by `inflict` and by the attach step.
     /// `Bubbly Water Energy`.
     CarrierImmuneToSpecialConditions,
+    /// A standing effect, not a choice: an attack by the carrier does
+    /// this much more damage to the opponent's Active, before Weakness
+    /// and Resistance, but only while the carrier's own type matches
+    /// the type this card provides. Read in `damage_dealt_with`
+    /// alongside the attacker's Tool bonuses. `Voltaic Lightning
+    /// Energy`.
+    CarrierAttacksHitOpponentActiveHarder(u32),
 }
 
 #[derive(Debug, Clone)]

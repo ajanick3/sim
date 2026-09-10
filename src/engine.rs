@@ -4765,6 +4765,21 @@ fn damage_dealt_with(
         damage += bonus;
     }
 
+    // Step 32e: a Special Energy on the attacker whose printed rider
+    // makes the carrier's attacks hit the opponent's Active harder, but
+    // only while the carrier's own type matches the type the card
+    // provides (its `kind`). `Voltaic Lightning Energy`.
+    let attacker_kind = state.pokemon_def(attacker).kind;
+    for card in &state.pokemon(attacker).attached {
+        if let Some(energy) = state.def_of(*card).as_energy()
+            && let Some(crate::card::EnergyEffect::CarrierAttacksHitOpponentActiveHarder(bonus)) =
+                energy.effect
+            && energy.kind == attacker_kind
+        {
+            damage += bonus;
+        }
+    }
+
     // Step 33: Weakness, then Resistance. Both read the attacker's type.
     // `AttackEffect::IgnoresDefendersEffects` skips this step outright —
     // "isn't affected by any effects on your opponent's Active Pokémon"
