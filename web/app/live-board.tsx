@@ -36,22 +36,27 @@ function CardFace({
 }) {
   if (src) return <CardArt src={src} alt={name} />;
   if (energyType) {
+    // TCGdex has no art for Basic Energy, so draw the card: the type
+    // colour edge to edge with the big centre disc a real one carries.
     const colour = ENERGY_COLOR[energyType] ?? "var(--color-dim)";
     return (
       <span
-        className="absolute inset-0 flex flex-col items-center justify-center gap-1"
-        style={{ background: `radial-gradient(circle at 50% 40%, ${colour}33, transparent 70%)` }}
+        className="absolute inset-0 flex items-center justify-center"
+        style={{ background: `linear-gradient(155deg, ${colour}, ${colour}bb 55%, ${colour}77)` }}
       >
         <span
-          className="size-8 rounded-full border-2 border-black/40"
-          style={{ background: colour }}
-        />
-        <span className="text-[8px] uppercase tracking-widest text-dim">{energyType}</span>
+          className="grid size-[46%] place-items-center rounded-full border-[3px] border-white/80"
+          style={{ background: `radial-gradient(circle at 38% 32%, #ffffffd0, ${colour} 72%)` }}
+        >
+          <span className="text-[10px] font-black uppercase text-black/55">
+            {energyType.slice(0, 2)}
+          </span>
+        </span>
       </span>
     );
   }
   return (
-    <span className="absolute inset-0 p-1 text-left text-[10px] font-semibold leading-tight">
+    <span className="absolute inset-0 bg-white p-1 text-left text-[10px] font-semibold leading-tight text-neutral-800">
       {name}
     </span>
   );
@@ -84,6 +89,7 @@ export function LiveBoard({
   const mine = view.sides[you];
   const opp = view.sides[you === 1 ? 0 : 1];
   const endTurn = meta.findIndex((m) => m.kind === "EndTurn");
+  const [showLog, setShowLog] = useState(false);
 
   const dropTargets =
     selection?.kind === "hand"
@@ -218,6 +224,7 @@ export function LiveBoard({
           yourTurn={seat === you}
           canEndTurn={endTurn >= 0 && !busy}
           onEndTurn={() => endTurn >= 0 && onAct(endTurn)}
+          onLog={() => setShowLog(true)}
         />
       </div>
 
@@ -289,12 +296,27 @@ export function LiveBoard({
         </div>
       )}
 
-      <details className="mt-3 text-[12px] text-dim">
-        <summary className="cursor-pointer">Log</summary>
-        <div className="mt-1 max-h-40 overflow-y-auto whitespace-pre-wrap rounded border border-edge bg-panel p-2">
-          {log.length ? log.join("\n") : "—"}
+      {showLog && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center"
+          onClick={() => setShowLog(false)}
+        >
+          <div
+            className="flex max-h-[70vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-edge bg-bg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-edge px-3 py-2">
+              <span className="text-[12px] uppercase tracking-widest text-dim">Log</span>
+              <button className="text-[13px]" onClick={() => setShowLog(false)}>
+                Close
+              </button>
+            </div>
+            <div className="overflow-y-auto whitespace-pre-wrap p-3 text-[13px] text-dim">
+              {log.length ? log.join("\n") : "—"}
+            </div>
+          </div>
         </div>
-      </details>
+      )}
     </div>
   );
 }
@@ -500,20 +522,20 @@ function LiveMon({
         interactive ? "hover:border-accent" : ""
       }`}
     >
-      {/* Active: just the illustration, cropped from the top of the card.
-          Bench: the whole small card behind a scrim. */}
+      {/* Every card on the board shows the top slice of the print — the
+          name bar and the head of the illustration — cropped from the
+          top edge. A scrim at the foot keeps the overlays readable. */}
       {src ? (
-        active ? (
-          // eslint-disable-next-line @next/next/no-img-element
+        <>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={src}
             alt={mon.name}
             loading="lazy"
-            className="absolute inset-0 size-full scale-[1.18] object-cover object-[50%_33%]"
+            className="absolute inset-0 size-full object-cover object-top"
           />
-        ) : (
-          <CardArt src={src} alt={mon.name} />
-        )
+          <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/80 to-transparent" />
+        </>
       ) : (
         <span className="relative z-10 p-1 text-[9px] font-semibold leading-tight">{mon.name}</span>
       )}
@@ -641,13 +663,9 @@ function HandStrip({
       {hand.length === 0 ? (
         <span className="px-2 py-8 text-[11px] text-dim">empty</span>
       ) : (
-        <div className="flex flex-col">
+        <div className="flex flex-col gap-2">
           {rows.map((row, ri) => (
-            <div
-              key={ri}
-              className="flex flex-wrap justify-center gap-x-3"
-              style={{ marginTop: ri === 0 ? 0 : -84, zIndex: ri + 1 }}
-            >
+            <div key={ri} className="flex flex-wrap justify-center gap-2">
               {row.map((c) => {
                 const playable = meta.some((x) => x.card === c.id);
                 const selected = selection?.kind === "hand" && selection.card === c.id;
@@ -667,34 +685,28 @@ function HandStrip({
                       )
                         onConfirm(confirmIndex);
                     }}
-                    className={`group relative h-[150px] w-auto flex-none transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-4 hover:scale-[1.06] disabled:opacity-50 ${
+                    className={`group relative h-[96px] w-[132px] flex-none overflow-hidden rounded-[7px] bg-white transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-2 hover:scale-[1.05] disabled:opacity-50 ${
+                      selected ? "ring-2 ring-accent" : ""
+                    } ${
                       tossing === c.id
-                        ? "card-toss z-40"
+                        ? "card-toss z-40 shadow-[0_1px_2px_rgba(28,16,8,0.55),0_4px_8px_rgba(28,16,8,0.35)]"
                         : selected
-                          ? "card-tap z-30 -translate-y-10 scale-[1.12]"
-                          : ""
+                          ? "card-tap z-30 -translate-y-3 scale-[1.06] shadow-[0_2px_4px_rgba(28,16,8,0.4),0_16px_32px_rgba(28,16,8,0.45)]"
+                          : "shadow-[0_1px_2px_rgba(28,16,8,0.55),0_4px_8px_rgba(28,16,8,0.35)] group-hover:shadow-[0_2px_4px_rgba(28,16,8,0.4),0_14px_28px_rgba(28,16,8,0.45)]"
                     }`}
                   >
+                    {/* Only the top slice of the print: the name bar and
+                        the head of the illustration. */}
                     {src ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
                         src={src}
                         alt={c.name}
                         loading="lazy"
-                        className={`block h-full w-auto rounded-[7px] bg-white object-cover transition-shadow ${
-                          selected
-                            ? "shadow-[0_0_0_3px_var(--color-accent),0_18px_38px_-8px_rgba(0,0,0,0.75)]"
-                            : "shadow-[0_2px_3px_rgba(0,0,0,0.45),0_9px_20px_-5px_rgba(0,0,0,0.55)] group-hover:shadow-[0_8px_14px_rgba(0,0,0,0.5),0_20px_40px_-8px_rgba(0,0,0,0.6)]"
-                        }`}
+                        className="absolute inset-0 size-full object-cover object-top"
                       />
                     ) : (
-                      <span
-                        className={`relative block h-full w-[104px] overflow-hidden rounded-[7px] border bg-white text-neutral-800 shadow-[0_2px_3px_rgba(0,0,0,0.45),0_9px_20px_-5px_rgba(0,0,0,0.55)] ${
-                          selected ? "border-accent ring-2 ring-accent" : "border-black/10"
-                        }`}
-                      >
-                        <CardFace src={null} name={c.name} energyType={c.energy_type} />
-                      </span>
+                      <CardFace src={null} name={c.name} energyType={c.energy_type} />
                     )}
                   </button>
                 );
@@ -714,6 +726,7 @@ function SideRail({
   yourTurn,
   canEndTurn,
   onEndTurn,
+  onLog,
 }: {
   myPrizes: number;
   oppPrizes: number;
@@ -721,6 +734,7 @@ function SideRail({
   yourTurn: boolean;
   canEndTurn: boolean;
   onEndTurn: () => void;
+  onLog: () => void;
 }) {
   return (
     <div className="flex w-[72px] flex-none flex-col items-center gap-2 pt-6">
@@ -741,6 +755,13 @@ function SideRail({
         {myPrizes}
       </div>
       <div className="text-[10px] text-dim">{yourTurn ? "your move" : "waiting"}</div>
+      <button
+        onClick={onLog}
+        aria-label="Log"
+        className="mt-1 grid size-9 place-items-center rounded-full border-edge text-base"
+      >
+        📜
+      </button>
     </div>
   );
 }
@@ -779,82 +800,60 @@ function DecisionBar({
   art: Art;
   meta: WireActionMeta[];
 }) {
-  const [peeking, setPeeking] = useState(false);
   const isFinish = (l: string) => /^(Stop |Finish|Take no more|Move on|Decline)/.test(l);
   const finish = actions.findIndex(isFinish);
   const choices = actions
     .map((label, index) => ({ label, index }))
     .filter(({ label }) => !isFinish(label));
 
-  if (peeking) {
-    return (
-      <button
-        type="button"
-        onClick={() => setPeeking(false)}
-        className="fixed bottom-4 right-4 z-50 rounded-lg border-accent bg-accent px-4 py-2 font-bold text-black shadow-lg"
-      >
-        ↩ Resume choosing
-      </button>
-    );
-  }
-
+  // In the document flow, below the board — the picker never covers the
+  // table.
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
-      <div className="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-edge bg-bg">
-        <div className="flex items-center gap-3 bg-accent px-3 py-2 text-black">
-          <span className="font-bold">{decision.verb}.</span>
-          <span className="text-[11px] opacity-70">only playable cards are shown</span>
-          {finish >= 0 && (
-            <button
-              onClick={() => onAct(finish)}
-              disabled={busy}
-              className="ml-auto rounded border-black/30 bg-warn px-4 py-1 font-bold text-black disabled:opacity-50"
-            >
-              DONE
-            </button>
-          )}
-        </div>
-        <div className="flex flex-wrap justify-center gap-2 overflow-y-auto p-3">
-          {choices.map(({ label, index }) => {
-            const face = meta[index]?.card_face ?? null;
-            const src = face ? art(face.print_id) : null;
-            return (
-              <button
-                key={index}
-                type="button"
-                disabled={busy}
-                onClick={() => onAct(index)}
-                className="relative h-[184px] w-auto flex-none transition-transform hover:-translate-y-1 hover:scale-[1.04] disabled:opacity-50"
-              >
-                {src ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={src}
-                    alt={face?.name ?? label}
-                    className="block h-full w-auto rounded-[8px] bg-white object-cover shadow-[0_3px_5px_rgba(0,0,0,0.5),0_14px_30px_-6px_rgba(0,0,0,0.6)]"
-                  />
-                ) : (
-                  <span className="relative block h-full w-[132px] overflow-hidden rounded-[8px] border border-black/10 bg-white text-neutral-800 shadow-[0_3px_5px_rgba(0,0,0,0.5),0_14px_30px_-6px_rgba(0,0,0,0.6)]">
-                    <CardFace
-                      src={null}
-                      name={face?.name ?? label.replace(/^Take /, "")}
-                      energyType={face?.energy_type ?? null}
-                    />
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-        <div className="flex justify-end border-t border-edge p-2">
+    <div className="mt-3 overflow-hidden rounded-lg border border-edge bg-bg">
+      <div className="sticky top-0 z-10 flex items-center gap-3 bg-accent px-3 py-2 text-black">
+        <span className="font-bold">{decision.verb}.</span>
+        <span className="text-[11px] opacity-70">only playable cards are shown</span>
+        {finish >= 0 && (
           <button
-            type="button"
-            onClick={() => setPeeking(true)}
-            className="rounded px-3 py-1 text-[13px]"
+            onClick={() => onAct(finish)}
+            disabled={busy}
+            className="ml-auto rounded border-black/30 bg-warn px-4 py-1 font-bold text-black disabled:opacity-50"
           >
-            View board
+            DONE
           </button>
-        </div>
+        )}
+      </div>
+      <div className="flex flex-wrap justify-center gap-3 p-3">
+        {choices.map(({ label, index }) => {
+          const face = meta[index]?.card_face ?? null;
+          const src = face ? art(face.print_id) : null;
+          return (
+            <button
+              key={index}
+              type="button"
+              disabled={busy}
+              onClick={() => onAct(index)}
+              className="relative h-[184px] w-auto flex-none transition-transform hover:-translate-y-1 hover:scale-[1.04] disabled:opacity-50"
+            >
+              {src ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={src}
+                  alt={face?.name ?? label}
+                  className="block h-full w-auto rounded-[8px] bg-white object-cover shadow-[0_1px_2px_rgba(28,16,8,0.55),0_5px_10px_rgba(28,16,8,0.4),0_16px_30px_-4px_rgba(28,16,8,0.4)]"
+                />
+              ) : (
+                <span className="relative block h-full w-[132px] overflow-hidden rounded-[8px] border border-black/10 bg-white text-neutral-800 shadow-[0_1px_2px_rgba(28,16,8,0.55),0_5px_10px_rgba(28,16,8,0.4),0_16px_30px_-4px_rgba(28,16,8,0.4)]">
+                  <CardFace
+                    src={null}
+                    name={face?.name ?? label.replace(/^Take /, "")}
+                    energyType={face?.energy_type ?? null}
+                  />
+                </span>
+              )}
+            </button>
+          );
+        })}
       </div>
     </div>
   );
