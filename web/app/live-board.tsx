@@ -7,7 +7,8 @@
 // search / discard prompts. Reached at /live. Shares the engine wiring
 // with the classic board; only the presentation differs.
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 import { ActionPanel, CardArt, ENERGY_COLOR } from "./table";
 import {
   COPY_COLORS,
@@ -171,6 +172,74 @@ export function LiveBoard({
             ?.name
         : undefined;
 
+  // --- Drag a hand card onto the board --------------------------------
+  // A pointer drag past a small threshold selects the card (so the valid
+  // spots light up) and floats a card ghost under the pointer. Releasing
+  // over a highlighted Pokémon or an empty slot plays the move; releasing
+  // anywhere else just leaves the card selected for a tap.
+  const [drag, setDrag] = useState<{ card: number; x: number; y: number } | null>(null);
+  const pending = useRef<{ card: number; x: number; y: number; started: boolean } | null>(null);
+  const suppressClick = useRef(false);
+
+  // The window listeners fire long after render, so they read the live
+  // board — the drop targets and empty-slot moves — from a ref.
+  const board = useRef({ dropTargets, benchPlace, activePlace });
+  useEffect(() => {
+    board.current = { dropTargets, benchPlace, activePlace };
+  });
+  const resolveDrop = (dropId: string): number | null => {
+    const b = board.current;
+    if (dropId.startsWith("mon:")) return b.dropTargets.get(Number(dropId.slice(4))) ?? null;
+    if (dropId === "slot:bench") return b.benchPlace >= 0 ? b.benchPlace : null;
+    if (dropId === "slot:active") return b.activePlace >= 0 ? b.activePlace : null;
+    return null;
+  };
+
+  const startDrag = (card: number, e: ReactPointerEvent) => {
+    if (busy) return;
+    suppressClick.current = false;
+    pending.current = { card, x: e.clientX, y: e.clientY, started: false };
+  };
+
+  useEffect(() => {
+    const dropIdAt = (x: number, y: number) =>
+      (document.elementFromPoint(x, y) as HTMLElement | null)
+        ?.closest("[data-drop-id]")
+        ?.getAttribute("data-drop-id") ?? null;
+
+    const move = (e: PointerEvent) => {
+      const p = pending.current;
+      if (!p) return;
+      if (!p.started) {
+        if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < 8) return;
+        p.started = true;
+        onSelect({ kind: "hand", card: p.card });
+      }
+      setDrag({ card: p.card, x: e.clientX, y: e.clientY });
+    };
+    const end = (e: PointerEvent) => {
+      const p = pending.current;
+      pending.current = null;
+      setDrag(null);
+      if (!p?.started) return;
+      suppressClick.current = true;
+      const id = dropIdAt(e.clientX, e.clientY);
+      const act = id ? resolveDrop(id) : null;
+      if (act != null) onAct(act);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", end);
+    window.addEventListener("pointercancel", end);
+    return () => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", end);
+      window.removeEventListener("pointercancel", end);
+    };
+  }, [onSelect, onAct, busy]);
+
+  const dragCard = drag ? view.your_hand.find((c) => c.id === drag.card) : undefined;
+  const dragSrc = dragCard ? art(dragCard.print_id) : null;
+
   return (
     <div className="mt-3">
       <div className="flex gap-2">
@@ -255,6 +324,9 @@ export function LiveBoard({
             onConfirm={onAct}
             confirmIndex={confirmIndex}
             art={art}
+            onCardPointerDown={startDrag}
+            suppressClickRef={suppressClick}
+            draggingCard={drag?.card ?? null}
           />
         </div>
 
@@ -338,6 +410,24 @@ export function LiveBoard({
               />
             </div>
           </details>
+        </div>
+      )}
+
+      {drag && (
+        <div
+          className="pointer-events-none fixed z-[60] h-[132px] w-[96px] -translate-x-1/2 -translate-y-1/2 rotate-3 overflow-hidden rounded-[7px] border border-black/10 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+          style={{ left: drag.x, top: drag.y }}
+        >
+          {dragSrc ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={dragSrc}
+              alt=""
+              className="absolute inset-0 size-full object-cover object-top"
+            />
+          ) : dragCard ? (
+            <CardFace src={null} name={dragCard.name} energyType={dragCard.energy_type} />
+          ) : null}
         </div>
       )}
 
@@ -536,6 +626,7 @@ function LiveMon({
       <button
         type="button"
         data-keep-selection
+        data-drop-id={placeHere ? (active ? "slot:active" : "slot:bench") : undefined}
         disabled={!placeHere}
         onClick={placeHere}
         className={`${size} flex flex-none items-center justify-center rounded-md border border-dashed text-[9px] disabled:cursor-default ${
@@ -562,6 +653,7 @@ function LiveMon({
     <button
       type="button"
       data-keep-selection
+      data-drop-id={`mon:${mon.id}`}
       disabled={!interactive}
       onClick={onSelect}
       className={`deal-in ${size} relative flex flex-none flex-col overflow-hidden rounded-md border bg-panel transition-colors disabled:cursor-default disabled:opacity-100 ${ring} ${
@@ -674,6 +766,9 @@ function HandStrip({
   onConfirm,
   confirmIndex,
   art,
+  onCardPointerDown,
+  suppressClickRef,
+  draggingCard,
 }: {
   hand: WireCard[];
   meta: WireActionMeta[];
@@ -683,6 +778,12 @@ function HandStrip({
   /** The one move a selected card resolves to, if it is unambiguous. */
   confirmIndex?: number;
   art: Art;
+  /** Begin a possible drag from this card. */
+  onCardPointerDown: (card: number, e: ReactPointerEvent) => void;
+  /** Set true by a finished drag; the click it spawns is then skipped. */
+  suppressClickRef: RefObject<boolean>;
+  /** The card currently being dragged, dimmed in its slot. */
+  draggingCard: number | null;
 }) {
   // Sort by category, then break into at most two rows at the category
   // boundary nearest the midpoint — an even split is nice but keeping a
@@ -722,7 +823,14 @@ function HandStrip({
                     type="button"
                     data-keep-selection
                     disabled={!playable}
-                    onClick={() => onCardClick(c, selected)}
+                    onPointerDown={playable ? (e) => onCardPointerDown(c.id, e) : undefined}
+                    onClick={() => {
+                      if (suppressClickRef.current) {
+                        suppressClickRef.current = false;
+                        return;
+                      }
+                      onCardClick(c, selected);
+                    }}
                     onAnimationEnd={(e) => {
                       if (
                         e.animationName === "card-toss" &&
@@ -731,9 +839,9 @@ function HandStrip({
                       )
                         onConfirm(confirmIndex);
                     }}
-                    className={`group relative h-[96px] w-[132px] flex-none overflow-hidden rounded-[7px] bg-white transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-2 hover:scale-[1.05] disabled:opacity-50 ${
-                      selected ? "ring-2 ring-accent" : ""
-                    } ${
+                    className={`group relative h-[96px] w-[132px] flex-none touch-none overflow-hidden rounded-[7px] bg-white transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-2 hover:scale-[1.05] disabled:opacity-50 ${
+                      draggingCard === c.id ? "opacity-30" : ""
+                    } ${selected ? "ring-2 ring-accent" : ""} ${
                       tossing === c.id
                         ? "card-toss z-40 shadow-[0_1px_2px_rgba(28,16,8,0.55),0_4px_8px_rgba(28,16,8,0.35)]"
                         : selected
