@@ -93,11 +93,39 @@ impl PlayerView {
             library_in_search: state.whole_library_search().filter(|owner| *owner == you).map(
                 |_| {
                     let mut cards = state.player(you).library.clone();
+                    // A Pokémon's place inside its own bucket follows its
+                    // evolution line, not its name: the bigger the line
+                    // is in this library, the sooner it shows, and within
+                    // a line a Basic leads its Stage 1 and Stage 2.
+                    let mut line_counts: std::collections::HashMap<&str, usize> =
+                        std::collections::HashMap::new();
+                    for card in &cards {
+                        if let crate::card::CardDef::Pokemon(_) = state.def_of(*card) {
+                            *line_counts.entry(root_basic_name(state.def_of(*card))).or_insert(0) +=
+                                1;
+                        }
+                    }
                     cards.sort_by(|a, b| {
                         let (da, db) = (state.def_of(*a), state.def_of(*b));
-                        category_rank(da)
-                            .cmp(&category_rank(db))
-                            .then_with(|| da.name().cmp(db.name()))
+                        category_rank(da).cmp(&category_rank(db)).then_with(|| {
+                            match (da, db) {
+                                (
+                                    crate::card::CardDef::Pokemon(pa),
+                                    crate::card::CardDef::Pokemon(pb),
+                                ) => {
+                                    let (ra, rb) = (root_basic_name(da), root_basic_name(db));
+                                    let (ca, cb) = (
+                                        line_counts.get(ra).copied().unwrap_or(0),
+                                        line_counts.get(rb).copied().unwrap_or(0),
+                                    );
+                                    cb.cmp(&ca) // the bigger line first
+                                        .then_with(|| ra.cmp(rb))
+                                        .then_with(|| stage_rank(pa.stage).cmp(&stage_rank(pb.stage)))
+                                        .then_with(|| da.name().cmp(db.name()))
+                                }
+                                _ => da.name().cmp(db.name()),
+                            }
+                        })
                     });
                     cards.iter().map(|card| card_view(state, *card)).collect()
                 },
@@ -127,6 +155,33 @@ fn category_rank(def: &crate::card::CardDef) -> u8 {
             TrainerKind::Stadium => 4,
         },
         CardDef::Energy(_) => 5,
+    }
+}
+
+/// The Basic at the root of a Pokémon's evolution line — itself, on a
+/// Basic. A Stage 2 reads `evolves_from_basic` where that resolved at
+/// import; a chain it did not resolve falls back to `evolve_from`, one
+/// link up, rather than losing the card from its line entirely.
+fn root_basic_name(def: &crate::card::CardDef) -> &'static str {
+    use crate::card::{CardDef, Stage};
+    match def {
+        CardDef::Pokemon(p) => match p.stage {
+            Stage::Basic => p.name,
+            Stage::Stage1 => p.evolve_from.unwrap_or(p.name),
+            Stage::Stage2 => p.evolves_from_basic.or(p.evolve_from).unwrap_or(p.name),
+        },
+        _ => "",
+    }
+}
+
+/// A Pokémon's depth in its own line: Basic leads, then Stage 1, then
+/// Stage 2.
+fn stage_rank(stage: crate::card::Stage) -> u8 {
+    use crate::card::Stage;
+    match stage {
+        Stage::Basic => 0,
+        Stage::Stage1 => 1,
+        Stage::Stage2 => 2,
     }
 }
 

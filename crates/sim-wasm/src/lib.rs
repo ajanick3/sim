@@ -290,6 +290,12 @@ fn action_handles(action: Action) -> (Option<usize>, Option<usize>) {
         Action::Retreat { to } => (None, mon(to)),
         Action::Promote { pokemon } | Action::UseAbility { pokemon } => (None, mon(pokemon)),
         Action::HealTarget { target } | Action::HealMegaEx { target } => (None, mon(target)),
+        // Placing a Phantom Dive-style damage counter, or the plain
+        // bench-damage a card like it deals directly: both name only the
+        // Bench Pokémon they land on, one tap at a time.
+        Action::PlaceDamageCounter { target } | Action::DamageBenchedPokemon { target } => {
+            (None, mon(target))
+        }
         _ => (None, None),
     }
 }
