@@ -335,6 +335,19 @@ export function LiveBoard({
               Choose a new Active — tap a Benched Pokémon, tap again to promote it
             </div>
           )}
+          {finishPlacing >= 0 && (
+            <div className="mt-1 flex items-center justify-center gap-3 rounded-lg border border-accent/60 bg-accent/10 p-2">
+              <span className="text-[12px] font-semibold text-dim">Fill your Bench, then</span>
+              <button
+                type="button"
+                onClick={() => onAct(finishPlacing)}
+                disabled={busy}
+                className="rounded-md border-accent bg-accent px-4 py-1.5 text-[13px] font-bold text-black disabled:opacity-50"
+              >
+                ✓ Done placing
+              </button>
+            </div>
+          )}
 
           <HandStrip
             hand={view.your_hand}
@@ -372,17 +385,6 @@ export function LiveBoard({
           className="fixed bottom-4 right-4 z-40 grid size-12 place-items-center rounded-full border-edge bg-panel text-lg shadow-[0_6px_18px_rgba(0,0,0,0.55)]"
         >
           «
-        </button>
-      )}
-
-      {finishPlacing >= 0 && (
-        <button
-          type="button"
-          onClick={() => onAct(finishPlacing)}
-          disabled={busy}
-          className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full border-accent bg-accent px-7 py-3 text-sm font-bold text-black shadow-[0_10px_28px_rgba(0,0,0,0.55)] disabled:opacity-50"
-        >
-          ✓ Done placing
         </button>
       )}
 
