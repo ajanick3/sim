@@ -49,8 +49,14 @@ More clusters merged:
 - #262 "-Berry" Tools — `ReducesDamageFromType`, a defender-Tool read in `damage_dealt_with`.
 - #263 conditional-damage Tools — `BonusDamageVsActiveEx`, `ReducesDamageFromAbilityHolders`.
 
-Coverage at #263: 886 / 3051 prints (29.0%). Refused, by kind:
-Supporter 69, Item 54, Tool 27, Stadium 24, Special Energy 9.
+- #264 static Stadiums — `StadiumBoostsBasicHp`, `StadiumReducesDamageToType`.
+- #265 name-prefix — `CardFilter::BasicPokemonNameContains`, `IncreasesHpForNamePrefix`, `StadiumReducesDamageForNamePrefix`.
+- #266 coin-gated + retreat — `CoinFlipThen(Box)`, `RaisesBothActiveRetreatWhileCarrierActive`.
+- #267 markers + Checkup Stadium — `DrawPerOwnPokemonWithMarker`, `AttachBasicEnergyFromDiscardToEachFuture`, `StadiumExtraPoisonDamage`.
+- #268 next-turn side shield — ADR 0098, `GameState::side_shield_next_turn`, `GrantSideShieldNextTurn`.
+
+Coverage at #268: 910 / 3051 prints (29.8%). Refused, by kind:
+Supporter 60, Item 48, Tool 20, Stadium 20, Special Energy 9.
 
 Deferred — the tier that needs its own design/ADR before it is cheap:
 - **Trainer-as-Pokémon**: the eight "Antique … Fossil" Items play as a
