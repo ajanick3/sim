@@ -379,6 +379,10 @@ pub enum TrainerEffect {
     /// Draw one card for each Mega Evolution Pokémon ex the opponent has
     /// in play. `Jett`.
     DrawPerOpponentMegaEx,
+    /// Discard the player's whole hand, then draw this many. Unlike
+    /// `ShuffleHandThenDraw`, what is given up does not go back in the
+    /// deck. `Carmine`.
+    DiscardHandThenDraw(u32),
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },

@@ -99,8 +99,9 @@ fn the_kinds_add_up_to_the_pool() {
     // The standard-trainers effort opens beyond the field: Cheren,
     // Friends in Paldea, and Urbain (`Draw(3)`) took it to 247; Cook,
     // Fennel, and Clemont's Quick Wit (heals) took it to 241; Picnicker, Jett, and Iris's
-    // Fighting Spirit (draw variants) take it to 235.
-    assert_eq!(trainers, 235, "the Trainers still refused, by kind");
+    // Fighting Spirit (draw variants) took it to 235; Carmine, Team
+    // Rocket's Archer, and Cassiopeia take it to 225.
+    assert_eq!(trainers, 225, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

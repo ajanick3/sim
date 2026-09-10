@@ -379,6 +379,25 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Cheren" | "Friends in Paldea" | "Urbain" => (free, TrainerEffect::Draw(3)),
         "Cook" => (free, TrainerEffect::HealActive(70)),
         "Picnicker" => (free, TrainerEffect::CoinFlipDraw { heads: 4, tails: 2 }),
+        "Carmine" => (free, TrainerEffect::DiscardHandThenDraw(5)),
+        "Team Rocket's Archer" => (
+            Some(Requirement::KnockedOutDuringOpponentsLastTurn),
+            TrainerEffect::BothShuffleHandThenDraw { you: 5, opponent: 3 },
+        ),
+        "Cassiopeia" => (
+            Some(Requirement::HandSizeIs(1)),
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::AnyCard,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 2,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         "Jett" => (free, TrainerEffect::DrawPerOpponentMegaEx),
         "Iris's Fighting Spirit" => (
             Some(Requirement::DiscardOtherCardsFromHand(1)),

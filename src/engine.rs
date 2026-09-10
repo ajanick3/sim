@@ -2904,6 +2904,14 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::DiscardHandThenDraw(count) => {
+            let hand = std::mem::take(&mut state.players[player.index()].hand);
+            state.players[player.index()].discard.extend(hand);
+            for _ in 0..count {
+                state.draw(player);
+            }
+        }
+
         TrainerEffect::ShuffleHandThenDraw {
             normal,
             at_six_prizes,
