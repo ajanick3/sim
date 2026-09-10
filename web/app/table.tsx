@@ -2,16 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { loadSim, type CardData, type Game } from "./wasm";
+import { gateAfterSeat, shouldAutoAdvance, sides } from "./session";
 import type { WireCard, WirePokemon, WireSide, WireView } from "./view";
 
 const DECKS = { a: "/decks/dragapult.txt", b: "/decks/alakazam.txt" };
 // Seat 0 is the first player, seat 1 the second — shown as medals.
 const SEAT_NAME = ["🥇", "🥈"];
 
-type Status =
-  | { kind: "loading" }
-  | { kind: "error"; message: string }
-  | { kind: "playing" };
+type Status = { kind: "loading" } | { kind: "error"; message: string } | { kind: "playing" };
 
 export default function Table() {
   const [status, setStatus] = useState<Status>({ kind: "loading" });
@@ -36,32 +34,34 @@ export default function Table() {
     setLog(JSON.parse(game.log()) as string[]);
     setSeat(next);
     setOver(game.is_over());
-    if (next !== shownSeat.current) {
-      shownSeat.current = next;
-      setRevealed(false);
-    }
+    const gate = gateAfterSeat(shownSeat.current, next);
+    shownSeat.current = gate.shown;
+    if (!gate.reveal) setRevealed(false);
   }, []);
 
-  const newGame = useCallback(async (seed: number) => {
-    try {
-      const sim = await loadSim();
-      if (!dataRef.current) {
-        const cards = await fetch("/cards.json").then((r) => r.text());
-        dataRef.current = sim.CardData.new(cards);
+  const newGame = useCallback(
+    async (seed: number) => {
+      try {
+        const sim = await loadSim();
+        if (!dataRef.current) {
+          const cards = await fetch("/cards.json").then((r) => r.text());
+          dataRef.current = sim.CardData.new(cards);
+        }
+        const [a, b] = await Promise.all([
+          fetch(DECKS.a).then((r) => r.text()),
+          fetch(DECKS.b).then((r) => r.text()),
+        ]);
+        gameRef.current?.free();
+        gameRef.current = sim.Game.standard(dataRef.current, a, b, BigInt(seed));
+        shownSeat.current = undefined;
+        setStatus({ kind: "playing" });
+        refresh();
+      } catch (err) {
+        setStatus({ kind: "error", message: String(err) });
       }
-      const [a, b] = await Promise.all([
-        fetch(DECKS.a).then((r) => r.text()),
-        fetch(DECKS.b).then((r) => r.text()),
-      ]);
-      gameRef.current?.free();
-      gameRef.current = sim.Game.standard(dataRef.current, a, b, BigInt(seed));
-      shownSeat.current = undefined;
-      setStatus({ kind: "playing" });
-      refresh();
-    } catch (err) {
-      setStatus({ kind: "error", message: String(err) });
-    }
-  }, [refresh]);
+    },
+    [refresh],
+  );
 
   useEffect(() => {
     void newGame(Math.floor(Math.random() * 1_000_000_000));
@@ -96,11 +96,14 @@ export default function Table() {
       return;
     }
     if (
-      status.kind === "playing" &&
-      revealed &&
-      !over &&
-      !busy &&
-      autoSteps.current < 100
+      shouldAutoAdvance({
+        actionCount: actions.length,
+        playing: status.kind === "playing",
+        revealed,
+        over,
+        busy,
+        steps: autoSteps.current,
+      })
     ) {
       autoSteps.current += 1;
       act(0);
@@ -115,9 +118,7 @@ export default function Table() {
     return (
       <Centre>
         <p style={{ color: "var(--warn)", maxWidth: 480 }}>{status.message}</p>
-        <button onClick={() => newGame(Math.floor(Math.random() * 1e9))}>
-          Try again
-        </button>
+        <button onClick={() => newGame(Math.floor(Math.random() * 1e9))}>Try again</button>
       </Centre>
     );
   }
@@ -127,8 +128,8 @@ export default function Table() {
       <header style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
         <h1 style={{ fontSize: 18, margin: 0 }}>sim</h1>
         <span style={{ color: "var(--dim)" }}>
-          Dragapult ex &nbsp;vs&nbsp; Alakazam &nbsp;·&nbsp; turn{" "}
-          {view?.turn_number ?? 0} &nbsp;·&nbsp; {view?.phase}
+          Dragapult ex &nbsp;vs&nbsp; Alakazam &nbsp;·&nbsp; turn {view?.turn_number ?? 0}{" "}
+          &nbsp;·&nbsp; {view?.phase}
         </span>
         <button
           style={{ marginLeft: "auto" }}
@@ -143,20 +144,10 @@ export default function Table() {
       ) : !revealed && seat !== undefined ? (
         <Centre>
           <p style={{ color: "var(--dim)" }}>Pass the device.</p>
-          <button onClick={() => setRevealed(true)}>
-            {SEAT_NAME[seat]} — tap to reveal
-          </button>
+          <button onClick={() => setRevealed(true)}>{SEAT_NAME[seat]} — tap to reveal</button>
         </Centre>
       ) : (
-        view && (
-          <Board
-            view={view}
-            actions={actions}
-            seat={seat}
-            busy={busy}
-            onAct={act}
-          />
-        )
+        view && <Board view={view} actions={actions} seat={seat} busy={busy} onAct={act} />
       )}
 
       <LogPanel lines={log} />
@@ -177,13 +168,11 @@ function Board({
   busy: boolean;
   onAct: (index: number) => void;
 }) {
+  const seats = sides(view.you);
   return (
     <div style={{ display: "grid", gap: 16, marginTop: 16 }}>
-      <Side
-        side={view.sides[view.you === 1 ? 0 : 1]}
-        label={`${SEAT_NAME[view.you === 1 ? 0 : 1]} Opponent`}
-      />
-      <Side side={view.sides[view.you]} label={`${SEAT_NAME[view.you]} You`} mine />
+      <Side side={view.sides[seats.opponent]} label={`${SEAT_NAME[seats.opponent]} Opponent`} />
+      <Side side={view.sides[seats.mine]} label={`${SEAT_NAME[seats.mine]} You`} mine />
 
       <section>
         <h2 style={h2}>Your hand ({view.your_hand.length})</h2>
@@ -193,9 +182,7 @@ function Board({
       </section>
 
       <section>
-        <h2 style={h2}>
-          {seat !== undefined ? `${SEAT_NAME[seat]} to act` : "Waiting"}
-        </h2>
+        <h2 style={h2}>{seat !== undefined ? `${SEAT_NAME[seat]} to act` : "Waiting"}</h2>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
           {actions.map((label, i) => (
             <button key={i} disabled={busy} onClick={() => onAct(i)}>
@@ -208,15 +195,7 @@ function Board({
   );
 }
 
-function Side({
-  side,
-  label,
-  mine = false,
-}: {
-  side: WireSide;
-  label: string;
-  mine?: boolean;
-}) {
+function Side({ side, label, mine = false }: { side: WireSide; label: string; mine?: boolean }) {
   return (
     <section
       style={{
@@ -259,19 +238,9 @@ function Side({
   );
 }
 
-function Mon({
-  mon,
-  active = false,
-}: {
-  mon: WirePokemon | null;
-  active?: boolean;
-}) {
+function Mon({ mon, active = false }: { mon: WirePokemon | null; active?: boolean }) {
   if (!mon) {
-    return (
-      <div style={{ ...monBox, color: "var(--dim)" }}>
-        {active ? "no Active" : ""}
-      </div>
-    );
+    return <div style={{ ...monBox, color: "var(--dim)" }}>{active ? "no Active" : ""}</div>;
   }
   return (
     <div
@@ -286,9 +255,7 @@ function Mon({
       </div>
       <Attachments cards={mon.attached} />
       {mon.conditions.length > 0 && (
-        <div style={{ color: "var(--warn)", fontSize: 12 }}>
-          {mon.conditions.join(", ")}
-        </div>
+        <div style={{ color: "var(--warn)", fontSize: 12 }}>{mon.conditions.join(", ")}</div>
       )}
     </div>
   );
