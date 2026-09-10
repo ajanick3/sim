@@ -1,3 +1,11 @@
+# This crate is the engine. A bare `cargo` command at the root builds and
+# tests only the engine, because `default-members` names this package alone.
+# The browser front end lives in `crates/sim-wasm`, added as a member when it
+# arrives, and is built on request.
+[workspace]
+members = ["."]
+default-members = ["."]
+
 [package]
 name = "sim"
 version = "0.1.0"
