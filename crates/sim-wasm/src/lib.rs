@@ -273,7 +273,7 @@ fn action_handles(action: Action) -> (Option<usize>, Option<usize>) {
         | Action::TakeCardOnto { card: c, target: t }
         | Action::MoveEnergy { card: c, target: t } => (card(c), mon(t)),
         Action::Retreat { to } => (None, mon(to)),
-        Action::Promote { pokemon } => (None, mon(pokemon)),
+        Action::Promote { pokemon } | Action::UseAbility { pokemon } => (None, mon(pokemon)),
         Action::HealTarget { target } | Action::HealMegaEx { target } => (None, mon(target)),
         _ => (None, None),
     }
