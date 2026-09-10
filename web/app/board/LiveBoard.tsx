@@ -1,11 +1,9 @@
 "use client";
 
-// An experimental board that arranges the game the way Pokémon TCG Live
-// does: a tilted felt mat with prize stacks, deck and discard piles, a
-// stadium slot, bench trays, and a hand strip, plus a right-hand rail
-// with prize counts and an END TURN button, and a blue decision bar for
-// search / discard prompts. Reached at /live. Shares the engine wiring
-// with the classic board; only the presentation differs.
+// The board: a felt mat with prize stacks, deck and discard piles, a
+// stadium slot, bench trays and a hand strip, a right-hand rail with the
+// prize counts and END TURN, and a decision bar for search / discard
+// prompts. `game-shell.tsx` drives it; this file only lays out a view.
 
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
@@ -193,7 +191,12 @@ export function LiveBoard({
   // spots light up) and floats a card ghost under the pointer. Releasing
   // over a highlighted Pokémon or an empty slot plays the move; releasing
   // anywhere else just leaves the card selected for a tap.
-  const [drag, setDrag] = useState<{ card: number; x: number; y: number } | null>(null);
+  const [drag, setDrag] = useState<{
+    card: number;
+    x: number;
+    y: number;
+    over: string | null;
+  } | null>(null);
   const pending = useRef<{ card: number; x: number; y: number; started: boolean } | null>(null);
   const suppressClick = useRef(false);
 
@@ -231,7 +234,9 @@ export function LiveBoard({
         p.started = true;
         onSelect({ kind: "hand", card: p.card });
       }
-      setDrag({ card: p.card, x: e.clientX, y: e.clientY });
+      const over = dropIdAt(e.clientX, e.clientY);
+      const landable = over ? resolveDrop(over) != null : false;
+      setDrag({ card: p.card, x: e.clientX, y: e.clientY, over: landable ? over : null });
     };
     const end = (e: PointerEvent) => {
       const p = pending.current;
@@ -253,6 +258,7 @@ export function LiveBoard({
     };
   }, [onSelect, onAct, busy]);
 
+  const hoverDropId = drag?.over ?? null;
   const dragCard = drag ? view.your_hand.find((c) => c.id === drag.card) : undefined;
   const dragSrc = dragCard ? art(dragCard.print_id) : null;
 
@@ -270,6 +276,7 @@ export function LiveBoard({
               dropTargets={dropTargets}
               onPokemon={onPokemon}
               onViewDiscard={(cards, label) => setDiscardView({ cards, label })}
+              hoverDropId={hoverDropId}
             />
 
             {/* Centre lane: stadium on the left, the two Actives stacked. */}
@@ -280,7 +287,15 @@ export function LiveBoard({
                   mon={opp.active}
                   active
                   art={art}
-                  {...monHooks(opp.active, meta, selection, dropTargets, onPokemon)}
+                  {...monHooks(
+                    opp.active,
+                    meta,
+                    selection,
+                    dropTargets,
+                    onPokemon,
+                    false,
+                    hoverDropId,
+                  )}
                 />
                 <div className="h-px w-24 bg-white/15" aria-hidden />
                 <div className="relative">
@@ -296,6 +311,7 @@ export function LiveBoard({
                       dropTargets,
                       onPokemon,
                       onCardMoves.length > 0,
+                      hoverDropId,
                     )}
                   />
                   {activeSelected && onCardMoves.length > 0 && (
@@ -356,6 +372,7 @@ export function LiveBoard({
               onPokemon={onPokemon}
               onPlaceBench={benchPlace >= 0 ? () => onAct(benchPlace) : undefined}
               onViewDiscard={(cards, label) => setDiscardView({ cards, label })}
+              hoverDropId={hoverDropId}
             />
           </div>
 

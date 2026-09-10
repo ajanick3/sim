@@ -18,6 +18,7 @@ export function LiveMon({
   selectable = false,
   selected = false,
   dropTarget = false,
+  hovered = false,
   placeHere,
 }: {
   mon: WirePokemon | null;
@@ -28,6 +29,8 @@ export function LiveMon({
   selectable?: boolean;
   selected?: boolean;
   dropTarget?: boolean;
+  /** A drag is over this card right now. */
+  hovered?: boolean;
   /** Empty slot: a selected hand card can be placed here. */
   placeHere?: () => void;
 }) {
@@ -55,7 +58,9 @@ export function LiveMon({
   const ring = selected
     ? "z-20 ring-2 ring-accent border-accent"
     : dropTarget
-      ? "z-20 border-white ring-2 ring-white shadow-[0_0_0_2px_#fff,0_0_18px_5px_rgba(255,255,255,0.7)]"
+      ? hovered
+        ? "z-30 border-white ring-4 ring-white shadow-[0_0_0_3px_#fff,0_0_28px_10px_rgba(255,255,255,0.95)]"
+        : "z-20 border-white ring-2 ring-white shadow-[0_0_0_2px_#fff,0_0_18px_5px_rgba(255,255,255,0.7)]"
       : active
         ? "border-accent"
         : "border-edge";
