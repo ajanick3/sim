@@ -4,8 +4,7 @@ import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 import { useState } from "react";
 import type { Selection } from "../session";
 import type { WireActionMeta, WireCard } from "../view";
-import { CardFace } from "./CardFace";
-import { CARD_SIZE } from "./sizes";
+import { PlayingCard } from "./PlayingCard";
 import { splitHandRows, type Art } from "./shared";
 
 /** The hand: cards sorted by category into one or two rows, each card
@@ -97,9 +96,16 @@ export function HandStrip({
                 const selected = selection?.kind === "hand" && selection.card === c.id;
                 const src = art(c.print_id);
                 return (
-                  <button
+                  <PlayingCard
                     key={c.id}
-                    type="button"
+                    size="hand"
+                    src={src}
+                    name={c.name}
+                    energyType={c.energy_type}
+                    selected={selected}
+                    dimmed={draggingCard === c.id}
+                    raised={selected && tossing !== c.id}
+                    interactive
                     data-keep-selection
                     disabled={!playable}
                     onPointerDown={playable ? (e) => onCardPointerDown(c.id, e) : undefined}
@@ -118,30 +124,14 @@ export function HandStrip({
                       )
                         onConfirm(confirmIndex);
                     }}
-                    className={`group relative ${CARD_SIZE.hand} flex-none touch-none overflow-hidden rounded-card bg-card transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-2 hover:scale-[1.05] disabled:opacity-50 ${
-                      draggingCard === c.id ? "opacity-30" : ""
-                    } ${selected ? "ring-2 ring-accent" : ""} ${
+                    className={`touch-none transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-2 hover:scale-[1.05] disabled:opacity-50 ${
                       tossing === c.id
-                        ? "card-toss z-40 shadow-card"
+                        ? "card-toss z-40"
                         : selected
-                          ? "card-tap z-30 -translate-y-3 scale-[1.06] shadow-card-raised"
-                          : "shadow-card group-hover:shadow-card-raised"
+                          ? "card-tap z-30 -translate-y-3 scale-[1.06]"
+                          : ""
                     }`}
-                  >
-                    {/* Only the top slice of the print: the name bar and
-                        the head of the illustration. */}
-                    {src ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={src}
-                        alt={c.name}
-                        loading="lazy"
-                        className="absolute inset-0 size-full object-cover object-top"
-                      />
-                    ) : (
-                      <CardFace src={null} name={c.name} energyType={c.energy_type} />
-                    )}
-                  </button>
+                  />
                 );
               })}
             </div>
