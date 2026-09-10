@@ -324,5 +324,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Shadowy Darkness Energy (a new
     // `PreventsBenchDamageWhileCarrierTypeMatches`, read in
     // `bench_attack_damage_blocked`) takes it to 915.
-    assert_eq!(admitted, 915, "coverage moves only on purpose");
+    // Precious Trolley (a `Decide` for Basic Pokemon to the Bench) and
+    // Energy Search Pro (a `Decide` for Basic Energy of distinct types
+    // to hand) take it to 917.
+    assert_eq!(admitted, 917, "coverage moves only on purpose");
 }

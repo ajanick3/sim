@@ -840,6 +840,34 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             },
         ),
         "Crushing Hammer" => (free, TrainerEffect::CoinFlipDiscardOpponentEnergy),
+        "Precious Trolley" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::PokemonOfStage(Stage::Basic),
+                    to: Destination::Bench,
+                    limit: 5,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
+        "Energy Search Pro" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicEnergy,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 9,
+                    excludes_type_of_previous: true,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         "Buddy-Buddy Poffin" => (
             free,
             TrainerEffect::Decide {

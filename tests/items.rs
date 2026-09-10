@@ -1377,6 +1377,95 @@ fn the_search_items_are_admitted_from_the_artifact() {
     }
 }
 
+#[test]
+fn precious_trolley_puts_basics_from_the_deck_onto_the_bench() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Precious Trolley" && c.playable.is_some()),
+        "Precious Trolley should play"
+    );
+
+    let mut set = build();
+    let trolley = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-precious-trolley",
+        name: "Precious Trolley",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::PokemonOfStage(Stage::Basic),
+                to: Destination::Bench,
+                limit: 5,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    let mut state = game(&set, trolley, 3);
+    let player = state.current;
+    let bench_before = state.player(player).bench.len();
+    let card = ensure_in_hand(&mut state, player, trolley);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    for _ in 0..2 {
+        let take = offered(&state)[0];
+        apply(&mut state, Action::TakeCard { card: take }).unwrap();
+    }
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.player(player).bench.len(), bench_before + 2, "two Basics joined the Bench");
+}
+
+#[test]
+fn energy_search_pro_takes_one_basic_energy_per_type() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Energy Search Pro" && c.playable.is_some()),
+        "Energy Search Pro should play"
+    );
+
+    let mut set = build();
+    let pro = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-energy-search-pro",
+        name: "Energy Search Pro",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::BasicEnergy,
+                to: Destination::Zone(Zone::Hand),
+                limit: 9,
+                excludes_type_of_previous: true,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    let mut state = game(&set, pro, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, pro);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let first = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: first }).unwrap();
+    assert!(
+        offered(&state).is_empty(),
+        "the deck only holds one Basic Energy type, so no second pick is offered"
+    );
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert!(state.player(player).hand.contains(&first));
+}
+
 // --- Beyond the field: deck manipulation and a gust ---
 
 fn plain_item(db: &mut CardDb, print_id: &'static str, name: &'static str, effect: TrainerEffect) -> CardDefId {
