@@ -61,6 +61,26 @@ export class Game {
         wasm.__wbg_game_free(ptr, 0);
     }
     /**
+     * What each legal action touches, index-aligned with `legal_actions`.
+     * Each entry is `{ kind, card, target }` — the `Action` variant's
+     * name, the `CardId` it names (or null), the `PokemonId` it names
+     * (or null). See ADR 0099. Actions this does not recognise still
+     * appear, with `card` and `target` both null.
+     * @returns {string}
+     */
+    action_meta() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.game_action_meta(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
+        }
+    }
+    /**
      * Apply the action at `index` in the current `legal_actions` list.
      * @param {number} index
      */

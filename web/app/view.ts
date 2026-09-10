@@ -10,6 +10,8 @@ export interface WireCard {
 }
 
 export interface WirePokemon {
+  /** Stable id for this Pokémon in play — matches an action's `target`. */
+  id: number;
   name: string;
   hp: number;
   damage: number;
@@ -26,6 +28,16 @@ export interface WireSide {
   discard: WireCard[];
   active: WirePokemon | null;
   bench: WirePokemon[];
+}
+
+/** One entry of `Game.action_meta()`, index-aligned with `legal_actions()`. */
+export interface WireActionMeta {
+  /** The `Action` variant's name, e.g. "AttachEnergy", "Attack", "PlayTrainer". */
+  kind: string;
+  /** The hand/attached card the action names, or null. */
+  card: number | null;
+  /** The Pokémon in play the action names, or null. */
+  target: number | null;
 }
 
 export interface WireView {

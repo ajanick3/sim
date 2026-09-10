@@ -25,6 +25,14 @@ export class Game {
     free(): void;
     [Symbol.dispose](): void;
     /**
+     * What each legal action touches, index-aligned with `legal_actions`.
+     * Each entry is `{ kind, card, target }` — the `Action` variant's
+     * name, the `CardId` it names (or null), the `PokemonId` it names
+     * (or null). See ADR 0099. Actions this does not recognise still
+     * appear, with `card` and `target` both null.
+     */
+    action_meta(): string;
+    /**
      * Apply the action at `index` in the current `legal_actions` list.
      */
     apply(index: number): void;
@@ -78,6 +86,7 @@ export interface InitOutput {
     readonly __wbg_carddata_free: (a: number, b: number) => void;
     readonly __wbg_game_free: (a: number, b: number) => void;
     readonly carddata_new: (a: number, b: number) => [number, number, number];
+    readonly game_action_meta: (a: number) => [number, number];
     readonly game_apply: (a: number, b: number) => [number, number];
     readonly game_history: (a: number) => [number, number];
     readonly game_is_over: (a: number) => number;

@@ -4,6 +4,7 @@ export const memory: WebAssembly.Memory;
 export const __wbg_carddata_free: (a: number, b: number) => void;
 export const __wbg_game_free: (a: number, b: number) => void;
 export const carddata_new: (a: number, b: number) => [number, number, number];
+export const game_action_meta: (a: number) => [number, number];
 export const game_apply: (a: number, b: number) => [number, number];
 export const game_history: (a: number) => [number, number];
 export const game_is_over: (a: number) => number;

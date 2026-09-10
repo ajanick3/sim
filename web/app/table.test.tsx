@@ -142,6 +142,7 @@ describe("<Table> recipe wiring", () => {
 
 describe("<Mon> card shape", () => {
   const bare: WirePokemon = {
+    id: 0,
     name: "Pikachu",
     hp: 60,
     damage: 0,
@@ -150,6 +151,7 @@ describe("<Mon> card shape", () => {
     attached: [],
   };
   const loaded: WirePokemon = {
+    id: 1,
     name: "A Very Long Pokemon Name ex",
     hp: 340,
     damage: 120,

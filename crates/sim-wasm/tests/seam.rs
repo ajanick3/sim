@@ -11,6 +11,49 @@ fn a_new_synthetic_game_offers_legal_actions() {
 }
 
 #[test]
+fn action_meta_is_index_aligned_with_the_labels() {
+    let game = Game::synthetic(1);
+    let labels: Vec<String> = serde_json::from_str(&game.legal_actions()).unwrap();
+    let meta: Vec<serde_json::Value> = serde_json::from_str(&game.action_meta()).unwrap();
+    assert_eq!(meta.len(), labels.len(), "one meta entry per legal action");
+    for entry in &meta {
+        assert!(entry["kind"].is_string(), "every entry names its Action variant");
+        assert!(entry.get("card").is_some(), "every entry has a card slot");
+        assert!(entry.get("target").is_some(), "every entry has a target slot");
+    }
+}
+
+#[test]
+fn action_meta_names_the_card_a_place_action_plays() {
+    let game = Game::synthetic(1);
+    let labels: Vec<String> = serde_json::from_str(&game.legal_actions()).unwrap();
+    let meta: Vec<serde_json::Value> = serde_json::from_str(&game.action_meta()).unwrap();
+    let placing = labels.iter().position(|l| l.starts_with("Place") || l.starts_with("Bench"));
+    if let Some(i) = placing {
+        assert!(
+            meta[i]["card"].is_number(),
+            "a place/bench action reports the hand card it plays"
+        );
+    }
+}
+
+#[test]
+fn every_pokemon_in_view_carries_a_stable_id() {
+    let mut game = Game::synthetic(1);
+    // Get a Pokémon onto the board.
+    for _ in 0..40 {
+        if let Ok(()) = game.apply(0) {
+            let view: serde_json::Value = serde_json::from_str(&game.view()).unwrap();
+            let active = &view["sides"][0]["active"];
+            if active.is_object() {
+                assert!(active["id"].is_number(), "a Pokémon in view has a numeric id");
+                return;
+            }
+        }
+    }
+}
+
+#[test]
 fn apply_by_index_grows_the_log() {
     let mut game = Game::synthetic(1);
     let before: Vec<String> = serde_json::from_str(&game.log()).unwrap();

@@ -6,7 +6,7 @@
 //! under an ordinary `cargo test` on the host.
 
 use sim::GameState;
-use sim::action::{describe, legal_actions, player_to_act};
+use sim::action::{Action, describe, legal_actions, player_to_act};
 use sim::cards::{milestone1, starter_decklist};
 use sim::decklist;
 use sim::engine::apply;
@@ -138,6 +138,26 @@ impl Game {
         serde_json::to_string(&labels).expect("a list of strings serializes")
     }
 
+    /// What each legal action touches, index-aligned with `legal_actions`.
+    /// Each entry is `{ kind, card, target }` — the `Action` variant's
+    /// name, the `CardId` it names (or null), the `PokemonId` it names
+    /// (or null). See ADR 0099. Actions this does not recognise still
+    /// appear, with `card` and `target` both null.
+    pub fn action_meta(&self) -> String {
+        let meta: Vec<ActionMeta> = legal_actions(&self.state)
+            .iter()
+            .map(|action| {
+                let (card, target) = action_handles(*action);
+                ActionMeta {
+                    kind: action_kind(*action),
+                    card,
+                    target,
+                }
+            })
+            .collect();
+        serde_json::to_string(&meta).expect("the action meta serializes")
+    }
+
     /// Apply the action at `index` in the current `legal_actions` list.
     pub fn apply(&mut self, index: usize) -> Result<(), String> {
         self.apply_index(index as u32)
@@ -189,7 +209,53 @@ struct WireCard {
 }
 
 #[derive(Serialize)]
+struct ActionMeta {
+    kind: String,
+    card: Option<usize>,
+    target: Option<usize>,
+}
+
+/// The `Action` variant's name, from its `Debug` form — the same trick
+/// `phase_tag` uses. Exhaustive without a match to maintain.
+fn action_kind(action: Action) -> String {
+    let debug = format!("{action:?}");
+    debug
+        .split(|c: char| c.is_whitespace() || c == '{' || c == '(')
+        .next()
+        .unwrap_or("")
+        .to_string()
+}
+
+/// The `CardId` and `PokemonId` an action names, as numbers. Wired for
+/// the moves a player makes over the board on an ordinary turn; every
+/// other variant returns `(None, None)` and stays label-only (ADR 0099).
+fn action_handles(action: Action) -> (Option<usize>, Option<usize>) {
+    let card = |c: sim::ids::CardId| Some(c.index());
+    let mon = |p: sim::ids::PokemonId| Some(p.index());
+    match action {
+        Action::PlaceActive { card: c }
+        | Action::PlaceOnBench { card: c }
+        | Action::PlayBasic { card: c }
+        | Action::PlayTrainer { card: c }
+        | Action::TakeCard { card: c }
+        | Action::DiscardEnergy { card: c }
+        | Action::PayWithCard { card: c }
+        | Action::MoveEnergyToActive { card: c } => (card(c), None),
+        Action::Evolve { card: c, target: t }
+        | Action::AttachEnergy { card: c, target: t }
+        | Action::PlayTool { card: c, target: t }
+        | Action::TakeCardOnto { card: c, target: t }
+        | Action::MoveEnergy { card: c, target: t } => (card(c), mon(t)),
+        Action::Retreat { to } => (None, mon(to)),
+        Action::Promote { pokemon } => (None, mon(pokemon)),
+        Action::HealTarget { target } | Action::HealMegaEx { target } => (None, mon(target)),
+        _ => (None, None),
+    }
+}
+
+#[derive(Serialize)]
 struct WirePokemon {
+    id: usize,
     name: String,
     hp: u32,
     damage: u32,
@@ -233,6 +299,7 @@ fn wire_card(db: &CardDb, card: &sim::view::CardView) -> WireCard {
 
 fn wire_pokemon(db: &CardDb, pokemon: &sim::view::PokemonView) -> WirePokemon {
     WirePokemon {
+        id: pokemon.id.index(),
         name: pokemon.name.to_string(),
         hp: pokemon.hp,
         damage: pokemon.damage,
