@@ -1131,6 +1131,9 @@ function asDecision(actions: string[]): { kind: DecisionKind; verb: string } | n
   const body = actions.filter((l) => !isFinish(l));
   if (body.length === 0) return null;
   const test = (re: RegExp) => body.every((l) => re.test(l));
+  // The setup bonus draw is a yes / no, not a card to pick — asPrompt
+  // handles it.
+  if (test(/bonus card$/)) return null;
   if (test(/^Take /)) return { kind: "take", verb: "Choose cards to take" };
   if (test(/^Bench /)) return { kind: "take", verb: "Choose Pokémon to Bench" };
   if (test(/^Discard /)) return { kind: "discard", verb: "Choose cards to discard" };
@@ -1139,12 +1142,27 @@ function asDecision(actions: string[]): { kind: DecisionKind; verb: string } | n
   return null;
 }
 
-type Prompt = { verb: string; accepts: { label: string; index: number }[]; decline: number };
+type Prompt = {
+  verb: string;
+  accepts: { label: string; index: number }[];
+  decline: number;
+  declineLabel?: string;
+};
 
 /** A "may" Ability the engine is waiting on — the action set is one or
  *  more ways to use it plus a single "Decline …". Returns null when
  *  there is no "Decline …" line, so an ordinary turn is never caught. */
 function asPrompt(actions: string[]): Prompt | null {
+  // Setup: take the bonus cards the opponent's mulligans owe you.
+  const takeBonus = actions.indexOf("Take a bonus card");
+  if (takeBonus >= 0) {
+    return {
+      verb: "Take a bonus card?",
+      accepts: [{ label: "Take one", index: takeBonus }],
+      decline: actions.findIndex((a) => /^Take no more/.test(a)),
+      declineLabel: "No more",
+    };
+  }
   const decline = actions.findIndex((a) => /^Decline /.test(a));
   if (decline < 0) return null;
   const accepts = actions
@@ -1184,7 +1202,7 @@ function PromptBar({
         onClick={() => onAct(prompt.decline)}
         className="rounded-md px-4 py-1.5 text-dim disabled:opacity-50"
       >
-        Decline
+        {prompt.declineLabel ?? "Decline"}
       </button>
     </div>
   );
