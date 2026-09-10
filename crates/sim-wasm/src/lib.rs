@@ -8,11 +8,39 @@
 use sim::GameState;
 use sim::action::{describe, legal_actions, player_to_act};
 use sim::cards::{milestone1, starter_decklist};
+use sim::decklist;
 use sim::engine::apply;
-use sim::ids::PlayerId;
+use sim::ids::{CardDefId, PlayerId};
+use sim::import::{Import, load};
 use sim::rng::SeededRng;
 use sim::view::PlayerView;
 use wasm_bindgen::prelude::*;
+
+/// The card artifact, read once. Parsing and interning the 2 MB of card data
+/// is done here, so a page that starts many games pays it a single time.
+#[wasm_bindgen]
+pub struct CardData {
+    import: Import,
+}
+
+#[wasm_bindgen]
+impl CardData {
+    /// Read `data/cards.json`, passed in as a string.
+    pub fn new(cards_json: &str) -> Result<CardData, String> {
+        load(cards_json).map(|import| CardData { import })
+    }
+}
+
+impl CardData {
+    fn build_deck(&mut self, text: &str) -> Result<Vec<CardDefId>, String> {
+        let list = decklist::parse(text);
+        let report = decklist::check(&list, &self.import);
+        if !report.is_playable() {
+            return Err("decklist has a card the engine cannot play".to_string());
+        }
+        Ok(decklist::to_deck(&list, &report, &mut self.import))
+    }
+}
 
 /// One game, held open across calls.
 #[wasm_bindgen]
@@ -33,6 +61,24 @@ impl Game {
             Box::new(SeededRng::new(seed)),
         );
         Game { state }
+    }
+
+    /// A game of the Standard set. Each decklist is the text of a `.txt`
+    /// deck file. Both must be fully playable.
+    pub fn standard(
+        data: &mut CardData,
+        deck_a: &str,
+        deck_b: &str,
+        seed: u64,
+    ) -> Result<Game, String> {
+        let a = data.build_deck(deck_a)?;
+        let b = data.build_deck(deck_b)?;
+        let state = GameState::new(
+            data.import.db.clone(),
+            [a, b],
+            Box::new(SeededRng::new(seed)),
+        );
+        Ok(Game { state })
     }
 
     /// The legal actions right now, each as the text `describe` prints.
