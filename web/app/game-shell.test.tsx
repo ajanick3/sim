@@ -32,6 +32,7 @@ const gameStub = {
       phase: "Main",
       your_hand: [],
       stadium: null,
+      library_in_search: null,
       sides: [side(), side()],
     }),
   free: vi.fn(),

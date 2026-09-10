@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { fn } from "storybook/test";
-import { noArt, swatchArt, takeActions, takeMeta } from "./fixtures";
+import { card, noArt, swatchArt, takeActions, takeMeta } from "./fixtures";
 import { asDecision } from "./shared";
+import type { WireCard } from "../view";
 import { DecisionBar } from "./DecisionBar";
 
 const meta = {
@@ -41,5 +42,30 @@ export const Discard: Story = {
       { kind: "FinishDiscardingFromHand", card: null, target: null },
     ],
     decision: asDecision(["Discard Rare Candy", "Discard Ultra Ball", "Stop discarding"])!,
+  },
+};
+
+// A whole-library search: six cards in the deck, two of which this step
+// may take. The rest are drawn dimmed.
+const library: WireCard[] = [
+  card({ name: "Gardevoir ex", category: "pokemon", print_id: "p-gardevoir" }),
+  card({ name: "Kirlia", category: "pokemon", print_id: "p-kirlia" }),
+  card({ name: "Ralts", category: "pokemon", print_id: "p-ralts" }),
+  card({ name: "Iono", category: "supporter", print_id: "t-iono" }),
+  card({ name: "Ultra Ball", category: "item", print_id: "t-ultraball" }),
+  card({ name: "Psychic Energy", category: "energy", print_id: "e-psychic" }),
+];
+const takeActionsLib = ["Take Ralts", "Take Kirlia", "Stop searching"];
+
+export const WholeLibrary: Story = {
+  args: {
+    actions: takeActionsLib,
+    meta: [
+      { kind: "TakeCard", card: library[2].id, target: null },
+      { kind: "TakeCard", card: library[1].id, target: null },
+      { kind: "FinishDeciding", card: null, target: null },
+    ],
+    decision: asDecision(takeActionsLib)!,
+    library,
   },
 };

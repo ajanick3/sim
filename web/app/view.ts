@@ -61,5 +61,8 @@ export interface WireView {
   your_hand: WireCard[];
   /** The Stadium card in play, or null. */
   stadium: WireCard | null;
+  /** Your whole library, sorted, while you search the whole of it — null
+   *  otherwise. The picker dims the cards the current search cannot take. */
+  library_in_search: WireCard[] | null;
   sides: [WireSide, WireSide];
 }
