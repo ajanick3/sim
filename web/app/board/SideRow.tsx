@@ -20,6 +20,7 @@ export function SideRow({
   onPokemon,
   onPlaceBench,
   onViewDiscard,
+  hoverDropId = null,
 }: {
   side: WireSide;
   label: string;
@@ -31,6 +32,7 @@ export function SideRow({
   onPokemon: (id: number) => void;
   onPlaceBench?: () => void;
   onViewDiscard?: (cards: WireCard[], label: string) => void;
+  hoverDropId?: string | null;
 }) {
   // Five slots: the Pokémon on the Bench, then empty pads to fill.
   const slots = [...side.bench, ...Array(Math.max(0, 5 - side.bench.length)).fill(null)];
@@ -54,7 +56,7 @@ export function SideRow({
                 mon={m}
                 art={art}
                 small
-                {...monHooks(m, meta, selection, dropTargets, onPokemon)}
+                {...monHooks(m, meta, selection, dropTargets, onPokemon, false, hoverDropId)}
               />
             ) : (
               <LiveMon

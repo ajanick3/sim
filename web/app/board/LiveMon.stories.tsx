@@ -51,5 +51,8 @@ export const WithEnergyAndCondition: Story = {
 export const Selectable: Story = { args: { active: true, selectable: true } };
 export const Selected: Story = { args: { active: true, selectable: true, selected: true } };
 export const DropTarget: Story = { args: { selectable: true, dropTarget: true } };
+export const DropTargetHovered: Story = {
+  args: { selectable: true, dropTarget: true, hovered: true },
+};
 export const EmptyActive: Story = { args: { mon: null, active: true } };
 export const EmptyPlaceHere: Story = { args: { mon: null, small: true, placeHere: fn() } };

@@ -23,11 +23,13 @@ export type MonHooks = {
   selectable?: boolean;
   selected?: boolean;
   dropTarget?: boolean;
+  hovered?: boolean;
 };
 
 /** Wire a Pokémon card to the selection flow: tappable when a legal move
- *  names it (or `extraSelectable` forces it), ringed when selected, and
- *  a drop target when a held card can land on it. */
+ *  names it (or `extraSelectable` forces it), ringed when selected, a
+ *  drop target when a held card can land on it, and `hovered` when a
+ *  drag is over it right now. */
 export function monHooks(
   m: WirePokemon | null,
   meta: WireActionMeta[],
@@ -35,6 +37,7 @@ export function monHooks(
   dropTargets: Map<number, number>,
   onPokemon: (id: number) => void,
   extraSelectable = false,
+  hoverDropId: string | null = null,
 ): MonHooks {
   if (!m) return {};
   return {
@@ -42,6 +45,7 @@ export function monHooks(
     selectable: extraSelectable || meta.some((x) => x.target === m.id) || dropTargets.has(m.id),
     selected: selection?.kind === "pokemon" && selection.id === m.id,
     dropTarget: dropTargets.has(m.id),
+    hovered: hoverDropId === `mon:${m.id}`,
   };
 }
 
