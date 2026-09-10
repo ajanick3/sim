@@ -10,18 +10,20 @@
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 import { ActionPanel, CardArt, ENERGY_COLOR } from "./table";
-import {
-  COPY_COLORS,
-  copyBadges,
-  movesForSelection,
-  targetsForHandCard,
-  type Selection,
-} from "./session";
+import { movesForSelection, targetsForHandCard, type Selection } from "./session";
 import type { WireActionMeta, WireCard, WirePokemon, WireSide, WireView } from "./view";
 
 const SEAT_NAME = ["🥇", "🥈"];
 
 type Art = (printId: string) => string | null;
+
+/** A stable pseudo-random spot for a Pokémon's damage counter, as
+ *  `top` / `left` percentages over the illustration. Seeded by the
+ *  Pokémon's id so it stays put across renders. */
+function damageSpot(id: number): { top: string; left: string } {
+  const h = (id * 2654435761) >>> 0;
+  return { top: `${28 + (h % 30)}%`, left: `${24 + ((h >>> 8) % 44)}%` };
+}
 
 /** The face of a card in a tile: real art when there is any, a drawn
  *  Energy card for Basic Energy (TCGdex has no art for those), else the
@@ -116,6 +118,16 @@ export function LiveBoard({
     .map(({ i }) => ({ index: i, label: actions[i].replace(/^Attack:?\s*/, "") }));
   const activeSelected =
     selection?.kind === "pokemon" && mine.active != null && selection.id === mine.active.id;
+
+  // A selected Pokémon's usable Abilities — `UseAbility` now names its
+  // carrier as the target, so tapping the card brings them up.
+  const abilityMoves =
+    selection?.kind === "pokemon"
+      ? meta
+          .map((m, i) => ({ m, i }))
+          .filter(({ m }) => m.kind === "UseAbility" && m.target === selection.id)
+          .map(({ i }) => ({ index: i, label: actions[i].replace(/^Use .*?'s /, "") }))
+      : [];
 
   const decision = asDecision(actions);
   // A yes/no Ability prompt ("Use Psychic Draw" / "Decline Psychic
@@ -387,12 +399,30 @@ export function LiveBoard({
               <span className="text-dim">
                 {activeSelected && attackMoves.length > 0
                   ? "tap an attack on your Active"
-                  : only && only.length === 0
-                    ? "no move from here — tap away to cancel"
-                    : confirmIndex !== undefined
-                      ? "tap ✅ on the card to play it"
-                      : "tap a highlighted spot on the board"}
+                  : abilityMoves.length > 0
+                    ? "use its Ability, or tap away"
+                    : only && only.length === 0
+                      ? "no move from here — tap away to cancel"
+                      : confirmIndex !== undefined
+                        ? "tap ✅ on the card to play it"
+                        : "tap a highlighted spot on the board"}
               </span>
+            </div>
+          )}
+          {abilityMoves.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {abilityMoves.map((a) => (
+                <button
+                  key={a.index}
+                  type="button"
+                  data-keep-selection
+                  disabled={busy}
+                  onClick={() => onAct(a.index)}
+                  className="rounded-md border-accent bg-accent/15 px-3 py-1.5 text-[12px] font-bold text-accent disabled:opacity-50"
+                >
+                  ⚡ {a.label}
+                </button>
+              ))}
             </div>
           )}
           {/* The full list stays here as an escape hatch for phases that
@@ -494,7 +524,6 @@ function SideRow({
   onPokemon: (id: number) => void;
   onPlaceBench?: () => void;
 }) {
-  const badges = copyBadges(side.bench.map((m) => m?.name ?? null));
   // Five slots: the Pokémon on the Bench, then empty pads to fill.
   const slots = [...side.bench, ...Array(Math.max(0, 5 - side.bench.length)).fill(null)];
   return (
@@ -517,7 +546,6 @@ function SideRow({
                 mon={m}
                 art={art}
                 small
-                copy={badges[i]}
                 {...monHooks(m, meta, selection, dropTargets, onPokemon)}
               />
             ) : (
@@ -609,7 +637,6 @@ function LiveMon({
   mon,
   active = false,
   small = false,
-  copy,
   art,
   onSelect,
   selectable = false,
@@ -620,7 +647,6 @@ function LiveMon({
   mon: WirePokemon | null;
   active?: boolean;
   small?: boolean;
-  copy?: number;
   art: Art;
   onSelect?: () => void;
   selectable?: boolean;
@@ -688,7 +714,7 @@ function LiveMon({
         <span className="relative z-10 p-1 text-[9px] font-semibold leading-tight">{mon.name}</span>
       )}
 
-      {/* HP pill — top-left on the Active so it clears the damage coin. */}
+      {/* HP pill — top-left. */}
       <span
         className={`absolute top-0.5 z-10 rounded bg-black/75 px-1 text-[9px] font-bold ${
           active ? "left-0.5" : "right-0.5"
@@ -696,23 +722,17 @@ function LiveMon({
       >
         {mon.hp}
       </span>
-      {/* Damage: a coin at the top-right of the image on the Active,
-          a small chip on a Bench card. */}
-      {mon.damage > 0 &&
-        (active ? (
-          <span className="absolute right-0.5 top-0.5 z-10 grid size-7 place-items-center rounded-full border-2 border-black/40 bg-orange-500 text-[11px] font-black text-black shadow-md">
-            {mon.damage}
-          </span>
-        ) : (
-          <span className="absolute right-0.5 top-4 z-10 rounded-full bg-orange-500 px-1 text-[9px] font-bold text-black">
-            {mon.damage}
-          </span>
-        ))}
-      {copy !== undefined && (
+      {/* Damage counter: a coin dropped on the illustration, its spot
+          fixed per Pokémon so it does not jump between renders. */}
+      {mon.damage > 0 && (
         <span
-          className="absolute left-0.5 top-0.5 z-10 size-2 rounded-full"
-          style={{ background: COPY_COLORS[copy % COPY_COLORS.length] }}
-        />
+          className={`absolute z-10 grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-black/50 bg-orange-500 font-black text-black shadow-[0_2px_5px_rgba(0,0,0,0.6)] ${
+            active ? "size-11 text-base" : "size-6 text-[10px]"
+          }`}
+          style={damageSpot(mon.id)}
+        >
+          {mon.damage}
+        </span>
       )}
 
       {/* Energy row, bottom-centre. */}
