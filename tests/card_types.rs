@@ -125,7 +125,7 @@ fn the_kinds_add_up_to_the_pool() {
     // Prism Energy (two prints), taking this from 21 to 12.
     // The standard-trainers effort's type-plus-rider Special Energy
     // (Rocky Fighting, Magnetic Metal, Bubbly Water) take this to 9.
-    assert_eq!(count(Refusal::IsASpecialEnergy), 7, "every Energy card");
+    assert_eq!(count(Refusal::IsASpecialEnergy), 6, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
         0,

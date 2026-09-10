@@ -1864,6 +1864,12 @@ pub enum EnergyEffect {
     /// alongside the attacker's Tool bonuses. `Voltaic Lightning
     /// Energy`.
     CarrierAttacksHitOpponentActiveHarder(u32),
+    /// A standing effect, not a choice: while the carrier sits on its
+    /// owner's Bench, no attack from the opponent's Pokémon does damage
+    /// to it — but only while the carrier's own type matches the type
+    /// this card provides. Read by `bench_attack_damage_blocked`.
+    /// `Shadowy Darkness Energy`.
+    PreventsBenchDamageWhileCarrierTypeMatches,
 }
 
 #[derive(Debug, Clone)]

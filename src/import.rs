@@ -1733,6 +1733,9 @@ fn known_energy(name: &str) -> Option<(Type, crate::card::EnergyEffect)> {
         "Voltaic Lightning Energy" => {
             (Type::Lightning, crate::card::EnergyEffect::CarrierAttacksHitOpponentActiveHarder(20))
         }
+        "Shadowy Darkness Energy" => {
+            (Type::Darkness, crate::card::EnergyEffect::PreventsBenchDamageWhileCarrierTypeMatches)
+        }
         _ => return None,
     })
 }
