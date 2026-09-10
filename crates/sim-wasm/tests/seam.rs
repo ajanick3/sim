@@ -136,7 +136,19 @@ fn action_meta_carries_a_face_for_every_card_it_names() {
 
 #[test]
 fn a_targeted_action_names_a_pokemon_in_view() {
-    let targeted = ["Retreat", "Promote", "UseAbility", "Evolve", "AttachEnergy", "HealTarget"];
+    let targeted = [
+        "Retreat",
+        "Promote",
+        "UseAbility",
+        "Evolve",
+        "AttachEnergy",
+        "HealTarget",
+        // Phantom Dive's damage counters, and the plain bench-damage
+        // shape it shares with cards like it: both name only a Bench
+        // Pokémon, so the board can offer them as a tap with no card.
+        "PlaceDamageCounter",
+        "DamageBenchedPokemon",
+    ];
     let mut game = Game::synthetic(3);
     for _ in 0..60 {
         let meta: Vec<serde_json::Value> = serde_json::from_str(&game.action_meta()).unwrap();
