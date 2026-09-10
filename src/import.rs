@@ -381,6 +381,11 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Hole-Digging Shovel" => (free, TrainerEffect::DiscardTopOfDeck(2)),
         "Maximum Belt" => (free, TrainerEffect::BonusDamageVsActiveEx(50)),
         "Sacred Charm" => (free, TrainerEffect::ReducesDamageFromAbilityHolders(30)),
+        "Lively Stadium" => (free, TrainerEffect::StadiumBoostsBasicHp(30)),
+        "Full Metal Lab" => (
+            free,
+            TrainerEffect::StadiumReducesDamageToType { kind: Type::Metal, amount: 30 },
+        ),
         "Babiri Berry" => (
             free,
             TrainerEffect::ReducesDamageFromType { kind: Type::Metal, amount: 60 },

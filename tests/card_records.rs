@@ -298,5 +298,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // take it to 882.
     // Maximum Belt (`BonusDamageVsActiveEx`, an attacker Tool) and Sacred
     // Charm (`ReducesDamageFromAbilityHolders`, a defender Tool) take it to 886.
-    assert_eq!(admitted, 886, "coverage moves only on purpose");
+    // Lively Stadium (`StadiumBoostsBasicHp`) and Full Metal Lab
+    // (`StadiumReducesDamageToType`) — static Stadium reads in
+    // `effective_hp` and `damage_dealt_with` — take it to 888.
+    assert_eq!(admitted, 888, "coverage moves only on purpose");
 }

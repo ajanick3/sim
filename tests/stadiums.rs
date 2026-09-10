@@ -1467,3 +1467,101 @@ fn team_rockets_watchtower_is_admitted_from_the_artifact() {
         "Team Rocket's Watchtower should play"
     );
 }
+
+// --- Beyond the field: static damage / HP Stadiums ---
+
+fn plain_stadium(db: &mut CardDb, print_id: &'static str, name: &'static str, effect: TrainerEffect) -> CardDefId {
+    db.add(CardDef::Trainer(Trainer {
+        print_id,
+        name,
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect,
+    }))
+}
+
+#[test]
+fn lively_stadium_gives_every_basic_thirty_more_hp() {
+    let mut set = build();
+    let lively = plain_stadium(&mut set.db, "test-lively", "Lively Stadium", TrainerEffect::StadiumBoostsBasicHp(30));
+    let mut state = game(&set, lively, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let played = ensure_in_hand(&mut state, player, lively);
+
+    let my_basic = state.player(player).active.unwrap();
+    let their_basic = state.player(opponent).active.unwrap();
+    let evo = deal_new_card(&mut state, player, set.stage2);
+    let evo_mon = state.put_into_play(player, evo);
+    state.players[player.index()].bench.push(evo_mon);
+
+    let my_before = state.pokemon_def(my_basic).hp;
+    let evo_before = state.effective_hp(evo_mon);
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert_eq!(state.effective_hp(my_basic), my_before + 30);
+    assert_eq!(state.effective_hp(their_basic), state.pokemon_def(their_basic).hp + 30);
+    assert_eq!(state.effective_hp(evo_mon), evo_before, "not a Basic");
+}
+
+#[test]
+fn full_metal_lab_softens_attacks_against_metal_pokemon_both_sides() {
+    let mut set = build();
+    let lab = plain_stadium(
+        &mut set.db,
+        "test-full-metal-lab",
+        "Full Metal Lab",
+        TrainerEffect::StadiumReducesDamageToType { kind: Type::Metal, amount: 30 },
+    );
+    let metal_mon = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-fml-metal",
+        name: "Ironmon",
+        hp: 150,
+        kind: Type::Metal,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack { name: "Tap", cost: vec![Type::Colorless], base_damage: 10, inflicts: None, effect: None }],
+    }));
+    let mut state = game(&set, lab, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+    let played = ensure_in_hand(&mut state, attacker_player, lab);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    // Give the defender a Metal Active, then attack it.
+    let d_card = deal_new_card(&mut state, defender_player, metal_mon);
+    let d = state.put_into_play(defender_player, d_card);
+    state.players[defender_player.index()].active = Some(d);
+
+    let attacker = state.player(attacker_player).active.unwrap();
+    let energy = state.player(attacker_player).library.iter().find(|c| state.def_of(**c).is_energy()).copied().unwrap();
+    state.players[attacker_player.index()].library.retain(|c| *c != energy);
+    state.pokemon[attacker.index()].attached.push(energy);
+    let attack = legal_actions(&state).into_iter().find(|a| matches!(a, Action::Attack { .. })).unwrap();
+    apply(&mut state, attack).unwrap();
+
+    // Fixture attacker's Tackle is 10; Full Metal Lab floors it to 0.
+    assert_eq!(state.pokemon(d).damage, 0);
+}
+
+#[test]
+fn the_static_stadiums_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Lively Stadium", "Full Metal Lab"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}

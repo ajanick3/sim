@@ -1065,7 +1065,15 @@ impl GameState {
             }
             _ => 0,
         };
-        (printed + bonus + energy_bonus).saturating_sub(stadium_reduction)
+        let stadium_bonus = match self.stadium_effect() {
+            Some(crate::card::TrainerEffect::StadiumBoostsBasicHp(amount))
+                if self.pokemon_def(id).stage == crate::card::Stage::Basic =>
+            {
+                amount
+            }
+            _ => 0,
+        };
+        (printed + bonus + energy_bonus + stadium_bonus).saturating_sub(stadium_reduction)
     }
 
     pub fn remaining_hp(&self, id: PokemonId) -> u32 {
