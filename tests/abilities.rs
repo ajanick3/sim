@@ -4497,3 +4497,59 @@ fn toxic_subjugation_does_nothing_once_benched() {
         "the carrier is Benched, so only the ordinary 1 Poison counter lands"
     );
 }
+
+// --- ADR 0097: a once-per-turn Ability is limited per Pokémon ---
+
+/// Two Pokémon carrying the same plain "Once during your turn" Ability
+/// each get their own use. Keying the limit by name alone let the first
+/// spend it for the second — the bug that blocked stacked `Drakloak`.
+#[test]
+fn two_carriers_each_get_their_own_once_per_turn_use() {
+    let ability = Ability {
+        name: "Recon Directive",
+        effect: sim::card::AbilityEffect::OncePerTurnIfKnockedOutLastTurnMayDrawCards(2),
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    state.knocked_out_last_turn[player.index()] = true;
+
+    let active = state.player(player).active.unwrap();
+    let card = deal_new_card(&mut state, player, carrier_def);
+    let benched = state.put_into_play(player, card);
+    state.players[player.index()].bench.push(benched);
+
+    let before = state.player(player).hand.len();
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+    apply(&mut state, Action::UseAbility { pokemon: benched }).unwrap();
+    assert_eq!(
+        state.player(player).hand.len(),
+        before + 4,
+        "each carrier drew its own two"
+    );
+
+    let again = apply(&mut state, Action::UseAbility { pokemon: active });
+    assert!(again.is_err(), "the same carrier cannot go twice");
+}
+
+/// The four cards printing "You can't use more than 1 [Name] Ability
+/// each turn" keep the name-wide limit: a second copy is spent by the
+/// first.
+#[test]
+fn a_name_scoped_ability_is_spent_across_copies() {
+    let ability = Ability {
+        name: "Flip the Script",
+        effect: sim::card::AbilityEffect::OncePerTurnIfKnockedOutLastTurnMayDrawCards(3),
+    };
+    let (mut state, carrier_def) = game(ability, 3);
+    let player = state.current;
+    state.knocked_out_last_turn[player.index()] = true;
+
+    let active = state.player(player).active.unwrap();
+    let card = deal_new_card(&mut state, player, carrier_def);
+    let benched = state.put_into_play(player, card);
+    state.players[player.index()].bench.push(benched);
+
+    apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
+    let second = apply(&mut state, Action::UseAbility { pokemon: benched });
+    assert!(second.is_err(), "one Flip the Script a turn, across every copy");
+}
