@@ -1,4 +1,4 @@
-// Pure helpers and shared types for the /live board components.
+// Pure helpers and shared types for the board components.
 
 import type { Selection } from "../session";
 import type { WireActionMeta, WireCard, WirePokemon } from "../view";
@@ -98,9 +98,10 @@ export function asDecision(actions: string[]): { kind: DecisionKind; verb: strin
   if (test(/bonus card$/)) return null;
   if (test(/^Take /)) return { kind: "take", verb: "Choose cards to take" };
   if (test(/^Bench /)) return { kind: "take", verb: "Choose Pokémon to Bench" };
+  // Before the plain "Discard …" test, which would otherwise swallow it.
+  if (test(/^Discard .* to pay/)) return { kind: "pay", verb: "Discard to pay the cost" };
   if (test(/^Discard /)) return { kind: "discard", verb: "Choose cards to discard" };
   if (test(/^Choose /)) return { kind: "choose", verb: "Make a choice" };
-  if (test(/^Discard .* to pay/)) return { kind: "pay", verb: "Discard to pay the cost" };
   return null;
 }
 
