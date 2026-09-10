@@ -3188,6 +3188,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::DamagesAttackerWhenDefenderIsHit(_)
         | TrainerEffect::DrawsWhenDefenderIsHit(_)
         | TrainerEffect::ReducesDamageFromType { .. }
+        | TrainerEffect::BonusDamageVsActiveEx(_)
+        | TrainerEffect::ReducesDamageFromAbilityHolders(_)
         | TrainerEffect::MovesEnergyFromAttackerToTheirBench
         | TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd => {
             unreachable!(
@@ -4658,6 +4660,11 @@ fn damage_dealt_with(
             {
                 damage += bonus;
             }
+            crate::card::TrainerEffect::BonusDamageVsActiveEx(bonus)
+                if state.pokemon_def(defender).prizes > 1 =>
+            {
+                damage += bonus;
+            }
             _ => {}
         }
     }
@@ -4711,12 +4718,20 @@ fn damage_dealt_with(
     // per the printed text. `Jamming Tower` turns Tool reads off.
     if !state.tools_disabled() {
         let attacker_type = state.pokemon_def(attacker).kind;
+        let attacker_has_ability = state.pokemon_def(attacker).ability.is_some();
         for tool in &state.pokemon(defender).attached {
-            if let Some(&crate::card::TrainerEffect::ReducesDamageFromType { kind, amount }) =
-                state.def_of(*tool).as_trainer().map(|t| &t.effect)
-                && kind == attacker_type
-            {
-                damage = damage.saturating_sub(amount);
+            match state.def_of(*tool).as_trainer().map(|t| &t.effect) {
+                Some(&crate::card::TrainerEffect::ReducesDamageFromType { kind, amount })
+                    if kind == attacker_type =>
+                {
+                    damage = damage.saturating_sub(amount);
+                }
+                Some(&crate::card::TrainerEffect::ReducesDamageFromAbilityHolders(amount))
+                    if attacker_has_ability =>
+                {
+                    damage = damage.saturating_sub(amount);
+                }
+                _ => {}
             }
         }
     }

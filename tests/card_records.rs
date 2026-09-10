@@ -296,5 +296,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Passho, Payapa, Haban) — a `ReducesDamageFromType` read for the
     // defender in `damage_dealt_with`, after Weakness and Resistance —
     // take it to 882.
-    assert_eq!(admitted, 882, "coverage moves only on purpose");
+    // Maximum Belt (`BonusDamageVsActiveEx`, an attacker Tool) and Sacred
+    // Charm (`ReducesDamageFromAbilityHolders`, a defender Tool) take it to 886.
+    assert_eq!(admitted, 886, "coverage moves only on purpose");
 }

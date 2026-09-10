@@ -111,7 +111,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Hole-Digging Shovel, Repel, and Brilliant Blender take it to 185.
     // Dangerous Laser and Dark Bell take it to 182.
     // The six "-Berry" Tools take it to 176.
-    assert_eq!(trainers, 176, "the Trainers still refused, by kind");
+    // Maximum Belt and Sacred Charm take it to 172.
+    assert_eq!(trainers, 172, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

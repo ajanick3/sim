@@ -1022,3 +1022,100 @@ fn the_berry_tools_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: conditional-damage Tools ---
+
+#[test]
+fn maximum_belt_adds_fifty_when_the_defender_is_an_ex() {
+    let mut set = build();
+    let belt = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-maximum-belt",
+        name: "Maximum Belt",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::BonusDamageVsActiveEx(50),
+    }));
+    let mut state = game(&set, belt, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+    let attacker = state.player(attacker_player).active.unwrap();
+
+    // Swap the defender's Active for an ex (two Prizes).
+    let ex_card = deal_new_card(&mut state, defender_player, set.mon_ex);
+    let ex = state.put_into_play(defender_player, ex_card);
+    state.players[defender_player.index()].active = Some(ex);
+
+    let tool = deal_new_card(&mut state, attacker_player, belt);
+    state.pokemon[attacker.index()].attached.push(tool);
+
+    pay_and_attack(&mut state, attacker_player);
+
+    // The fixture attacker's Tackle is 10; +50 for the ex defender.
+    assert_eq!(state.pokemon(ex).damage, 60);
+}
+
+#[test]
+fn sacred_charm_softens_an_attack_from_a_pokemon_with_an_ability() {
+    let mut set = build();
+    let charm = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-sacred-charm",
+        name: "Sacred Charm",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::ReducesDamageFromAbilityHolders(30),
+    }));
+    let ability_attacker = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-ability-attacker",
+        name: "Aurabreaker",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: Some(sim::card::Ability {
+            name: "Aura",
+            effect: sim::card::AbilityEffect::PassiveOwnBasicPokemonHaveNoRetreatCost,
+        }),
+        attacks: vec![Attack {
+            name: "Blast",
+            cost: vec![Type::Colorless],
+            base_damage: 80,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let mut state = game(&set, charm, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+
+    let atk_card = deal_new_card(&mut state, attacker_player, ability_attacker);
+    let atk = state.put_into_play(attacker_player, atk_card);
+    state.players[attacker_player.index()].active = Some(atk);
+
+    let defender = state.player(defender_player).active.unwrap();
+    let tool = deal_new_card(&mut state, defender_player, charm);
+    state.pokemon[defender.index()].attached.push(tool);
+
+    pay_and_attack(&mut state, attacker_player);
+
+    assert_eq!(state.pokemon(defender).damage, 50, "80 - 30");
+}
+
+#[test]
+fn the_conditional_damage_tools_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Maximum Belt", "Sacred Charm"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
