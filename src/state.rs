@@ -986,6 +986,35 @@ impl GameState {
         self.db.get(self.cards[card.index()].def)
     }
 
+    /// The player looking through their whole own library right now, if the
+    /// phase is such a search. The board shows that player every card in the
+    /// library, not only the cards the search can take, so they see what it
+    /// cannot reach. A search that reads only the top few cards (a `peek`)
+    /// is left out: showing the rest would leak the order the view hides.
+    pub fn whole_library_search(&self) -> Option<PlayerId> {
+        match self.phase {
+            Phase::SearchingLibraryForBasics { player, .. }
+            | Phase::SearchingLibraryForBasicsOfType { player, .. }
+            | Phase::SearchingLibraryForItem { player }
+            | Phase::SearchingLibraryForAnyCards { player, .. }
+            | Phase::SearchingLibraryToEvolveSelf { player, .. }
+            | Phase::SearchingLibraryForTrainerCards { player, .. }
+            | Phase::SearchingLibraryForPokemonOfTypeOrStadium { player, .. }
+            | Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. }
+            | Phase::SearchingLibraryForAnyCardAbility { player, .. }
+            | Phase::SearchingForFanCall { player, .. }
+            | Phase::SearchingForSinisterSurgeTarget { player, .. }
+            | Phase::SearchingEnergyOfTypeToAttachToChosen { player, .. } => Some(player),
+            Phase::Deciding {
+                chooser,
+                from: crate::card::Zone::Library,
+                peek: None,
+                ..
+            } => Some(chooser),
+            _ => None,
+        }
+    }
+
     pub fn pokemon_def(&self, pokemon: PokemonId) -> &Pokemon {
         self.def_of(self.pokemon[pokemon.index()].top_card())
             .as_pokemon()

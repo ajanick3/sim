@@ -326,6 +326,10 @@ struct WireView {
     your_hand: Vec<WireCard>,
     /// The Stadium card in play, or null.
     stadium: Option<WireCard>,
+    /// Every card in your own library, sorted, while you search the whole
+    /// of it — null otherwise. The board dims the cards this search cannot
+    /// take. See ADR 0101.
+    library_in_search: Option<Vec<WireCard>>,
     sides: [WireSide; 2],
 }
 
@@ -395,6 +399,10 @@ fn wire_view(db: &CardDb, view: &PlayerView) -> WireView {
         phase: phase_tag(view),
         your_hand: view.your_hand.iter().map(|c| wire_card(db, c)).collect(),
         stadium: view.stadium.as_ref().map(|c| wire_card(db, c)),
+        library_in_search: view
+            .library_in_search
+            .as_ref()
+            .map(|cards| cards.iter().map(|c| wire_card(db, c)).collect()),
         sides: [
             wire_side(db, view.side(PlayerId::One)),
             wire_side(db, view.side(PlayerId::Two)),
