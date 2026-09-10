@@ -2966,6 +2966,23 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::DiscardTopOfDeck(count) => {
+            for _ in 0..count {
+                let Some(top) = state.players[player.index()].library.pop() else {
+                    break;
+                };
+                state.players[player.index()].discard.push(top);
+            }
+        }
+
+        TrainerEffect::SwitchOutOpponentActive => {
+            state.phase = Phase::Promoting {
+                of: player.opponent(),
+                chooser: player.opponent(),
+                then: None,
+            };
+        }
+
         TrainerEffect::ShuffleHandThenCoinFlipDraw { heads, tails } => {
             shuffle_hand_into_library(state, player);
             let count = if state.rng.flip() { heads } else { tails };
