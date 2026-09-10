@@ -93,12 +93,8 @@ export function LiveMon({
         <span className="relative z-10 p-1 text-[9px] font-semibold leading-tight">{mon.name}</span>
       )}
 
-      {/* HP pill — top-left. */}
-      <span
-        className={`absolute top-0.5 z-10 rounded bg-black/75 px-1 text-[9px] font-bold ${
-          active ? "left-0.5" : "right-0.5"
-        }`}
-      >
+      {/* HP pill — top-right, where a card prints it. */}
+      <span className="absolute right-0.5 top-0.5 z-10 rounded bg-black/75 px-1 text-[9px] font-bold">
         {mon.hp}
       </span>
       {/* Damage counter: a coin dropped on the illustration, its spot
@@ -114,21 +110,24 @@ export function LiveMon({
         </span>
       )}
 
-      {/* Energy row, bottom-centre — one type icon per attached Energy. */}
-      <span className="absolute inset-x-0 bottom-0.5 z-10 flex justify-center gap-[3px]">
-        {energies.map((c) => {
-          const kind = energyKind(c.energy_type);
-          return kind ? (
-            <EnergyIcon key={c.id} kind={kind} size={11} decorative />
-          ) : (
-            <span
-              key={c.id}
-              title={`${c.energy_type} Energy`}
-              className="size-2 rounded-full border border-black/50 bg-dim"
-            />
-          );
-        })}
-      </span>
+      {/* Energy — bottom-right, always full strength however the card
+          reads, on a dark pill so the icons stay bright over any art. */}
+      {energies.length > 0 && (
+        <span className="absolute bottom-0.5 right-0.5 z-20 flex gap-0.5 rounded-full bg-black/45 px-1 py-0.5 opacity-100">
+          {energies.map((c) => {
+            const kind = energyKind(c.energy_type);
+            return kind ? (
+              <EnergyIcon key={c.id} kind={kind} size={14} decorative />
+            ) : (
+              <span
+                key={c.id}
+                title={`${c.energy_type} Energy`}
+                className="size-2.5 rounded-full border border-black/50 bg-dim"
+              />
+            );
+          })}
+        </span>
+      )}
 
       {mon.conditions.length > 0 && (
         <span className="absolute inset-x-0 top-1/2 z-10 bg-black/60 text-center text-[8px] text-warn">
