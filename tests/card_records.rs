@@ -315,5 +315,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // The next-turn side shields — Jasmine's Gaze, Iron Defender,
     // Roxie's Performance (`GrantSideShieldNextTurn`, ADR 0098; a new
     // `side_shield_next_turn` state field) — take it to 910.
-    assert_eq!(admitted, 910, "coverage moves only on purpose");
+    // Lumiose Galette (`HealActiveAndClearConditions`) and Dragon Elixir
+    // (a `HealChosenPlain` restricted to Dragon) take it to 912.
+    assert_eq!(admitted, 912, "coverage moves only on purpose");
 }

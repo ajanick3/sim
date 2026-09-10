@@ -1832,3 +1832,36 @@ fn the_marker_cards_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: more heal Items ---
+
+#[test]
+fn lumiose_galette_heals_the_active_and_clears_its_condition() {
+    let mut set = build();
+    let galette = plain_item(&mut set.db, "test-lumiose-galette", "Lumiose Galette", TrainerEffect::HealActiveAndClearConditions(20));
+    let mut state = game(&set, galette, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    state.pokemon[active.index()].damage = 50;
+    state.inflict(active, sim::card::Condition::Asleep);
+    let card = ensure_in_hand(&mut state, player, galette);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.pokemon(active).damage, 30);
+    assert!(state.pokemon(active).conditions.is_empty());
+}
+
+#[test]
+fn the_more_heal_items_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Lumiose Galette", "Dragon Elixir"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}

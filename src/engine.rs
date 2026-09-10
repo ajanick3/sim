@@ -3150,6 +3150,14 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             };
         }
 
+        TrainerEffect::HealActiveAndClearConditions(amount) => {
+            if let Some(active) = state.player(player).active {
+                state.pokemon[active.index()].damage =
+                    state.pokemon(active).damage.saturating_sub(amount);
+                state.clear_conditions(active);
+            }
+        }
+
         TrainerEffect::HealChosenPlain { amount, of_type } => {
             state.phase = Phase::HealingChosen {
                 player,

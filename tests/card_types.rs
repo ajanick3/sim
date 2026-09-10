@@ -117,7 +117,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Poké Ball, Rescue Board, and Gravity Gemstone take it to 159.
     // Awakening Drum, Reboot Pod, and Perilous Jungle take it to 156.
     // Jasmine's Gaze, Iron Defender, and Roxie's Performance take it to 148.
-    assert_eq!(trainers, 148, "the Trainers still refused, by kind");
+    // Lumiose Galette and Dragon Elixir take it to 146.
+    assert_eq!(trainers, 146, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and
