@@ -92,6 +92,8 @@ export function LiveBoard({
   const mine = view.sides[you];
   const opp = view.sides[you === 1 ? 0 : 1];
   const endTurn = meta.findIndex((m) => m.kind === "EndTurn");
+  // Setup: once the Bench is as the player wants it, this ends placing.
+  const finishPlacing = meta.findIndex((m) => m.kind === "FinishPlacing");
   const [showLog, setShowLog] = useState(false);
   const [showRail, setShowRail] = useState(true);
   const [discardView, setDiscardView] = useState<{ label: string; cards: WireCard[] } | null>(null);
@@ -279,10 +281,10 @@ export function LiveBoard({
   const dragSrc = dragCard ? art(dragCard.print_id) : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-1 pt-1">
-      <div className="flex min-h-0 flex-1 gap-2">
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-edge bg-felt p-2">
-          <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+    <div className="mt-3">
+      <div className="flex gap-2">
+        <div className="min-w-0 flex-1 rounded-xl border border-edge bg-felt p-2">
+          <div className="flex flex-col gap-1">
             <SideRow
               side={opp}
               label={`${SEAT_NAME[opp.player]} Opponent`}
@@ -416,7 +418,18 @@ export function LiveBoard({
         </button>
       )}
 
-      <div className="shrink-0">
+      {finishPlacing >= 0 && (
+        <button
+          type="button"
+          onClick={() => onAct(finishPlacing)}
+          disabled={busy}
+          className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full border-accent bg-accent px-7 py-3 text-sm font-bold text-black shadow-[0_10px_28px_rgba(0,0,0,0.55)] disabled:opacity-50"
+        >
+          ✓ Done placing
+        </button>
+      )}
+
+      <div>
         {firstTurn ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
             <div className="w-full max-w-md rounded-xl border border-edge bg-bg p-6 text-center">
@@ -980,7 +993,7 @@ function HandStrip({
   };
 
   return (
-    <div className="mt-1 shrink-0 rounded-lg border-2 border-cyan-400/60 p-1">
+    <div className="mt-1 rounded-lg border-2 border-cyan-400/60 p-1">
       <div className="mb-1 text-[10px] uppercase tracking-widest text-dim">
         Hand ({hand.length})
       </div>
