@@ -2889,14 +2889,14 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         }
 
         TrainerEffect::CoinFlipDraw { heads, tails } => {
-            let count = if state.rng.flip() { heads } else { tails };
+            let count = if state.flip_for(player) { heads } else { tails };
             for _ in 0..count {
                 state.draw(player);
             }
         }
 
         TrainerEffect::CoinFlipThen(inner) => {
-            if state.rng.flip() {
+            if state.flip_for(player) {
                 resolve_trainer(state, player, card, *inner);
             }
         }
@@ -3057,7 +3057,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::ShuffleHandThenCoinFlipDraw { heads, tails } => {
             shuffle_hand_into_library(state, player);
-            let count = if state.rng.flip() { heads } else { tails };
+            let count = if state.flip_for(player) { heads } else { tails };
             for _ in 0..count {
                 state.draw(player);
             }
@@ -3071,7 +3071,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         } => {
             shuffle_hand_into_library(state, player);
             shuffle_hand_into_library(state, player.opponent());
-            let heads = state.rng.flip();
+            let heads = state.flip_for(player);
             let (mine, theirs) = if heads {
                 (you_heads, opponent_heads)
             } else {
@@ -3316,7 +3316,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             // The flip is the effect, so it happens with no target in
             // play — the card is still legal to play. Heads only opens
             // the discard where there is an Energy to discard.
-            if state.rng.flip() && state.has_energy_in_play(player.opponent()) {
+            if state.flip_for(player) && state.has_energy_in_play(player.opponent()) {
                 state.phase = Phase::DiscardingOpponentEnergy {
                     chooser: player,
                     of: player.opponent(),
@@ -3500,7 +3500,8 @@ fn attack(state: &mut GameState, index: usize) {
 
     // Rule 30: Confusion flips before the attack happens. Rule 52: on tails
     // the attack does not happen and 3 damage counters go on your own Pokémon.
-    if state.has_condition(attacker, Condition::Confused) && !state.rng.flip() {
+    let attacker_side = state.pokemon(attacker).owner;
+    if state.has_condition(attacker, Condition::Confused) && !state.flip_for(attacker_side) {
         state.pokemon[attacker.index()].damage += 30;
         let name = state.pokemon_def(attacker).name;
         state
@@ -3588,23 +3589,24 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
             state.players[opponent.index()].discard.push(tool);
         }
     }
+    let flipper = state.pokemon(attacker).owner;
     let base = match attack.effect {
         Some(crate::card::AttackEffect::DamagePerCount(count, per_unit)) => {
             count_for_attack(state, attacker, defender, count) * per_unit
         }
         Some(crate::card::AttackEffect::DamagePerCoinFlipHeads { flips, per_head }) => {
-            let heads = (0..flips).filter(|_| state.rng.flip()).count() as u32;
+            let heads = (0..flips).filter(|_| state.flip_for(flipper)).count() as u32;
             heads * per_head
         }
         Some(crate::card::AttackEffect::DamagePerCoinFlipUntilTails(per_head)) => {
             let mut heads = 0;
-            while state.rng.flip() {
+            while state.flip_for(flipper) {
                 heads += 1;
             }
             attack.base_damage + heads * per_head
         }
         Some(crate::card::AttackEffect::CoinFlipBonusDamage(bonus)) => {
-            if state.rng.flip() {
+            if state.flip_for(flipper) {
                 attack.base_damage + bonus
             } else {
                 attack.base_damage
@@ -3805,6 +3807,7 @@ fn resolve_attack_effect(
     effect: crate::card::AttackEffect,
     attack_name: &'static str,
 ) {
+    let flipper = state.pokemon(attacker).owner;
     match effect {
         crate::card::AttackEffect::Recoil(amount) => {
             state.pokemon[attacker.index()].damage += amount;
@@ -3846,14 +3849,14 @@ fn resolve_attack_effect(
             state.attacking_defender = Some(defender);
         }
         crate::card::AttackEffect::CoinFlipInflicts(condition) => {
-            if state.rng.flip() && !state.attack_effects_on_it_prevented(defender) {
+            if state.flip_for(flipper) && !state.attack_effects_on_it_prevented(defender) {
                 state.inflict(defender, condition);
                 let name = state.pokemon_def(defender).name;
                 state.log.push(format!("{name} is now {condition:?}."));
             }
         }
         crate::card::AttackEffect::CoinFlipInflictsAndDiscardsDefenderEnergy(condition) => {
-            if state.rng.flip() && !state.attack_effects_on_it_prevented(defender) {
+            if state.flip_for(flipper) && !state.attack_effects_on_it_prevented(defender) {
                 state.inflict(defender, condition);
                 let name = state.pokemon_def(defender).name;
                 state.log.push(format!("{name} is now {condition:?}."));
@@ -3867,7 +3870,7 @@ fn resolve_attack_effect(
             }
         }
         crate::card::AttackEffect::CoinFlipDiscardsDefenderEnergy => {
-            if state.rng.flip() && !state.pokemon(defender).attached.is_empty() {
+            if state.flip_for(flipper) && !state.pokemon(defender).attached.is_empty() {
                 let owner = state.pokemon(attacker).owner;
                 state.phase =
                     Phase::DiscardingDefenderEnergyForAttack { chooser: owner, target: defender };
@@ -3983,7 +3986,7 @@ fn resolve_attack_effect(
             }
         }
         crate::card::AttackEffect::CoinFlipSelfInvulnerableNextTurn => {
-            if state.rng.flip() {
+            if state.flip_for(flipper) {
                 state.opponent_next_turn_restriction = Some((attacker, effect, state.current));
                 let name = state.pokemon_def(attacker).name;
                 state.log.push(format!("{name} is invulnerable next turn."));
@@ -5234,7 +5237,8 @@ fn resolve_checkup(state: &mut GameState, pokemon: PokemonId, condition: Conditi
     }
 
     // Rules 50 and 53: Asleep and Burned each flip, and heads removes them.
-    if matches!(condition, Condition::Burned | Condition::Asleep) && state.rng.flip() {
+    let checkup_side = state.pokemon(pokemon).owner;
+    if matches!(condition, Condition::Burned | Condition::Asleep) && state.flip_for(checkup_side) {
         state.remove_condition(pokemon, condition);
         let name = state.pokemon_def(pokemon).name;
         state
@@ -5269,7 +5273,7 @@ fn knock_out_the_dead(state: &mut GameState) {
                 && state.pokemon_def(pokemon).ability.is_some_and(|a| {
                     a.effect == crate::card::AbilityEffect::PassiveCoinFlipPreventsAttackKnockOutAtTenHp
                 })
-                && state.rng.flip()
+                && state.flip_for(player)
             {
                 let effective_hp = state.effective_hp(pokemon);
                 state.pokemon[pokemon.index()].damage = effective_hp.saturating_sub(10);

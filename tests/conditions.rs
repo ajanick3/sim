@@ -267,6 +267,11 @@ fn confusion_flips_before_the_attack_and_tails_hurts_you() {
         !state.has_condition(defender, Condition::Confused),
         "rule 52: on tails the attack does not happen"
     );
+    assert!(
+        state.log.iter().any(|l| l.contains("flips tails")),
+        "the log records the Confusion coin flip: {:?}",
+        state.log
+    );
 }
 
 #[test]
