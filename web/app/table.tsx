@@ -84,6 +84,29 @@ export default function Table() {
     [busy, refresh],
   );
 
+  // A step with exactly one legal action forces the player's hand — there
+  // is no choice to make (a "Finish placing" with no Basics left to bench,
+  // promoting an only Pokemon, and so on). Apply it for them. This runs
+  // only once the seat is revealed, so it never skips the reveal gate; the
+  // counter guards against a pathological forced loop.
+  const autoSteps = useRef(0);
+  useEffect(() => {
+    if (actions.length !== 1) {
+      autoSteps.current = 0;
+      return;
+    }
+    if (
+      status.kind === "playing" &&
+      revealed &&
+      !over &&
+      !busy &&
+      autoSteps.current < 100
+    ) {
+      autoSteps.current += 1;
+      act(0);
+    }
+  }, [actions, status.kind, revealed, over, busy, act]);
+
   if (status.kind === "loading") {
     return <Centre>Loading the engine…</Centre>;
   }
