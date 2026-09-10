@@ -15,6 +15,7 @@ import {
   type Selection,
 } from "./session";
 import { newRecipe, readRecipeParam, writeRecipeParam, type Recipe } from "./recipe";
+import { artUrl, loadArtIndex, type ArtIndex } from "./art";
 import type { WireActionMeta, WireCard, WirePokemon, WireSide, WireView } from "./view";
 
 // The two curated decks, by the key a recipe stores.
@@ -33,6 +34,7 @@ export default function Table() {
   const [actions, setActions] = useState<string[]>([]);
   const [meta, setMeta] = useState<WireActionMeta[]>([]);
   const [selection, setSelection] = useState<Selection>(null);
+  const [artIndex, setArtIndex] = useState<ArtIndex>({});
   const [log, setLog] = useState<string[]>([]);
   const [seat, setSeat] = useState<number | undefined>(undefined);
   const [over, setOver] = useState(false);
@@ -120,6 +122,11 @@ export default function Table() {
     const shared = readRecipeParam(window.location.search);
     void startGame(shared ?? newRecipe(randomSeed(), DECK_KEYS.a, DECK_KEYS.b));
   }, [startGame]);
+
+  // Card art loads on its own; the board draws its own cards until it lands.
+  useEffect(() => {
+    void loadArtIndex().then(setArtIndex);
+  }, []);
 
   // Back and Forward change the URL; rebuild the game to whatever recipe
   // the new URL carries. The URL is already where it should be, so the
@@ -225,6 +232,7 @@ export default function Table() {
             meta={meta}
             selection={selection}
             onSelect={setSelection}
+            art={(printId: string) => artUrl(artIndex, printId)}
             seat={seat}
             busy={busy}
             onAct={act}
@@ -264,6 +272,7 @@ function Board({
   meta,
   selection,
   onSelect,
+  art,
   seat,
   busy,
   onAct,
@@ -273,6 +282,7 @@ function Board({
   meta: WireActionMeta[];
   selection: Selection;
   onSelect: (s: Selection) => void;
+  art: (printId: string) => string | null;
   seat: number | undefined;
   busy: boolean;
   onAct: (index: number) => void;
@@ -296,7 +306,7 @@ function Board({
   const onHand = (card: number) =>
     onSelect(selection?.kind === "hand" && selection.card === card ? null : { kind: "hand", card });
 
-  const shared = { meta, selection, dropTargets, onPokemon };
+  const shared = { meta, selection, dropTargets, onPokemon, art };
   return (
     <div className="mt-4 space-y-3">
       <div className="overflow-hidden rounded-xl border border-edge bg-felt p-2 sm:p-3">
@@ -400,6 +410,7 @@ function SideBoard({
   dropTargets,
   onPokemon,
   onHand,
+  art,
 }: {
   side: WireSide;
   label: string;
@@ -410,6 +421,7 @@ function SideBoard({
   dropTargets: Map<number, number>;
   onPokemon: (id: number) => void;
   onHand?: (card: number) => void;
+  art: (printId: string) => string | null;
 }) {
   const lineup = [side.active, ...side.bench];
   const badges = copyBadges(lineup.map((m) => m?.name ?? null));
@@ -421,6 +433,7 @@ function SideBoard({
       selectable: meta.some((x) => x.target === m.id) || dropTargets.has(m.id),
       selected: selection?.kind === "pokemon" && selection.id === m.id,
       dropTarget: dropTargets.has(m.id),
+      art: art(m.print_id),
     };
   };
 
@@ -470,6 +483,7 @@ function SideBoard({
                 <HandCard
                   key={c.id}
                   card={c}
+                  art={art(c.print_id)}
                   playable={meta.some((x) => x.card === c.id)}
                   selected={selection?.kind === "hand" && selection.card === c.id}
                   onSelect={onHand ? () => onHand(c.id) : undefined}
@@ -496,13 +510,34 @@ function Pile({ label, count, top }: { label: string; count: number; top?: strin
 
 const CARD_SIZE = "w-[88px] min-h-[116px] sm:w-[104px] sm:min-h-[132px]";
 
+/** The card's TCGdex art, filling the card, with a scrim so overlaid text
+ *  stays readable. Falls away (returns null) the moment the image 404s. */
+function CardArt({ src, alt }: { src: string; alt: string }) {
+  const [broken, setBroken] = useState(false);
+  if (broken) return null;
+  return (
+    <>
+      <img
+        src={src}
+        alt={alt}
+        loading="lazy"
+        onError={() => setBroken(true)}
+        className="absolute inset-0 size-full rounded-md object-cover"
+      />
+      <div className="absolute inset-x-0 bottom-0 h-2/3 rounded-b-md bg-gradient-to-t from-black/85 to-transparent" />
+    </>
+  );
+}
+
 function HandCard({
   card,
+  art,
   playable = false,
   selected = false,
   onSelect,
 }: {
   card: WireCard;
+  art?: string | null;
   playable?: boolean;
   selected?: boolean;
   onSelect?: () => void;
@@ -514,7 +549,7 @@ function HandCard({
       data-testid="hand-card"
       disabled={!interactive}
       onClick={onSelect}
-      className={`deal-in ${CARD_SIZE} flex flex-none flex-col items-start rounded-md border bg-panel p-1.5 text-left transition-colors disabled:cursor-default disabled:opacity-100 ${
+      className={`deal-in ${CARD_SIZE} relative flex flex-none flex-col items-start overflow-hidden rounded-md border bg-panel p-1.5 text-left transition-colors disabled:cursor-default disabled:opacity-100 ${
         selected
           ? "border-accent ring-2 ring-accent"
           : interactive
@@ -522,10 +557,13 @@ function HandCard({
             : "border-edge opacity-60"
       }`}
     >
-      <span className="text-[11px] font-semibold leading-tight">{card.name}</span>
+      {art && <CardArt src={art} alt={card.name} />}
+      <span className="relative z-10 mt-auto text-[11px] font-semibold leading-tight [text-shadow:0_1px_2px_rgba(0,0,0,0.9)]">
+        {card.name}
+      </span>
       {card.energy_type && (
         <span
-          className="mt-auto size-2.5 rounded-full border border-black/35"
+          className="relative z-10 mt-1 size-2.5 rounded-full border border-black/35"
           style={{ background: ENERGY_COLOR[card.energy_type] ?? "var(--color-dim)" }}
         />
       )}
@@ -541,6 +579,7 @@ export function Mon({
   selected = false,
   dropTarget = false,
   onSelect,
+  art,
 }: {
   mon: WirePokemon | null;
   active?: boolean;
@@ -552,6 +591,8 @@ export function Mon({
   /** A selected hand card can land here — show it as a drop target. */
   dropTarget?: boolean;
   onSelect?: () => void;
+  /** The card art URL, or null to draw the card. */
+  art?: string | null;
 }) {
   if (!mon) {
     return (
@@ -578,11 +619,12 @@ export function Mon({
       data-testid="mon-card"
       disabled={!interactive}
       onClick={onSelect}
-      className={`deal-in ${CARD_SIZE} flex flex-none flex-col gap-1 rounded-md border bg-panel p-1.5 text-center transition-colors disabled:cursor-default disabled:opacity-100 ${ring} ${
+      className={`deal-in ${CARD_SIZE} relative flex flex-none flex-col gap-1 overflow-hidden rounded-md border bg-panel p-1.5 text-center transition-colors disabled:cursor-default disabled:opacity-100 ${ring} ${
         interactive ? "hover:border-accent" : ""
       }`}
     >
-      <div className="flex max-w-full items-center gap-1 text-[11px] font-semibold leading-tight">
+      {art && <CardArt src={art} alt={mon.name} />}
+      <div className="relative z-10 flex max-w-full items-center gap-1 text-[11px] font-semibold leading-tight">
         {copy !== undefined && (
           <span
             data-testid="copy-badge"
@@ -591,24 +633,28 @@ export function Mon({
             style={{ background: COPY_COLORS[copy % COPY_COLORS.length] }}
           />
         )}
-        <span className="overflow-hidden text-ellipsis whitespace-nowrap">{mon.name}</span>
+        {!art && (
+          <span className="overflow-hidden text-ellipsis whitespace-nowrap">{mon.name}</span>
+        )}
       </div>
-      <div className="h-1 overflow-hidden rounded-full bg-white/10">
+      <div className="relative z-10 mt-auto h-1 overflow-hidden rounded-full bg-white/10">
         <div
           className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out"
           style={{ width: `${pct}%` }}
         />
       </div>
-      <div className="text-[11px] text-dim">
+      <div className="relative z-10 text-[11px] text-dim [text-shadow:0_1px_2px_rgba(0,0,0,0.9)]">
         {mon.remaining_hp}/{mon.hp}
       </div>
       {/* Reserve the attachment row so a Pokémon carrying nothing keeps
           the same shape as one holding Energy. */}
-      <div className="flex min-h-[14px] items-center justify-center">
+      <div className="relative z-10 flex min-h-[14px] items-center justify-center">
         <Attachments cards={mon.attached} />
       </div>
       {mon.conditions.length > 0 && (
-        <div className="text-[10px] text-warn">{mon.conditions.join(", ")}</div>
+        <div className="relative z-10 text-[10px] text-warn [text-shadow:0_1px_2px_rgba(0,0,0,0.9)]">
+          {mon.conditions.join(", ")}
+        </div>
       )}
     </button>
   );

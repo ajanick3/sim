@@ -47,6 +47,10 @@ fn every_pokemon_in_view_carries_a_stable_id() {
             let active = &view["sides"][0]["active"];
             if active.is_object() {
                 assert!(active["id"].is_number(), "a Pokémon in view has a numeric id");
+                assert!(
+                    active["print_id"].as_str().is_some_and(|s| !s.is_empty()),
+                    "and a non-empty TCGdex print id for its art"
+                );
                 return;
             }
         }

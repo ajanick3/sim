@@ -23,6 +23,8 @@ pub struct CardView {
     pub id: CardId,
     pub name: &'static str,
     pub def: CardDefId,
+    /// The TCGdex print id, e.g. `"sv6-160"` — the key card art is filed under.
+    pub print_id: &'static str,
 }
 
 /// A Pokémon in play. Everything about it is public.
@@ -30,6 +32,8 @@ pub struct CardView {
 pub struct PokemonView {
     pub id: PokemonId,
     pub name: &'static str,
+    /// The TCGdex print id of this Pokémon's top card.
+    pub print_id: &'static str,
     pub hp: u32,
     pub damage: u32,
     pub remaining_hp: u32,
@@ -91,6 +95,7 @@ fn card_view(state: &GameState, card: CardId) -> CardView {
         id: card,
         name: state.def_of(card).name(),
         def: state.cards[card.index()].def,
+        print_id: state.def_of(card).print_id(),
     }
 }
 
@@ -117,6 +122,7 @@ fn pokemon_view(state: &GameState, id: PokemonId) -> PokemonView {
     PokemonView {
         id,
         name: def.name,
+        print_id: def.print_id,
         hp: state.effective_hp(id),
         damage: in_play.damage,
         remaining_hp: state.remaining_hp(id),

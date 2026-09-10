@@ -16,7 +16,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run lint && npm run fmt:check && npm run typecheck && npm run test"
+    "check": "npm run lint && npm run fmt:check && npm run typecheck && npm run test",
+    "art-index": "node scripts/build-art-index.mjs"
   },
   "dependencies": {
     "next": "^15.5.0",
