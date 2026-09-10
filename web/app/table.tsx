@@ -39,10 +39,20 @@ export default function Table() {
     return { v: 1, seed: seedRef.current, a: DECK_KEYS.a, b: DECK_KEYS.b, moves };
   }, []);
 
-  const syncUrl = useCallback(() => {
-    if (!gameRef.current) return;
-    window.history.replaceState(null, "", writeRecipeParam(currentRecipe()));
-  }, [currentRecipe]);
+  // Write the current recipe to the address bar. "push" adds a history
+  // entry — one per move — so the browser's Back and Forward buttons step
+  // through the game. "replace" rewrites the current entry (a new game, a
+  // shared link on load). "skip" writes nothing (a rebuild that a Back or
+  // Forward already moved the URL for).
+  const writeRecipe = useCallback(
+    (mode: "push" | "replace" | "skip") => {
+      if (mode === "skip" || !gameRef.current) return;
+      const url = writeRecipeParam(currentRecipe());
+      if (mode === "push") window.history.pushState(null, "", url);
+      else window.history.replaceState(null, "", url);
+    },
+    [currentRecipe],
+  );
 
   const refresh = useCallback(() => {
     const game = gameRef.current;
@@ -59,7 +69,7 @@ export default function Table() {
   }, []);
 
   const startGame = useCallback(
-    async (recipe: Recipe) => {
+    async (recipe: Recipe, write: "push" | "replace" | "skip" = "replace") => {
       try {
         const sim = await loadSim();
         if (!dataRef.current) {
@@ -82,17 +92,29 @@ export default function Table() {
         shownSeat.current = undefined;
         setStatus({ kind: "playing" });
         refresh();
-        syncUrl();
+        writeRecipe(write);
       } catch (err) {
         setStatus({ kind: "error", message: String(err) });
       }
     },
-    [refresh, syncUrl],
+    [refresh, writeRecipe],
   );
 
   useEffect(() => {
     const shared = readRecipeParam(window.location.search);
     void startGame(shared ?? newRecipe(randomSeed(), DECK_KEYS.a, DECK_KEYS.b));
+  }, [startGame]);
+
+  // Back and Forward change the URL; rebuild the game to whatever recipe
+  // the new URL carries. The URL is already where it should be, so the
+  // rebuild writes nothing back.
+  useEffect(() => {
+    const onPop = () => {
+      const recipe = readRecipeParam(window.location.search);
+      if (recipe) void startGame(recipe, "skip");
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, [startGame]);
 
   const act = useCallback(
@@ -103,14 +125,14 @@ export default function Table() {
       try {
         game.apply(index);
         refresh();
-        syncUrl();
+        writeRecipe("push");
       } catch (err) {
         setStatus({ kind: "error", message: String(err) });
       } finally {
         setBusy(false);
       }
     },
-    [busy, refresh, syncUrl],
+    [busy, refresh, writeRecipe],
   );
 
   // A step with exactly one legal action forces the player's hand — there
@@ -164,7 +186,9 @@ export default function Table() {
         </span>
         <span style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
           <CopyLinkButton />
-          <button onClick={() => startGame(newRecipe(randomSeed(), DECK_KEYS.a, DECK_KEYS.b))}>
+          <button
+            onClick={() => startGame(newRecipe(randomSeed(), DECK_KEYS.a, DECK_KEYS.b), "push")}
+          >
             New game
           </button>
         </span>
