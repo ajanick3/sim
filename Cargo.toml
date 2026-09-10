@@ -3,7 +3,7 @@
 # The browser front end lives in `crates/sim-wasm`, added as a member when it
 # arrives, and is built on request.
 [workspace]
-members = ["."]
+members = [".", "crates/sim-wasm"]
 default-members = ["."]
 
 [package]

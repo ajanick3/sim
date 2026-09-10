@@ -1,0 +1,15 @@
+# The browser boundary. `cdylib` builds the `.wasm`; `rlib` lets an ordinary
+# `cargo test` link the seam and run it on the host, with no browser.
+[package]
+name = "sim-wasm"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+sim = { path = "../.." }
+wasm-bindgen = "0.2.100"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
