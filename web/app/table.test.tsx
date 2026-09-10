@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { act as domAct, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { encodeRecipe, readRecipeParam } from "./recipe";
 
@@ -86,5 +86,55 @@ describe("<Table> recipe wiring", () => {
     expect(call[3]).toBe(99n); // seed, as bigint
     expect(call[4]).toEqual([1, 0, 1]); // the moves to replay
     expect(standard).not.toHaveBeenCalled();
+  });
+
+  it("rebuilds the game to whatever recipe Back or Forward lands on", async () => {
+    render(<Table />);
+    await screen.findByText("Copy link");
+    replayStandard.mockClear();
+
+    // The browser moved the URL to a two-move recipe; fire popstate.
+    window.history.replaceState(
+      null,
+      "",
+      "/?g=" +
+        encodeRecipe({
+          v: 1,
+          seed: 7,
+          a: "dragapult",
+          b: "alakazam",
+          moves: [2, 5],
+        }),
+    );
+    await domAct(async () => {
+      window.dispatchEvent(new PopStateEvent("popstate"));
+    });
+
+    await waitFor(() => expect(replayStandard).toHaveBeenCalled());
+    const call = replayStandard.mock.calls.at(-1) as unknown[];
+    expect(call[3]).toBe(7n);
+    expect(call[4]).toEqual([2, 5]);
+  });
+
+  it("pushes a history entry for each move so Back steps through them", async () => {
+    const pushSpy = vi.spyOn(window.history, "pushState");
+    render(<Table />);
+
+    // Past the reveal gate first: the action buttons hide behind it.
+    const reveal = await screen.findByRole("button", { name: /tap to reveal/ });
+    await domAct(async () => {
+      reveal.click();
+    });
+
+    const button = await screen.findByRole("button", { name: "Action A" });
+    pushSpy.mockClear();
+
+    await domAct(async () => {
+      button.click();
+    });
+
+    await waitFor(() => expect(pushSpy).toHaveBeenCalledTimes(1));
+    expect(gameStub.apply).toHaveBeenCalledWith(0);
+    pushSpy.mockRestore();
   });
 });
