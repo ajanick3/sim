@@ -60,3 +60,40 @@ describe("DecisionBar with a whole-library search", () => {
     expect(queryByText("Kirlia")).toBeNull();
   });
 });
+
+describe("DecisionBar for a slot bound to attach", () => {
+  // Crispin's second slot: the same Energy could land on any Pokémon in
+  // play, so `action_meta` carries one `TakeCardOnto` per legal target.
+  const energy = card({ name: "Fire Energy", category: "energy" });
+  const attachActions = [
+    "Take Fire Energy and attach it to Charmander",
+    "Take Fire Energy and attach it to Squirtle",
+    "Stop taking cards",
+  ];
+  const attachMeta = [
+    { kind: "TakeCardOnto", card: energy.id, target: 10 },
+    { kind: "TakeCardOnto", card: energy.id, target: 11 },
+    { kind: "FinishDeciding", card: null, target: null },
+  ];
+
+  it("selects the card instead of guessing a target, when more than one is legal", () => {
+    const onAct = vi.fn();
+    const onSelect = vi.fn();
+    const { getByText } = render(
+      <DecisionBar
+        actions={attachActions}
+        decision={asDecision(attachActions)!}
+        busy={false}
+        onAct={onAct}
+        art={noArt}
+        meta={attachMeta}
+        library={[energy]}
+        selection={null}
+        onSelect={onSelect}
+      />,
+    );
+    fireEvent.click(getByText("Fire Energy").closest("button")!);
+    expect(onAct).not.toHaveBeenCalled();
+    expect(onSelect).toHaveBeenCalledWith({ kind: "hand", card: energy.id });
+  });
+});
