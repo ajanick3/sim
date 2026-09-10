@@ -378,6 +378,21 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Boss's Orders" => (free, TrainerEffect::SwitchOpponentActive),
         "Cheren" | "Friends in Paldea" | "Urbain" => (free, TrainerEffect::Draw(3)),
         "Cook" => (free, TrainerEffect::HealActive(70)),
+        "Potion" => (
+            free,
+            TrainerEffect::HealChosenPlain { amount: 30, of_type: None },
+        ),
+        "Poké Vital A" => (
+            free,
+            TrainerEffect::HealChosenPlain { amount: 150, of_type: None },
+        ),
+        "Jacinthe" => (
+            free,
+            TrainerEffect::HealChosenPlain {
+                amount: 150,
+                of_type: Some(Type::Psychic),
+            },
+        ),
         "Picnicker" => (free, TrainerEffect::CoinFlipDraw { heads: 4, tails: 2 }),
         "Carmine" => (free, TrainerEffect::DiscardHandThenDraw(5)),
         "Tarragon" => (

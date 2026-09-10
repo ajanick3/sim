@@ -652,9 +652,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::FinishMovingEnergyToActive);
             return actions;
         }
-        Phase::HealingChosen { player: whose, .. } => {
+        Phase::HealingChosen {
+            player: whose,
+            of_type,
+            ..
+        } => {
             for target in state.player(whose).in_play() {
-                actions.push(Action::HealTarget { target });
+                if of_type.is_none_or(|t| state.pokemon_def(target).kind == t) {
+                    actions.push(Action::HealTarget { target });
+                }
             }
             return actions;
         }

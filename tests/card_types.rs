@@ -106,7 +106,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Emcee's Hype, Billy & O'Nare, and Emma take it to 211.
     // Drasna, Harlequin, and Naveen take it to 205.
     // Hassel and Drayton take it to 199.
-    assert_eq!(trainers, 199, "the Trainers still refused, by kind");
+    // Potion, Poké Vital A, and Jacinthe take it to 194.
+    assert_eq!(trainers, 194, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

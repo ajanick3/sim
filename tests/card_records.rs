@@ -281,5 +281,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Rocky Fighting Energy (a `PreventsAttackEffectsOnCarrier` reskin),
     // Magnetic Metal Energy (`CarrierHasNoRetreatCost`), and Bubbly Water
     // Energy (`CarrierImmuneToSpecialConditions`) take it to 859.
-    assert_eq!(admitted, 859, "coverage moves only on purpose");
+    // The heal-chosen cards Potion, Poké Vital A, and Jacinthe
+    // (`HealChosenPlain`, a heal with no condition clear, optionally
+    // type-restricted) take it to 864.
+    assert_eq!(admitted, 864, "coverage moves only on purpose");
 }

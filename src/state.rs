@@ -237,7 +237,15 @@ pub enum Phase {
     /// picks which one. `amount` is how much it heals — `Pokémon Center
     /// Lady` always names the same number, but the phase carries it so a
     /// second card healing a different amount needs no new phase.
-    HealingChosen { player: PlayerId, amount: u32 },
+    HealingChosen {
+        player: PlayerId,
+        amount: u32,
+        /// Clear every Special Condition from the healed Pokémon too —
+        /// `Pokémon Center Lady` does, `Potion` does not.
+        clear_conditions: bool,
+        /// Only a Pokémon of this type may be chosen, when set. `Jacinthe`.
+        of_type: Option<crate::card::Type>,
+    },
     /// `player` played `Rare Candy` and chooses both the Stage 2 from hand
     /// and the Basic in play it evolves, skipping the Stage 1 between them.
     /// A card and a target are chosen together, the same reason
