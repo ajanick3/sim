@@ -416,9 +416,10 @@ export function LiveBoard({
           type="button"
           onClick={() => setShowRail(true)}
           aria-label="Show controls"
-          className="fixed bottom-4 right-4 z-40 grid size-12 place-items-center rounded-full border-edge bg-panel text-lg shadow-[0_6px_18px_rgba(0,0,0,0.55)]"
+          className="fixed right-3 top-1/2 z-40 flex -translate-y-1/2 items-center gap-1.5 rounded-l-lg border border-r-0 border-edge bg-panel/95 py-3 pl-2.5 pr-2 text-[11px] font-semibold uppercase tracking-wider text-dim shadow-[0_4px_14px_rgba(0,0,0,0.4)] backdrop-blur transition-colors hover:border-accent hover:text-text"
         >
-          «
+          <span aria-hidden>‹</span>
+          <span className="[writing-mode:vertical-rl]">Controls</span>
         </button>
       )}
 
@@ -550,7 +551,7 @@ export function LiveBoard({
               </button>
             </div>
             <div className="overflow-y-auto whitespace-pre-wrap p-3 text-[13px] text-dim">
-              {log.length ? log.join("\n") : "—"}
+              {log.length ? [...log].reverse().join("\n") : "—"}
             </div>
           </div>
         </div>

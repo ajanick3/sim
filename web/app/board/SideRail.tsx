@@ -26,9 +26,9 @@ export function SideRail({
       <button
         onClick={onHide}
         aria-label="Hide controls"
-        className="grid size-6 place-items-center rounded-full border-edge text-[11px] text-dim"
+        className="w-full rounded-md border-edge py-0.5 text-[11px] text-dim transition-colors hover:border-accent hover:text-text"
       >
-        »
+        ›
       </button>
       <div className="text-[10px] text-dim">turn {turn}</div>
       <div className="grid h-9 w-9 place-items-center rounded bg-prize text-lg font-bold">
