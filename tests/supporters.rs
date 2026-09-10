@@ -2199,3 +2199,138 @@ fn the_hand_refresh_supporters_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: deck-search Supporters ---
+
+fn with_deck_search(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let firebreather = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-firebreather",
+        name: "Firebreather",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::BasicEnergyOfType(Type::Fire),
+                to: Destination::Zone(Zone::Hand),
+                limit: 7,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    let canari = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-canari",
+        name: "Canari",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::DiscardOtherCardsFromHand(1)),
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::PokemonOfType(Type::Lightning),
+                to: Destination::Zone(Zone::Hand),
+                limit: 4,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    let fire_energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-fire-energy",
+        name: "Basic Fire Energy",
+        kind: Type::Fire,
+        effect: None,
+    }));
+    (Set { db, ..set }, firebreather, canari, fire_energy)
+}
+
+#[test]
+fn firebreather_takes_up_to_seven_basic_fire_energy() {
+    let (set, firebreather, _canari, fire_energy) = with_deck_search(build());
+    let mut state = game(&set, firebreather, 3);
+    let player = state.current;
+    for _ in 0..3 {
+        let c = deal_new_card(&mut state, player, fire_energy);
+        state.players[player.index()].library.push(c);
+    }
+    let card = ensure_in_hand(&mut state, player, firebreather);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let mut took = 0;
+    while let Some(take) = offered(&state).first().copied() {
+        apply(&mut state, Action::TakeCard { card: take }).unwrap();
+        took += 1;
+    }
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(took, 3, "only the three Fire Energy in the deck");
+    assert_eq!(state.player(player).hand.len(), before - 1 + 3);
+}
+
+#[test]
+fn canari_takes_lightning_pokemon_of_any_stage() {
+    let (set, _fb, canari, _fe) = with_deck_search(build());
+    let mut state = game(&set, canari, 3);
+    let player = state.current;
+    // A Lightning basic already exists via the heals fixture pattern; add one.
+    let spark = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-canari-spark",
+        name: "Boltmon",
+        hp: 70,
+        kind: Type::Lightning,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Jolt",
+            cost: vec![Type::Lightning],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    for _ in 0..2 {
+        let c = deal_new_card(&mut state, player, spark);
+        state.players[player.index()].library.push(c);
+    }
+    let card = ensure_in_hand(&mut state, player, canari);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let pay = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::PayWithCard { .. }))
+        .expect("a card to discard");
+    apply(&mut state, pay).unwrap();
+
+    let mut took = 0;
+    while let Some(take) = offered(&state).first().copied() {
+        apply(&mut state, Action::TakeCard { card: take }).unwrap();
+        took += 1;
+    }
+    apply(&mut state, Action::FinishDeciding).unwrap();
+    assert_eq!(took, 2, "the two Lightning Pokemon in the deck");
+}
+
+#[test]
+fn the_deck_search_supporters_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Firebreather", "Canari"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}

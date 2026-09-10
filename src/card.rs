@@ -160,6 +160,8 @@ pub enum CardFilter {
     PokemonOfTypeWithHpAtMost(Type, u32),
     /// A Basic Pokémon of this type. `Telepathic Psychic Energy`.
     BasicPokemonOfType(Type),
+    /// A Pokémon of this type, any stage. `Canari`.
+    PokemonOfType(Type),
     /// A Pokémon carrying `Marker::Tera`. `Tera Orb`.
     TeraPokemon,
     /// A Pokémon of this type, or a Stadium card — the same "one

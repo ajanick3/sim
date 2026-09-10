@@ -101,7 +101,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Fennel, and Clemont's Quick Wit (heals) took it to 241; Picnicker, Jett, and Iris's
     // Fighting Spirit (draw variants) took it to 235; Carmine, Team
     // Rocket's Archer, and Cassiopeia take it to 225.
-    assert_eq!(trainers, 225, "the Trainers still refused, by kind");
+    // Firebreather and Canari take it to 220.
+    assert_eq!(trainers, 220, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and
