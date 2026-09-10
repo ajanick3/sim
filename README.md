@@ -87,7 +87,7 @@ Every card in the artifact, by name; the tables below track the field.
 | Items | 50 | 85 |
 | Tools | 20 | 35 |
 | Stadiums | 17 | 31 |
-| Special Energy | 10 | 17 |
+| Special Energy | 12 | 17 |
 
 ### Supporters (26/26 built)
 
@@ -201,101 +201,101 @@ Every card in the artifact, by name; the tables below track the field.
 
 | Card | Attacks | Ability |
 | --- | --- | --- |
-| [Abra](src/import.rs#L1913) | [✅](src/import.rs#L1913) | [✅](src/import.rs#L1795) |
-| [Alakazam](src/import.rs#L2068) | [✅](src/import.rs#L2068) | [✅](src/import.rs#L1785) |
-| [Annihilape](src/import.rs#L1942) | [✅](src/import.rs#L1942) | [✅](src/import.rs#L1751) |
-| [Applin](src/import.rs#L1903) | [✅](src/import.rs#L1903) | — |
-| [Bayleef](src/import.rs#L1945) | [✅](src/import.rs#L1945) | — |
-| [Beldum](src/import.rs#L1925) | [✅](src/import.rs#L1925) | — |
-| [Blaziken ex](src/import.rs#L2009) | [✅](src/import.rs#L2009) | [✅](src/import.rs#L1825) |
-| [Bloodmoon Ursaluna ex](src/import.rs#L1973) | [✅](src/import.rs#L1973) | [✅](src/import.rs#L1759) |
-| [Brute Bonnet](src/import.rs#L1884) | [✅](src/import.rs#L1884) | — |
-| [Budew](src/import.rs#L1950) | [✅](src/import.rs#L1950) | — |
-| [Buneary](src/import.rs#L1944) | [✅](src/import.rs#L1944) | — |
-| [Carvanha](src/import.rs#L1862) | [✅](src/import.rs#L1862) | — |
-| [Celebi](src/import.rs#L1943) | [✅](src/import.rs#L1943) | — |
-| [Chi-Yu](src/import.rs#L2041) | [✅](src/import.rs#L2041) | — |
-| [Chien-Pao](src/import.rs#L2010) | [✅](src/import.rs#L2010) | [✅](src/import.rs#L1828) |
-| [Chikorita](src/import.rs#L1946) | [✅](src/import.rs#L1946) | — |
-| [Cofagrigus](src/import.rs#L1991) | [✅](src/import.rs#L1991) | — |
-| [Combusken](src/import.rs#L1960) | [✅](src/import.rs#L1960) | — |
-| [Crustle](src/import.rs#L2080) | [✅](src/import.rs#L2080) | [✅](src/import.rs#L1740) |
-| [Dedenne](src/import.rs#L1900) | [✅](src/import.rs#L1900) | — |
-| [Dipplin](src/import.rs#L2025) | [✅](src/import.rs#L2025) | [✅](src/import.rs#L1813) |
-| [Dragapult ex](src/import.rs#L1907) | [✅](src/import.rs#L1907) | — |
-| [Drakloak](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1768) |
+| [Abra](src/import.rs#L1919) | [✅](src/import.rs#L1919) | [✅](src/import.rs#L1801) |
+| [Alakazam](src/import.rs#L2074) | [✅](src/import.rs#L2074) | [✅](src/import.rs#L1791) |
+| [Annihilape](src/import.rs#L1948) | [✅](src/import.rs#L1948) | [✅](src/import.rs#L1757) |
+| [Applin](src/import.rs#L1909) | [✅](src/import.rs#L1909) | — |
+| [Bayleef](src/import.rs#L1951) | [✅](src/import.rs#L1951) | — |
+| [Beldum](src/import.rs#L1931) | [✅](src/import.rs#L1931) | — |
+| [Blaziken ex](src/import.rs#L2015) | [✅](src/import.rs#L2015) | [✅](src/import.rs#L1831) |
+| [Bloodmoon Ursaluna ex](src/import.rs#L1979) | [✅](src/import.rs#L1979) | [✅](src/import.rs#L1765) |
+| [Brute Bonnet](src/import.rs#L1890) | [✅](src/import.rs#L1890) | — |
+| [Budew](src/import.rs#L1956) | [✅](src/import.rs#L1956) | — |
+| [Buneary](src/import.rs#L1950) | [✅](src/import.rs#L1950) | — |
+| [Carvanha](src/import.rs#L1868) | [✅](src/import.rs#L1868) | — |
+| [Celebi](src/import.rs#L1949) | [✅](src/import.rs#L1949) | — |
+| [Chi-Yu](src/import.rs#L2047) | [✅](src/import.rs#L2047) | — |
+| [Chien-Pao](src/import.rs#L2016) | [✅](src/import.rs#L2016) | [✅](src/import.rs#L1834) |
+| [Chikorita](src/import.rs#L1952) | [✅](src/import.rs#L1952) | — |
+| [Cofagrigus](src/import.rs#L1997) | [✅](src/import.rs#L1997) | — |
+| [Combusken](src/import.rs#L1966) | [✅](src/import.rs#L1966) | — |
+| [Crustle](src/import.rs#L2086) | [✅](src/import.rs#L2086) | [✅](src/import.rs#L1746) |
+| [Dedenne](src/import.rs#L1906) | [✅](src/import.rs#L1906) | — |
+| [Dipplin](src/import.rs#L2031) | [✅](src/import.rs#L2031) | [✅](src/import.rs#L1819) |
+| [Dragapult ex](src/import.rs#L1913) | [✅](src/import.rs#L1913) | — |
+| [Drakloak](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1774) |
 | [Dreepy](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
-| [Drilbur](src/import.rs#L1914) | [✅](src/import.rs#L1914) | ❌ |
-| [Dudunsparce](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1792) |
-| [Dudunsparce ex](src/import.rs#L1875) | [✅](src/import.rs#L1875) | — |
-| [Dunsparce](src/import.rs#L1926) | [✅](src/import.rs#L1926) | — |
-| [Dusclops](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1796) |
-| [Dusknoir](src/import.rs#L2007) | [✅](src/import.rs#L2007) | [✅](src/import.rs#L1797) |
-| [Duskull](src/import.rs#L1929) | [✅](src/import.rs#L1929) | — |
-| [Dwebble](src/import.rs#L1919) | [✅](src/import.rs#L1919) | — |
-| [Elgyem](src/import.rs#L1949) | [✅](src/import.rs#L1949) | — |
-| [Enamorus](src/import.rs#L1969) | [✅](src/import.rs#L1969) | — |
-| [Fan Rotom](src/import.rs#L2014) | [✅](src/import.rs#L2014) | [✅](src/import.rs#L1838) |
-| [Fezandipiti ex](src/import.rs#L2088) | [✅](src/import.rs#L2088) | [✅](src/import.rs#L1786) |
-| [Flutter Mane](src/import.rs#L2005) | [✅](src/import.rs#L2005) | [✅](src/import.rs#L1762) |
-| [Genesect](src/import.rs#L2060) | [✅](src/import.rs#L2060) | [✅](src/import.rs#L1801) |
-| [Genesect ex](src/import.rs#L2008) | [✅](src/import.rs#L2008) | [✅](src/import.rs#L1798) |
-| [Goldeen](src/import.rs#L2023) | [✅](src/import.rs#L2023) | [✅](src/import.rs#L1811) |
+| [Drilbur](src/import.rs#L1920) | [✅](src/import.rs#L1920) | ❌ |
+| [Dudunsparce](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1798) |
+| [Dudunsparce ex](src/import.rs#L1881) | [✅](src/import.rs#L1881) | — |
+| [Dunsparce](src/import.rs#L1932) | [✅](src/import.rs#L1932) | — |
+| [Dusclops](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1802) |
+| [Dusknoir](src/import.rs#L2013) | [✅](src/import.rs#L2013) | [✅](src/import.rs#L1803) |
+| [Duskull](src/import.rs#L1935) | [✅](src/import.rs#L1935) | — |
+| [Dwebble](src/import.rs#L1925) | [✅](src/import.rs#L1925) | — |
+| [Elgyem](src/import.rs#L1955) | [✅](src/import.rs#L1955) | — |
+| [Enamorus](src/import.rs#L1975) | [✅](src/import.rs#L1975) | — |
+| [Fan Rotom](src/import.rs#L2020) | [✅](src/import.rs#L2020) | [✅](src/import.rs#L1844) |
+| [Fezandipiti ex](src/import.rs#L2094) | [✅](src/import.rs#L2094) | [✅](src/import.rs#L1792) |
+| [Flutter Mane](src/import.rs#L2011) | [✅](src/import.rs#L2011) | [✅](src/import.rs#L1768) |
+| [Genesect](src/import.rs#L2066) | [✅](src/import.rs#L2066) | [✅](src/import.rs#L1807) |
+| [Genesect ex](src/import.rs#L2014) | [✅](src/import.rs#L2014) | [✅](src/import.rs#L1804) |
+| [Goldeen](src/import.rs#L2029) | [✅](src/import.rs#L2029) | [✅](src/import.rs#L1817) |
 | [Grookey](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
-| [Hoothoot](src/import.rs#L1916) | [✅](src/import.rs#L1916) | [✅](src/import.rs#L1752) |
-| [Hydrapple ex](src/import.rs#L1974) | [✅](src/import.rs#L1974) | [✅](src/import.rs#L1753) |
-| [Iron Crown ex](src/import.rs#L1934) | [✅](src/import.rs#L1934) | [✅](src/import.rs#L1748) |
-| [Iron Leaves ex](src/import.rs#L2013) | [✅](src/import.rs#L2013) | [✅](src/import.rs#L1829) |
-| [Kadabra](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1781) |
-| [Koraidon ex](src/import.rs#L1935) | [✅](src/import.rs#L1935) | — |
-| [Kyurem](src/import.rs#L2057) | [✅](src/import.rs#L2057) | [✅](src/import.rs#L1820) |
-| [Latias ex](src/import.rs#L2074) | [✅](src/import.rs#L2074) | [✅](src/import.rs#L1739) |
-| [Lillie's Clefairy ex](src/import.rs#L2098) | [✅](src/import.rs#L2098) | [✅](src/import.rs#L1743) |
-| [Mega Absol ex](src/import.rs#L1981) | [✅](src/import.rs#L1981) | — |
-| [Mega Excadrill ex](src/import.rs#L1977) | [✅](src/import.rs#L1977) | — |
-| [Mega Kangaskhan ex](src/import.rs#L2084) | [✅](src/import.rs#L2084) | [✅](src/import.rs#L1736) |
-| [Mega Lopunny ex](src/import.rs#L1882) | [✅](src/import.rs#L1882) | — |
-| [Mega Sharpedo ex](src/import.rs#L1917) | [✅](src/import.rs#L1917) | — |
-| [Mega Skarmory ex](src/import.rs#L1995) | [✅](src/import.rs#L1995) | — |
-| [Mega Slowbro ex](src/import.rs#L2035) | [✅](src/import.rs#L2035) | — |
-| [Meganium](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1807) |
-| [Meowth ex](src/import.rs#L2087) | [✅](src/import.rs#L2087) | [✅](src/import.rs#L1780) |
-| [Metagross](src/import.rs#L1891) | [✅](src/import.rs#L1891) | — |
-| [Metang](src/import.rs#L2075) | [✅](src/import.rs#L2075) | [✅](src/import.rs#L1771) |
-| [Moltres](src/import.rs#L1927) | [✅](src/import.rs#L1927) | — |
-| [Munkidori](src/import.rs#L2081) | [✅](src/import.rs#L2081) | [✅](src/import.rs#L1774) |
-| [N's Darmanitan](src/import.rs#L1872) | [✅](src/import.rs#L1872) | — |
+| [Hoothoot](src/import.rs#L1922) | [✅](src/import.rs#L1922) | [✅](src/import.rs#L1758) |
+| [Hydrapple ex](src/import.rs#L1980) | [✅](src/import.rs#L1980) | [✅](src/import.rs#L1759) |
+| [Iron Crown ex](src/import.rs#L1940) | [✅](src/import.rs#L1940) | [✅](src/import.rs#L1754) |
+| [Iron Leaves ex](src/import.rs#L2019) | [✅](src/import.rs#L2019) | [✅](src/import.rs#L1835) |
+| [Kadabra](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1787) |
+| [Koraidon ex](src/import.rs#L1941) | [✅](src/import.rs#L1941) | — |
+| [Kyurem](src/import.rs#L2063) | [✅](src/import.rs#L2063) | [✅](src/import.rs#L1826) |
+| [Latias ex](src/import.rs#L2080) | [✅](src/import.rs#L2080) | [✅](src/import.rs#L1745) |
+| [Lillie's Clefairy ex](src/import.rs#L2104) | [✅](src/import.rs#L2104) | [✅](src/import.rs#L1749) |
+| [Mega Absol ex](src/import.rs#L1987) | [✅](src/import.rs#L1987) | — |
+| [Mega Excadrill ex](src/import.rs#L1983) | [✅](src/import.rs#L1983) | — |
+| [Mega Kangaskhan ex](src/import.rs#L2090) | [✅](src/import.rs#L2090) | [✅](src/import.rs#L1742) |
+| [Mega Lopunny ex](src/import.rs#L1888) | [✅](src/import.rs#L1888) | — |
+| [Mega Sharpedo ex](src/import.rs#L1923) | [✅](src/import.rs#L1923) | — |
+| [Mega Skarmory ex](src/import.rs#L2001) | [✅](src/import.rs#L2001) | — |
+| [Mega Slowbro ex](src/import.rs#L2041) | [✅](src/import.rs#L2041) | — |
+| [Meganium](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1813) |
+| [Meowth ex](src/import.rs#L2093) | [✅](src/import.rs#L2093) | [✅](src/import.rs#L1786) |
+| [Metagross](src/import.rs#L1897) | [✅](src/import.rs#L1897) | — |
+| [Metang](src/import.rs#L2081) | [✅](src/import.rs#L2081) | [✅](src/import.rs#L1777) |
+| [Moltres](src/import.rs#L1933) | [✅](src/import.rs#L1933) | — |
+| [Munkidori](src/import.rs#L2087) | [✅](src/import.rs#L2087) | [✅](src/import.rs#L1780) |
+| [N's Darmanitan](src/import.rs#L1878) | [✅](src/import.rs#L1878) | — |
 | [N's Darumaka](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
-| [N's Reshiram](src/import.rs#L1869) | [✅](src/import.rs#L1869) | — |
-| [N's Zekrom](src/import.rs#L1881) | [✅](src/import.rs#L1881) | — |
-| [N's Zoroark ex](src/import.rs#L2054) | [✅](src/import.rs#L2054) | [✅](src/import.rs#L1804) |
+| [N's Reshiram](src/import.rs#L1875) | [✅](src/import.rs#L1875) | — |
+| [N's Zekrom](src/import.rs#L1887) | [✅](src/import.rs#L1887) | — |
+| [N's Zoroark ex](src/import.rs#L2060) | [✅](src/import.rs#L2060) | [✅](src/import.rs#L1810) |
 | [N's Zorua](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
-| [Noctowl](src/import.rs#L2077) | [✅](src/import.rs#L2077) | [✅](src/import.rs#L1782) |
-| [Paldean Tauros](src/import.rs#L1865) | [✅](src/import.rs#L1865) | — |
-| [Passimian](src/import.rs#L1878) | [✅](src/import.rs#L1878) | — |
-| [Patrat](src/import.rs#L2076) | [✅](src/import.rs#L2076) | [✅](src/import.rs#L1741) |
-| [Pecharunt](src/import.rs#L2018) | [✅](src/import.rs#L2018) | [✅](src/import.rs#L1808) |
-| [Pecharunt ex](src/import.rs#L2015) | [✅](src/import.rs#L2015) | [✅](src/import.rs#L1845) |
-| [Psyduck](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1742) |
-| [Rabsca](src/import.rs#L1931) | [✅](src/import.rs#L1931) | [✅](src/import.rs#L1747) |
-| [Raging Bolt ex](src/import.rs#L1896) | [✅](src/import.rs#L1896) | — |
-| [Rellor](src/import.rs#L1863) | [✅](src/import.rs#L1863) | — |
-| [Seaking](src/import.rs#L2024) | [✅](src/import.rs#L2024) | [✅](src/import.rs#L1812) |
-| [Shaymin](src/import.rs#L2071) | [✅](src/import.rs#L2071) | [✅](src/import.rs#L1746) |
-| [Slowking](src/import.rs#L1920) | [✅](src/import.rs#L1920) | — |
-| [Slowpoke](src/import.rs#L1928) | [✅](src/import.rs#L1928) | ❌ |
-| [Smoochum](src/import.rs#L1988) | [✅](src/import.rs#L1988) | — |
-| [Stunfisk](src/import.rs#L1970) | [✅](src/import.rs#L1970) | — |
-| [Tapu Bulu](src/import.rs#L1864) | [✅](src/import.rs#L1864) | — |
-| [Tatsugiri](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1765) |
-| [Teal Mask Ogerpon ex](src/import.rs#L2089) | [✅](src/import.rs#L2089) | [✅](src/import.rs#L1789) |
-| [Thwackey](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1814) |
-| [Torchic](src/import.rs#L1930) | [✅](src/import.rs#L1930) | — |
-| [Toxel](src/import.rs#L1915) | [✅](src/import.rs#L1915) | — |
-| [Toxtricity](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1832) |
-| [Wellspring Mask Ogerpon ex](src/import.rs#L1905) | [✅](src/import.rs#L1905) | — |
-| [Yveltal](src/import.rs#L1904) | [✅](src/import.rs#L1904) | — |
-| [Zeraora](src/import.rs#L1887) | [✅](src/import.rs#L1887) | — |
+| [Noctowl](src/import.rs#L2083) | [✅](src/import.rs#L2083) | [✅](src/import.rs#L1788) |
+| [Paldean Tauros](src/import.rs#L1871) | [✅](src/import.rs#L1871) | — |
+| [Passimian](src/import.rs#L1884) | [✅](src/import.rs#L1884) | — |
+| [Patrat](src/import.rs#L2082) | [✅](src/import.rs#L2082) | [✅](src/import.rs#L1747) |
+| [Pecharunt](src/import.rs#L2024) | [✅](src/import.rs#L2024) | [✅](src/import.rs#L1814) |
+| [Pecharunt ex](src/import.rs#L2021) | [✅](src/import.rs#L2021) | [✅](src/import.rs#L1851) |
+| [Psyduck](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1748) |
+| [Rabsca](src/import.rs#L1937) | [✅](src/import.rs#L1937) | [✅](src/import.rs#L1753) |
+| [Raging Bolt ex](src/import.rs#L1902) | [✅](src/import.rs#L1902) | — |
+| [Rellor](src/import.rs#L1869) | [✅](src/import.rs#L1869) | — |
+| [Seaking](src/import.rs#L2030) | [✅](src/import.rs#L2030) | [✅](src/import.rs#L1818) |
+| [Shaymin](src/import.rs#L2077) | [✅](src/import.rs#L2077) | [✅](src/import.rs#L1752) |
+| [Slowking](src/import.rs#L1926) | [✅](src/import.rs#L1926) | — |
+| [Slowpoke](src/import.rs#L1934) | [✅](src/import.rs#L1934) | ❌ |
+| [Smoochum](src/import.rs#L1994) | [✅](src/import.rs#L1994) | — |
+| [Stunfisk](src/import.rs#L1976) | [✅](src/import.rs#L1976) | — |
+| [Tapu Bulu](src/import.rs#L1870) | [✅](src/import.rs#L1870) | — |
+| [Tatsugiri](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1771) |
+| [Teal Mask Ogerpon ex](src/import.rs#L2095) | [✅](src/import.rs#L2095) | [✅](src/import.rs#L1795) |
+| [Thwackey](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1820) |
+| [Torchic](src/import.rs#L1936) | [✅](src/import.rs#L1936) | — |
+| [Toxel](src/import.rs#L1921) | [✅](src/import.rs#L1921) | — |
+| [Toxtricity](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1838) |
+| [Wellspring Mask Ogerpon ex](src/import.rs#L1911) | [✅](src/import.rs#L1911) | — |
+| [Yveltal](src/import.rs#L1910) | [✅](src/import.rs#L1910) | — |
+| [Zeraora](src/import.rs#L1893) | [✅](src/import.rs#L1893) | — |
 
 ## The documents
 

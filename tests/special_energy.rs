@@ -372,13 +372,21 @@ fn attacker_and_defender_game_with_attack(
     seed: u64,
     attack: sim::card::Attack,
 ) -> (GameState, sim::ids::PokemonId, sim::ids::PokemonId) {
+    attacker_and_defender_game_with_attack_typed(seed, attack, Type::Colorless)
+}
+
+fn attacker_and_defender_game_with_attack_typed(
+    seed: u64,
+    attack: sim::card::Attack,
+    attacker_kind: Type,
+) -> (GameState, sim::ids::PokemonId, sim::ids::PokemonId) {
     let mut db = CardDb::new();
     let attacker_def = db.add(CardDef::Pokemon(Pokemon {
         markers: Vec::new(),
         print_id: "test-attacker",
         name: "Attackmon",
         hp: 200,
-        kind: Type::Colorless,
+        kind: attacker_kind,
         weakness: None,
         resistance: None,
         retreat_cost: 1,
@@ -774,6 +782,101 @@ fn the_type_plus_rider_special_energy_are_admitted_from_the_artifact() {
     )
     .unwrap();
     for name in ["Rocky Fighting Energy", "Magnetic Metal Energy", "Bubbly Water Energy"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
+
+// --- Ticket 08: a type-matched attack rider ---
+
+#[test]
+fn nitro_fire_energy_returns_after_its_own_attack_discards_it() {
+    let attack = sim::card::Attack {
+        name: "Flamebody Cannon",
+        cost: vec![Type::Colorless],
+        base_damage: 10,
+        inflicts: None,
+        effect: Some(sim::card::AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenched(10)),
+    };
+    let (mut state, attacker, _defender) = attacker_and_defender_game_with_attack(3, attack);
+    let owner = state.pokemon(attacker).owner;
+
+    let nitro_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-nitro-fire-energy",
+        name: "Nitro Fire Energy",
+        kind: Type::Fire,
+        effect: Some(EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect),
+    }));
+    let nitro = attach(&mut state, attacker, nitro_def);
+
+    pay_and_attack(&mut state, attacker);
+
+    assert!(
+        state.pokemon(attacker).attached.contains(&nitro),
+        "Nitro Fire Energy returns after its own discard"
+    );
+    assert!(!state.player(owner).discard.contains(&nitro));
+}
+
+#[test]
+fn voltaic_lightning_energy_adds_damage_to_the_opponents_active() {
+    let (mut state, attacker, defender) =
+        attacker_and_defender_game_with_attack_typed(3, tackle(), Type::Lightning);
+
+    let voltaic_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-voltaic-lightning-energy",
+        name: "Voltaic Lightning Energy",
+        kind: Type::Lightning,
+        effect: Some(EnergyEffect::CarrierAttacksHitOpponentActiveHarder(20)),
+    }));
+    attach(&mut state, attacker, voltaic_def);
+
+    pay_and_attack(&mut state, attacker);
+
+    assert_eq!(
+        state.pokemon(defender).damage,
+        30,
+        "10 base plus 20 from Voltaic Lightning Energy"
+    );
+}
+
+#[test]
+fn voltaic_lightning_energy_does_nothing_off_a_non_lightning_carrier() {
+    let (mut state, attacker, defender) =
+        attacker_and_defender_game_with_attack_typed(3, tackle(), Type::Colorless);
+
+    let voltaic_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-voltaic-lightning-energy-wrong-type",
+        name: "Voltaic Lightning Energy",
+        kind: Type::Lightning,
+        effect: Some(EnergyEffect::CarrierAttacksHitOpponentActiveHarder(20)),
+    }));
+    attach(&mut state, attacker, voltaic_def);
+
+    pay_and_attack(&mut state, attacker);
+
+    assert_eq!(state.pokemon(defender).damage, 10, "only a Lightning carrier hits harder");
+}
+
+fn tackle() -> sim::card::Attack {
+    sim::card::Attack {
+        name: "Tackle",
+        cost: vec![Type::Colorless],
+        base_damage: 10,
+        inflicts: None,
+        effect: None,
+    }
+}
+
+#[test]
+fn the_type_matched_attack_rider_energy_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Nitro Fire Energy", "Voltaic Lightning Energy"] {
         assert!(
             import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
             "{name} should play",

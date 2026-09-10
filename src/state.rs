@@ -1057,7 +1057,8 @@ impl GameState {
                     | crate::card::EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect
                     | crate::card::EnergyEffect::ProvidesAnyTypeIfAttachedToBasic
                     | crate::card::EnergyEffect::CarrierHasNoRetreatCost
-                    | crate::card::EnergyEffect::CarrierImmuneToSpecialConditions,
+                    | crate::card::EnergyEffect::CarrierImmuneToSpecialConditions
+                    | crate::card::EnergyEffect::CarrierAttacksHitOpponentActiveHarder(_),
                 )
                 | None => 0,
             })

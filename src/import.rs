@@ -1727,6 +1727,12 @@ fn known_energy(name: &str) -> Option<(Type, crate::card::EnergyEffect)> {
         "Bubbly Water Energy" => {
             (Type::Water, crate::card::EnergyEffect::CarrierImmuneToSpecialConditions)
         }
+        "Nitro Fire Energy" => {
+            (Type::Fire, crate::card::EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect)
+        }
+        "Voltaic Lightning Energy" => {
+            (Type::Lightning, crate::card::EnergyEffect::CarrierAttacksHitOpponentActiveHarder(20))
+        }
         _ => return None,
     })
 }

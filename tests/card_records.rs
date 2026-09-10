@@ -317,5 +317,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // `side_shield_next_turn` state field) — take it to 910.
     // Lumiose Galette (`HealActiveAndClearConditions`) and Dragon Elixir
     // (a `HealChosenPlain` restricted to Dragon) take it to 912.
-    assert_eq!(admitted, 912, "coverage moves only on purpose");
+    // Nitro Fire Energy (a `ReattachesAfterOwnDiscardByAttackEffect`
+    // reskin) and Voltaic Lightning Energy (a new
+    // `CarrierAttacksHitOpponentActiveHarder`, read in
+    // `damage_dealt_with`) take it to 914.
+    assert_eq!(admitted, 914, "coverage moves only on purpose");
 }
