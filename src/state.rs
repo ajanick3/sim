@@ -247,9 +247,10 @@ pub enum Phase {
     /// the card could be played, so no action here declines.
     EvolvingWithRareCandy { player: PlayerId },
     /// `chooser` picks one Energy attached to a Pokémon `of` controls, in
-    /// play, to discard. Crushing Hammer's heads case is the only card that
-    /// needs this; a Pokémon's attachments are not a `Zone`, so `Deciding`
-    /// cannot express it.
+    /// play, to discard. `Crushing Hammer`'s heads case and
+    /// `Rust Syndicate Grunt` reach this; a Pokémon's attachments are not
+    /// a `Zone`, so `Deciding` cannot express it. Opened only where `of`
+    /// has an Energy in play.
     DiscardingOpponentEnergy { chooser: PlayerId, of: PlayerId },
     /// The narrower mirror of `DiscardingOpponentEnergy`, offering
     /// only a Special Energy — one carrying an effect. `Enhanced
@@ -1614,6 +1615,14 @@ impl GameState {
 
     pub fn has_condition(&self, id: PokemonId, condition: Condition) -> bool {
         self.pokemon(id).conditions.contains(&condition)
+    }
+
+    /// Whether any Pokémon this player has in play carries an Energy.
+    pub fn has_energy_in_play(&self, player: PlayerId) -> bool {
+        self.player(player)
+            .in_play()
+            .iter()
+            .any(|p| self.pokemon(*p).attached.iter().any(|c| self.def_of(*c).is_energy()))
     }
 
     /// Whether `Festival Grounds` protects this Pokémon right now: the

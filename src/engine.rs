@@ -3054,7 +3054,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         }
 
         TrainerEffect::CoinFlipDiscardOpponentEnergy => {
-            if state.rng.flip() {
+            // The flip is the effect, so it happens with no target in
+            // play — the card is still legal to play. Heads only opens
+            // the discard where there is an Energy to discard.
+            if state.rng.flip() && state.has_energy_in_play(player.opponent()) {
                 state.phase = Phase::DiscardingOpponentEnergy {
                     chooser: player,
                     of: player.opponent(),
@@ -3063,10 +3066,12 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         }
 
         TrainerEffect::DiscardOpponentEnergy => {
-            state.phase = Phase::DiscardingOpponentEnergy {
-                chooser: player,
-                of: player.opponent(),
-            };
+            if state.has_energy_in_play(player.opponent()) {
+                state.phase = Phase::DiscardingOpponentEnergy {
+                    chooser: player,
+                    of: player.opponent(),
+                };
+            }
         }
 
         TrainerEffect::DiscardOpponentSpecialEnergy => {
