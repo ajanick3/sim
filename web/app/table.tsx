@@ -16,6 +16,7 @@ import {
 } from "./session";
 import { newRecipe, readRecipeParam, writeRecipeParam, type Recipe } from "./recipe";
 import { artUrl, loadArtIndex, type ArtIndex } from "./art";
+import { LiveBoard } from "./live-board";
 import type { WireActionMeta, WireCard, WirePokemon, WireSide, WireView } from "./view";
 
 // The two curated decks, by the key a recipe stores.
@@ -28,7 +29,9 @@ const SEAT_NAME = ["🥇", "🥈"];
 
 type Status = { kind: "loading" } | { kind: "error"; message: string } | { kind: "playing" };
 
-export default function Table() {
+export type BoardVariant = "classic" | "live";
+
+export default function Table({ variant = "classic" }: { variant?: BoardVariant }) {
   const [status, setStatus] = useState<Status>({ kind: "loading" });
   const [view, setView] = useState<WireView | null>(null);
   const [actions, setActions] = useState<string[]>([]);
@@ -225,7 +228,21 @@ export default function Table() {
           <button onClick={() => setRevealed(true)}>{SEAT_NAME[seat]} — tap to reveal</button>
         </Centre>
       ) : (
-        view && (
+        view &&
+        (variant === "live" ? (
+          <LiveBoard
+            view={view}
+            actions={actions}
+            meta={meta}
+            selection={selection}
+            onSelect={setSelection}
+            art={(printId: string) => artUrl(artIndex, printId)}
+            seat={seat}
+            busy={busy}
+            onAct={act}
+            log={log}
+          />
+        ) : (
           <Board
             view={view}
             actions={actions}
@@ -237,7 +254,7 @@ export default function Table() {
             busy={busy}
             onAct={act}
           />
-        )
+        ))
       )}
 
       <LogPanel lines={log} />
@@ -338,7 +355,7 @@ function Board({
   );
 }
 
-function ActionPanel({
+export function ActionPanel({
   actions,
   only,
   onClearSelection,
@@ -508,11 +525,11 @@ function Pile({ label, count, top }: { label: string; count: number; top?: strin
   );
 }
 
-const CARD_SIZE = "w-[88px] min-h-[116px] sm:w-[104px] sm:min-h-[132px]";
+export const CARD_SIZE = "w-[88px] min-h-[116px] sm:w-[104px] sm:min-h-[132px]";
 
 /** The card's TCGdex art, filling the card, with a scrim so overlaid text
  *  stays readable. Falls away (returns null) the moment the image 404s. */
-function CardArt({ src, alt }: { src: string; alt: string }) {
+export function CardArt({ src, alt }: { src: string; alt: string }) {
   const [broken, setBroken] = useState(false);
   if (broken) return null;
   return (
@@ -660,7 +677,7 @@ export function Mon({
   );
 }
 
-const ENERGY_COLOR: Record<string, string> = {
+export const ENERGY_COLOR: Record<string, string> = {
   Grass: "#63B95B",
   Fire: "#E4593E",
   Water: "#5AA7E4",
@@ -674,7 +691,7 @@ const ENERGY_COLOR: Record<string, string> = {
   Colorless: "#C6C0B7",
 };
 
-function Attachments({ cards }: { cards: WireCard[] }) {
+export function Attachments({ cards }: { cards: WireCard[] }) {
   if (cards.length === 0) return null;
   const energies = cards.filter((c) => c.energy_type);
   const others = cards.length - energies.length;
@@ -745,7 +762,7 @@ function Banner({ children }: { children: React.ReactNode }) {
   );
 }
 
-function SectionHeading({
+export function SectionHeading({
   children,
   className = "",
 }: {
