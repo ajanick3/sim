@@ -5,7 +5,8 @@ import { loadSim, type CardData, type Game } from "./wasm";
 import type { WirePokemon, WireSide, WireView } from "./view";
 
 const DECKS = { a: "/decks/dragapult.txt", b: "/decks/alakazam.txt" };
-const SEAT_NAME = ["Player 1", "Player 2"];
+// Seat 0 is the first player, seat 1 the second — shown as medals.
+const SEAT_NAME = ["🥇", "🥈"];
 
 type Status =
   | { kind: "loading" }
@@ -120,7 +121,7 @@ export default function Table() {
         <Centre>
           <p style={{ color: "var(--dim)" }}>Pass the device.</p>
           <button onClick={() => setRevealed(true)}>
-            {SEAT_NAME[seat]} — reveal
+            {SEAT_NAME[seat]} — tap to reveal
           </button>
         </Centre>
       ) : (
@@ -155,8 +156,11 @@ function Board({
 }) {
   return (
     <div style={{ display: "grid", gap: 16, marginTop: 16 }}>
-      <Side side={view.sides[view.you === 1 ? 0 : 1]} label="Opponent" />
-      <Side side={view.sides[view.you]} label="You" mine />
+      <Side
+        side={view.sides[view.you === 1 ? 0 : 1]}
+        label={`${SEAT_NAME[view.you === 1 ? 0 : 1]} Opponent`}
+      />
+      <Side side={view.sides[view.you]} label={`${SEAT_NAME[view.you]} You`} mine />
 
       <section>
         <h2 style={h2}>Your hand ({view.your_hand.length})</h2>
