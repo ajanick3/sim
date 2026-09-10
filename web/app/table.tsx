@@ -2,7 +2,14 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { loadSim, type CardData, type Game } from "./wasm";
-import { COPY_COLORS, copyBadges, gateAfterSeat, shouldAutoAdvance, sides } from "./session";
+import {
+  COPY_COLORS,
+  copyBadges,
+  gateAfterSeat,
+  groupActions,
+  shouldAutoAdvance,
+  sides,
+} from "./session";
 import { newRecipe, readRecipeParam, writeRecipeParam, type Recipe } from "./recipe";
 import type { WireCard, WirePokemon, WireSide, WireView } from "./view";
 
@@ -259,11 +266,34 @@ function Board({
 
       <section>
         <h2 style={h2}>{seat !== undefined ? `${SEAT_NAME[seat]} to act` : "Waiting"}</h2>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {actions.map((label, i) => (
-            <button key={i} disabled={busy} onClick={() => onAct(i)}>
-              {label}
-            </button>
+        <div style={{ display: "grid", gap: 10 }}>
+          {groupActions(actions).map((g) => (
+            <div key={g.group}>
+              <div style={{ ...h2, margin: "0 0 4px" }}>{g.group}</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                {g.items.map((item) => (
+                  <button
+                    key={item.index}
+                    disabled={busy}
+                    onClick={() => onAct(item.index)}
+                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                  >
+                    {item.copy !== undefined && (
+                      <span
+                        aria-hidden
+                        style={{
+                          width: 8,
+                          height: 8,
+                          borderRadius: "50%",
+                          background: COPY_COLORS[item.copy % COPY_COLORS.length],
+                        }}
+                      />
+                    )}
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           ))}
         </div>
       </section>

@@ -3,10 +3,42 @@ import {
   AUTO_ADVANCE_CAP,
   copyBadges,
   gateAfterSeat,
+  groupActions,
   shouldAutoAdvance,
   sides,
   type AutoAdvanceInput,
 } from "./session";
+
+describe("groupActions", () => {
+  it("sorts labels into named groups and keeps their engine index", () => {
+    const groups = groupActions([
+      "End turn",
+      "Attack: Phantom Dive (200 damage)",
+      "Bench Dreepy",
+      "Attach Fire Energy to Dragapult ex",
+    ]);
+    expect(groups.map((g) => g.group)).toEqual(["Attack", "Attach Energy", "Bench", "Finish"]);
+    const attack = groups.find((g) => g.group === "Attack")!;
+    expect(attack.items[0].index).toBe(1);
+  });
+
+  it("puts an unrecognised label in Other, before Finish", () => {
+    const groups = groupActions(["Reshuffle the mystery pile", "End turn"]);
+    expect(groups.map((g) => g.group)).toEqual(["Other", "Finish"]);
+  });
+
+  it("ranks repeated labels so identical moves can be told apart", () => {
+    const groups = groupActions([
+      "Evolve Dreepy into Drakloak",
+      "Evolve Dreepy into Drakloak",
+      "Bench Dreepy",
+    ]);
+    const evolve = groups.find((g) => g.group === "Evolve")!;
+    expect(evolve.items.map((i) => i.copy)).toEqual([0, 1]);
+    const bench = groups.find((g) => g.group === "Bench")!;
+    expect(bench.items[0].copy).toBeUndefined();
+  });
+});
 
 describe("copyBadges", () => {
   it("leaves a unique name without a badge", () => {

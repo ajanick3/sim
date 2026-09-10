@@ -46,6 +46,82 @@ export function copyBadges(names: (string | null)[]): (number | undefined)[] {
   });
 }
 
+// The engine hands the UI a flat list of move labels. Until the wasm
+// boundary reports structured actions, the label prefix is the only clue
+// to what kind of move each one is. These rules are matched in order; the
+// first hit wins, and anything unmatched lands in "Other".
+const ACTION_GROUPS: { group: string; test: RegExp }[] = [
+  { group: "Attack", test: /^Attack/ },
+  { group: "Attach Energy", test: /^Attach .* Energy /i },
+  { group: "Attach", test: /^Attach / },
+  { group: "Evolve", test: /^Evolve / },
+  { group: "Bench", test: /^Bench / },
+  { group: "Play", test: /^Play / },
+  { group: "Retreat", test: /^Retreat/ },
+  { group: "Promote", test: /^Promote / },
+  { group: "Move Energy", test: /^(Move .* to|Stop moving Energy)/ },
+  { group: "Heal", test: /^Heal / },
+  { group: "Take cards", test: /^(Take |Stop taking)/ },
+  { group: "Discard", test: /^Discard /i },
+  { group: "Choose", test: /^Choose /i },
+];
+const FINISH_GROUP = "Finish";
+const OTHER_GROUP = "Other";
+
+export const ACTION_GROUP_ORDER = [...ACTION_GROUPS.map((g) => g.group), OTHER_GROUP, FINISH_GROUP];
+
+export interface GroupedAction {
+  /** Index into the engine's own `legal_actions()` list — what `apply` takes. */
+  index: number;
+  label: string;
+  /** Set when this exact label appears more than once; its 0-based rank. */
+  copy?: number;
+}
+
+export interface ActionGroup {
+  group: string;
+  items: GroupedAction[];
+}
+
+function groupOf(label: string): string {
+  if (label === "End turn" || label === "End your turn") return FINISH_GROUP;
+  for (const { group, test } of ACTION_GROUPS) {
+    if (test.test(label)) return group;
+  }
+  return OTHER_GROUP;
+}
+
+/**
+ * Sort the engine's flat action labels into named groups for display,
+ * keeping each action's original index for `apply`. When one label repeats
+ * — two same-named Pokémon give identical text — each copy gets a 0-based
+ * `copy` rank so the panel can mark them apart, the way the board does.
+ */
+export function groupActions(labels: string[]): ActionGroup[] {
+  const total = new Map<string, number>();
+  for (const l of labels) total.set(l, (total.get(l) ?? 0) + 1);
+  const seen = new Map<string, number>();
+
+  const byGroup = new Map<string, GroupedAction[]>();
+  labels.forEach((label, index) => {
+    const g = groupOf(label);
+    const item: GroupedAction = { index, label };
+    if ((total.get(label) ?? 0) > 1) {
+      const rank = seen.get(label) ?? 0;
+      seen.set(label, rank + 1);
+      item.copy = rank;
+    }
+    const bucket = byGroup.get(g) ?? [];
+    bucket.push(item);
+    byGroup.set(g, bucket);
+  });
+
+  return ACTION_GROUP_ORDER.filter((g) => byGroup.has(g)).map((group) => ({
+    group,
+    items: byGroup.get(group)!,
+  }));
+}
+
 export const AUTO_ADVANCE_CAP = 100;
 
 export interface AutoAdvanceInput {
