@@ -343,9 +343,9 @@ fn rust_syndicate_grunt_discards_an_energy_with_no_coin_flip() {
     assert_eq!(state.current, player);
 
     let card = ensure_in_hand(&mut state, player, grunt);
-    assert!(legal_actions(&state).contains(&Action::PlayTrainer { card }));
 
-    // Give the opponent's Active an Energy to lose.
+    // Give the opponent's Active an Energy to lose. Without one in play
+    // the card would do nothing, so it is not playable until now.
     let their_active = state.player(opponent).active.unwrap();
     let energy = *state
         .player(opponent)
@@ -356,6 +356,7 @@ fn rust_syndicate_grunt_discards_an_energy_with_no_coin_flip() {
     state.players[opponent.index()].library.retain(|c| *c != energy);
     state.pokemon[their_active.index()].attached.push(energy);
 
+    assert!(legal_actions(&state).contains(&Action::PlayTrainer { card }));
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
     assert!(
         matches!(state.phase, Phase::DiscardingOpponentEnergy { .. }),

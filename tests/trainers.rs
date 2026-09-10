@@ -616,6 +616,45 @@ fn crushing_hammer_discards_opponent_energy_on_heads() {
     assert!(state.player(player.opponent()).discard.contains(&energy));
 }
 
+#[test]
+fn crushing_hammer_is_playable_with_no_opponent_energy_in_play() {
+    use sim::rng::ScriptedRng;
+    let set = build2();
+    let decklist = deck2(&set, set.crushing_hammer);
+    let mut state = GameState::new(
+        set.db.clone(),
+        [decklist.clone(), decklist],
+        Box::new(ScriptedRng::new(vec![1])), // heads
+    );
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+    apply(&mut state, Action::EndTurn).unwrap();
+    while state.phase != Phase::Main && !state.is_over() {
+        let first = legal_actions(&state)[0];
+        apply(&mut state, first).unwrap();
+    }
+
+    let player = state.current;
+    assert!(
+        !state.has_energy_in_play(player.opponent()),
+        "the fixture opens with no Energy attached on either side"
+    );
+
+    let card = ensure_in_hand2(&mut state, player, set.crushing_hammer);
+    assert!(
+        legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "Crushing Hammer plays even with nothing to discard"
+    );
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert_eq!(
+        state.phase,
+        Phase::Main,
+        "heads with no Energy in play resolves, not a stuck discard phase"
+    );
+}
+
 // --- Beyond the map: discard only a Special Energy from the opponent ---
 
 #[test]
