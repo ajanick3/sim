@@ -574,6 +574,28 @@ const HAND_ORDER = [
   "energy",
 ] as const;
 
+function splitHandRows(hand: WireCard[]): WireCard[][] {
+  const order = HAND_ORDER as readonly string[];
+  const rank = (c: string) => {
+    const i = order.indexOf(c);
+    return i < 0 ? order.length : i;
+  };
+  const sorted = [...hand].sort((a, b) => rank(a.category) - rank(b.category));
+  const n = sorted.length;
+  if (n <= 4) return [sorted];
+  const target = Math.ceil(n / 2);
+  const boundaries: number[] = [];
+  for (let i = 1; i < n; i++) {
+    if (sorted[i].category !== sorted[i - 1].category) boundaries.push(i);
+  }
+  let split = target;
+  if (boundaries.length) {
+    const best = boundaries.reduce((p, c) => (Math.abs(c - target) < Math.abs(p - target) ? c : p));
+    if (Math.abs(best - target) <= 2) split = best;
+  }
+  return [sorted.slice(0, split), sorted.slice(split)];
+}
+
 function HandStrip({
   hand,
   meta,
@@ -592,12 +614,22 @@ function HandStrip({
   confirmIndex?: number;
   art: Art;
 }) {
-  // One row per category, in play order. Rows after the first slide up so
-  // the front row covers the text band of the row behind it but not its
-  // illustration; a later row sits above an earlier one.
-  const rows = HAND_ORDER.map((cat) => hand.filter((c) => c.category === cat)).filter(
-    (r) => r.length > 0,
-  );
+  // Sort by category, then break into at most two rows at the category
+  // boundary nearest the midpoint — an even split is nice but keeping a
+  // category whole is nicer, so allow the split to drift a card or two.
+  const rows = splitHandRows(hand);
+  const [tossing, setTossing] = useState<number | null>(null);
+  const reduce =
+    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const onCardClick = (c: WireCard, selected: boolean) => {
+    if (selected && confirmIndex !== undefined) {
+      if (reduce) onConfirm(confirmIndex);
+      else setTossing(c.id);
+      return;
+    }
+    onHand(c.id);
+  };
 
   return (
     <div className="mt-2 rounded-lg border-2 border-cyan-400/60 p-1.5">
@@ -619,35 +651,48 @@ function HandStrip({
                 const selected = selection?.kind === "hand" && selection.card === c.id;
                 const src = art(c.print_id);
                 return (
-                  <div
+                  <button
                     key={c.id}
+                    type="button"
                     data-keep-selection
-                    className={`relative h-[150px] w-[104px] flex-none transition-transform hover:z-20 hover:-translate-y-6 ${
-                      selected ? "z-30 -translate-y-6" : ""
+                    disabled={!playable}
+                    onClick={() => onCardClick(c, selected)}
+                    onAnimationEnd={(e) => {
+                      if (
+                        e.animationName === "card-toss" &&
+                        tossing === c.id &&
+                        confirmIndex !== undefined
+                      )
+                        onConfirm(confirmIndex);
+                    }}
+                    className={`relative h-[150px] w-[104px] flex-none transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-4 hover:scale-[1.06] disabled:opacity-50 ${
+                      tossing === c.id
+                        ? "card-toss z-40"
+                        : selected
+                          ? "card-tap z-30 -translate-y-10 scale-[1.12]"
+                          : ""
                     }`}
                   >
-                    <button
-                      type="button"
-                      disabled={!playable}
-                      onClick={() => onHand(c.id)}
-                      className={`block size-full overflow-hidden rounded-md border bg-panel disabled:opacity-50 ${
-                        selected ? "border-accent ring-2 ring-accent" : "border-edge"
-                      }`}
-                    >
-                      <CardFace src={src} name={c.name} energyType={c.energy_type} />
-                    </button>
-                    {selected && confirmIndex !== undefined && (
-                      <button
-                        type="button"
-                        data-keep-selection
-                        onClick={() => onConfirm(confirmIndex)}
-                        aria-label="Confirm"
-                        className="absolute left-1/2 top-1/2 z-40 grid size-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-black/40 bg-emerald-500 text-xl shadow-lg hover:bg-emerald-400"
+                    {src ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={src}
+                        alt={c.name}
+                        loading="lazy"
+                        className={`size-full rounded-[6px] object-contain drop-shadow-md ${
+                          selected ? "ring-2 ring-accent" : ""
+                        }`}
+                      />
+                    ) : (
+                      <span
+                        className={`absolute inset-0 rounded-md border bg-panel ${
+                          selected ? "border-accent ring-2 ring-accent" : "border-edge"
+                        }`}
                       >
-                        ✅
-                      </button>
+                        <CardFace src={null} name={c.name} energyType={c.energy_type} />
+                      </span>
                     )}
-                  </div>
+                  </button>
                 );
               })}
             </div>
@@ -775,13 +820,24 @@ function DecisionBar({
                 type="button"
                 disabled={busy}
                 onClick={() => onAct(index)}
-                className="relative h-[168px] w-[120px] flex-none overflow-hidden rounded-md border border-edge bg-panel transition-transform hover:-translate-y-1 hover:border-accent disabled:opacity-50"
+                className="relative h-[176px] w-[126px] flex-none transition-transform hover:-translate-y-1 hover:scale-[1.04] disabled:opacity-50"
               >
-                <CardFace
-                  src={src}
-                  name={face?.name ?? label.replace(/^Take /, "")}
-                  energyType={face?.energy_type ?? null}
-                />
+                {src ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={src}
+                    alt={face?.name ?? label}
+                    className="size-full rounded-[6px] object-contain drop-shadow-md"
+                  />
+                ) : (
+                  <span className="absolute inset-0 rounded-md border border-edge bg-panel">
+                    <CardFace
+                      src={null}
+                      name={face?.name ?? label.replace(/^Take /, "")}
+                      energyType={face?.energy_type ?? null}
+                    />
+                  </span>
+                )}
               </button>
             );
           })}
