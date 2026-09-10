@@ -9,7 +9,7 @@ const meta = {
   component: CardFace,
   decorators: [
     (Story) => (
-      <span className="relative block h-[168px] w-[120px] overflow-hidden rounded-[7px] border border-black/10 bg-white">
+      <span className="relative block h-[168px] w-[120px] overflow-hidden rounded-card border border-black/10 bg-card">
         <Story />
       </span>
     ),

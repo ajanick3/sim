@@ -478,7 +478,7 @@ export function LiveBoard({
 
       {drag && (
         <div
-          className="pointer-events-none fixed z-[60] h-[132px] w-[96px] -translate-x-1/2 -translate-y-1/2 rotate-3 overflow-hidden rounded-[7px] border border-black/10 bg-white shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
+          className="pointer-events-none fixed z-[60] h-[132px] w-[96px] -translate-x-1/2 -translate-y-1/2 rotate-3 overflow-hidden rounded-card border border-black/10 bg-card shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
           style={{ left: drag.x, top: drag.y }}
         >
           {dragSrc ? (
@@ -540,7 +540,7 @@ export function LiveBoard({
               {discardView.cards.map((c, i) => (
                 <span
                   key={i}
-                  className="relative block aspect-[5/7] overflow-hidden rounded-[6px] border border-black/10 bg-white shadow-[0_1px_3px_rgba(28,16,8,0.5)]"
+                  className="relative block aspect-[5/7] overflow-hidden rounded-card border border-black/10 bg-card shadow-card"
                 >
                   <CardFace src={art(c.print_id)} name={c.name} energyType={c.energy_type} />
                 </span>

@@ -26,6 +26,23 @@
   --color-energy-fairy: #e993d0;
   --color-energy-dragon: #7b6c4e;
   --color-energy-colorless: #c6c0b7;
+
+  /* A physical card: white stock, near-black ink. Tokenised so one place
+     owns them, though nothing should theme a card away from paper. */
+  --color-card: #ffffff;
+  --color-card-ink: #1a1a1a;
+
+  /* The two board accents that are not `accent` or `warn`: the orange of
+     a damage counter and the rose of a Prize marker. */
+  --color-damage: #f97316;
+  --color-prize: #f43f5e;
+
+  /* One card corner radius, and the warm top-lit shadow a card casts on
+     the table — resting, and raised when it lifts. Defined once here so
+     the string is not copied across components. */
+  --radius-card: 7px;
+  --shadow-card: 0 1px 2px rgba(28, 16, 8, 0.55), 0 4px 8px rgba(28, 16, 8, 0.35);
+  --shadow-card-raised: 0 2px 4px rgba(28, 16, 8, 0.4), 0 16px 32px rgba(28, 16, 8, 0.45);
 }
 
 :root {

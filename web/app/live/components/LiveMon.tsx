@@ -2,6 +2,7 @@
 
 import { ENERGY_COLOR } from "../../table";
 import type { WirePokemon } from "../../view";
+import { CARD_SIZE } from "./sizes";
 import { damageSpot, type Art } from "./shared";
 
 /** One Pokémon in play — Active or Bench — as a card showing the top
@@ -30,11 +31,7 @@ export function LiveMon({
   /** Empty slot: a selected hand card can be placed here. */
   placeHere?: () => void;
 }) {
-  const size = active
-    ? "w-[200px] h-[118px]"
-    : small
-      ? "w-[64px] min-h-[90px]"
-      : "w-[96px] min-h-[134px]";
+  const size = active ? CARD_SIZE.active : small ? CARD_SIZE.benchSmall : CARD_SIZE.bench;
   if (!mon) {
     return (
       <button
@@ -43,7 +40,7 @@ export function LiveMon({
         data-drop-id={placeHere ? (active ? "slot:active" : "slot:bench") : undefined}
         disabled={!placeHere}
         onClick={placeHere}
-        className={`${size} flex flex-none items-center justify-center rounded-md border border-dashed text-[9px] disabled:cursor-default ${
+        className={`${size} flex flex-none items-center justify-center rounded-card border border-dashed text-[9px] disabled:cursor-default ${
           placeHere
             ? "border-accent bg-accent/10 text-accent animate-pulse"
             : "border-white/15 text-dim"
@@ -72,7 +69,7 @@ export function LiveMon({
       onClick={onSelect}
       className={`deal-in ${size} ${
         selected ? "card-tap" : ""
-      } relative flex flex-none flex-col overflow-hidden rounded-md border bg-panel transition-colors disabled:cursor-default disabled:opacity-100 ${ring} ${
+      } relative flex flex-none flex-col overflow-hidden rounded-card border bg-panel transition-colors disabled:cursor-default disabled:opacity-100 ${ring} ${
         interactive ? "hover:border-accent" : ""
       }`}
     >
@@ -103,7 +100,7 @@ export function LiveMon({
           fixed per Pokémon so it does not jump between renders. */}
       {mon.damage > 0 && (
         <span
-          className={`absolute z-10 grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-black/50 bg-orange-500 font-black text-black shadow-[0_2px_5px_rgba(0,0,0,0.6)] ${
+          className={`absolute z-10 grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-black/50 bg-damage font-black text-black shadow-[0_2px_5px_rgba(0,0,0,0.6)] ${
             active ? "size-11 text-base" : "size-6 text-[10px]"
           }`}
           style={damageSpot(mon.id)}
