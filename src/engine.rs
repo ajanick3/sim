@@ -3468,6 +3468,11 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
     let damage =
         damage_dealt_with(state, attacker, defender, base, ignore_defenders_effects, ignore_weakness);
 
+    // The summary line reports every point the defender took from this
+    // attack, its plain damage plus any damage counters the effect places
+    // on it — `Powerful Hand` deals 0 plain damage and lands all of it as
+    // counters, so "for 0" would read as a whiff.
+    let defender_damage_before = state.pokemon[defender.index()].damage;
     state.pokemon[defender.index()].damage += damage;
     // `Lillie's Pearl` tells this knockout apart from one a checkup
     // causes; `settle`'s knockout check consumes this, every call.
@@ -3514,8 +3519,11 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
         resolve_attack_effect(state, attacker, defender, effect, attack.name);
     }
 
+    let dealt_to_defender = state.pokemon[defender.index()]
+        .damage
+        .saturating_sub(defender_damage_before);
     state.log.push(format!(
-        "{attacker_name} uses {} on {defender_name} for {damage}.",
+        "{attacker_name} uses {} on {defender_name} for {dealt_to_defender}.",
         attack.name
     ));
 }

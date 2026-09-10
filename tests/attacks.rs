@@ -2352,6 +2352,37 @@ fn places_damage_counters_on_the_defender_per_hand_size() {
 }
 
 #[test]
+fn the_summary_line_counts_damage_counters_the_effect_placed() {
+    let attack = Attack {
+        name: "Powerful Hand",
+        cost: vec![Type::Colorless],
+        base_damage: 0,
+        inflicts: None,
+        effect: Some(AttackEffect::PlaceDamageCountersOnDefenderPerCount(
+            sim::card::Count::OwnHandSizeCount,
+            2,
+        )),
+    };
+    let (mut state, _defender_ex) = game(attack, 3);
+    let player = state.current;
+    let placed = (state.player(player).hand.len() as u32 - 1) * 2 * 10;
+
+    pay_and_attack(&mut state);
+
+    let line = state
+        .log
+        .iter()
+        .rev()
+        .find(|l| l.contains("uses Powerful Hand on"))
+        .expect("the attack logged a summary line");
+    assert_eq!(
+        line,
+        &format!("Attackmon uses Powerful Hand on Defendmon for {placed}."),
+        "the summary counts the counters the effect placed, not a bare 0"
+    );
+}
+
+#[test]
 fn alakazam_is_admitted_from_the_artifact() {
     let import = sim::import::load(
         &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
