@@ -277,5 +277,6 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Drasna (`ShuffleHandThenCoinFlipDraw`), Harlequin
     // (`BothShuffleHandThenCoinFlipDraw`), and Naveen (`DrawUpToHandSize`,
     // its optional pre-discard skipped) take it to 850.
-    assert_eq!(admitted, 850, "coverage moves only on purpose");
+    // Hassel and Drayton (peek-and-take `Decide` reskins) take it to 856.
+    assert_eq!(admitted, 856, "coverage moves only on purpose");
 }

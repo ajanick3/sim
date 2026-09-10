@@ -476,6 +476,43 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::ShuffleHandThenCoinFlipDraw { heads: 8, tails: 3 },
         ),
+        "Hassel" => (
+            Some(Requirement::KnockedOutDuringOpponentsLastTurn),
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::AnyCard,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 3,
+                    excludes_type_of_previous: false,
+                    peek: Some(8),
+                }],
+                then: None,
+            },
+        ),
+        "Drayton" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![
+                    Slot {
+                        filter: CardFilter::AnyPokemon,
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: Some(7),
+                    },
+                    Slot {
+                        filter: CardFilter::AnyTrainer,
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: Some(7),
+                    },
+                ],
+                then: None,
+            },
+        ),
         "Harlequin" => (
             free,
             TrainerEffect::BothShuffleHandThenCoinFlipDraw {

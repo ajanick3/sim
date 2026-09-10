@@ -105,7 +105,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Tarragon and Philippe take it to 216.
     // Emcee's Hype, Billy & O'Nare, and Emma take it to 211.
     // Drasna, Harlequin, and Naveen take it to 205.
-    assert_eq!(trainers, 205, "the Trainers still refused, by kind");
+    // Hassel and Drayton take it to 199.
+    assert_eq!(trainers, 199, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and
