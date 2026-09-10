@@ -24,3 +24,9 @@ from.
 - `GameState` is not `Serialize` and ADR 0096 chose not to make it so. The
   live alternative is replay from `{seed, deck, action indices}`, the shape
   `tests/replay.rs` already exercises.
+- **Free tier only.** No paid plan, no paid add-on, no card on file. The
+  target is Vercel Hobby (static page plus Server Actions; non-commercial)
+  and Neon's Free plan (0.5 GB storage, autosuspend after idle, no card).
+  The stored data is a few kilobytes per game, so this holds with room to
+  spare. A design that would need a paid tier is out of scope; say so
+  rather than reaching for one.
