@@ -93,6 +93,7 @@ export function LiveBoard({
   const opp = view.sides[you === 1 ? 0 : 1];
   const endTurn = meta.findIndex((m) => m.kind === "EndTurn");
   const [showLog, setShowLog] = useState(false);
+  const [showRail, setShowRail] = useState(true);
 
   const dropTargets =
     selection?.kind === "hand"
@@ -256,7 +257,7 @@ export function LiveBoard({
     <div className="flex h-full min-h-0 flex-col gap-1 pt-1">
       <div className="flex min-h-0 flex-1 gap-2">
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-edge bg-felt p-2">
-          <div className="flex min-h-0 flex-1 flex-col justify-center gap-1 overflow-y-auto">
+          <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
             <SideRow
               side={opp}
               label={`${SEAT_NAME[opp.player]} Opponent`}
@@ -346,16 +347,30 @@ export function LiveBoard({
           />
         </div>
 
-        <SideRail
-          myPrizes={mine.prize_count}
-          oppPrizes={opp.prize_count}
-          turn={view.turn_number}
-          yourTurn={seat === you}
-          canEndTurn={endTurn >= 0 && !busy}
-          onEndTurn={() => endTurn >= 0 && onAct(endTurn)}
-          onLog={() => setShowLog(true)}
-        />
+        {showRail && (
+          <SideRail
+            myPrizes={mine.prize_count}
+            oppPrizes={opp.prize_count}
+            turn={view.turn_number}
+            yourTurn={seat === you}
+            canEndTurn={endTurn >= 0 && !busy}
+            onEndTurn={() => endTurn >= 0 && onAct(endTurn)}
+            onLog={() => setShowLog(true)}
+            onHide={() => setShowRail(false)}
+          />
+        )}
       </div>
+
+      {!showRail && (
+        <button
+          type="button"
+          onClick={() => setShowRail(true)}
+          aria-label="Show controls"
+          className="fixed bottom-4 right-4 z-40 grid size-12 place-items-center rounded-full border-edge bg-panel text-lg shadow-[0_6px_18px_rgba(0,0,0,0.55)]"
+        >
+          «
+        </button>
+      )}
 
       <div className="shrink-0">
         {firstTurn ? (
@@ -778,7 +793,9 @@ function splitHandRows(hand: WireCard[]): WireCard[][] {
   };
   const sorted = [...hand].sort((a, b) => rank(a.category) - rank(b.category));
   const n = sorted.length;
-  if (n <= 4) return [sorted];
+  // One row until it would hold more than six; then two rows, each at
+  // least three wide, split at the category boundary nearest the middle.
+  if (n <= 6) return [sorted];
   const target = Math.ceil(n / 2);
   const boundaries: number[] = [];
   for (let i = 1; i < n; i++) {
@@ -789,6 +806,7 @@ function splitHandRows(hand: WireCard[]): WireCard[][] {
     const best = boundaries.reduce((p, c) => (Math.abs(c - target) < Math.abs(p - target) ? c : p));
     if (Math.abs(best - target) <= 2) split = best;
   }
+  split = Math.max(3, Math.min(split, n - 3));
   return [sorted.slice(0, split), sorted.slice(split)];
 }
 
@@ -941,6 +959,7 @@ function SideRail({
   canEndTurn,
   onEndTurn,
   onLog,
+  onHide,
 }: {
   myPrizes: number;
   oppPrizes: number;
@@ -949,9 +968,17 @@ function SideRail({
   canEndTurn: boolean;
   onEndTurn: () => void;
   onLog: () => void;
+  onHide: () => void;
 }) {
   return (
-    <div className="flex w-[72px] flex-none flex-col items-center gap-2 pt-6">
+    <div className="flex w-[72px] flex-none flex-col items-center gap-2 pt-1">
+      <button
+        onClick={onHide}
+        aria-label="Hide controls"
+        className="grid size-6 place-items-center rounded-full border-edge text-[11px] text-dim"
+      >
+        »
+      </button>
       <div className="text-[10px] text-dim">turn {turn}</div>
       <div className="grid h-9 w-9 place-items-center rounded bg-rose-500 text-lg font-bold">
         {oppPrizes}
