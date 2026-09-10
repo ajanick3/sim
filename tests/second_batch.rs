@@ -3,8 +3,8 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
-    TargetFilter, Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, EnergyEffect, Pokemon, Requirement,
+    Slot, Stage, TargetFilter, Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
@@ -971,7 +971,7 @@ fn with_hilda_and_dawn(set: Set) -> (Set, CardDefId, CardDefId) {
             from: Zone::Library,
             slots: vec![
                 slot(CardFilter::EvolutionPokemon),
-                slot(CardFilter::BasicEnergy),
+                slot(CardFilter::AnyEnergy),
             ],
             then: None,
         },
@@ -1043,6 +1043,40 @@ fn hilda_asks_for_one_of_each_in_turn() {
     assert_eq!(state.phase, Phase::Main, "two slots, two cards, done");
     assert!(state.player(player).hand.contains(&evolution));
     assert!(state.player(player).hand.contains(&energy));
+}
+
+#[test]
+fn hilda_finds_a_special_energy_not_just_basic() {
+    // "Search your deck for an Evolution Pokémon and an Energy card" — a
+    // Special Energy is an Energy card, so the second slot must offer it.
+    let (set, hilda, _) = with_hilda_and_dawn(build());
+    let mut state = game(&set, hilda, 3);
+    let player = state.current;
+
+    // Put a Special Energy — an Energy carrying rules text — in the deck.
+    let special_def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-special-energy",
+        name: "Enriching Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::DrawCardsOnAttachFromHand(4)),
+    }));
+    let special = CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: special_def, owner: player });
+    state.players[player.index()].library.push(special);
+
+    let card = ensure_in_hand(&mut state, player, hilda);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap(); // decline the Evolution slot
+
+    assert_eq!(step_of(&state), Some(1), "on the Energy slot");
+    assert!(
+        offered(&state).contains(&special),
+        "the Special Energy is offered as an Energy card"
+    );
+
+    apply(&mut state, Action::TakeCard { card: special }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+    assert!(state.player(player).hand.contains(&special));
 }
 
 #[test]
@@ -1171,7 +1205,8 @@ fn hilda_and_dawn_are_admitted_from_the_artifact() {
             from: Zone::Library,
             slots: vec![
                 slot(CardFilter::EvolutionPokemon),
-                slot(CardFilter::BasicEnergy),
+                // "an Energy card" — a Special Energy counts too.
+                slot(CardFilter::AnyEnergy),
             ],
             then: None,
         })
