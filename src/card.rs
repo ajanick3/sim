@@ -1756,6 +1756,14 @@ pub enum EnergyEffect {
     /// `Colorless` (the value it falls back to off a Basic).
     /// `Prism Energy`.
     ProvidesAnyTypeIfAttachedToBasic,
+    /// While attached, the carrier has no Retreat Cost. Read by
+    /// `effective_retreat_cost`. `Magnetic Metal Energy`.
+    CarrierHasNoRetreatCost,
+    /// While attached, the carrier cannot be affected by any Special
+    /// Condition, and sheds every one it has the moment this card is
+    /// attached. Read by `inflict` and by the attach step.
+    /// `Bubbly Water Energy`.
+    CarrierImmuneToSpecialConditions,
 }
 
 #[derive(Debug, Clone)]

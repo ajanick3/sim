@@ -1479,6 +1479,15 @@ fn known_energy(name: &str) -> Option<(Type, crate::card::EnergyEffect)> {
         "Prism Energy" => {
             (Type::Colorless, crate::card::EnergyEffect::ProvidesAnyTypeIfAttachedToBasic)
         }
+        "Rocky Fighting Energy" => {
+            (Type::Fighting, crate::card::EnergyEffect::PreventsAttackEffectsOnCarrier)
+        }
+        "Magnetic Metal Energy" => {
+            (Type::Metal, crate::card::EnergyEffect::CarrierHasNoRetreatCost)
+        }
+        "Bubbly Water Energy" => {
+            (Type::Water, crate::card::EnergyEffect::CarrierImmuneToSpecialConditions)
+        }
         _ => return None,
     })
 }

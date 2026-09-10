@@ -278,5 +278,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // (`BothShuffleHandThenCoinFlipDraw`), and Naveen (`DrawUpToHandSize`,
     // its optional pre-discard skipped) take it to 850.
     // Hassel and Drayton (peek-and-take `Decide` reskins) take it to 856.
-    assert_eq!(admitted, 856, "coverage moves only on purpose");
+    // Rocky Fighting Energy (a `PreventsAttackEffectsOnCarrier` reskin),
+    // Magnetic Metal Energy (`CarrierHasNoRetreatCost`), and Bubbly Water
+    // Energy (`CarrierImmuneToSpecialConditions`) take it to 859.
+    assert_eq!(admitted, 859, "coverage moves only on purpose");
 }

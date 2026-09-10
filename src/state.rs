@@ -1042,7 +1042,9 @@ impl GameState {
                     | crate::card::EnergyEffect::CountersAttackerOnDamageTakenWhileActive(_)
                     | crate::card::EnergyEffect::PreventsAttackEffectsOnCarrier
                     | crate::card::EnergyEffect::ReattachesAfterOwnDiscardByAttackEffect
-                    | crate::card::EnergyEffect::ProvidesAnyTypeIfAttachedToBasic,
+                    | crate::card::EnergyEffect::ProvidesAnyTypeIfAttachedToBasic
+                    | crate::card::EnergyEffect::CarrierHasNoRetreatCost
+                    | crate::card::EnergyEffect::CarrierImmuneToSpecialConditions,
                 )
                 | None => 0,
             })
@@ -1178,6 +1180,15 @@ impl GameState {
             if has_skyliner {
                 return 0;
             }
+        }
+        let no_cost_energy = self.pokemon(id).attached.iter().any(|c| {
+            self.def_of(*c)
+                .as_energy()
+                .and_then(|e| e.effect)
+                .is_some_and(|e| e == crate::card::EnergyEffect::CarrierHasNoRetreatCost)
+        });
+        if no_cost_energy {
+            return 0;
         }
         let printed = self.pokemon_def(id).retreat_cost as u32;
         let reduction: u32 = if self.tools_disabled() {
@@ -1666,6 +1677,9 @@ impl GameState {
         if self.immune_under_festival_grounds(id) {
             return;
         }
+        if self.carries_special_condition_immunity(id) {
+            return;
+        }
         if condition == Condition::Asleep
             && !self.abilities_disabled_for(id)
             && self.pokemon_def(id).ability.is_some_and(|a| {
@@ -1680,6 +1694,17 @@ impl GameState {
             self.remove_condition(id, condition);
         }
         self.pokemon[id.index()].conditions.push(condition);
+    }
+
+    /// Whether `id` carries an Energy granting immunity to every Special
+    /// Condition. `Bubbly Water Energy`.
+    pub fn carries_special_condition_immunity(&self, id: PokemonId) -> bool {
+        self.pokemon(id).attached.iter().any(|c| {
+            self.def_of(*c)
+                .as_energy()
+                .and_then(|e| e.effect)
+                .is_some_and(|e| e == crate::card::EnergyEffect::CarrierImmuneToSpecialConditions)
+        })
     }
 
     /// Rule 27: a Pokémon that leaves the Active spot loses every condition.
