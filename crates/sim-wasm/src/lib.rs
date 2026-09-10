@@ -166,7 +166,7 @@ impl Game {
     /// The board as the seat to act sees it, masked. JSON of [`WireView`].
     pub fn view(&self) -> String {
         let you = player_to_act(&self.state).unwrap_or(PlayerId::One);
-        let wire = wire_view(&PlayerView::of(&self.state, you));
+        let wire = wire_view(&self.state.db, &PlayerView::of(&self.state, you));
         serde_json::to_string(&wire).expect("the wire view serializes")
     }
 }
@@ -176,12 +176,16 @@ impl Game {
 // and `ids.rs`, and a browser contract has no business there. See ADR 0096.
 
 use serde::Serialize;
+use sim::card::CardDb;
 
 #[derive(Serialize)]
 struct WireCard {
     id: usize,
     name: String,
     def: usize,
+    /// The Energy type this card provides, e.g. `"Fire"`, or `null` when
+    /// the card is not an Energy — a Tool, say.
+    energy_type: Option<String>,
 }
 
 #[derive(Serialize)]
@@ -215,15 +219,19 @@ struct WireView {
     sides: [WireSide; 2],
 }
 
-fn wire_card(card: &sim::view::CardView) -> WireCard {
+fn wire_card(db: &CardDb, card: &sim::view::CardView) -> WireCard {
     WireCard {
         id: card.id.index(),
         name: card.name.to_string(),
         def: card.def.index(),
+        energy_type: db
+            .get(card.def)
+            .as_energy()
+            .map(|energy| format!("{:?}", energy.kind)),
     }
 }
 
-fn wire_pokemon(pokemon: &sim::view::PokemonView) -> WirePokemon {
+fn wire_pokemon(db: &CardDb, pokemon: &sim::view::PokemonView) -> WirePokemon {
     WirePokemon {
         name: pokemon.name.to_string(),
         hp: pokemon.hp,
@@ -234,32 +242,32 @@ fn wire_pokemon(pokemon: &sim::view::PokemonView) -> WirePokemon {
             .iter()
             .map(|condition| format!("{condition:?}"))
             .collect(),
-        attached: pokemon.attached.iter().map(wire_card).collect(),
+        attached: pokemon.attached.iter().map(|c| wire_card(db, c)).collect(),
     }
 }
 
-fn wire_side(side: &sim::view::SideView) -> WireSide {
+fn wire_side(db: &CardDb, side: &sim::view::SideView) -> WireSide {
     WireSide {
         player: side.player.index() as u8,
         hand_count: side.hand_count,
         library_count: side.library_count,
         prize_count: side.prize_count,
-        discard: side.discard.iter().map(wire_card).collect(),
-        active: side.active.as_ref().map(wire_pokemon),
-        bench: side.bench.iter().map(wire_pokemon).collect(),
+        discard: side.discard.iter().map(|c| wire_card(db, c)).collect(),
+        active: side.active.as_ref().map(|p| wire_pokemon(db, p)),
+        bench: side.bench.iter().map(|p| wire_pokemon(db, p)).collect(),
     }
 }
 
-fn wire_view(view: &PlayerView) -> WireView {
+fn wire_view(db: &CardDb, view: &PlayerView) -> WireView {
     WireView {
         you: view.you.index() as u8,
         current: view.current.index() as u8,
         turn_number: view.turn_number,
         phase: phase_tag(view),
-        your_hand: view.your_hand.iter().map(wire_card).collect(),
+        your_hand: view.your_hand.iter().map(|c| wire_card(db, c)).collect(),
         sides: [
-            wire_side(view.side(PlayerId::One)),
-            wire_side(view.side(PlayerId::Two)),
+            wire_side(db, view.side(PlayerId::One)),
+            wire_side(db, view.side(PlayerId::Two)),
         ],
     }
 }

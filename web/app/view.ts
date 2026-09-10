@@ -5,6 +5,8 @@ export interface WireCard {
   id: number;
   name: string;
   def: number;
+  /** The Energy type this card provides, e.g. "Fire", or null if not an Energy. */
+  energy_type: string | null;
 }
 
 export interface WirePokemon {

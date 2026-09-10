@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { loadSim, type CardData, type Game } from "./wasm";
-import type { WirePokemon, WireSide, WireView } from "./view";
+import type { WireCard, WirePokemon, WireSide, WireView } from "./view";
 
 const DECKS = { a: "/decks/dragapult.txt", b: "/decks/alakazam.txt" };
 // Seat 0 is the first player, seat 1 the second — shown as medals.
@@ -260,12 +260,62 @@ function Mon({
       <div style={{ fontWeight: 600 }}>{mon.name}</div>
       <div style={{ color: "var(--dim)", fontSize: 12 }}>
         {mon.remaining_hp}/{mon.hp} HP
-        {mon.attached.length > 0 && ` · ${mon.attached.length} attached`}
       </div>
+      <Attachments cards={mon.attached} />
       {mon.conditions.length > 0 && (
         <div style={{ color: "var(--warn)", fontSize: 12 }}>
           {mon.conditions.join(", ")}
         </div>
+      )}
+    </div>
+  );
+}
+
+const ENERGY_COLOR: Record<string, string> = {
+  Grass: "#63B95B",
+  Fire: "#E4593E",
+  Water: "#5AA7E4",
+  Lightning: "#F4D023",
+  Psychic: "#A461C2",
+  Fighting: "#C4622D",
+  Darkness: "#5B5466",
+  Metal: "#A8A8B5",
+  Fairy: "#E993D0",
+  Dragon: "#7B6C4E",
+  Colorless: "#C6C0B7",
+};
+
+function Attachments({ cards }: { cards: WireCard[] }) {
+  if (cards.length === 0) return null;
+  const energies = cards.filter((c) => c.energy_type);
+  const others = cards.length - energies.length;
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        flexWrap: "wrap",
+        gap: 4,
+        marginTop: 4,
+      }}
+    >
+      {energies.map((c) => (
+        <span
+          key={c.id}
+          title={`${c.energy_type} Energy`}
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: "50%",
+            background: ENERGY_COLOR[c.energy_type as string] ?? "var(--dim)",
+            border: "1px solid rgba(0,0,0,0.35)",
+          }}
+        />
+      ))}
+      {others > 0 && (
+        <span style={{ color: "var(--dim)", fontSize: 12 }}>
+          {`+${others} tool${others > 1 ? "s" : ""}`}
+        </span>
       )}
     </div>
   );
