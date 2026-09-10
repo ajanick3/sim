@@ -8,6 +8,11 @@
 //! library and their order, and the cards in either Prize pile — a player
 //! cannot see their own Prizes either. Each of those keeps its count, because
 //! a count is public.
+//!
+//! One scoped exception: while a player searches their whole own library,
+//! [`PlayerView::library_in_search`] shows that player every card in it,
+//! sorted so the order the search saw is gone. This lets the board show the
+//! cards the search cannot reach next to the cards it can. See ADR 0101.
 
 use crate::card::Condition;
 use crate::ids::{CardDefId, CardId, PlayerId, PokemonId};
@@ -64,6 +69,10 @@ pub struct PlayerView {
     pub your_hand: Vec<CardView>,
     /// The Stadium in play, or none.
     pub stadium: Option<CardView>,
+    /// Every card in your own library, sorted by kind then name, while you
+    /// search the whole of it — otherwise none. The order the search saw is
+    /// dropped by the sort, so this leaks nothing the mask holds back.
+    pub library_in_search: Option<Vec<CardView>>,
     sides: [SideView; 2],
 }
 
@@ -81,6 +90,18 @@ impl PlayerView {
                 .map(|card| card_view(state, *card))
                 .collect(),
             stadium: state.stadium.map(|(_, card)| card_view(state, card)),
+            library_in_search: state.whole_library_search().filter(|owner| *owner == you).map(
+                |_| {
+                    let mut cards = state.player(you).library.clone();
+                    cards.sort_by(|a, b| {
+                        let (da, db) = (state.def_of(*a), state.def_of(*b));
+                        category_rank(da)
+                            .cmp(&category_rank(db))
+                            .then_with(|| da.name().cmp(db.name()))
+                    });
+                    cards.iter().map(|card| card_view(state, *card)).collect()
+                },
+            ),
             sides: [
                 side_view(state, PlayerId::One),
                 side_view(state, PlayerId::Two),
@@ -90,6 +111,22 @@ impl PlayerView {
 
     pub fn side(&self, player: PlayerId) -> &SideView {
         &self.sides[player.index()]
+    }
+}
+
+/// A coarse sort bucket for a library listing: Pokémon, then Trainers by
+/// kind, then Energy. It only has to be stable, not meaningful.
+fn category_rank(def: &crate::card::CardDef) -> u8 {
+    use crate::card::{CardDef, TrainerKind};
+    match def {
+        CardDef::Pokemon(_) => 0,
+        CardDef::Trainer(t) => match t.kind {
+            TrainerKind::Supporter => 1,
+            TrainerKind::Item => 2,
+            TrainerKind::Tool => 3,
+            TrainerKind::Stadium => 4,
+        },
+        CardDef::Energy(_) => 5,
     }
 }
 

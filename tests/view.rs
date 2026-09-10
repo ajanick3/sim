@@ -61,6 +61,10 @@ fn a_view_hides_the_library_and_keeps_its_size() {
         state.player(you).library.len(),
         "you know how many cards are left, not which"
     );
+    assert!(
+        view.library_in_search.is_none(),
+        "the library is shown only during a whole-library search"
+    );
 }
 
 #[test]

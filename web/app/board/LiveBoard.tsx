@@ -473,6 +473,7 @@ export function LiveBoard({
             onAct={onAct}
             art={art}
             meta={meta}
+            library={view.library_in_search}
           />
         ) : (
           <div className="mt-2" data-keep-selection>

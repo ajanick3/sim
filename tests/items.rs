@@ -691,6 +691,49 @@ fn secret_box_pays_its_cost_then_finds_one_of_each_kind() {
     }
 }
 
+#[test]
+fn a_whole_library_search_shows_the_searcher_every_card_in_it() {
+    use sim::view::PlayerView;
+
+    let (set, card, an_item, a_tool, a_supporter, a_stadium) = with_secret_box(build());
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    for _ in 0..3 {
+        ensure_in_hand(&mut state, player, set.mon);
+    }
+    for def in [an_item, a_tool, a_supporter, a_stadium] {
+        let placed = deal_new_card(&mut state, player, def);
+        state.players[player.index()].library.push(placed);
+    }
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    for _ in 0..3 {
+        let pay = match legal_actions(&state)[0] {
+            Action::PayWithCard { card } => card,
+            other => panic!("expected a payment: {other:?}"),
+        };
+        apply(&mut state, Action::PayWithCard { card: pay }).unwrap();
+    }
+    assert!(matches!(state.phase, Phase::Deciding { .. }), "the search runs");
+
+    let mine = PlayerView::of(&state, player);
+    let shown = mine
+        .library_in_search
+        .expect("the searcher sees the whole library");
+    let shown_ids: std::collections::HashSet<_> = shown.iter().map(|c| c.id).collect();
+    let library_ids: std::collections::HashSet<_> =
+        state.player(player).library.iter().copied().collect();
+    assert_eq!(shown_ids, library_ids, "every library card is shown, no more");
+
+    assert!(
+        PlayerView::of(&state, player.opponent())
+            .library_in_search
+            .is_none(),
+        "the opponent never sees the searcher's library"
+    );
+}
+
 // --- Ticket 08: Dusk Ball ---
 
 fn with_dusk_ball(set: Set) -> (Set, CardDefId) {
