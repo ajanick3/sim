@@ -205,11 +205,28 @@ function Side({
         <span>deck {side.library_count}</span>
         <span>prizes {side.prize_count}</span>
       </div>
-      <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 8 }}>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: 8,
+          marginTop: 8,
+        }}
+      >
         <Mon mon={side.active} active />
-        {side.bench.map((m, i) => (
-          <Mon key={i} mon={m} />
-        ))}
+        <div
+          style={{
+            display: "flex",
+            flexWrap: "wrap",
+            justifyContent: "center",
+            gap: 8,
+          }}
+        >
+          {side.bench.map((m, i) => (
+            <Mon key={i} mon={m} />
+          ))}
+        </div>
       </div>
     </section>
   );
