@@ -263,6 +263,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Beyond the field: the standard-trainers effort. Cheren,
     // Friends in Paldea, and Urbain — a plain `Draw(3)` Supporter,
     // five prints between them — take it to 808. Cook (`HealActive`),
-    // Fennel, and Clemont's Quick Wit (`HealEachYours`) take it to 814.
-    assert_eq!(admitted, 814, "coverage moves only on purpose");
+    // Fennel, and Clemont's Quick Wit (`HealEachYours`) take it to 814. Picnicker (`CoinFlipDraw`), Jett
+    // (`DrawPerOpponentMegaEx`), and Iris's Fighting Spirit
+    // (`DrawUpToHandSize`) take it to 820.
+    assert_eq!(admitted, 820, "coverage moves only on purpose");
 }

@@ -378,6 +378,12 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Boss's Orders" => (free, TrainerEffect::SwitchOpponentActive),
         "Cheren" | "Friends in Paldea" | "Urbain" => (free, TrainerEffect::Draw(3)),
         "Cook" => (free, TrainerEffect::HealActive(70)),
+        "Picnicker" => (free, TrainerEffect::CoinFlipDraw { heads: 4, tails: 2 }),
+        "Jett" => (free, TrainerEffect::DrawPerOpponentMegaEx),
+        "Iris's Fighting Spirit" => (
+            Some(Requirement::DiscardOtherCardsFromHand(1)),
+            TrainerEffect::DrawUpToHandSize(6),
+        ),
         "Fennel" => (
             free,
             TrainerEffect::HealEachYours { amount: 40, of_type: None },

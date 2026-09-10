@@ -370,6 +370,15 @@ pub enum TrainerEffect {
     /// Draw this many cards. No cost, no target. `Cheren`,
     /// `Friends in Paldea`, `Urbain`.
     Draw(u32),
+    /// Draw until the player holds this many cards, stopping early if the
+    /// deck runs out. `Iris's Fighting Spirit`.
+    DrawUpToHandSize(u32),
+    /// Flip a coin, then draw `heads` on heads or `tails` on tails.
+    /// `Picnicker`.
+    CoinFlipDraw { heads: u32, tails: u32 },
+    /// Draw one card for each Mega Evolution Pokémon ex the opponent has
+    /// in play. `Jett`.
+    DrawPerOpponentMegaEx,
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
