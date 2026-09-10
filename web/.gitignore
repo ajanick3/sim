@@ -14,3 +14,4 @@ public/decks/
 
 # Storybook build output
 storybook-static/
+public/storybook/
