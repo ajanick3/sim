@@ -208,6 +208,9 @@ struct WireCard {
     /// The Energy type this card provides, e.g. `"Fire"`, or `null` when
     /// the card is not an Energy — a Tool, say.
     energy_type: Option<String>,
+    /// A coarse bucket for sorting a hand: `"pokemon"`, `"supporter"`,
+    /// `"item"`, `"tool"`, `"stadium"`, `"special-energy"`, `"energy"`.
+    category: String,
 }
 
 #[derive(Serialize)]
@@ -289,16 +292,32 @@ struct WireView {
 }
 
 fn wire_card(db: &CardDb, card: &sim::view::CardView) -> WireCard {
+    let def = db.get(card.def);
     WireCard {
         id: card.id.index(),
         name: card.name.to_string(),
         def: card.def.index(),
         print_id: card.print_id.to_string(),
-        energy_type: db
-            .get(card.def)
-            .as_energy()
-            .map(|energy| format!("{:?}", energy.kind)),
+        energy_type: def.as_energy().map(|energy| format!("{:?}", energy.kind)),
+        category: card_category(def),
     }
+}
+
+/// The hand-sorting bucket for a card.
+fn card_category(def: &sim::card::CardDef) -> String {
+    use sim::card::{CardDef, TrainerKind};
+    match def {
+        CardDef::Pokemon(_) => "pokemon",
+        CardDef::Energy(e) if e.effect.is_some() => "special-energy",
+        CardDef::Energy(_) => "energy",
+        CardDef::Trainer(t) => match t.kind {
+            TrainerKind::Supporter => "supporter",
+            TrainerKind::Item => "item",
+            TrainerKind::Tool => "tool",
+            TrainerKind::Stadium => "stadium",
+        },
+    }
+    .to_string()
 }
 
 fn wire_pokemon(db: &CardDb, pokemon: &sim::view::PokemonView) -> WirePokemon {

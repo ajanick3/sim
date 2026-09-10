@@ -504,6 +504,16 @@ function LiveMon({
   );
 }
 
+const HAND_ORDER = [
+  "pokemon",
+  "supporter",
+  "item",
+  "tool",
+  "stadium",
+  "special-energy",
+  "energy",
+] as const;
+
 function HandStrip({
   hand,
   meta,
@@ -517,32 +527,52 @@ function HandStrip({
   onHand: (card: number) => void;
   art: Art;
 }) {
+  // One row per category, in play order. Rows after the first slide up so
+  // the front row covers the text band of the row behind it but not its
+  // illustration; a later row sits above an earlier one.
+  const rows = HAND_ORDER.map((cat) => hand.filter((c) => c.category === cat)).filter(
+    (r) => r.length > 0,
+  );
+
   return (
     <div className="mt-2 rounded-lg border-2 border-cyan-400/60 p-1.5">
       <div className="mb-1 text-[10px] uppercase tracking-widest text-dim">
         Hand ({hand.length})
       </div>
-      <div className="flex gap-1.5 overflow-x-auto">
-        {hand.length === 0 && <span className="px-2 py-8 text-[11px] text-dim">empty</span>}
-        {hand.map((c) => {
-          const playable = meta.some((x) => x.card === c.id);
-          const selected = selection?.kind === "hand" && selection.card === c.id;
-          const src = art(c.print_id);
-          return (
-            <button
-              key={c.id}
-              type="button"
-              disabled={!playable}
-              onClick={() => onHand(c.id)}
-              className={`relative h-[132px] w-[94px] flex-none overflow-hidden rounded-md border bg-panel transition-transform hover:-translate-y-1 disabled:translate-y-0 disabled:opacity-50 ${
-                selected ? "border-accent ring-2 ring-accent" : "border-edge"
-              }`}
+      {hand.length === 0 ? (
+        <span className="px-2 py-8 text-[11px] text-dim">empty</span>
+      ) : (
+        <div className="flex flex-col">
+          {rows.map((row, ri) => (
+            <div
+              key={ri}
+              className="flex flex-wrap justify-center"
+              style={{ marginTop: ri === 0 ? 0 : -84, zIndex: ri + 1 }}
             >
-              <CardFace src={src} name={c.name} energyType={c.energy_type} />
-            </button>
-          );
-        })}
-      </div>
+              {row.map((c) => {
+                const playable = meta.some((x) => x.card === c.id);
+                const selected = selection?.kind === "hand" && selection.card === c.id;
+                const src = art(c.print_id);
+                return (
+                  <button
+                    key={c.id}
+                    type="button"
+                    disabled={!playable}
+                    onClick={() => onHand(c.id)}
+                    className={`relative -ml-3 h-[150px] w-[104px] flex-none overflow-hidden rounded-md border bg-panel transition-transform first:ml-0 hover:z-20 hover:-translate-y-6 disabled:translate-y-0 disabled:opacity-50 ${
+                      selected
+                        ? "z-20 -translate-y-6 border-accent ring-2 ring-accent"
+                        : "border-edge"
+                    }`}
+                  >
+                    <CardFace src={src} name={c.name} energyType={c.energy_type} />
+                  </button>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

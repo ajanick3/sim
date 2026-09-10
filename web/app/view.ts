@@ -9,6 +9,8 @@ export interface WireCard {
   print_id: string;
   /** The Energy type this card provides, e.g. "Fire", or null if not an Energy. */
   energy_type: string | null;
+  /** Coarse hand-sort bucket: "pokemon" | "supporter" | "item" | "tool" | "stadium" | "special-energy" | "energy". */
+  category: string;
 }
 
 export interface WirePokemon {
