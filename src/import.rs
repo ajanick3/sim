@@ -868,6 +868,34 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             },
         ),
+        "Mega Signal" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::MegaPokemon,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
+        "TM Machine" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::ToolNameContains("Technical Machine"),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 3,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         "Buddy-Buddy Poffin" => (
             free,
             TrainerEffect::Decide {
