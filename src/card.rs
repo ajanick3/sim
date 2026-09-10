@@ -532,6 +532,10 @@ pub enum TrainerEffect {
     /// `HealChosen` but without the Special Condition clear, optionally
     /// restricted to a type. `Potion`, `Poké Vital A`, `Jacinthe`.
     HealChosenPlain { amount: u32, of_type: Option<Type> },
+    /// Heal this many from the player's own Active and clear every
+    /// Special Condition on it. `Lumiose Galette` prints "a Special
+    /// Condition" singular; the Active only carries one at a time.
+    HealActiveAndClearConditions(u32),
     /// This turn, the player's attacks do this much more damage to a
     /// restricted target, before Weakness and Resistance. Cleared the
     /// moment the turn ends — distinct from a Tool or Stadium's static

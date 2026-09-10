@@ -597,6 +597,11 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             },
         ),
+        "Lumiose Galette" => (free, TrainerEffect::HealActiveAndClearConditions(20)),
+        "Dragon Elixir" => (
+            free,
+            TrainerEffect::HealChosenPlain { amount: 60, of_type: Some(Type::Dragon) },
+        ),
         "Potion" => (
             free,
             TrainerEffect::HealChosenPlain { amount: 30, of_type: None },
