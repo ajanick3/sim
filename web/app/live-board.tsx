@@ -103,6 +103,24 @@ export function LiveBoard({
   // A tapped hand card (or Pokémon) narrows the action panel to just its
   // moves, so the next step is a short list, not the whole turn.
   const only = selection ? movesForSelection(meta, selection) : undefined;
+
+  // A selected hand card that can go to the Bench / the empty Active spot —
+  // tapped straight onto an empty slot, no button needed.
+  const benchPlace =
+    selection?.kind === "hand"
+      ? meta.findIndex(
+          (m) =>
+            m.card === selection.card &&
+            m.target === null &&
+            (m.kind === "PlayBasic" || m.kind === "PlaceOnBench"),
+        )
+      : -1;
+  const activePlace =
+    selection?.kind === "hand"
+      ? meta.findIndex(
+          (m) => m.card === selection.card && m.target === null && m.kind === "PlaceActive",
+        )
+      : -1;
   const selectedName =
     selection?.kind === "hand"
       ? view.your_hand.find((c) => c.id === selection.card)?.name
@@ -113,36 +131,50 @@ export function LiveBoard({
 
   return (
     <div className="mt-3">
-      <div className="relative flex gap-2">
-        {/* The mat, under a mild tilt like the real client. */}
-        <div className="min-w-0 flex-1 [perspective:1400px]">
-          <div className="origin-top rounded-2xl border border-edge bg-felt p-2 [transform:rotateX(6deg)] sm:p-3">
-            <SideRow side={opp} label={`${SEAT_NAME[opp.player]} Opponent`} art={art} />
+      <div className="flex gap-2">
+        <div className="min-w-0 flex-1 rounded-xl border border-edge bg-felt p-2">
+          <SideRow
+            side={opp}
+            label={`${SEAT_NAME[opp.player]} Opponent`}
+            art={art}
+            meta={meta}
+            selection={selection}
+            dropTargets={dropTargets}
+            onPokemon={onPokemon}
+          />
 
-            <div className="my-2 flex items-stretch justify-center gap-3">
-              <StadiumSlot />
-              <div className="flex flex-col items-center gap-2">
-                <LiveMon
-                  mon={opp.active}
-                  active
-                  art={art}
-                  {...monHooks(opp.active, meta, selection, dropTargets, onPokemon)}
-                />
-                <div className="text-[10px] uppercase tracking-widest text-dim">active</div>
-                <LiveMon
-                  mon={mine.active}
-                  active
-                  art={art}
-                  {...monHooks(mine.active, meta, selection, dropTargets, onPokemon)}
-                />
-              </div>
-              <div className="w-[92px]" aria-hidden />
-            </div>
-
-            <SideRow side={mine} label={`${SEAT_NAME[mine.player]} You`} mine art={art} />
+          {/* Centre lane: stadium, then the two Actives nose to nose. */}
+          <div className="my-1.5 flex items-center justify-center gap-2">
+            <StadiumSlot />
+            <LiveMon
+              mon={opp.active}
+              active
+              art={art}
+              {...monHooks(opp.active, meta, selection, dropTargets, onPokemon)}
+            />
+            <div className="h-px w-6 bg-white/15" aria-hidden />
+            <LiveMon
+              mon={mine.active}
+              active
+              art={art}
+              placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
+              {...monHooks(mine.active, meta, selection, dropTargets, onPokemon)}
+            />
+            <StadiumSlot ghost />
           </div>
 
-          {/* The hand sits flat, off the tilted mat. */}
+          <SideRow
+            side={mine}
+            label={`${SEAT_NAME[mine.player]} You`}
+            mine
+            art={art}
+            meta={meta}
+            selection={selection}
+            dropTargets={dropTargets}
+            onPokemon={onPokemon}
+            onPlaceBench={benchPlace >= 0 ? () => onAct(benchPlace) : undefined}
+          />
+
           <HandStrip
             hand={view.your_hand}
             meta={meta}
@@ -228,32 +260,57 @@ function SideRow({
   label,
   mine = false,
   art,
+  meta,
+  selection,
+  dropTargets,
+  onPokemon,
+  onPlaceBench,
 }: {
   side: WireSide;
   label: string;
   mine?: boolean;
   art: Art;
+  meta: WireActionMeta[];
+  selection: Selection;
+  dropTargets: Map<number, number>;
+  onPokemon: (id: number) => void;
+  onPlaceBench?: () => void;
 }) {
   const badges = copyBadges(side.bench.map((m) => m?.name ?? null));
+  // Five slots: the Pokémon on the Bench, then empty pads to fill.
+  const slots = [...side.bench, ...Array(Math.max(0, 5 - side.bench.length)).fill(null)];
   return (
     <div className={`flex items-start gap-2 ${mine ? "" : "flex-row-reverse"}`}>
       <PrizeStack count={side.prize_count} />
       <div
-        className={`flex-1 rounded-lg border-2 p-1.5 ${
+        className={`min-w-0 flex-1 rounded-lg border-2 p-1.5 ${
           mine ? "border-accent/60" : "border-warn/50"
         }`}
       >
         <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-widest text-dim">
           <span>{label}</span>
-          <span>
-            bench {side.bench.length}/5 · hand {side.hand_count}
-          </span>
+          <span>hand {side.hand_count}</span>
         </div>
         <div className="flex gap-1.5 overflow-x-auto">
-          {side.bench.length === 0 ? (
-            <span className="px-2 py-6 text-[11px] text-dim">bench empty</span>
-          ) : (
-            side.bench.map((m, i) => <LiveMon key={i} mon={m} art={art} copy={badges[i]} small />)
+          {slots.map((m, i) =>
+            m ? (
+              <LiveMon
+                key={i}
+                mon={m}
+                art={art}
+                small
+                copy={badges[i]}
+                {...monHooks(m, meta, selection, dropTargets, onPokemon)}
+              />
+            ) : (
+              <LiveMon
+                key={i}
+                mon={null}
+                art={art}
+                small
+                placeHere={mine ? onPlaceBench : undefined}
+              />
+            ),
           )}
         </div>
       </div>
@@ -305,11 +362,14 @@ function DeckPile({ deck, discard, art }: { deck: number; discard: WireCard[]; a
   );
 }
 
-function StadiumSlot() {
+function StadiumSlot({ ghost = false }: { ghost?: boolean }) {
   return (
-    <div className="flex h-full w-[92px] flex-col items-center justify-center rounded border border-dashed border-white/20 text-center text-[9px] text-dim">
+    <div
+      className={`flex h-[90px] w-[56px] flex-col items-center justify-center rounded border border-dashed border-white/15 text-center text-[8px] text-dim ${
+        ghost ? "invisible" : ""
+      }`}
+    >
       stadium
-      <span className="opacity-60">(not in view yet)</span>
     </div>
   );
 }
@@ -324,6 +384,7 @@ function LiveMon({
   selectable = false,
   selected = false,
   dropTarget = false,
+  placeHere,
 }: {
   mon: WirePokemon | null;
   active?: boolean;
@@ -334,15 +395,24 @@ function LiveMon({
   selectable?: boolean;
   selected?: boolean;
   dropTarget?: boolean;
+  /** Empty slot: a selected hand card can be placed here. */
+  placeHere?: () => void;
 }) {
-  const size = small ? "w-[62px] min-h-[86px]" : "w-[112px] min-h-[156px]";
+  const size = small ? "w-[64px] min-h-[90px]" : "w-[96px] min-h-[134px]";
   if (!mon) {
     return (
-      <div
-        className={`${size} flex items-center justify-center rounded-md border border-dashed border-white/20 text-[10px] text-dim`}
+      <button
+        type="button"
+        disabled={!placeHere}
+        onClick={placeHere}
+        className={`${size} flex flex-none items-center justify-center rounded-md border border-dashed text-[9px] disabled:cursor-default ${
+          placeHere
+            ? "border-accent bg-accent/10 text-accent animate-pulse"
+            : "border-white/15 text-dim"
+        }`}
       >
-        {active ? "no Active" : ""}
-      </div>
+        {placeHere ? "place here" : active ? "no Active" : ""}
+      </button>
     );
   }
   const src = art(mon.print_id);
