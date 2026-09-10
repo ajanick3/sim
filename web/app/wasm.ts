@@ -4,6 +4,8 @@
 
 export interface Game {
   legal_actions(): string;
+  /** What each legal action touches, index-aligned with `legal_actions`. JSON of `WireActionMeta[]`. */
+  action_meta(): string;
   apply(index: number): void;
   /** Every action index applied so far, oldest first, as JSON `number[]`. */
   history(): string;
