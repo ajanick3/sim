@@ -265,6 +265,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // five prints between them — take it to 808. Cook (`HealActive`),
     // Fennel, and Clemont's Quick Wit (`HealEachYours`) take it to 814. Picnicker (`CoinFlipDraw`), Jett
     // (`DrawPerOpponentMegaEx`), and Iris's Fighting Spirit
-    // (`DrawUpToHandSize`) take it to 820.
-    assert_eq!(admitted, 820, "coverage moves only on purpose");
+    // (`DrawUpToHandSize`) take it to 820. Carmine (`DiscardHandThenDraw`),
+    // Team Rocket's Archer (a `BothShuffleHandThenDraw` reskin), and
+    // Cassiopeia (`Decide` from the deck) take it to 830.
+    assert_eq!(admitted, 830, "coverage moves only on purpose");
 }

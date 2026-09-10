@@ -2085,3 +2085,117 @@ fn the_draw_variant_supporters_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: hand-refresh and last-card Supporters ---
+
+fn with_hand_refresh(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let carmine = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-carmine",
+        name: "Carmine",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::DiscardHandThenDraw(5),
+    }));
+    let archer = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tr-archer",
+        name: "Team Rocket's Archer",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::KnockedOutDuringOpponentsLastTurn),
+        effect: TrainerEffect::BothShuffleHandThenDraw { you: 5, opponent: 3 },
+    }));
+    let cassiopeia = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-cassiopeia",
+        name: "Cassiopeia",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::HandSizeIs(1)),
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::AnyCard,
+                to: Destination::Zone(Zone::Hand),
+                limit: 2,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, carmine, archer, cassiopeia)
+}
+
+#[test]
+fn carmine_discards_the_hand_and_draws_five() {
+    let (set, carmine, ..) = with_hand_refresh(build());
+    let mut state = game(&set, carmine, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, carmine);
+    let discard_before = state.player(player).discard.len();
+    let hand_before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), 5, "drew a fresh five");
+    // The old hand minus Carmine, plus Carmine, all in the discard.
+    assert_eq!(
+        state.player(player).discard.len(),
+        discard_before + hand_before,
+    );
+}
+
+#[test]
+fn team_rockets_archer_refreshes_both_hands() {
+    let (set, _c, archer, _cass) = with_hand_refresh(build());
+    let mut state = game(&set, archer, 3);
+    let player = state.current;
+    state.knocked_out_last_turn[player.index()] = true;
+    let card = ensure_in_hand(&mut state, player, archer);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), 5);
+    assert_eq!(state.player(player.opponent()).hand.len(), 3);
+}
+
+#[test]
+fn cassiopeia_searches_two_cards_when_it_is_the_last_in_hand() {
+    let (set, _c, _a, cassiopeia) = with_hand_refresh(build());
+    let mut state = game(&set, cassiopeia, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, cassiopeia);
+    // Make Cassiopeia the only card in hand.
+    let others: Vec<_> = state
+        .player(player)
+        .hand
+        .iter()
+        .copied()
+        .filter(|c| *c != card)
+        .collect();
+    let side = &mut state.players[player.index()];
+    side.hand.retain(|c| *c == card);
+    side.library.extend(others);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    for _ in 0..2 {
+        let take = offered(&state)[0];
+        apply(&mut state, Action::TakeCard { card: take }).unwrap();
+    }
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(state.player(player).hand.len(), 2);
+}
+
+#[test]
+fn the_hand_refresh_supporters_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Carmine", "Team Rocket's Archer", "Cassiopeia"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
