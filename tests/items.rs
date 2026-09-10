@@ -4,7 +4,7 @@
 use sim::action::{Action, legal_actions};
 use sim::card::{
     Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
-    Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    Then, Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId};
@@ -1254,6 +1254,122 @@ fn the_heal_items_are_admitted_from_the_artifact() {
     )
     .unwrap();
     for name in ["Potion", "Poké Vital A", "Jacinthe"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
+
+// --- Beyond the field: deck-search and discard-retrieval Items ---
+
+fn search_item(
+    db: &mut CardDb,
+    print_id: &'static str,
+    name: &'static str,
+    from: Zone,
+    filter: CardFilter,
+    limit: u32,
+    then: Option<Then>,
+) -> CardDefId {
+    db.add(CardDef::Trainer(Trainer {
+        print_id,
+        name,
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from,
+            slots: vec![Slot {
+                filter,
+                to: Destination::Zone(Zone::Hand),
+                limit,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then,
+        },
+    }))
+}
+
+#[test]
+fn master_ball_pulls_a_pokemon_from_the_deck() {
+    let mut set = build();
+    let master_ball = search_item(
+        &mut set.db,
+        "test-master-ball",
+        "Master Ball",
+        Zone::Library,
+        CardFilter::AnyPokemon,
+        1,
+        None,
+    );
+    let mut state = game(&set, master_ball, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, master_ball);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let take = legal_actions(&state)
+        .into_iter()
+        .find_map(|a| match a {
+            Action::TakeCard { card } => Some(card),
+            _ => None,
+        })
+        .expect("a Pokemon is in the deck");
+    apply(&mut state, Action::TakeCard { card: take }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), before - 1 + 1);
+    assert!(state.def_of(take).as_pokemon().is_some());
+}
+
+#[test]
+fn boxed_order_ends_the_turn_after_the_search() {
+    let mut set = build();
+    let boxed_order = search_item(
+        &mut set.db,
+        "test-boxed-order",
+        "Boxed Order",
+        Zone::Library,
+        CardFilter::TrainerOfKind(TrainerKind::Item),
+        2,
+        Some(Then::EndTurnIfMoved),
+    );
+    // Put a couple of Items in the deck to find.
+    let mut state = game(&set, boxed_order, 3);
+    let player = state.current;
+    for _ in 0..2 {
+        let c = deal_new_card(&mut state, player, boxed_order);
+        state.players[player.index()].library.push(c);
+    }
+    let card = ensure_in_hand(&mut state, player, boxed_order);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    while let Some(t) = legal_actions(&state).into_iter().find_map(|a| match a {
+        Action::TakeCard { card } => Some(card),
+        _ => None,
+    }) {
+        apply(&mut state, Action::TakeCard { card: t }).unwrap();
+    }
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_ne!(state.current, player, "the turn ended");
+}
+
+#[test]
+fn the_search_items_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in [
+        "Master Ball",
+        "Hyper Aroma",
+        "Treasure Tracker",
+        "Boxed Order",
+        "Max Rod",
+        "Miracle Headset",
+    ] {
         assert!(
             import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
             "{name} should play",

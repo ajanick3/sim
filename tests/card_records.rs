@@ -284,5 +284,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // The heal-chosen cards Potion, Poké Vital A, and Jacinthe
     // (`HealChosenPlain`, a heal with no condition clear, optionally
     // type-restricted) take it to 864.
-    assert_eq!(admitted, 864, "coverage moves only on purpose");
+    // Six deck-search and discard-retrieval Items (Master Ball, Hyper
+    // Aroma, Treasure Tracker, Boxed Order with `Then::EndTurnIfMoved`,
+    // Max Rod, Miracle Headset) — all `Decide` reskins — take it to 870.
+    assert_eq!(admitted, 870, "coverage moves only on purpose");
 }

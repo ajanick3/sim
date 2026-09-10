@@ -378,6 +378,90 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Boss's Orders" => (free, TrainerEffect::SwitchOpponentActive),
         "Cheren" | "Friends in Paldea" | "Urbain" => (free, TrainerEffect::Draw(3)),
         "Cook" => (free, TrainerEffect::HealActive(70)),
+        "Master Ball" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::AnyPokemon,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
+        "Hyper Aroma" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::PokemonOfStage(Stage::Stage1),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 3,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
+        "Treasure Tracker" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::TrainerOfKind(TrainerKind::Tool),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 5,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
+        "Boxed Order" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::TrainerOfKind(TrainerKind::Item),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 2,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: Some(Then::EndTurnIfMoved),
+            },
+        ),
+        "Max Rod" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Discard,
+                slots: vec![Slot {
+                    filter: CardFilter::PokemonOrBasicEnergy,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 5,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
+        "Miracle Headset" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Discard,
+                slots: vec![Slot {
+                    filter: CardFilter::TrainerOfKind(TrainerKind::Supporter),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 2,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         "Potion" => (
             free,
             TrainerEffect::HealChosenPlain { amount: 30, of_type: None },
