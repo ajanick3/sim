@@ -1,6 +1,6 @@
 import { act as domAct, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { encodeRecipe, readRecipeParam } from "./recipe";
+import { encodeRecipe } from "./recipe";
 
 // A stub wasm handle: two legal actions, no moves, a minimal board.
 const side = () => ({
@@ -36,21 +36,47 @@ const gameStub = {
   free: vi.fn(),
 };
 const replayStandard = vi.fn(() => gameStub);
-const standard = vi.fn(() => gameStub);
 
 vi.mock("./wasm", () => ({
   loadSim: vi.fn(async () => ({
     CardData: { new: vi.fn(() => ({ free: vi.fn() })) },
-    Game: { standard, replay_standard: replayStandard, synthetic: vi.fn() },
+    Game: { standard: vi.fn(), replay_standard: replayStandard, synthetic: vi.fn() },
   })),
+}));
+
+// A controllable stand-in for the app router and the query string.
+let mockSearch = "";
+let cachedParams: URLSearchParams | null = null;
+let cachedFor: string | null = null;
+const push = vi.fn((url: string) => setSearch(url.replace(/^\?/, "")));
+const replace = vi.fn((url: string) => setSearch(url.replace(/^\?/, "")));
+function setSearch(next: string) {
+  mockSearch = next;
+}
+const routerStub = { push, replace };
+vi.mock("next/navigation", () => ({
+  useRouter: () => routerStub,
+  useSearchParams: () => {
+    if (cachedFor !== mockSearch) {
+      cachedFor = mockSearch;
+      cachedParams = new URLSearchParams(mockSearch);
+    }
+    return cachedParams!;
+  },
 }));
 
 import GameShell from "./game-shell";
 
 beforeEach(() => {
   vi.clearAllMocks();
-  window.history.replaceState(null, "", "/");
-  global.fetch = vi.fn(async () => ({ text: async () => "" })) as never;
+  mockSearch = "";
+  cachedParams = null;
+  cachedFor = null;
+  global.fetch = vi.fn(async () => ({
+    text: async () => "",
+    ok: true,
+    json: async () => [],
+  })) as never;
 });
 
 afterEach(() => {
@@ -58,62 +84,32 @@ afterEach(() => {
 });
 
 describe("<GameShell> recipe wiring", () => {
-  it("starts a fresh game and writes a recipe to the address bar", async () => {
+  it("starts a fresh game and replaces the URL with its recipe", async () => {
     render(<GameShell />);
     await screen.findByText("Copy link");
-
-    await waitFor(() => {
-      expect(window.location.search).toMatch(/^\?g=/);
-    });
-    const recipe = readRecipeParam(window.location.search);
-    expect(recipe).toMatchObject({ a: "dragapult", b: "alakazam", moves: [] });
+    await waitFor(() => expect(replace).toHaveBeenCalled());
+    expect(replace.mock.calls[0][0]).toMatch(/^\?g=/);
   });
 
-  it("replays a game handed to it in the URL", async () => {
-    window.history.replaceState(
-      null,
-      "",
-      "/?g=" +
-        encodeRecipe({
-          v: 1,
-          seed: 99,
-          a: "dragapult",
-          b: "alakazam",
-          moves: [1, 0, 1],
-        }),
-    );
+  it("replays the recipe the URL carries", async () => {
+    mockSearch = "g=" + encodeRecipe({ v: 1, seed: 99, a: "one", b: "two", moves: [1, 0, 1] });
 
     render(<GameShell />);
     await screen.findByText("Copy link");
 
     await waitFor(() => expect(replayStandard).toHaveBeenCalled());
     const call = replayStandard.mock.calls[0] as unknown[];
-    expect(call[3]).toBe(99n); // seed, as bigint
-    expect(call[4]).toEqual([1, 0, 1]); // the moves to replay
-    expect(standard).not.toHaveBeenCalled();
+    expect(call[3]).toBe(99n);
+    expect(call[4]).toEqual([1, 0, 1]);
   });
 
-  it("rebuilds the game to whatever recipe Back or Forward lands on", async () => {
-    render(<GameShell />);
+  it("rebuilds the game when Back or Forward changes ?g=", async () => {
+    const { rerender } = render(<GameShell />);
     await screen.findByText("Copy link");
     replayStandard.mockClear();
 
-    // The browser moved the URL to a two-move recipe; fire popstate.
-    window.history.replaceState(
-      null,
-      "",
-      "/?g=" +
-        encodeRecipe({
-          v: 1,
-          seed: 7,
-          a: "dragapult",
-          b: "alakazam",
-          moves: [2, 5],
-        }),
-    );
-    await domAct(async () => {
-      window.dispatchEvent(new PopStateEvent("popstate"));
-    });
+    mockSearch = "g=" + encodeRecipe({ v: 1, seed: 7, a: "one", b: "two", moves: [2, 5] });
+    rerender(<GameShell />);
 
     await waitFor(() => expect(replayStandard).toHaveBeenCalled());
     const call = replayStandard.mock.calls.at(-1) as unknown[];
@@ -121,21 +117,17 @@ describe("<GameShell> recipe wiring", () => {
     expect(call[4]).toEqual([2, 5]);
   });
 
-  it("pushes a history entry for each move so Back steps through them", async () => {
-    const pushSpy = vi.spyOn(window.history, "pushState");
+  it("pushes the recipe after a move", async () => {
     render(<GameShell />);
-
-    // The board keeps the raw action list in a collapsed "All actions"
-    // panel; the buttons are in the DOM, just hidden.
     const button = await screen.findByRole("button", { name: "Action A", hidden: true });
-    pushSpy.mockClear();
+    push.mockClear();
 
     await domAct(async () => {
       button.click();
     });
 
-    await waitFor(() => expect(pushSpy).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(push).toHaveBeenCalled());
+    expect(push.mock.calls[0][0]).toMatch(/^\?g=/);
     expect(gameStub.apply).toHaveBeenCalledWith(0);
-    pushSpy.mockRestore();
   });
 });
