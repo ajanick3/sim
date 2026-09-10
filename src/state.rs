@@ -821,6 +821,16 @@ pub struct GameState {
 }
 
 impl GameState {
+    /// A coin flip a player sees, recorded in the log the way PTCG Live
+    /// records every flip. Use this for a card or rule effect; the
+    /// opening flip logs its own sentence.
+    pub fn flip_for(&mut self, who: PlayerId) -> bool {
+        let heads = self.rng.flip();
+        self.log
+            .push(format!("{who:?} flips {}.", if heads { "heads" } else { "tails" }));
+        heads
+    }
+
     /// Deal a new game and stop at the first choice.
     ///
     /// Shuffling, drawing, and mulliganing are not choices, so they happen
