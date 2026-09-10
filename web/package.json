@@ -1,0 +1,25 @@
+{
+  "name": "sim-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "assets": "mkdir -p public/decks && cp ../data/cards.json public/cards.json && cp ../decks/2026-worlds/03-brent-tonisson.txt public/decks/dragapult.txt && cp ../decks/2026-worlds/02-diego-cassiraga.txt public/decks/alakazam.txt",
+    "wasm": "wasm-pack build ../crates/sim-wasm --target web --out-dir ../../web/public/pkg --out-name sim_wasm && rm -f public/pkg/.gitignore",
+    "predev": "npm run assets",
+    "dev": "next dev",
+    "prebuild": "npm run assets",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "^15.5.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.7.0"
+  }
+}
