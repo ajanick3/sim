@@ -31,6 +31,7 @@ const gameStub = {
       turn_number: 0,
       phase: "Main",
       your_hand: [],
+      stadium: null,
       sides: [side(), side()],
     }),
   free: vi.fn(),

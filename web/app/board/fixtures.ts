@@ -101,6 +101,7 @@ export const sampleView: WireView = {
   turn_number: 4,
   phase: "Main",
   your_hand: sampleHand,
+  stadium: card({ name: "Area Zero Underdepths", category: "stadium" }),
   sides: [
     side({ player: 0 }),
     side({

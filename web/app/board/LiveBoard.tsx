@@ -297,7 +297,7 @@ export function LiveBoard({
 
             {/* Centre lane: stadium on the left, the two Actives stacked. */}
             <div className="flex items-center justify-center gap-3">
-              <StadiumSlot />
+              <StadiumSlot card={view.stadium} art={art} />
               <div className="flex flex-col items-center gap-1">
                 <LiveMon
                   mon={opp.active}
