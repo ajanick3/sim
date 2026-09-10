@@ -465,6 +465,10 @@ pub enum TrainerEffect {
     /// or every one of a type when `of_type` is set. No choice, no
     /// condition clear. `Fennel`, `Clemont's Quick Wit`.
     HealEachYours { amount: u32, of_type: Option<Type> },
+    /// Heal this many points from a Pokémon the player chooses — like
+    /// `HealChosen` but without the Special Condition clear, optionally
+    /// restricted to a type. `Potion`, `Poké Vital A`, `Jacinthe`.
+    HealChosenPlain { amount: u32, of_type: Option<Type> },
     /// This turn, the player's attacks do this much more damage to a
     /// restricted target, before Weakness and Resistance. Cleared the
     /// moment the turn ends — distinct from a Tool or Stadium's static

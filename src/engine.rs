@@ -618,13 +618,19 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::HealTarget { target } => {
-            let amount = match state.phase {
-                Phase::HealingChosen { amount, .. } => amount,
+            let (amount, clear) = match state.phase {
+                Phase::HealingChosen {
+                    amount,
+                    clear_conditions,
+                    ..
+                } => (amount, clear_conditions),
                 _ => return Err(IllegalAction),
             };
             state.pokemon[target.index()].damage =
                 state.pokemon(target).damage.saturating_sub(amount);
-            state.clear_conditions(target);
+            if clear {
+                state.clear_conditions(target);
+            }
             let name = state.pokemon_def(target).name;
             state.log.push(format!("{name} is healed."));
             state.phase = Phase::Main;
@@ -3047,7 +3053,21 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         }
 
         TrainerEffect::HealChosen(amount) => {
-            state.phase = Phase::HealingChosen { player, amount };
+            state.phase = Phase::HealingChosen {
+                player,
+                amount,
+                clear_conditions: true,
+                of_type: None,
+            };
+        }
+
+        TrainerEffect::HealChosenPlain { amount, of_type } => {
+            state.phase = Phase::HealingChosen {
+                player,
+                amount,
+                clear_conditions: false,
+                of_type,
+            };
         }
 
         TrainerEffect::HealEachYours { amount, of_type } => {

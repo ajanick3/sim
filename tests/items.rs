@@ -1189,3 +1189,74 @@ fn tera_orb_is_admitted_from_the_artifact() {
         "Tera Orb should play"
     );
 }
+
+// --- Beyond the field: heal Items ---
+
+fn with_heal_items(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let potion = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-potion",
+        name: "Potion",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::HealChosenPlain { amount: 30, of_type: None },
+    }));
+    let vital = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-poke-vital-a",
+        name: "Poké Vital A",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::HealChosenPlain { amount: 150, of_type: None },
+    }));
+    (Set { db, ..set }, potion, vital)
+}
+
+#[test]
+fn potion_heals_thirty_from_a_chosen_pokemon_and_leaves_conditions() {
+    let (set, potion, _v) = with_heal_items(build());
+    let mut state = game(&set, potion, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    state.pokemon[active.index()].damage = 50;
+    state.inflict(active, sim::card::Condition::Poisoned);
+    let card = ensure_in_hand(&mut state, player, potion);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::HealTarget { target: active }).unwrap();
+
+    assert_eq!(state.pokemon(active).damage, 20);
+    assert!(
+        state.pokemon(active).conditions.contains(&sim::card::Condition::Poisoned),
+        "Potion does not clear conditions",
+    );
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn poke_vital_a_heals_one_hundred_fifty() {
+    let (set, _p, vital) = with_heal_items(build());
+    let mut state = game(&set, vital, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    state.pokemon[active.index()].damage = 90;
+    let card = ensure_in_hand(&mut state, player, vital);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::HealTarget { target: active }).unwrap();
+
+    assert_eq!(state.pokemon(active).damage, 0);
+}
+
+#[test]
+fn the_heal_items_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Potion", "Poké Vital A", "Jacinthe"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
