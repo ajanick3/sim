@@ -1824,3 +1824,122 @@ fn the_plain_draw_supporters_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: heal-each and heal-Active Supporters ---
+
+fn with_heals(set: Set) -> (Set, CardDefId, CardDefId, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let cook = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-cook",
+        name: "Cook",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::HealActive(70),
+    }));
+    let fennel = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-fennel",
+        name: "Fennel",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::HealEachYours { amount: 40, of_type: None },
+    }));
+    let clemont = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-clemont",
+        name: "Clemont's Quick Wit",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::HealEachYours {
+            amount: 60,
+            of_type: Some(Type::Lightning),
+        },
+    }));
+    let lightning_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-lightning-mon",
+        name: "Sparkmon",
+        hp: 120,
+        kind: Type::Lightning,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Zap",
+            cost: vec![Type::Lightning],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    (Set { db, ..set }, cook, fennel, clemont, lightning_mon, lightning_mon)
+}
+
+#[test]
+fn cook_heals_seventy_from_the_active() {
+    let (set, cook, ..) = with_heals(build());
+    let mut state = game(&set, cook, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    state.pokemon[active.index()].damage = 90;
+    let card = ensure_in_hand(&mut state, player, cook);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.pokemon(active).damage, 20);
+}
+
+#[test]
+fn fennel_heals_forty_from_every_pokemon() {
+    let (set, _cook, fennel, ..) = with_heals(build());
+    let mut state = game(&set, fennel, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let benched_card = deal_new_card(&mut state, player, set.mon);
+    let benched = state.put_into_play(player, benched_card);
+    state.players[player.index()].bench.push(benched);
+    state.pokemon[active.index()].damage = 100;
+    state.pokemon[benched.index()].damage = 30;
+    let card = ensure_in_hand(&mut state, player, fennel);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.pokemon(active).damage, 60);
+    assert_eq!(state.pokemon(benched).damage, 0, "40 heal floors the 30");
+}
+
+#[test]
+fn clemonts_quick_wit_heals_only_lightning_pokemon() {
+    let (set, _c, _f, clemont, lightning_mon, _) = with_heals(build());
+    let mut state = game(&set, clemont, 3);
+    let player = state.current;
+    let colorless_active = state.player(player).active.unwrap();
+    let spark_card = deal_new_card(&mut state, player, lightning_mon);
+    let spark = state.put_into_play(player, spark_card);
+    state.players[player.index()].bench.push(spark);
+    state.pokemon[colorless_active.index()].damage = 100;
+    state.pokemon[spark.index()].damage = 100;
+    let card = ensure_in_hand(&mut state, player, clemont);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.pokemon(colorless_active).damage, 100, "not a {{L}} Pokemon");
+    assert_eq!(state.pokemon(spark).damage, 40, "60 healed from the {{L}} Pokemon");
+}
+
+#[test]
+fn the_heal_supporters_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Cook", "Fennel", "Clemont's Quick Wit"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
