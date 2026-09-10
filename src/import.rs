@@ -380,6 +380,34 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Cook" => (free, TrainerEffect::HealActive(70)),
         "Picnicker" => (free, TrainerEffect::CoinFlipDraw { heads: 4, tails: 2 }),
         "Carmine" => (free, TrainerEffect::DiscardHandThenDraw(5)),
+        "Firebreather" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicEnergyOfType(Type::Fire),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 7,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
+        "Canari" => (
+            Some(Requirement::DiscardOtherCardsFromHand(1)),
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::PokemonOfType(Type::Lightning),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 4,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         "Team Rocket's Archer" => (
             Some(Requirement::KnockedOutDuringOpponentsLastTurn),
             TrainerEffect::BothShuffleHandThenDraw { you: 5, opponent: 3 },

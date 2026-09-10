@@ -268,5 +268,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // (`DrawUpToHandSize`) take it to 820. Carmine (`DiscardHandThenDraw`),
     // Team Rocket's Archer (a `BothShuffleHandThenDraw` reskin), and
     // Cassiopeia (`Decide` from the deck) take it to 830.
-    assert_eq!(admitted, 830, "coverage moves only on purpose");
+    // Firebreather and Canari (deck searches; Canari adds
+    // `CardFilter::PokemonOfType`) take it to 835.
+    assert_eq!(admitted, 835, "coverage moves only on purpose");
 }
