@@ -1406,11 +1406,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 });
             }
         }
-        // Rules 18-20: not on the first turn of the game, only onto the
-        // Pokémon this card names, only if it has been in play since the
-        // start of the turn, and only once per Pokémon per turn.
+        // Rules 18-20: not on the acting player's own first turn of the
+        // game, only onto the Pokémon this card names, only if it has
+        // been in play since the start of the turn, and only once per
+        // Pokémon per turn.
         if let Some(from) = def.as_pokemon().and_then(|p| p.evolve_from)
-            && !state.is_first_turn_of_game()
+            && !state.is_players_first_turn()
         {
             for target in side.in_play() {
                 let evolution = def.as_pokemon().expect("this arm only runs for a Pokémon card");
@@ -1850,12 +1851,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
 }
 
 /// Every Stage 2 in hand and Basic in play that `Rare Candy` may pair: the
-/// same rules 18-20 an ordinary evolution reads — not the first turn of the
-/// game, the target in play since before this turn, not yet evolved this
-/// turn — matched by `evolves_from_basic` two links down rather than by
-/// `evolve_from` one link up.
+/// same rules 18-20 an ordinary evolution reads — not the acting player's
+/// own first turn of the game, the target in play since before this turn,
+/// not yet evolved this turn — matched by `evolves_from_basic` two links
+/// down rather than by `evolve_from` one link up.
 fn rare_candy_pairs(state: &GameState, player: PlayerId) -> Vec<(CardId, PokemonId)> {
-    if state.is_first_turn_of_game() {
+    if state.is_players_first_turn() {
         return Vec::new();
     }
     let side = state.player(player);

@@ -1679,8 +1679,15 @@ impl GameState {
     }
 
     /// Rule 15-18: the player going first draws, cannot play a Supporter, and
-    /// skips their attack step.
+    /// skips their attack step. Their turn alone — turn 0.
     pub fn is_first_turn_of_game(&self) -> bool {
         self.turn_number == 0
+    }
+
+    /// Rules 18-20: neither player may evolve a Pokémon during that
+    /// player's own first turn of the game. Turn 0 is the first player's
+    /// first turn and turn 1 the second player's, so both are covered.
+    pub fn is_players_first_turn(&self) -> bool {
+        self.turn_number <= 1
     }
 }
