@@ -14,6 +14,11 @@ const side = () => ({
 });
 const gameStub = {
   legal_actions: () => JSON.stringify(["Action A", "Action B"]),
+  action_meta: () =>
+    JSON.stringify([
+      { kind: "Other", card: null, target: null },
+      { kind: "Other", card: null, target: null },
+    ]),
   apply: vi.fn(),
   history: vi.fn(() => JSON.stringify([])),
   log: () => JSON.stringify([]),
@@ -186,5 +191,26 @@ describe("<Mon> card shape", () => {
     rerender(<Mon mon={bare} copy={2} />);
     const badge = screen.getByTestId("copy-badge");
     expect(badge.style.background).toBe("rgb(90, 167, 228)"); // COPY_COLORS[2], blue
+  });
+
+  it("is clickable only when it is a legal move's target", () => {
+    const pick = vi.fn();
+    const { rerender } = render(<Mon mon={bare} onSelect={pick} />);
+    const card = screen.getByTestId("mon-card") as HTMLButtonElement;
+    expect(card.disabled).toBe(true);
+    card.click();
+    expect(pick).not.toHaveBeenCalled();
+
+    rerender(<Mon mon={bare} selectable onSelect={pick} />);
+    (screen.getByTestId("mon-card") as HTMLButtonElement).click();
+    expect(pick).toHaveBeenCalledTimes(1);
+  });
+
+  it("rings itself when selected and a drop target when a card can land", () => {
+    const { rerender } = render(<Mon mon={bare} selectable selected onSelect={() => {}} />);
+    expect(screen.getByTestId("mon-card").className).toContain("ring-accent");
+
+    rerender(<Mon mon={bare} selectable dropTarget onSelect={() => {}} />);
+    expect(screen.getByTestId("mon-card").className).toContain("ring-warn");
   });
 });
