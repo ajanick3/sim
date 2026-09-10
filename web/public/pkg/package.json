@@ -1,0 +1,15 @@
+{
+  "name": "sim-wasm",
+  "type": "module",
+  "version": "0.1.0",
+  "files": [
+    "sim_wasm_bg.wasm",
+    "sim_wasm.js",
+    "sim_wasm.d.ts"
+  ],
+  "main": "sim_wasm.js",
+  "types": "sim_wasm.d.ts",
+  "sideEffects": [
+    "./snippets/*"
+  ]
+}
