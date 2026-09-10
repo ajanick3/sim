@@ -1,0 +1,134 @@
+"use client";
+
+import { ENERGY_COLOR } from "../../table";
+import type { WirePokemon } from "../../view";
+import { damageSpot, type Art } from "./shared";
+
+/** One Pokémon in play — Active or Bench — as a card showing the top
+ *  slice of its print, with HP, damage counter, attached Energy and any
+ *  Special Conditions laid over it. `mon = null` draws an empty slot,
+ *  which a held card can be tapped onto when `placeHere` is set. */
+export function LiveMon({
+  mon,
+  active = false,
+  small = false,
+  art,
+  onSelect,
+  selectable = false,
+  selected = false,
+  dropTarget = false,
+  placeHere,
+}: {
+  mon: WirePokemon | null;
+  active?: boolean;
+  small?: boolean;
+  art: Art;
+  onSelect?: () => void;
+  selectable?: boolean;
+  selected?: boolean;
+  dropTarget?: boolean;
+  /** Empty slot: a selected hand card can be placed here. */
+  placeHere?: () => void;
+}) {
+  const size = active
+    ? "w-[200px] h-[118px]"
+    : small
+      ? "w-[64px] min-h-[90px]"
+      : "w-[96px] min-h-[134px]";
+  if (!mon) {
+    return (
+      <button
+        type="button"
+        data-keep-selection
+        data-drop-id={placeHere ? (active ? "slot:active" : "slot:bench") : undefined}
+        disabled={!placeHere}
+        onClick={placeHere}
+        className={`${size} flex flex-none items-center justify-center rounded-md border border-dashed text-[9px] disabled:cursor-default ${
+          placeHere
+            ? "border-accent bg-accent/10 text-accent animate-pulse"
+            : "border-white/15 text-dim"
+        }`}
+      >
+        {placeHere ? "place here" : active ? "no Active" : ""}
+      </button>
+    );
+  }
+  const src = art(mon.print_id);
+  const interactive = selectable && !!onSelect;
+  const ring = selected
+    ? "z-20 ring-2 ring-accent border-accent"
+    : dropTarget
+      ? "z-20 border-white ring-2 ring-white shadow-[0_0_0_2px_#fff,0_0_18px_5px_rgba(255,255,255,0.7)]"
+      : active
+        ? "border-accent"
+        : "border-edge";
+  const energies = mon.attached.filter((c) => c.energy_type);
+  return (
+    <button
+      type="button"
+      data-keep-selection
+      data-drop-id={`mon:${mon.id}`}
+      disabled={!interactive}
+      onClick={onSelect}
+      className={`deal-in ${size} ${
+        selected ? "card-tap" : ""
+      } relative flex flex-none flex-col overflow-hidden rounded-md border bg-panel transition-colors disabled:cursor-default disabled:opacity-100 ${ring} ${
+        interactive ? "hover:border-accent" : ""
+      }`}
+    >
+      {/* Every card on the board — Active and Bench alike — shows the top
+          slice of the print, cropped from the top edge. No scrim: the
+          only thing laid over a card is the dimming of an illegal one. */}
+      {src ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={src}
+          alt={mon.name}
+          loading="lazy"
+          className="absolute inset-0 size-full object-cover object-top"
+        />
+      ) : (
+        <span className="relative z-10 p-1 text-[9px] font-semibold leading-tight">{mon.name}</span>
+      )}
+
+      {/* HP pill — top-left. */}
+      <span
+        className={`absolute top-0.5 z-10 rounded bg-black/75 px-1 text-[9px] font-bold ${
+          active ? "left-0.5" : "right-0.5"
+        }`}
+      >
+        {mon.hp}
+      </span>
+      {/* Damage counter: a coin dropped on the illustration, its spot
+          fixed per Pokémon so it does not jump between renders. */}
+      {mon.damage > 0 && (
+        <span
+          className={`absolute z-10 grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-black/50 bg-orange-500 font-black text-black shadow-[0_2px_5px_rgba(0,0,0,0.6)] ${
+            active ? "size-11 text-base" : "size-6 text-[10px]"
+          }`}
+          style={damageSpot(mon.id)}
+        >
+          {mon.damage}
+        </span>
+      )}
+
+      {/* Energy row, bottom-centre. */}
+      <span className="absolute inset-x-0 bottom-0.5 z-10 flex justify-center gap-0.5">
+        {energies.map((c) => (
+          <span
+            key={c.id}
+            title={`${c.energy_type} Energy`}
+            className="size-2 rounded-full border border-black/40"
+            style={{ background: ENERGY_COLOR[c.energy_type as string] ?? "var(--color-dim)" }}
+          />
+        ))}
+      </span>
+
+      {mon.conditions.length > 0 && (
+        <span className="absolute inset-x-0 top-1/2 z-10 bg-black/60 text-center text-[8px] text-warn">
+          {mon.conditions.join(", ")}
+        </span>
+      )}
+    </button>
+  );
+}
