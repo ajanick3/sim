@@ -97,9 +97,9 @@ fn the_kinds_add_up_to_the_pool() {
     // takes it to 252.
     //
     // The standard-trainers effort opens beyond the field: Cheren,
-    // Friends in Paldea, and Urbain — a plain `Draw(3)` Supporter,
-    // five prints — take it to 247.
-    assert_eq!(trainers, 247, "the Trainers still refused, by kind");
+    // Friends in Paldea, and Urbain (`Draw(3)`) took it to 247; Cook,
+    // Fennel, and Clemont's Quick Wit (heals) take it to 241.
+    assert_eq!(trainers, 241, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

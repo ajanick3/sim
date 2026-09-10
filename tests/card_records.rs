@@ -262,6 +262,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     //
     // Beyond the field: the standard-trainers effort. Cheren,
     // Friends in Paldea, and Urbain — a plain `Draw(3)` Supporter,
-    // five prints between them — take it to 808.
-    assert_eq!(admitted, 808, "coverage moves only on purpose");
+    // five prints between them — take it to 808. Cook (`HealActive`),
+    // Fennel, and Clemont's Quick Wit (`HealEachYours`) take it to 814.
+    assert_eq!(admitted, 814, "coverage moves only on purpose");
 }

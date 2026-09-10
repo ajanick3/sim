@@ -2932,6 +2932,15 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             state.phase = Phase::HealingChosen { player, amount };
         }
 
+        TrainerEffect::HealEachYours { amount, of_type } => {
+            for id in state.player(player).in_play() {
+                if of_type.is_none_or(|t| state.pokemon_def(id).kind == t) {
+                    state.pokemon[id.index()].damage =
+                        state.pokemon(id).damage.saturating_sub(amount);
+                }
+            }
+        }
+
         TrainerEffect::BonusDamageThisTurn(amount, target) => {
             state.turn_bonus = Some((amount, target));
         }

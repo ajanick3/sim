@@ -377,6 +377,18 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
     Some(match name {
         "Boss's Orders" => (free, TrainerEffect::SwitchOpponentActive),
         "Cheren" | "Friends in Paldea" | "Urbain" => (free, TrainerEffect::Draw(3)),
+        "Cook" => (free, TrainerEffect::HealActive(70)),
+        "Fennel" => (
+            free,
+            TrainerEffect::HealEachYours { amount: 40, of_type: None },
+        ),
+        "Clemont's Quick Wit" => (
+            free,
+            TrainerEffect::HealEachYours {
+                amount: 60,
+                of_type: Some(Type::Lightning),
+            },
+        ),
         "Tool Scrapper" => (free, TrainerEffect::MayDiscardUpToTwoToolsAnywhere),
         "Briar" => (
             Some(Requirement::OpponentPrizesExactly(2)),
