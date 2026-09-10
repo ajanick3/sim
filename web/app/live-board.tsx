@@ -607,39 +607,42 @@ function DecisionBar({
   };
 
   return (
-    <div className="mt-3">
-      <div className="flex items-center gap-3 rounded-md bg-accent px-3 py-2 text-black">
-        <span className="font-bold">{decision.verb}.</span>
-        {finish >= 0 && (
-          <button
-            onClick={() => onAct(finish)}
-            disabled={busy}
-            className="ml-auto rounded border-black/30 bg-warn px-4 py-1 font-bold text-black disabled:opacity-50"
-          >
-            DONE
-          </button>
-        )}
-      </div>
-      <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
-        {choices.map(({ label, index }) => {
-          const card = cardFor(index);
-          const src = card ? art(card.print_id) : null;
-          return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
+      <div className="flex max-h-full w-full max-w-3xl flex-col overflow-hidden rounded-lg border border-edge bg-bg">
+        <div className="flex items-center gap-3 bg-accent px-3 py-2 text-black">
+          <span className="font-bold">{decision.verb}.</span>
+          <span className="text-[11px] opacity-70">only playable cards are shown</span>
+          {finish >= 0 && (
             <button
-              key={index}
-              type="button"
+              onClick={() => onAct(finish)}
               disabled={busy}
-              onClick={() => onAct(index)}
-              className="relative h-[150px] w-[108px] flex-none overflow-hidden rounded-md border border-edge bg-panel transition-transform hover:-translate-y-1 disabled:opacity-50"
+              className="ml-auto rounded border-black/30 bg-warn px-4 py-1 font-bold text-black disabled:opacity-50"
             >
-              <CardFace
-                src={src}
-                name={card?.name ?? label}
-                energyType={card?.energy_type ?? null}
-              />
+              DONE
             </button>
-          );
-        })}
+          )}
+        </div>
+        <div className="flex flex-wrap justify-center gap-2 overflow-y-auto p-3">
+          {choices.map(({ label, index }) => {
+            const card = cardFor(index);
+            const src = card ? art(card.print_id) : null;
+            return (
+              <button
+                key={index}
+                type="button"
+                disabled={busy}
+                onClick={() => onAct(index)}
+                className="relative h-[168px] w-[120px] flex-none overflow-hidden rounded-md border border-edge bg-panel transition-transform hover:-translate-y-1 hover:border-accent disabled:opacity-50"
+              >
+                <CardFace
+                  src={src}
+                  name={card?.name ?? label}
+                  energyType={card?.energy_type ?? null}
+                />
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
