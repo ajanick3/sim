@@ -64,3 +64,34 @@ button:disabled {
   opacity: 0.5;
   cursor: default;
 }
+
+/* A card sliding into play, and the newest log line arriving. Both are
+   short and respect a reduced-motion preference. */
+@keyframes deal-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+}
+
+@keyframes line-in {
+  from {
+    opacity: 0;
+    background: color-mix(in srgb, var(--color-accent) 25%, transparent);
+  }
+}
+
+.deal-in {
+  animation: deal-in 220ms ease-out;
+}
+
+.line-in {
+  animation: line-in 900ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deal-in,
+  .line-in {
+    animation: none;
+  }
+}

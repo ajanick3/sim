@@ -45,7 +45,7 @@ vi.mock("./wasm", () => ({
   })),
 }));
 
-import Table, { Mon } from "./table";
+import Table, { LogPanel, Mon } from "./table";
 import type { WirePokemon } from "./view";
 
 beforeEach(() => {
@@ -212,5 +212,20 @@ describe("<Mon> card shape", () => {
 
     rerender(<Mon mon={bare} selectable dropTarget onSelect={() => {}} />);
     expect(screen.getByTestId("mon-card").className).toContain("ring-warn");
+  });
+});
+
+describe("<LogPanel>", () => {
+  it("renders one row per line and animates only the newest", () => {
+    render(<LogPanel lines={["first", "second", "third"]} />);
+    const rows = screen.getAllByText(/first|second|third/);
+    expect(rows).toHaveLength(3);
+    expect(rows[2].className).toContain("line-in");
+    expect(rows[0].className).not.toContain("line-in");
+  });
+
+  it("shows a dash when the log is empty", () => {
+    render(<LogPanel lines={[]} />);
+    expect(screen.getByText("—")).toBeInTheDocument();
   });
 });
