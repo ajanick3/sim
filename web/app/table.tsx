@@ -514,7 +514,7 @@ function HandCard({
       data-testid="hand-card"
       disabled={!interactive}
       onClick={onSelect}
-      className={`${CARD_SIZE} flex flex-none flex-col items-start rounded-md border bg-panel p-1.5 text-left disabled:cursor-default disabled:opacity-100 ${
+      className={`deal-in ${CARD_SIZE} flex flex-none flex-col items-start rounded-md border bg-panel p-1.5 text-left transition-colors disabled:cursor-default disabled:opacity-100 ${
         selected
           ? "border-accent ring-2 ring-accent"
           : interactive
@@ -578,7 +578,7 @@ export function Mon({
       data-testid="mon-card"
       disabled={!interactive}
       onClick={onSelect}
-      className={`${CARD_SIZE} flex flex-none flex-col gap-1 rounded-md border bg-panel p-1.5 text-center disabled:cursor-default disabled:opacity-100 ${ring} ${
+      className={`deal-in ${CARD_SIZE} flex flex-none flex-col gap-1 rounded-md border bg-panel p-1.5 text-center transition-colors disabled:cursor-default disabled:opacity-100 ${ring} ${
         interactive ? "hover:border-accent" : ""
       }`}
     >
@@ -594,7 +594,10 @@ export function Mon({
         <span className="overflow-hidden text-ellipsis whitespace-nowrap">{mon.name}</span>
       </div>
       <div className="h-1 overflow-hidden rounded-full bg-white/10">
-        <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
+        <div
+          className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out"
+          style={{ width: `${pct}%` }}
+        />
       </div>
       <div className="text-[11px] text-dim">
         {mon.remaining_hp}/{mon.hp}
@@ -646,19 +649,35 @@ function Attachments({ cards }: { cards: WireCard[] }) {
   );
 }
 
-function LogPanel({ lines }: { lines: string[] }) {
+export function LogPanel({ lines }: { lines: string[] }) {
   const ref = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     ref.current?.scrollTo(0, ref.current.scrollHeight);
   }, [lines]);
+  const last = lines.length - 1;
   return (
     <section className="mt-6">
       <SectionHeading className="mb-1.5">Log</SectionHeading>
       <div
         ref={ref}
-        className="max-h-[220px] overflow-y-auto whitespace-pre-wrap rounded-lg border border-edge bg-panel p-3 text-[13px] text-dim"
+        className="max-h-[220px] overflow-y-auto rounded-lg border border-edge bg-panel p-3 text-[13px]"
       >
-        {lines.length ? lines.join("\n") : "—"}
+        {lines.length === 0 ? (
+          <span className="text-dim">—</span>
+        ) : (
+          lines.map((line, i) => (
+            <div
+              key={i}
+              className={
+                i === last
+                  ? "line-in whitespace-pre-wrap rounded px-1 text-text"
+                  : "whitespace-pre-wrap px-1 text-dim"
+              }
+            >
+              {line}
+            </div>
+          ))
+        )}
       </div>
     </section>
   );
