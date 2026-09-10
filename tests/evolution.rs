@@ -81,8 +81,9 @@ fn deck(set: &Set) -> Vec<CardDefId> {
     decklist
 }
 
-/// Deal a game and drive setup, then end the first turn (rule 18 forbids
-/// evolving on it in any case, so a test past it is testing the real rule).
+/// Deal a game and drive setup, then end both players' first turns —
+/// rule 18 forbids evolving on either, so a test evolves only once the
+/// game is past them, back on the first player's second turn.
 fn game(set: &Set, seed: u64) -> GameState {
     let decklist = deck(set);
     let mut state = GameState::new(
@@ -90,11 +91,13 @@ fn game(set: &Set, seed: u64) -> GameState {
         [decklist.clone(), decklist],
         Box::new(SeededRng::new(seed)),
     );
-    while state.phase != Phase::Main && !state.is_over() {
-        let first = legal_actions(&state)[0];
-        apply(&mut state, first).unwrap();
+    for _ in 0..2 {
+        while state.phase != Phase::Main && !state.is_over() {
+            let first = legal_actions(&state)[0];
+            apply(&mut state, first).unwrap();
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
     }
-    apply(&mut state, Action::EndTurn).unwrap();
     while state.phase != Phase::Main && !state.is_over() {
         let first = legal_actions(&state)[0];
         apply(&mut state, first).unwrap();
@@ -253,16 +256,33 @@ fn neither_player_evolves_on_the_first_turn_of_the_game() {
         [decklist.clone(), decklist],
         Box::new(SeededRng::new(3)),
     );
-    while state.phase != Phase::Main && !state.is_over() {
-        let first = legal_actions(&state)[0];
-        apply(&mut state, first).unwrap();
+    fn drive_to_main(state: &mut GameState) {
+        while state.phase != Phase::Main && !state.is_over() {
+            let first = legal_actions(state)[0];
+            apply(state, first).unwrap();
+        }
     }
-    assert!(
-        !legal_actions(&state)
-            .iter()
-            .any(|a| matches!(a, Action::Evolve { .. })),
-        "rule 18: neither player evolves on the first turn"
-    );
+    // Both Actives are `Seedling`, the only Basic in the deck. Give the
+    // acting player its `Bloomling` so nothing but rule 18 can stop the
+    // evolution, then read whether it is offered.
+    let stage1 = set.stage1;
+    let evolve_offered = |state: &mut GameState| -> bool {
+        let player = state.current;
+        let card = find_in_hand(state, player, stage1);
+        ensure_in_hand(state, player, card);
+        legal_actions(state).iter().any(|a| matches!(a, Action::Evolve { .. }))
+    };
+
+    drive_to_main(&mut state);
+    assert!(!evolve_offered(&mut state), "rule 18: not on the first player's first turn");
+
+    apply(&mut state, Action::EndTurn).unwrap();
+    drive_to_main(&mut state);
+    assert!(!evolve_offered(&mut state), "rule 18: not on the second player's first turn either");
+
+    apply(&mut state, Action::EndTurn).unwrap();
+    drive_to_main(&mut state);
+    assert!(evolve_offered(&mut state), "the first player's second turn: evolution is legal");
 }
 
 #[test]

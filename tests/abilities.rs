@@ -11,9 +11,24 @@ use sim::engine::apply;
 use sim::rng::{ScriptedRng, SeededRng};
 use sim::state::{GameState, Phase};
 
-/// A game where the first player's Active carries the Ability under
-/// test, and the second player's Active is a plain punching bag.
+/// A game where one player's Active carries the Ability under test, the
+/// other's Active is a plain punching bag, stopped on the carrier's
+/// second turn — past rule 18's first-turn evolution ban.
 fn game(ability: Ability, seed: u64) -> (GameState, sim::ids::CardDefId) {
+    game_after_turns(ability, seed, 3)
+}
+
+/// The same, stopped on the carrier's own first turn — for the Abilities
+/// whose text reads "during your first turn".
+fn game_on_first_turn(ability: Ability, seed: u64) -> (GameState, sim::ids::CardDefId) {
+    game_after_turns(ability, seed, 1)
+}
+
+fn game_after_turns(
+    ability: Ability,
+    seed: u64,
+    turns: u32,
+) -> (GameState, sim::ids::CardDefId) {
     let mut db = CardDb::new();
     let carrier = db.add(CardDef::Pokemon(Pokemon {
         markers: Vec::new(),
@@ -79,11 +94,13 @@ fn game(ability: Ability, seed: u64) -> (GameState, sim::ids::CardDefId) {
         [carrier_deck, defender_deck],
         Box::new(SeededRng::new(seed)),
     );
-    while state.phase != Phase::Main && !state.is_over() {
-        let first = legal_actions(&state)[0];
-        apply(&mut state, first).unwrap();
+    for _ in 0..turns {
+        while state.phase != Phase::Main && !state.is_over() {
+            let first = legal_actions(&state)[0];
+            apply(&mut state, first).unwrap();
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
     }
-    apply(&mut state, Action::EndTurn).unwrap();
     while state.phase != Phase::Main && !state.is_over() {
         let first = legal_actions(&state)[0];
         apply(&mut state, first).unwrap();
@@ -1364,7 +1381,7 @@ fn searches_on_the_first_turn_for_colorless_low_hp_pokemon() {
             3,
         ),
     };
-    let (mut state, _carrier_def) = game(ability, 3);
+    let (mut state, _carrier_def) = game_on_first_turn(ability, 3);
     let player = state.current;
     let active = state.player(player).active.unwrap();
 
