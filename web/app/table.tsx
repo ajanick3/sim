@@ -193,13 +193,9 @@ export default function Table() {
   }
 
   return (
-    <main className="mx-auto max-w-[960px] px-4 py-6">
-      <header className="flex items-baseline gap-[12px]">
+    <main className="mx-auto max-w-[960px] px-3 py-4 sm:px-4 sm:py-6">
+      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h1 className="m-0 text-[18px]">sim</h1>
-        <span className="text-dim">
-          Dragapult ex &nbsp;vs&nbsp; Alakazam &nbsp;·&nbsp; turn {view?.turn_number ?? 0}{" "}
-          &nbsp;·&nbsp; {view?.phase}
-        </span>
         <span className="ml-auto flex gap-2">
           <CopyLinkButton />
           <button
@@ -207,6 +203,10 @@ export default function Table() {
           >
             New game
           </button>
+        </span>
+        <span className="basis-full text-[12px] text-dim sm:text-[13px]">
+          Dragapult ex &nbsp;vs&nbsp; Alakazam &nbsp;·&nbsp; turn {view?.turn_number ?? 0}{" "}
+          &nbsp;·&nbsp; {view?.phase}
         </span>
       </header>
 
@@ -299,7 +299,7 @@ function Board({
   const shared = { meta, selection, dropTargets, onPokemon };
   return (
     <div className="mt-4 space-y-3">
-      <div className="overflow-hidden rounded-xl border border-edge bg-felt p-3">
+      <div className="overflow-hidden rounded-xl border border-edge bg-felt p-2 sm:p-3">
         <SideBoard
           {...shared}
           side={view.sides[seats.opponent]}
@@ -370,7 +370,7 @@ function ActionPanel({
                   key={item.index}
                   disabled={busy}
                   onClick={() => onAct(item.index)}
-                  className="flex items-center gap-1.5"
+                  className="flex min-h-[34px] items-center gap-1.5"
                 >
                   {item.copy !== undefined && (
                     <span
@@ -447,7 +447,7 @@ function SideBoard({
         </span>
       </div>
 
-      <div className="flex flex-wrap justify-center gap-2">
+      <div className="flex gap-2 overflow-x-auto pb-1 sm:flex-wrap sm:justify-center sm:overflow-visible">
         {side.bench.length === 0 ? (
           <span className="self-center text-[12px] text-dim">bench empty</span>
         ) : (
@@ -494,7 +494,7 @@ function Pile({ label, count, top }: { label: string; count: number; top?: strin
   );
 }
 
-const CARD_SIZE = "w-[104px] min-h-[132px]";
+const CARD_SIZE = "w-[88px] min-h-[116px] sm:w-[104px] sm:min-h-[132px]";
 
 function HandCard({
   card,
