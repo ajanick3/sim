@@ -378,6 +378,22 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Boss's Orders" => (free, TrainerEffect::SwitchOpponentActive),
         "Cheren" | "Friends in Paldea" | "Urbain" => (free, TrainerEffect::Draw(3)),
         "Cook" => (free, TrainerEffect::HealActive(70)),
+        "Hole-Digging Shovel" => (free, TrainerEffect::DiscardTopOfDeck(2)),
+        "Repel" => (free, TrainerEffect::SwitchOutOpponentActive),
+        "Brilliant Blender" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::AnyCard,
+                    to: Destination::Zone(Zone::Discard),
+                    limit: 5,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         "Master Ball" => (
             free,
             TrainerEffect::Decide {

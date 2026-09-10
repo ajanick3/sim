@@ -397,6 +397,13 @@ pub enum TrainerEffect {
     /// `ShuffleHandThenDraw`, what is given up does not go back in the
     /// deck. `Carmine`.
     DiscardHandThenDraw(u32),
+    /// Discard this many cards from the top of the player's own deck.
+    /// `Hole-Digging Shovel`.
+    DiscardTopOfDeck(u32),
+    /// The opponent switches their own Active to the Bench, choosing the
+    /// replacement — a gust that hands the choice to them, unlike
+    /// `SwitchOpponentActive` where the player chooses. `Repel`.
+    SwitchOutOpponentActive,
     /// Shuffle the player's hand into their Library, flip a coin, then
     /// draw `heads` or `tails`. `Drasna`.
     ShuffleHandThenCoinFlipDraw { heads: u32, tails: u32 },

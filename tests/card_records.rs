@@ -287,5 +287,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Six deck-search and discard-retrieval Items (Master Ball, Hyper
     // Aroma, Treasure Tracker, Boxed Order with `Then::EndTurnIfMoved`,
     // Max Rod, Miracle Headset) — all `Decide` reskins — take it to 870.
-    assert_eq!(admitted, 870, "coverage moves only on purpose");
+    // Hole-Digging Shovel (`DiscardTopOfDeck`), Repel
+    // (`SwitchOutOpponentActive` — the opponent picks the replacement),
+    // and Brilliant Blender (a `Decide` to the discard) take it to 873.
+    assert_eq!(admitted, 873, "coverage moves only on purpose");
 }

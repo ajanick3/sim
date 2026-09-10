@@ -1467,7 +1467,8 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // switch to; every other effect built so far can always be
             // attempted, even where it turns up nothing to move.
             let has_a_target = match trainer.effect {
-                TrainerEffect::SwitchOpponentActive => {
+                TrainerEffect::SwitchOpponentActive
+                | TrainerEffect::SwitchOutOpponentActive => {
                     !state.player(player.opponent()).bench.is_empty()
                 }
                 TrainerEffect::SwitchOwnActive | TrainerEffect::SwitchOwnActiveWithFollowUp(_) => {

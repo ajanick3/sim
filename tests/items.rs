@@ -1376,3 +1376,71 @@ fn the_search_items_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: deck manipulation and a gust ---
+
+fn plain_item(db: &mut CardDb, print_id: &'static str, name: &'static str, effect: TrainerEffect) -> CardDefId {
+    db.add(CardDef::Trainer(Trainer {
+        print_id,
+        name,
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect,
+    }))
+}
+
+#[test]
+fn hole_digging_shovel_discards_the_top_two_of_the_deck() {
+    let mut set = build();
+    let shovel = plain_item(&mut set.db, "test-shovel", "Hole-Digging Shovel", TrainerEffect::DiscardTopOfDeck(2));
+    let mut state = game(&set, shovel, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, shovel);
+    let deck_before = state.player(player).library.len();
+    let discard_before = state.player(player).discard.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.player(player).library.len(), deck_before - 2);
+    // Two from the deck, plus the Shovel itself.
+    assert_eq!(state.player(player).discard.len(), discard_before + 3);
+}
+
+#[test]
+fn repel_makes_the_opponent_promote_a_new_active() {
+    let mut set = build();
+    let repel = plain_item(&mut set.db, "test-repel", "Repel", TrainerEffect::SwitchOutOpponentActive);
+    let mut state = game(&set, repel, 3);
+    let player = state.current;
+    let opp = player.opponent();
+    let benched_card = deal_new_card(&mut state, opp, set.mon);
+    let benched = state.put_into_play(opp, benched_card);
+    state.players[opp.index()].bench.push(benched);
+    let old_active = state.player(opp).active.unwrap();
+    let card = ensure_in_hand(&mut state, player, repel);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    // The opponent now chooses the replacement.
+    let promote = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Promote { .. }))
+        .expect("the opponent promotes");
+    apply(&mut state, promote).unwrap();
+
+    assert_ne!(state.player(opp).active, Some(old_active), "the Active changed");
+    assert!(state.player(opp).bench.contains(&old_active), "and went to the Bench");
+}
+
+#[test]
+fn the_deck_manip_items_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Hole-Digging Shovel", "Repel", "Brilliant Blender"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
