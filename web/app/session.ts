@@ -1,6 +1,38 @@
 // Pure decisions for a game session, kept out of the component so they can
 // be tested without a DOM or the wasm engine.
 
+import type { WireActionMeta } from "./view";
+
+/** What the player has tapped on the board, if anything. */
+export type Selection = { kind: "pokemon"; id: number } | { kind: "hand"; card: number } | null;
+
+/**
+ * The `legal_actions` indices that concern the current selection: a tapped
+ * Pokémon matches every move aimed at it (`target`); a tapped hand card
+ * matches every move that plays it (`card`). No selection matches nothing —
+ * the caller shows the whole list instead.
+ */
+export function movesForSelection(meta: WireActionMeta[], sel: Selection): number[] {
+  if (!sel) return [];
+  return meta
+    .map((m, i) => ({ m, i }))
+    .filter(({ m }) => (sel.kind === "pokemon" ? m.target === sel.id : m.card === sel.card))
+    .map(({ i }) => i);
+}
+
+/**
+ * When a hand card is selected, the Pokémon ids a move with that card can be
+ * aimed at — the ones to highlight as drop targets. Maps each target id to
+ * the `legal_actions` index that lands the card there.
+ */
+export function targetsForHandCard(meta: WireActionMeta[], card: number): Map<number, number> {
+  const out = new Map<number, number>();
+  meta.forEach((m, i) => {
+    if (m.card === card && m.target !== null && !out.has(m.target)) out.set(m.target, i);
+  });
+  return out;
+}
+
 /** Which board side belongs to the viewer, and which to the opponent. */
 export function sides(you: number): { mine: number; opponent: number } {
   return { mine: you, opponent: you === 1 ? 0 : 1 };
@@ -92,18 +124,31 @@ function groupOf(label: string): string {
 }
 
 /**
- * Sort the engine's flat action labels into named groups for display,
- * keeping each action's original index for `apply`. When one label repeats
- * — two same-named Pokémon give identical text — each copy gets a 0-based
- * `copy` rank so the panel can mark them apart, the way the board does.
+ * Sort action labels into named groups for display, keeping each action's
+ * original index for `apply`. When one label repeats — two same-named
+ * Pokémon give identical text — each copy gets a 0-based `copy` rank so the
+ * panel can mark them apart, the way the board does.
  */
 export function groupActions(labels: string[]): ActionGroup[] {
+  return groupActionsAt(
+    labels,
+    labels.map((_, i) => i),
+  );
+}
+
+/**
+ * As `groupActions`, but over a subset: `indices` picks which of `labels` to
+ * show (and in what order), each keeping its own index for `apply`.
+ */
+export function groupActionsAt(labels: string[], indices: number[]): ActionGroup[] {
+  const chosen = indices.map((index) => labels[index]);
   const total = new Map<string, number>();
-  for (const l of labels) total.set(l, (total.get(l) ?? 0) + 1);
+  for (const l of chosen) total.set(l, (total.get(l) ?? 0) + 1);
   const seen = new Map<string, number>();
 
   const byGroup = new Map<string, GroupedAction[]>();
-  labels.forEach((label, index) => {
+  indices.forEach((index) => {
+    const label = labels[index];
     const g = groupOf(label);
     const item: GroupedAction = { index, label };
     if ((total.get(label) ?? 0) > 1) {

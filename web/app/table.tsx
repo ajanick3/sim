@@ -7,11 +7,15 @@ import {
   copyBadges,
   gateAfterSeat,
   groupActions,
+  groupActionsAt,
+  movesForSelection,
   shouldAutoAdvance,
   sides,
+  targetsForHandCard,
+  type Selection,
 } from "./session";
 import { newRecipe, readRecipeParam, writeRecipeParam, type Recipe } from "./recipe";
-import type { WireCard, WirePokemon, WireSide, WireView } from "./view";
+import type { WireActionMeta, WireCard, WirePokemon, WireSide, WireView } from "./view";
 
 // The two curated decks, by the key a recipe stores.
 const DECK_KEYS = { a: "dragapult", b: "alakazam" };
@@ -27,6 +31,8 @@ export default function Table() {
   const [status, setStatus] = useState<Status>({ kind: "loading" });
   const [view, setView] = useState<WireView | null>(null);
   const [actions, setActions] = useState<string[]>([]);
+  const [meta, setMeta] = useState<WireActionMeta[]>([]);
+  const [selection, setSelection] = useState<Selection>(null);
   const [log, setLog] = useState<string[]>([]);
   const [seat, setSeat] = useState<number | undefined>(undefined);
   const [over, setOver] = useState(false);
@@ -67,6 +73,9 @@ export default function Table() {
     const next = game.player_to_act();
     setView(JSON.parse(game.view()) as WireView);
     setActions(JSON.parse(game.legal_actions()) as string[]);
+    setMeta(JSON.parse(game.action_meta()) as WireActionMeta[]);
+    // Indices belong to the list that just changed; drop the selection.
+    setSelection(null);
     setLog(JSON.parse(game.log()) as string[]);
     setSeat(next);
     setOver(game.is_over());
@@ -209,7 +218,18 @@ export default function Table() {
           <button onClick={() => setRevealed(true)}>{SEAT_NAME[seat]} — tap to reveal</button>
         </Centre>
       ) : (
-        view && <Board view={view} actions={actions} seat={seat} busy={busy} onAct={act} />
+        view && (
+          <Board
+            view={view}
+            actions={actions}
+            meta={meta}
+            selection={selection}
+            onSelect={setSelection}
+            seat={seat}
+            busy={busy}
+            onAct={act}
+          />
+        )
       )}
 
       <LogPanel lines={log} />
@@ -241,56 +261,107 @@ function CopyLinkButton() {
 function Board({
   view,
   actions,
+  meta,
+  selection,
+  onSelect,
   seat,
   busy,
   onAct,
 }: {
   view: WireView;
   actions: string[];
+  meta: WireActionMeta[];
+  selection: Selection;
+  onSelect: (s: Selection) => void;
   seat: number | undefined;
   busy: boolean;
   onAct: (index: number) => void;
 }) {
   const seats = sides(view.you);
+  const dropTargets =
+    selection?.kind === "hand"
+      ? targetsForHandCard(meta, selection.card)
+      : new Map<number, number>();
+
+  // Clicking a Pokémon: if a hand card is waiting for a target and this is a
+  // valid one, land it; otherwise select the Pokémon.
+  const onPokemon = (id: number) => {
+    const landing = dropTargets.get(id);
+    if (landing !== undefined) onAct(landing);
+    else
+      onSelect(
+        selection?.kind === "pokemon" && selection.id === id ? null : { kind: "pokemon", id },
+      );
+  };
+  const onHand = (card: number) =>
+    onSelect(selection?.kind === "hand" && selection.card === card ? null : { kind: "hand", card });
+
+  const shared = { meta, selection, dropTargets, onPokemon };
   return (
     <div className="mt-4 space-y-3">
       <div className="overflow-hidden rounded-xl border border-edge bg-felt p-3">
         <SideBoard
+          {...shared}
           side={view.sides[seats.opponent]}
           label={`${SEAT_NAME[seats.opponent]} Opponent`}
         />
         <div className="my-3 border-t border-white/10" />
         <SideBoard
+          {...shared}
           side={view.sides[seats.mine]}
           label={`${SEAT_NAME[seats.mine]} You`}
           mine
           hand={view.your_hand}
+          onHand={onHand}
         />
       </div>
 
-      <ActionPanel actions={actions} seat={seat} busy={busy} onAct={onAct} />
+      <ActionPanel
+        actions={actions}
+        only={selection ? movesForSelection(meta, selection) : undefined}
+        onClearSelection={() => onSelect(null)}
+        seat={seat}
+        busy={busy}
+        onAct={onAct}
+      />
     </div>
   );
 }
 
 function ActionPanel({
   actions,
+  only,
+  onClearSelection,
   seat,
   busy,
   onAct,
 }: {
   actions: string[];
+  /** When set, show only these action indices — the current selection's moves. */
+  only?: number[];
+  onClearSelection: () => void;
   seat: number | undefined;
   busy: boolean;
   onAct: (index: number) => void;
 }) {
+  const groups = only ? groupActionsAt(actions, only) : groupActions(actions);
   return (
     <section>
-      <SectionHeading className="mb-1.5">
-        {seat !== undefined ? `${SEAT_NAME[seat]} to act` : "Waiting"}
-      </SectionHeading>
+      <div className="mb-1.5 flex items-center gap-2">
+        <SectionHeading>
+          {seat !== undefined ? `${SEAT_NAME[seat]} to act` : "Waiting"}
+        </SectionHeading>
+        {only && (
+          <button className="text-[11px]" onClick={onClearSelection}>
+            Clear selection
+          </button>
+        )}
+      </div>
       <div className="grid gap-[10px]">
-        {groupActions(actions).map((g) => (
+        {only && groups.length === 0 && (
+          <p className="text-[12px] text-dim">No move here. Pick something else.</p>
+        )}
+        {groups.map((g) => (
           <div key={g.group}>
             <SectionHeading className="mb-1">{g.group}</SectionHeading>
             <div className="flex flex-wrap gap-2">
@@ -324,14 +395,35 @@ function SideBoard({
   label,
   mine = false,
   hand,
+  meta,
+  selection,
+  dropTargets,
+  onPokemon,
+  onHand,
 }: {
   side: WireSide;
   label: string;
   mine?: boolean;
   hand?: WireCard[];
+  meta: WireActionMeta[];
+  selection: Selection;
+  dropTargets: Map<number, number>;
+  onPokemon: (id: number) => void;
+  onHand?: (card: number) => void;
 }) {
   const lineup = [side.active, ...side.bench];
   const badges = copyBadges(lineup.map((m) => m?.name ?? null));
+
+  const monProps = (m: WirePokemon | null) => {
+    if (!m) return {};
+    return {
+      onSelect: () => onPokemon(m.id),
+      selectable: meta.some((x) => x.target === m.id) || dropTargets.has(m.id),
+      selected: selection?.kind === "pokemon" && selection.id === m.id,
+      dropTarget: dropTargets.has(m.id),
+    };
+  };
+
   // The player's own Active sits nearest the centre line; the opponent's
   // does too, so their rows read top-down: prizes, bench, Active.
   return (
@@ -359,12 +451,12 @@ function SideBoard({
         {side.bench.length === 0 ? (
           <span className="self-center text-[12px] text-dim">bench empty</span>
         ) : (
-          side.bench.map((m, i) => <Mon key={i} mon={m} copy={badges[i + 1]} />)
+          side.bench.map((m, i) => <Mon key={i} mon={m} copy={badges[i + 1]} {...monProps(m)} />)
         )}
       </div>
 
       <div className="flex justify-center">
-        <Mon mon={side.active} active copy={badges[0]} />
+        <Mon mon={side.active} active copy={badges[0]} {...monProps(side.active)} />
       </div>
 
       {mine && hand && (
@@ -374,7 +466,15 @@ function SideBoard({
             {hand.length === 0 ? (
               <span className="text-[12px] text-dim">empty</span>
             ) : (
-              hand.map((c) => <HandCard key={c.id} card={c} />)
+              hand.map((c) => (
+                <HandCard
+                  key={c.id}
+                  card={c}
+                  playable={meta.some((x) => x.card === c.id)}
+                  selected={selection?.kind === "hand" && selection.card === c.id}
+                  onSelect={onHand ? () => onHand(c.id) : undefined}
+                />
+              ))
             )}
           </div>
         </div>
@@ -396,10 +496,31 @@ function Pile({ label, count, top }: { label: string; count: number; top?: strin
 
 const CARD_SIZE = "w-[104px] min-h-[132px]";
 
-function HandCard({ card }: { card: WireCard }) {
+function HandCard({
+  card,
+  playable = false,
+  selected = false,
+  onSelect,
+}: {
+  card: WireCard;
+  playable?: boolean;
+  selected?: boolean;
+  onSelect?: () => void;
+}) {
+  const interactive = playable && !!onSelect;
   return (
-    <div
-      className={`${CARD_SIZE} flex flex-none flex-col rounded-md border border-edge bg-panel p-1.5`}
+    <button
+      type="button"
+      data-testid="hand-card"
+      disabled={!interactive}
+      onClick={onSelect}
+      className={`${CARD_SIZE} flex flex-none flex-col items-start rounded-md border bg-panel p-1.5 text-left disabled:cursor-default disabled:opacity-100 ${
+        selected
+          ? "border-accent ring-2 ring-accent"
+          : interactive
+            ? "border-edge hover:border-accent"
+            : "border-edge opacity-60"
+      }`}
     >
       <span className="text-[11px] font-semibold leading-tight">{card.name}</span>
       {card.energy_type && (
@@ -408,7 +529,7 @@ function HandCard({ card }: { card: WireCard }) {
           style={{ background: ENERGY_COLOR[card.energy_type] ?? "var(--color-dim)" }}
         />
       )}
-    </div>
+    </button>
   );
 }
 
@@ -416,11 +537,21 @@ export function Mon({
   mon,
   active = false,
   copy,
+  selectable = false,
+  selected = false,
+  dropTarget = false,
+  onSelect,
 }: {
   mon: WirePokemon | null;
   active?: boolean;
   /** Index among same-named copies on this side; a colour badge is drawn when set. */
   copy?: number;
+  /** This Pokémon is named by at least one legal move right now. */
+  selectable?: boolean;
+  selected?: boolean;
+  /** A selected hand card can land here — show it as a drop target. */
+  dropTarget?: boolean;
+  onSelect?: () => void;
 }) {
   if (!mon) {
     return (
@@ -433,11 +564,22 @@ export function Mon({
     );
   }
   const pct = mon.hp > 0 ? Math.max(0, Math.min(100, (mon.remaining_hp / mon.hp) * 100)) : 0;
+  const interactive = selectable && !!onSelect;
+  const ring = selected
+    ? "ring-2 ring-accent border-accent"
+    : dropTarget
+      ? "ring-2 ring-warn border-warn"
+      : active
+        ? "border-accent shadow-[0_0_0_1px_var(--color-accent)]"
+        : "border-edge";
   return (
-    <div
+    <button
+      type="button"
       data-testid="mon-card"
-      className={`${CARD_SIZE} flex flex-none flex-col gap-1 rounded-md border bg-panel p-1.5 text-center ${
-        active ? "border-accent shadow-[0_0_0_1px_var(--color-accent)]" : "border-edge"
+      disabled={!interactive}
+      onClick={onSelect}
+      className={`${CARD_SIZE} flex flex-none flex-col gap-1 rounded-md border bg-panel p-1.5 text-center disabled:cursor-default disabled:opacity-100 ${ring} ${
+        interactive ? "hover:border-accent" : ""
       }`}
     >
       <div className="flex max-w-full items-center gap-1 text-[11px] font-semibold leading-tight">
@@ -465,7 +607,7 @@ export function Mon({
       {mon.conditions.length > 0 && (
         <div className="text-[10px] text-warn">{mon.conditions.join(", ")}</div>
       )}
-    </div>
+    </button>
   );
 }
 
