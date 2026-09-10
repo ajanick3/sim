@@ -414,7 +414,7 @@ function SideRow({
           <span>{label}</span>
           <span>hand {side.hand_count}</span>
         </div>
-        <div className="flex gap-1.5 overflow-x-auto">
+        <div className="flex flex-wrap gap-1.5">
           {slots.map((m, i) =>
             m ? (
               <LiveMon
@@ -546,9 +546,9 @@ function LiveMon({
   const src = art(mon.print_id);
   const interactive = selectable && !!onSelect;
   const ring = selected
-    ? "ring-2 ring-accent border-accent"
+    ? "z-20 ring-2 ring-accent border-accent"
     : dropTarget
-      ? "ring-2 ring-warn border-warn"
+      ? "z-20 border-white ring-2 ring-white shadow-[0_0_0_2px_#fff,0_0_18px_5px_rgba(255,255,255,0.7)]"
       : active
         ? "border-accent"
         : "border-edge";
