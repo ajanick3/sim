@@ -611,7 +611,7 @@ function HandStrip({
           {rows.map((row, ri) => (
             <div
               key={ri}
-              className="flex flex-wrap justify-center"
+              className="flex flex-wrap justify-center gap-x-3"
               style={{ marginTop: ri === 0 ? 0 : -84, zIndex: ri + 1 }}
             >
               {row.map((c) => {
@@ -622,7 +622,7 @@ function HandStrip({
                   <div
                     key={c.id}
                     data-keep-selection
-                    className={`relative -ml-3 h-[150px] w-[104px] flex-none transition-transform first:ml-0 hover:z-20 hover:-translate-y-6 ${
+                    className={`relative h-[150px] w-[104px] flex-none transition-transform hover:z-20 hover:-translate-y-6 ${
                       selected ? "z-30 -translate-y-6" : ""
                     }`}
                   >
