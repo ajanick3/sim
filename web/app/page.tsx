@@ -1,5 +1,5 @@
-import Table from "./table";
+import GameShell from "./game-shell";
 
 export default function Page() {
-  return <Table />;
+  return <GameShell />;
 }

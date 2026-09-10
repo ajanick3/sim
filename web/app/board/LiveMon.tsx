@@ -1,7 +1,7 @@
 "use client";
 
-import { ENERGY_COLOR } from "../../table";
-import type { WirePokemon } from "../../view";
+import { ENERGY_COLOR } from "./energy";
+import type { WirePokemon } from "../view";
 import { CARD_SIZE } from "./sizes";
 import { damageSpot, type Art } from "./shared";
 

@@ -1,7 +1,7 @@
-import Table from "../table";
+import { redirect } from "next/navigation";
 
-// The experimental Pokémon TCG Live-style board. Same game, same engine
-// wiring as `/`; only the presentation differs.
+// The board used to live here while it was the experimental variant.
+// It is the only board now, at `/`.
 export default function LivePage() {
-  return <Table variant="live" />;
+  redirect("/");
 }

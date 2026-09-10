@@ -1,6 +1,7 @@
 "use client";
 
-import { CardArt, ENERGY_COLOR } from "../../table";
+import { CardArt } from "./CardArt";
+import { ENERGY_COLOR } from "./energy";
 
 /** The face of a card in a tile: real art when there is any, a drawn
  *  Energy card for Basic Energy (TCGdex has no art for those), else the
