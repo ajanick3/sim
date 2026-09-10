@@ -42,10 +42,40 @@ impl CardData {
     }
 }
 
-/// One game, held open across calls.
+/// One game, held open across calls. `applied` records the index of every
+/// action taken, in order — the tail of a recipe that can rebuild this game
+/// from its start (ticket `web-followups/01`).
 #[wasm_bindgen]
 pub struct Game {
     state: GameState,
+    applied: Vec<u32>,
+}
+
+impl Game {
+    fn standard_state(
+        data: &mut CardData,
+        deck_a: &str,
+        deck_b: &str,
+        seed: u64,
+    ) -> Result<GameState, String> {
+        let a = data.build_deck(deck_a)?;
+        let b = data.build_deck(deck_b)?;
+        Ok(GameState::new(
+            data.import.db.clone(),
+            [a, b],
+            Box::new(SeededRng::new(seed)),
+        ))
+    }
+
+    fn apply_index(&mut self, index: u32) -> Result<(), String> {
+        let actions = legal_actions(&self.state);
+        let action = actions
+            .get(index as usize)
+            .ok_or_else(|| format!("no legal action at index {index}"))?;
+        apply(&mut self.state, *action).map_err(|error| format!("{error:?}"))?;
+        self.applied.push(index);
+        Ok(())
+    }
 }
 
 #[wasm_bindgen]
@@ -60,7 +90,7 @@ impl Game {
             [deck.clone(), deck],
             Box::new(SeededRng::new(seed)),
         );
-        Game { state }
+        Game { state, applied: Vec::new() }
     }
 
     /// A game of the Standard set. Each decklist is the text of a `.txt`
@@ -71,14 +101,31 @@ impl Game {
         deck_b: &str,
         seed: u64,
     ) -> Result<Game, String> {
-        let a = data.build_deck(deck_a)?;
-        let b = data.build_deck(deck_b)?;
-        let state = GameState::new(
-            data.import.db.clone(),
-            [a, b],
-            Box::new(SeededRng::new(seed)),
-        );
-        Ok(Game { state })
+        Ok(Game {
+            state: Game::standard_state(data, deck_a, deck_b, seed)?,
+            applied: Vec::new(),
+        })
+    }
+
+    /// Rebuild a Standard game and replay `indices` from its start, each an
+    /// index into the legal-action list at that point. The end state is the
+    /// game those moves produced live.
+    pub fn replay_standard(
+        data: &mut CardData,
+        deck_a: &str,
+        deck_b: &str,
+        seed: u64,
+        indices: Vec<u32>,
+    ) -> Result<Game, String> {
+        let mut game = Game {
+            state: Game::standard_state(data, deck_a, deck_b, seed)?,
+            applied: Vec::with_capacity(indices.len()),
+        };
+        for (seq, index) in indices.into_iter().enumerate() {
+            game.apply_index(index)
+                .map_err(|error| format!("move {seq}: {error}"))?;
+        }
+        Ok(game)
     }
 
     /// The legal actions right now, each as the text `describe` prints.
@@ -93,11 +140,12 @@ impl Game {
 
     /// Apply the action at `index` in the current `legal_actions` list.
     pub fn apply(&mut self, index: usize) -> Result<(), String> {
-        let actions = legal_actions(&self.state);
-        let action = actions
-            .get(index)
-            .ok_or_else(|| format!("no legal action at index {index}"))?;
-        apply(&mut self.state, *action).map_err(|error| format!("{error:?}"))
+        self.apply_index(index as u32)
+    }
+
+    /// Every action index applied so far, oldest first. JSON `number[]`.
+    pub fn history(&self) -> String {
+        serde_json::to_string(&self.applied).expect("a list of numbers serializes")
     }
 
     /// The whole log, oldest line first.
