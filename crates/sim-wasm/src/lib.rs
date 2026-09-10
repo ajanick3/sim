@@ -152,6 +152,16 @@ impl Game {
                     kind: action_kind(*action),
                     card,
                     target,
+                    card_face: card.map(|i| {
+                        let id = sim::ids::CardId(i as u32);
+                        let def = self.state.def_of(id);
+                        WireCardFace {
+                            print_id: def.print_id().to_string(),
+                            name: def.name().to_string(),
+                            energy_type: def.as_energy().map(|e| format!("{:?}", e.kind)),
+                            category: card_category(def),
+                        }
+                    }),
                 }
             })
             .collect();
@@ -208,6 +218,9 @@ struct WireCard {
     /// The Energy type this card provides, e.g. `"Fire"`, or `null` when
     /// the card is not an Energy — a Tool, say.
     energy_type: Option<String>,
+    /// A coarse bucket for sorting a hand: `"pokemon"`, `"supporter"`,
+    /// `"item"`, `"tool"`, `"stadium"`, `"special-energy"`, `"energy"`.
+    category: String,
 }
 
 #[derive(Serialize)]
@@ -215,6 +228,17 @@ struct ActionMeta {
     kind: String,
     card: Option<usize>,
     target: Option<usize>,
+    /// Enough to draw the face of the card this action names — set for
+    /// any zone, so a deck-search prompt can show real art.
+    card_face: Option<WireCardFace>,
+}
+
+#[derive(Serialize)]
+struct WireCardFace {
+    print_id: String,
+    name: String,
+    energy_type: Option<String>,
+    category: String,
 }
 
 /// The `Action` variant's name, from its `Debug` form — the same trick
@@ -242,14 +266,29 @@ fn action_handles(action: Action) -> (Option<usize>, Option<usize>) {
         | Action::TakeCard { card: c }
         | Action::DiscardEnergy { card: c }
         | Action::PayWithCard { card: c }
-        | Action::MoveEnergyToActive { card: c } => (card(c), None),
+        | Action::MoveEnergyToActive { card: c }
+        | Action::TakeBasicPokemonForCallForFamily { card: c }
+        | Action::TakeBasicPokemonOfTypeForEnergyAttach { card: c }
+        | Action::TakeItemFromLibrary { card: c }
+        | Action::TakeAnyCardFromLibrary { card: c }
+        | Action::TakeTrainerCardFromLibrary { card: c }
+        | Action::TakePokemonOfTypeOrStadiumFromLibrary { card: c }
+        | Action::TakeEvolutionPokemonOfType { card: c }
+        | Action::TakeCardForFanCall { card: c }
+        | Action::TakeFromBottomOfLibrary { card: c }
+        | Action::TakeTrainerFromDiscard { card: c }
+        | Action::TakePokemonFromDiscard { card: c }
+        | Action::TakeNamedFromDiscardToBench { card: c }
+        | Action::TakeCardFromTopPeek { card: c }
+        | Action::TakeSupporterFromTopPeek { card: c }
+        | Action::TakeSupporterForLastDitchCatch { card: c } => (card(c), None),
         Action::Evolve { card: c, target: t }
         | Action::AttachEnergy { card: c, target: t }
         | Action::PlayTool { card: c, target: t }
         | Action::TakeCardOnto { card: c, target: t }
         | Action::MoveEnergy { card: c, target: t } => (card(c), mon(t)),
         Action::Retreat { to } => (None, mon(to)),
-        Action::Promote { pokemon } => (None, mon(pokemon)),
+        Action::Promote { pokemon } | Action::UseAbility { pokemon } => (None, mon(pokemon)),
         Action::HealTarget { target } | Action::HealMegaEx { target } => (None, mon(target)),
         _ => (None, None),
     }
@@ -289,16 +328,32 @@ struct WireView {
 }
 
 fn wire_card(db: &CardDb, card: &sim::view::CardView) -> WireCard {
+    let def = db.get(card.def);
     WireCard {
         id: card.id.index(),
         name: card.name.to_string(),
         def: card.def.index(),
         print_id: card.print_id.to_string(),
-        energy_type: db
-            .get(card.def)
-            .as_energy()
-            .map(|energy| format!("{:?}", energy.kind)),
+        energy_type: def.as_energy().map(|energy| format!("{:?}", energy.kind)),
+        category: card_category(def),
     }
+}
+
+/// The hand-sorting bucket for a card.
+fn card_category(def: &sim::card::CardDef) -> String {
+    use sim::card::{CardDef, TrainerKind};
+    match def {
+        CardDef::Pokemon(_) => "pokemon",
+        CardDef::Energy(e) if e.effect.is_some() => "special-energy",
+        CardDef::Energy(_) => "energy",
+        CardDef::Trainer(t) => match t.kind {
+            TrainerKind::Supporter => "supporter",
+            TrainerKind::Item => "item",
+            TrainerKind::Tool => "tool",
+            TrainerKind::Stadium => "stadium",
+        },
+    }
+    .to_string()
 }
 
 fn wire_pokemon(db: &CardDb, pokemon: &sim::view::PokemonView) -> WirePokemon {

@@ -165,9 +165,23 @@ describe("<Mon> card shape", () => {
     remaining_hp: 220,
     conditions: ["Asleep", "Poisoned"],
     attached: [
-      { id: 1, name: "Fire Energy", def: 0, energy_type: "Fire", print_id: "e-1" },
-      { id: 2, name: "Water Energy", def: 0, energy_type: "Water", print_id: "e-2" },
-      { id: 3, name: "Rescue Board", def: 0, energy_type: null, print_id: "t-3" },
+      {
+        id: 1,
+        name: "Fire Energy",
+        def: 0,
+        energy_type: "Fire",
+        print_id: "e-1",
+        category: "energy",
+      },
+      {
+        id: 2,
+        name: "Water Energy",
+        def: 0,
+        energy_type: "Water",
+        print_id: "e-2",
+        category: "energy",
+      },
+      { id: 3, name: "Rescue Board", def: 0, energy_type: null, print_id: "t-3", category: "tool" },
     ],
   };
 

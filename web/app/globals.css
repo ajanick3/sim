@@ -89,9 +89,50 @@ button:disabled {
   animation: line-in 900ms ease-out;
 }
 
+/* Hand card: a little bounce when it's picked up, and a toss-and-shrink
+   toward the discard pile when the pick is confirmed. Uses the
+   individual `scale` / `translate` properties so it composes with the
+   card wrapper's own transform. */
+@keyframes card-tap {
+  0% {
+    scale: 1;
+  }
+  45% {
+    scale: 1.22;
+  }
+  100% {
+    scale: 1.12;
+  }
+}
+
+@keyframes card-toss {
+  0% {
+    scale: 1.12;
+    opacity: 1;
+  }
+  18% {
+    scale: 1.28;
+  }
+  100% {
+    translate: var(--toss-x, 34vw) var(--toss-y, 26vh);
+    scale: 0.06;
+    opacity: 0;
+  }
+}
+
+.card-tap {
+  animation: card-tap 260ms ease-out;
+}
+
+.card-toss {
+  animation: card-toss 380ms ease-in forwards;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .deal-in,
-  .line-in {
+  .line-in,
+  .card-tap,
+  .card-toss {
     animation: none;
   }
 }

@@ -16,6 +16,7 @@ import {
 } from "./session";
 import { newRecipe, readRecipeParam, writeRecipeParam, type Recipe } from "./recipe";
 import { artUrl, loadArtIndex, type ArtIndex } from "./art";
+import { LiveBoard } from "./live-board";
 import type { WireActionMeta, WireCard, WirePokemon, WireSide, WireView } from "./view";
 
 // The two curated decks, by the key a recipe stores.
@@ -28,7 +29,9 @@ const SEAT_NAME = ["🥇", "🥈"];
 
 type Status = { kind: "loading" } | { kind: "error"; message: string } | { kind: "playing" };
 
-export default function Table() {
+export type BoardVariant = "classic" | "live";
+
+export default function Table({ variant = "classic" }: { variant?: BoardVariant }) {
   const [status, setStatus] = useState<Status>({ kind: "loading" });
   const [view, setView] = useState<WireView | null>(null);
   const [actions, setActions] = useState<string[]>([]);
@@ -38,8 +41,10 @@ export default function Table() {
   const [log, setLog] = useState<string[]>([]);
   const [seat, setSeat] = useState<number | undefined>(undefined);
   const [over, setOver] = useState(false);
-  const [revealed, setRevealed] = useState(false);
+  const [revealedState, setRevealed] = useState(false);
   const [busy, setBusy] = useState(false);
+  // The live board is a solo review surface — no pass-the-device gate.
+  const revealed = variant === "live" ? true : revealedState;
 
   const gameRef = useRef<Game | null>(null);
   const dataRef = useRef<CardData | null>(null);
@@ -199,8 +204,16 @@ export default function Table() {
     );
   }
 
+  const live = variant === "live";
+
   return (
-    <main className="mx-auto max-w-[960px] px-3 py-4 sm:px-4 sm:py-6">
+    <main
+      className={
+        live
+          ? "mx-auto flex h-[100dvh] max-w-[1100px] flex-col overflow-hidden px-3 py-2"
+          : "mx-auto max-w-[960px] px-3 py-4 sm:px-4 sm:py-6"
+      }
+    >
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h1 className="m-0 text-[18px]">sim</h1>
         <span className="ml-auto flex gap-2">
@@ -217,30 +230,46 @@ export default function Table() {
         </span>
       </header>
 
-      {over ? (
-        <Banner>{log[log.length - 1] ?? "Game over."}</Banner>
-      ) : !revealed && seat !== undefined ? (
-        <Centre>
-          <p className="text-dim">Pass the device.</p>
-          <button onClick={() => setRevealed(true)}>{SEAT_NAME[seat]} — tap to reveal</button>
-        </Centre>
-      ) : (
-        view && (
-          <Board
-            view={view}
-            actions={actions}
-            meta={meta}
-            selection={selection}
-            onSelect={setSelection}
-            art={(printId: string) => artUrl(artIndex, printId)}
-            seat={seat}
-            busy={busy}
-            onAct={act}
-          />
-        )
-      )}
+      <div className={live ? "min-h-0 flex-1 overflow-hidden" : "contents"}>
+        {over ? (
+          <Banner>{log[log.length - 1] ?? "Game over."}</Banner>
+        ) : !revealed && seat !== undefined ? (
+          <Centre>
+            <p className="text-dim">Pass the device.</p>
+            <button onClick={() => setRevealed(true)}>{SEAT_NAME[seat]} — tap to reveal</button>
+          </Centre>
+        ) : (
+          view &&
+          (variant === "live" ? (
+            <LiveBoard
+              view={view}
+              actions={actions}
+              meta={meta}
+              selection={selection}
+              onSelect={setSelection}
+              art={(printId: string) => artUrl(artIndex, printId)}
+              seat={seat}
+              busy={busy}
+              onAct={act}
+              log={log}
+            />
+          ) : (
+            <Board
+              view={view}
+              actions={actions}
+              meta={meta}
+              selection={selection}
+              onSelect={setSelection}
+              art={(printId: string) => artUrl(artIndex, printId)}
+              seat={seat}
+              busy={busy}
+              onAct={act}
+            />
+          ))
+        )}
+      </div>
 
-      <LogPanel lines={log} />
+      {!live && <LogPanel lines={log} />}
     </main>
   );
 }
@@ -338,7 +367,7 @@ function Board({
   );
 }
 
-function ActionPanel({
+export function ActionPanel({
   actions,
   only,
   onClearSelection,
@@ -508,11 +537,11 @@ function Pile({ label, count, top }: { label: string; count: number; top?: strin
   );
 }
 
-const CARD_SIZE = "w-[88px] min-h-[116px] sm:w-[104px] sm:min-h-[132px]";
+export const CARD_SIZE = "w-[88px] min-h-[116px] sm:w-[104px] sm:min-h-[132px]";
 
 /** The card's TCGdex art, filling the card, with a scrim so overlaid text
  *  stays readable. Falls away (returns null) the moment the image 404s. */
-function CardArt({ src, alt }: { src: string; alt: string }) {
+export function CardArt({ src, alt }: { src: string; alt: string }) {
   const [broken, setBroken] = useState(false);
   if (broken) return null;
   return (
@@ -660,7 +689,7 @@ export function Mon({
   );
 }
 
-const ENERGY_COLOR: Record<string, string> = {
+export const ENERGY_COLOR: Record<string, string> = {
   Grass: "#63B95B",
   Fire: "#E4593E",
   Water: "#5AA7E4",
@@ -674,7 +703,7 @@ const ENERGY_COLOR: Record<string, string> = {
   Colorless: "#C6C0B7",
 };
 
-function Attachments({ cards }: { cards: WireCard[] }) {
+export function Attachments({ cards }: { cards: WireCard[] }) {
   if (cards.length === 0) return null;
   const energies = cards.filter((c) => c.energy_type);
   const others = cards.length - energies.length;
@@ -745,7 +774,7 @@ function Banner({ children }: { children: React.ReactNode }) {
   );
 }
 
-function SectionHeading({
+export function SectionHeading({
   children,
   className = "",
 }: {

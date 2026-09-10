@@ -9,6 +9,8 @@ export interface WireCard {
   print_id: string;
   /** The Energy type this card provides, e.g. "Fire", or null if not an Energy. */
   energy_type: string | null;
+  /** Coarse hand-sort bucket: "pokemon" | "supporter" | "item" | "tool" | "stadium" | "special-energy" | "energy". */
+  category: string;
 }
 
 export interface WirePokemon {
@@ -42,6 +44,13 @@ export interface WireActionMeta {
   card: number | null;
   /** The Pokémon in play the action names, or null. */
   target: number | null;
+  /** Enough to draw the named card's face, for any zone (e.g. a deck search). */
+  card_face?: {
+    print_id: string;
+    name: string;
+    energy_type: string | null;
+    category: string;
+  } | null;
 }
 
 export interface WireView {
