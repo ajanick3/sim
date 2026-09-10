@@ -11,3 +11,6 @@ public/decks/
 # `npm run wasm` rebuilds this from crates/sim-wasm. It is committed so a
 # deploy needs no Rust toolchain; regenerate it after an engine change.
 !public/pkg/
+
+# Storybook build output
+storybook-static/

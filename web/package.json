@@ -17,7 +17,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "check": "npm run lint && npm run fmt:check && npm run typecheck && npm run test",
-    "art-index": "node scripts/build-art-index.mjs"
+    "art-index": "node scripts/build-art-index.mjs",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "next": "^15.5.0",
@@ -25,6 +27,7 @@
     "react-dom": "^19.0.0"
   },
   "devDependencies": {
+    "@storybook/nextjs": "^10.6.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.3",
@@ -35,6 +38,7 @@
     "jsdom": "^25.0.1",
     "oxfmt": "0.67.0",
     "oxlint": "^1.82.0",
+    "storybook": "^10.6.0",
     "tailwindcss": "^4.3.3",
     "typescript": "^5.7.0",
     "vitest": "^2.1.9"
