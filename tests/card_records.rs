@@ -327,5 +327,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Precious Trolley (a `Decide` for Basic Pokemon to the Bench) and
     // Energy Search Pro (a `Decide` for Basic Energy of distinct types
     // to hand) take it to 917.
-    assert_eq!(admitted, 917, "coverage moves only on purpose");
+    // Mega Signal (a `Decide` reading a new `CardFilter::MegaPokemon`)
+    // and TM Machine (a new `CardFilter::ToolNameContains`) take it to
+    // 921.
+    assert_eq!(admitted, 921, "coverage moves only on purpose");
 }

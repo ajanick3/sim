@@ -1466,6 +1466,113 @@ fn energy_search_pro_takes_one_basic_energy_per_type() {
     assert!(state.player(player).hand.contains(&first));
 }
 
+#[test]
+fn mega_signal_pulls_a_mega_pokemon_from_the_deck() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Mega Signal" && c.playable.is_some()),
+        "Mega Signal should play"
+    );
+
+    let mut set = build();
+    let mega = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: vec![Marker::Mega, Marker::Ex],
+        print_id: "test-mega-mon-ex",
+        name: "Megamon ex",
+        hp: 330,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 3,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let signal = search_item(
+        &mut set.db,
+        "test-mega-signal",
+        "Mega Signal",
+        Zone::Library,
+        CardFilter::MegaPokemon,
+        1,
+        None,
+    );
+    let mut state = game(&set, signal, 3);
+    let player = state.current;
+    let in_deck = deal_new_card(&mut state, player, mega);
+    state.players[player.index()].library.push(in_deck);
+    let card = ensure_in_hand(&mut state, player, signal);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let offered_now = offered(&state);
+    assert_eq!(offered_now, vec![in_deck], "only the Mega Pokemon is on offer");
+    apply(&mut state, Action::TakeCard { card: in_deck }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert!(state.player(player).hand.contains(&in_deck));
+}
+
+#[test]
+fn tm_machine_pulls_technical_machine_tools_from_the_deck() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "TM Machine" && c.playable.is_some()),
+        "TM Machine should play"
+    );
+
+    let mut set = build();
+    let tm_tool = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tm-fluorite",
+        name: "Technical Machine: Fluorite",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::IncreasesHp(0),
+    }));
+    let plain_tool = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-plain-tool",
+        name: "Rescue Board",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::IncreasesHp(0),
+    }));
+    let machine = search_item(
+        &mut set.db,
+        "test-tm-machine",
+        "TM Machine",
+        Zone::Library,
+        CardFilter::ToolNameContains("Technical Machine"),
+        3,
+        None,
+    );
+    let mut state = game(&set, machine, 3);
+    let player = state.current;
+    for _ in 0..2 {
+        let c = deal_new_card(&mut state, player, tm_tool);
+        state.players[player.index()].library.push(c);
+    }
+    let decoy = deal_new_card(&mut state, player, plain_tool);
+    state.players[player.index()].library.push(decoy);
+    let card = ensure_in_hand(&mut state, player, machine);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let offered_now = offered(&state);
+    assert_eq!(offered_now.len(), 2, "only the two Technical Machine Tools, not the decoy");
+    assert!(!offered_now.contains(&decoy));
+    for c in offered_now {
+        apply(&mut state, Action::TakeCard { card: c }).unwrap();
+    }
+    apply(&mut state, Action::FinishDeciding).unwrap();
+}
+
 // --- Beyond the field: deck manipulation and a gust ---
 
 fn plain_item(db: &mut CardDb, print_id: &'static str, name: &'static str, effect: TrainerEffect) -> CardDefId {

@@ -170,6 +170,12 @@ pub enum CardFilter {
     BasicPokemonNameContains(&'static str),
     /// A Pokémon carrying `Marker::Tera`. `Tera Orb`.
     TeraPokemon,
+    /// A Pokémon carrying `Marker::Mega` — every Mega Evolution
+    /// Pokémon ex. `Mega Signal`.
+    MegaPokemon,
+    /// A Pokémon Tool card whose printed name contains this word.
+    /// `TM Machine`.
+    ToolNameContains(&'static str),
     /// A Pokémon of this type, or a Stadium card — the same "one
     /// filter, two kinds of card" shape `PokemonOrBasicEnergy` and
     /// `PokemonOfTypeOrBasicEnergyOfType` already are, but the second

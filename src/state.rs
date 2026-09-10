@@ -1513,6 +1513,13 @@ impl GameState {
                 .def_of(card)
                 .as_pokemon()
                 .is_some_and(|p| p.markers.contains(&crate::card::Marker::Tera)),
+            CardFilter::MegaPokemon => self
+                .def_of(card)
+                .as_pokemon()
+                .is_some_and(|p| p.markers.contains(&crate::card::Marker::Mega)),
+            CardFilter::ToolNameContains(word) => self.def_of(card).as_trainer().is_some_and(|t| {
+                t.kind == crate::card::TrainerKind::Tool && t.name.contains(word)
+            }),
             CardFilter::PokemonOfTypeOrStadium(kind) => match self.def_of(card) {
                 CardDef::Pokemon(p) => p.kind == kind,
                 CardDef::Trainer(t) => t.kind == crate::card::TrainerKind::Stadium,
