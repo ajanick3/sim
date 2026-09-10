@@ -253,70 +253,162 @@ function Board({
 }) {
   const seats = sides(view.you);
   return (
-    <div className="mt-4 grid gap-4">
-      <Side side={view.sides[seats.opponent]} label={`${SEAT_NAME[seats.opponent]} Opponent`} />
-      <Side side={view.sides[seats.mine]} label={`${SEAT_NAME[seats.mine]} You`} mine />
+    <div className="mt-4 space-y-3">
+      <div className="overflow-hidden rounded-xl border border-edge bg-felt p-3">
+        <SideBoard
+          side={view.sides[seats.opponent]}
+          label={`${SEAT_NAME[seats.opponent]} Opponent`}
+        />
+        <div className="my-3 border-t border-white/10" />
+        <SideBoard
+          side={view.sides[seats.mine]}
+          label={`${SEAT_NAME[seats.mine]} You`}
+          mine
+          hand={view.your_hand}
+        />
+      </div>
 
-      <section>
-        <SectionHeading className="mb-1.5">Your hand ({view.your_hand.length})</SectionHeading>
-        <div className="text-dim">{view.your_hand.map((c) => c.name).join(" · ") || "—"}</div>
-      </section>
-
-      <section>
-        <SectionHeading className="mb-1.5">
-          {seat !== undefined ? `${SEAT_NAME[seat]} to act` : "Waiting"}
-        </SectionHeading>
-        <div className="grid gap-[10px]">
-          {groupActions(actions).map((g) => (
-            <div key={g.group}>
-              <SectionHeading className="mb-1">{g.group}</SectionHeading>
-              <div className="flex flex-wrap gap-2">
-                {g.items.map((item) => (
-                  <button
-                    key={item.index}
-                    disabled={busy}
-                    onClick={() => onAct(item.index)}
-                    className="flex items-center gap-1.5"
-                  >
-                    {item.copy !== undefined && (
-                      <span
-                        aria-hidden
-                        className="size-2 rounded-full"
-                        style={{ background: COPY_COLORS[item.copy % COPY_COLORS.length] }}
-                      />
-                    )}
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <ActionPanel actions={actions} seat={seat} busy={busy} onAct={onAct} />
     </div>
   );
 }
 
-function Side({ side, label, mine = false }: { side: WireSide; label: string; mine?: boolean }) {
-  const lineup = [side.active, ...side.bench];
-  const badges = copyBadges(lineup.map((m) => m?.name ?? null));
+function ActionPanel({
+  actions,
+  seat,
+  busy,
+  onAct,
+}: {
+  actions: string[];
+  seat: number | undefined;
+  busy: boolean;
+  onAct: (index: number) => void;
+}) {
   return (
-    <section className={`rounded-lg border bg-panel p-3 ${mine ? "border-accent" : "border-edge"}`}>
-      <div className="flex gap-3 text-[12px] text-dim">
-        <strong className="text-text">{label}</strong>
-        <span>hand {side.hand_count}</span>
-        <span>deck {side.library_count}</span>
-        <span>prizes {side.prize_count}</span>
-      </div>
-      <div className="mt-2 flex flex-col items-center gap-2">
-        <Mon mon={side.active} active copy={badges[0]} />
-        <div className="flex flex-wrap justify-center gap-2">
-          {side.bench.map((m, i) => (
-            <Mon key={i} mon={m} copy={badges[i + 1]} />
-          ))}
-        </div>
+    <section>
+      <SectionHeading className="mb-1.5">
+        {seat !== undefined ? `${SEAT_NAME[seat]} to act` : "Waiting"}
+      </SectionHeading>
+      <div className="grid gap-[10px]">
+        {groupActions(actions).map((g) => (
+          <div key={g.group}>
+            <SectionHeading className="mb-1">{g.group}</SectionHeading>
+            <div className="flex flex-wrap gap-2">
+              {g.items.map((item) => (
+                <button
+                  key={item.index}
+                  disabled={busy}
+                  onClick={() => onAct(item.index)}
+                  className="flex items-center gap-1.5"
+                >
+                  {item.copy !== undefined && (
+                    <span
+                      aria-hidden
+                      className="size-2 rounded-full"
+                      style={{ background: COPY_COLORS[item.copy % COPY_COLORS.length] }}
+                    />
+                  )}
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </section>
+  );
+}
+
+function SideBoard({
+  side,
+  label,
+  mine = false,
+  hand,
+}: {
+  side: WireSide;
+  label: string;
+  mine?: boolean;
+  hand?: WireCard[];
+}) {
+  const lineup = [side.active, ...side.bench];
+  const badges = copyBadges(lineup.map((m) => m?.name ?? null));
+  // The player's own Active sits nearest the centre line; the opponent's
+  // does too, so their rows read top-down: prizes, bench, Active.
+  return (
+    <div className={`flex flex-col gap-2 ${mine ? "" : "flex-col-reverse"}`}>
+      <div className="flex flex-wrap items-center gap-3 text-[12px] text-dim">
+        <strong className="text-text">{label}</strong>
+        <Pile label="deck" count={side.library_count} />
+        <Pile label="discard" count={side.discard.length} top={side.discard.at(-1)?.name} />
+        <span data-testid="prizes" className="flex items-center gap-1">
+          prizes
+          <span className="flex gap-0.5">
+            {Array.from({ length: 6 }, (_, i) => (
+              <span
+                key={i}
+                className={`h-4 w-3 rounded-[2px] border border-white/20 ${
+                  i < side.prize_count ? "bg-accent/30" : "bg-transparent"
+                }`}
+              />
+            ))}
+          </span>
+        </span>
+      </div>
+
+      <div className="flex flex-wrap justify-center gap-2">
+        {side.bench.length === 0 ? (
+          <span className="self-center text-[12px] text-dim">bench empty</span>
+        ) : (
+          side.bench.map((m, i) => <Mon key={i} mon={m} copy={badges[i + 1]} />)
+        )}
+      </div>
+
+      <div className="flex justify-center">
+        <Mon mon={side.active} active copy={badges[0]} />
+      </div>
+
+      {mine && hand && (
+        <div>
+          <SectionHeading className="mb-1">Your hand ({hand.length})</SectionHeading>
+          <div data-testid="hand" className="flex gap-2 overflow-x-auto pb-1">
+            {hand.length === 0 ? (
+              <span className="text-[12px] text-dim">empty</span>
+            ) : (
+              hand.map((c) => <HandCard key={c.id} card={c} />)
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Pile({ label, count, top }: { label: string; count: number; top?: string }) {
+  return (
+    <span className="flex items-center gap-1" title={top ? `top: ${top}` : undefined}>
+      {label}
+      <span className="inline-flex h-6 min-w-6 items-center justify-center rounded border border-white/20 bg-white/5 px-1 text-text">
+        {count}
+      </span>
+    </span>
+  );
+}
+
+const CARD_SIZE = "w-[104px] min-h-[132px]";
+
+function HandCard({ card }: { card: WireCard }) {
+  return (
+    <div
+      className={`${CARD_SIZE} flex flex-none flex-col rounded-md border border-edge bg-panel p-1.5`}
+    >
+      <span className="text-[11px] font-semibold leading-tight">{card.name}</span>
+      {card.energy_type && (
+        <span
+          className="mt-auto size-2.5 rounded-full border border-black/35"
+          style={{ background: ENERGY_COLOR[card.energy_type] ?? "var(--color-dim)" }}
+        />
+      )}
+    </div>
   );
 }
 
@@ -332,17 +424,23 @@ export function Mon({
 }) {
   if (!mon) {
     return (
-      <div data-testid="mon-card" className={`${MON_BOX} border-edge text-dim`}>
+      <div
+        data-testid="mon-card"
+        className={`${CARD_SIZE} flex flex-col items-center justify-center rounded-md border border-dashed border-edge text-[12px] text-dim`}
+      >
         {active ? "no Active" : ""}
       </div>
     );
   }
+  const pct = mon.hp > 0 ? Math.max(0, Math.min(100, (mon.remaining_hp / mon.hp) * 100)) : 0;
   return (
     <div
       data-testid="mon-card"
-      className={`${MON_BOX} ${active ? "border-accent" : "border-edge"}`}
+      className={`${CARD_SIZE} flex flex-none flex-col gap-1 rounded-md border bg-panel p-1.5 text-center ${
+        active ? "border-accent shadow-[0_0_0_1px_var(--color-accent)]" : "border-edge"
+      }`}
     >
-      <div className="flex max-w-full items-center gap-1 font-semibold">
+      <div className="flex max-w-full items-center gap-1 text-[11px] font-semibold leading-tight">
         {copy !== undefined && (
           <span
             data-testid="copy-badge"
@@ -353,16 +451,19 @@ export function Mon({
         )}
         <span className="overflow-hidden text-ellipsis whitespace-nowrap">{mon.name}</span>
       </div>
-      <div className="text-[12px] text-dim">
-        {mon.remaining_hp}/{mon.hp} HP
+      <div className="h-1 overflow-hidden rounded-full bg-white/10">
+        <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
       </div>
-      {/* Reserve the attachment row's height so a Pokémon with no
-          attachments is the same shape as one carrying Energy. */}
-      <div className="flex min-h-[14px] items-center">
+      <div className="text-[11px] text-dim">
+        {mon.remaining_hp}/{mon.hp}
+      </div>
+      {/* Reserve the attachment row so a Pokémon carrying nothing keeps
+          the same shape as one holding Energy. */}
+      <div className="flex min-h-[14px] items-center justify-center">
         <Attachments cards={mon.attached} />
       </div>
       {mon.conditions.length > 0 && (
-        <div className="text-[12px] text-warn">{mon.conditions.join(", ")}</div>
+        <div className="text-[10px] text-warn">{mon.conditions.join(", ")}</div>
       )}
     </div>
   );
@@ -450,8 +551,3 @@ function SectionHeading({
     </h2>
   );
 }
-
-// Every Pokémon renders in a card of this fixed shape, so a full Bench
-// reads as an even row whatever each Pokémon is carrying.
-const MON_BOX =
-  "box-border flex w-[132px] min-h-[96px] flex-col items-center justify-center gap-1 rounded-md border p-2 text-center";

@@ -174,8 +174,8 @@ describe("<Mon> card shape", () => {
     );
     const [a, b, c] = screen.getAllByTestId("mon-card");
     for (const el of [a, b, c]) {
-      expect(el.className).toContain("w-[132px]");
-      expect(el.className).toContain("min-h-[96px]");
+      expect(el.className).toContain("w-[104px]");
+      expect(el.className).toContain("min-h-[132px]");
     }
   });
 
