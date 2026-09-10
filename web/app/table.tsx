@@ -314,22 +314,41 @@ function Side({ side, label, mine = false }: { side: WireSide; label: string; mi
   );
 }
 
-function Mon({ mon, active = false }: { mon: WirePokemon | null; active?: boolean }) {
+export function Mon({ mon, active = false }: { mon: WirePokemon | null; active?: boolean }) {
   if (!mon) {
-    return <div style={{ ...monBox, color: "var(--dim)" }}>{active ? "no Active" : ""}</div>;
+    return (
+      <div data-testid="mon-card" style={{ ...monBox, color: "var(--dim)" }}>
+        {active ? "no Active" : ""}
+      </div>
+    );
   }
   return (
     <div
+      data-testid="mon-card"
       style={{
         ...monBox,
         borderColor: active ? "var(--accent)" : "var(--edge)",
       }}
     >
-      <div style={{ fontWeight: 600 }}>{mon.name}</div>
+      <div
+        style={{
+          fontWeight: 600,
+          maxWidth: "100%",
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {mon.name}
+      </div>
       <div style={{ color: "var(--dim)", fontSize: 12 }}>
         {mon.remaining_hp}/{mon.hp} HP
       </div>
-      <Attachments cards={mon.attached} />
+      {/* Reserve the attachment row's height so a Pokémon with no
+          attachments is the same shape as one carrying Energy. */}
+      <div style={{ minHeight: 14, display: "flex", alignItems: "center" }}>
+        <Attachments cards={mon.attached} />
+      </div>
       {mon.conditions.length > 0 && (
         <div style={{ color: "var(--warn)", fontSize: 12 }}>{mon.conditions.join(", ")}</div>
       )}
@@ -458,9 +477,19 @@ const h2: React.CSSProperties = {
   margin: "0 0 6px",
 };
 
+// Every Pokémon renders in a card of this fixed shape, so a full Bench
+// reads as an even row whatever each Pokémon is carrying.
 const monBox: React.CSSProperties = {
-  minWidth: 120,
+  width: 132,
+  minHeight: 96,
+  boxSizing: "border-box",
   padding: 8,
   border: "1px solid var(--edge)",
   borderRadius: 6,
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 4,
+  textAlign: "center",
 };

@@ -40,7 +40,8 @@ vi.mock("./wasm", () => ({
   })),
 }));
 
-import Table from "./table";
+import Table, { Mon } from "./table";
+import type { WirePokemon } from "./view";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -136,5 +137,43 @@ describe("<Table> recipe wiring", () => {
     await waitFor(() => expect(pushSpy).toHaveBeenCalledTimes(1));
     expect(gameStub.apply).toHaveBeenCalledWith(0);
     pushSpy.mockRestore();
+  });
+});
+
+describe("<Mon> card shape", () => {
+  const bare: WirePokemon = {
+    name: "Pikachu",
+    hp: 60,
+    damage: 0,
+    remaining_hp: 60,
+    conditions: [],
+    attached: [],
+  };
+  const loaded: WirePokemon = {
+    name: "A Very Long Pokemon Name ex",
+    hp: 340,
+    damage: 120,
+    remaining_hp: 220,
+    conditions: ["Asleep", "Poisoned"],
+    attached: [
+      { id: 1, name: "Fire Energy", def: 0, energy_type: "Fire" },
+      { id: 2, name: "Water Energy", def: 0, energy_type: "Water" },
+      { id: 3, name: "Rescue Board", def: 0, energy_type: null },
+    ],
+  };
+
+  it("renders every Pokemon at the same width whatever it carries", () => {
+    render(
+      <>
+        <Mon mon={bare} />
+        <Mon mon={loaded} />
+        <Mon mon={null} />
+      </>,
+    );
+    const [a, b, c] = screen.getAllByTestId("mon-card");
+    expect(b.style.width).toBe(a.style.width);
+    expect(c.style.width).toBe(a.style.width);
+    expect(a.style.width).not.toBe("");
+    expect(b.style.minHeight).toBe(a.style.minHeight);
   });
 });
