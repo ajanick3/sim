@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import type { WireActionMeta, WireCard, WirePokemon } from "../view";
-import { asDecision, asPrompt, damageSpot, monHooks, splitHandRows } from "./shared";
+import { asDecision, asPrompt, coinFlipsIn, damageSpot, monHooks, splitHandRows } from "./shared";
 
 const card = (category: string, id = 0): WireCard => ({
   id,
@@ -155,5 +155,23 @@ describe("monHooks", () => {
     const onPokemon = vi.fn();
     monHooks(mon, meta(5), null, new Map(), onPokemon).onSelect?.();
     expect(onPokemon).toHaveBeenCalledWith(5);
+  });
+});
+
+describe("coinFlipsIn", () => {
+  it("pulls each flip result from a run of log lines", () => {
+    expect(
+      coinFlipsIn([
+        "One benches Budew.",
+        "One flips heads.",
+        "One flips tails.",
+        "Two flips heads.",
+        "One draws 2.",
+      ]),
+    ).toEqual(["heads", "tails", "heads"]);
+  });
+
+  it("is empty when nothing flipped", () => {
+    expect(coinFlipsIn(["One wins the coin flip.", "One draws 7."])).toEqual([]);
   });
 });

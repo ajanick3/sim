@@ -13,6 +13,7 @@ import { ActionPanel } from "./ActionPanel";
 import { movesForSelection, targetsForHandCard, type Selection } from "../session";
 import type { WireActionMeta, WireCard, WireView } from "../view";
 import { CardFace } from "./CardFace";
+import { CoinFlip } from "./CoinFlip";
 import { DecisionBar } from "./DecisionBar";
 import { HandStrip } from "./HandStrip";
 import { LiveMon } from "./LiveMon";
@@ -20,7 +21,8 @@ import { PromptBar } from "./PromptBar";
 import { SideRail } from "./SideRail";
 import { SideRow } from "./SideRow";
 import { StadiumSlot } from "./StadiumSlot";
-import { asDecision, asPrompt, monHooks, SEAT_NAME, type Art } from "./shared";
+import { asDecision, asPrompt, coinFlipsIn, monHooks, SEAT_NAME, type Art } from "./shared";
+import type { CoinResult } from "./shared";
 
 export function LiveBoard({
   view,
@@ -133,6 +135,23 @@ export function LiveBoard({
   // A selected card with one unambiguous move shows a ✅ over itself.
   const confirmIndex =
     selection?.kind === "hand" && only && only.length === 1 ? only[0] : undefined;
+
+  // Coin flips: the engine logs each one. Watch the log grow and play a
+  // spin for whatever landed since last render. `null` until first seen,
+  // so a replayed game's existing flips are not re-animated.
+  const [flipRun, setFlipRun] = useState<{ id: number; results: CoinResult[] } | null>(null);
+  const seenLogLen = useRef<number | null>(null);
+  useEffect(() => {
+    if (seenLogLen.current === null || log.length < seenLogLen.current) {
+      seenLogLen.current = log.length;
+      return;
+    }
+    if (log.length > seenLogLen.current) {
+      const results = coinFlipsIn(log.slice(seenLogLen.current));
+      seenLogLen.current = log.length;
+      if (results.length > 0) setFlipRun({ id: Date.now(), results });
+    }
+  }, [log]);
 
   // Click anywhere that isn't part of the selection flow to cancel it.
   useEffect(() => {
@@ -475,6 +494,10 @@ export function LiveBoard({
           </div>
         )}
       </div>
+
+      {flipRun && (
+        <CoinFlip key={flipRun.id} results={flipRun.results} onDone={() => setFlipRun(null)} />
+      )}
 
       {drag && (
         <div
