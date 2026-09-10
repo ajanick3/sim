@@ -994,7 +994,8 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                         peek: None,
                     },
                     Slot {
-                        filter: CardFilter::BasicEnergy,
+                        // "an Energy card" — Basic or Special alike.
+                        filter: CardFilter::AnyEnergy,
                         to: Destination::Zone(Zone::Hand),
                         limit: 1,
                         excludes_type_of_previous: false,
