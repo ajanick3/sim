@@ -532,7 +532,7 @@ function SideRow({
           )}
         </div>
       </div>
-      <DeckPile deck={side.library_count} discard={side.discard} art={art} />
+      <DeckPile deck={side.library_count} discard={side.discard} art={art} mine={mine} />
     </div>
   );
 }
@@ -555,7 +555,17 @@ function PrizeStack({ count }: { count: number }) {
   );
 }
 
-function DeckPile({ deck, discard, art }: { deck: number; discard: WireCard[]; art: Art }) {
+function DeckPile({
+  deck,
+  discard,
+  art,
+  mine = false,
+}: {
+  deck: number;
+  discard: WireCard[];
+  art: Art;
+  mine?: boolean;
+}) {
   const top = discard.at(-1);
   return (
     <div className="flex flex-col items-center gap-1">
@@ -564,7 +574,10 @@ function DeckPile({ deck, discard, art }: { deck: number; discard: WireCard[]; a
           {deck}
         </span>
       </div>
-      <div className="relative h-[64px] w-[46px] overflow-hidden rounded border border-white/15 bg-panel">
+      <div
+        data-toss-target={mine ? "discard" : undefined}
+        className="relative h-[64px] w-[46px] overflow-hidden rounded border border-white/15 bg-panel"
+      >
         {top && art(top.print_id) ? (
           <CardArt src={art(top.print_id)!} alt={top.name} />
         ) : (
@@ -793,10 +806,36 @@ function HandStrip({
   const reduce =
     typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const onCardClick = (c: WireCard, selected: boolean) => {
+  const onCardClick = (c: WireCard, selected: boolean, el: HTMLElement) => {
     if (selected && confirmIndex !== undefined) {
-      if (reduce) onConfirm(confirmIndex);
-      else setTossing(c.id);
+      if (reduce) {
+        onConfirm(confirmIndex);
+        return;
+      }
+      // Fly the card to where the move actually sends it — the target
+      // Pokémon, the empty slot it fills, or the discard pile.
+      const m = meta[confirmIndex];
+      const sel =
+        m?.target != null
+          ? `[data-drop-id="mon:${m.target}"]`
+          : m?.kind === "PlaceActive"
+            ? '[data-drop-id="slot:active"]'
+            : m?.kind === "PlayBasic" || m?.kind === "PlaceOnBench"
+              ? '[data-drop-id="slot:bench"]'
+              : '[data-toss-target="discard"]';
+      const dest = document.querySelector(sel)?.getBoundingClientRect();
+      if (dest) {
+        const from = el.getBoundingClientRect();
+        el.style.setProperty(
+          "--toss-x",
+          `${dest.left + dest.width / 2 - (from.left + from.width / 2)}px`,
+        );
+        el.style.setProperty(
+          "--toss-y",
+          `${dest.top + dest.height / 2 - (from.top + from.height / 2)}px`,
+        );
+      }
+      setTossing(c.id);
       return;
     }
     onHand(c.id);
@@ -824,12 +863,12 @@ function HandStrip({
                     data-keep-selection
                     disabled={!playable}
                     onPointerDown={playable ? (e) => onCardPointerDown(c.id, e) : undefined}
-                    onClick={() => {
+                    onClick={(e) => {
                       if (suppressClickRef.current) {
                         suppressClickRef.current = false;
                         return;
                       }
-                      onCardClick(c, selected);
+                      onCardClick(c, selected, e.currentTarget);
                     }}
                     onAnimationEnd={(e) => {
                       if (

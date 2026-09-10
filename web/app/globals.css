@@ -114,8 +114,8 @@ button:disabled {
     scale: 1.28;
   }
   100% {
-    translate: 34vw 26vh;
-    scale: 0.04;
+    translate: var(--toss-x, 34vw) var(--toss-y, 26vh);
+    scale: 0.06;
     opacity: 0;
   }
 }
