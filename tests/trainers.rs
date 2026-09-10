@@ -729,9 +729,10 @@ fn enhanced_hammer_not_offered_with_no_special_energy_on_the_opponents_board() {
     let player = state.current;
 
     let card = ensure_in_hand2(&mut state, player, enhanced_hammer);
-    apply(&mut state, Action::PlayTrainer { card }).unwrap();
-
-    assert_eq!(state.phase, Phase::Main, "no Special Energy anywhere on the opponent's board");
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "no Special Energy on the opponent's board: nothing to discard, so not playable"
+    );
 }
 
 #[test]

@@ -1625,6 +1625,17 @@ impl GameState {
             .any(|p| self.pokemon(*p).attached.iter().any(|c| self.def_of(*c).is_energy()))
     }
 
+    /// Whether any Pokémon this player has in play carries a Special
+    /// Energy — one whose card carries an effect.
+    pub fn has_special_energy_in_play(&self, player: PlayerId) -> bool {
+        self.player(player).in_play().iter().any(|p| {
+            self.pokemon(*p)
+                .attached
+                .iter()
+                .any(|c| self.def_of(*c).as_energy().is_some_and(|e| e.effect.is_some()))
+        })
+    }
+
     /// Whether `Festival Grounds` protects this Pokémon right now: the
     /// Stadium is in play, and it carries any Energy.
     pub fn immune_under_festival_grounds(&self, id: PokemonId) -> bool {
