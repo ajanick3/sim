@@ -1224,7 +1224,26 @@ impl GameState {
         if no_cost_energy {
             return 0;
         }
-        let printed = self.pokemon_def(id).retreat_cost as u32;
+        // `Gravity Gemstone`: while a carrier of it is Active on either
+        // side, both Actives retreat for more.
+        let id_is_active = [PlayerId::One, PlayerId::Two]
+            .into_iter()
+            .any(|p| self.player(p).active == Some(id));
+        let gemstone_surcharge: u32 = if self.tools_disabled() || !id_is_active {
+            0
+        } else {
+            [PlayerId::One, PlayerId::Two]
+                .into_iter()
+                .filter_map(|p| self.player(p).active)
+                .flat_map(|active| self.pokemon(active).attached.iter())
+                .filter_map(|c| self.def_of(*c).as_trainer())
+                .map(|t| match t.effect {
+                    crate::card::TrainerEffect::RaisesBothActiveRetreatWhileCarrierActive(a) => a,
+                    _ => 0,
+                })
+                .sum()
+        };
+        let printed = self.pokemon_def(id).retreat_cost as u32 + gemstone_surcharge;
         let reduction: u32 = if self.tools_disabled() {
             0
         } else {

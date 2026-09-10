@@ -1655,3 +1655,98 @@ fn the_name_prefix_cards_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: a coin-flipped search and retreat modifiers ---
+
+#[test]
+fn poke_ball_searches_for_a_pokemon_on_heads() {
+    use sim::rng::ScriptedRng;
+    let mut set = build();
+    let poke_ball = plain_item(
+        &mut set.db,
+        "test-poke-ball",
+        "Poké Ball",
+        TrainerEffect::CoinFlipThen(Box::new(TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::AnyPokemon,
+                to: Destination::Zone(Zone::Hand),
+                limit: 1,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        })),
+    );
+    let decklist = deck(&set, poke_ball);
+    let mut state = GameState::new(
+        set.db.clone(),
+        [decklist.clone(), decklist],
+        Box::new(ScriptedRng::new(vec![1u32])), // heads
+    );
+    for _ in 0..2 {
+        while state.phase != Phase::Main && !state.is_over() {
+            let a = legal_actions(&state)[0];
+            apply(&mut state, a).unwrap();
+        }
+        if state.turn_number > 1 {
+            break;
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
+    }
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, poke_ball);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let take = legal_actions(&state)
+        .into_iter()
+        .find_map(|a| match a {
+            Action::TakeCard { card } => Some(card),
+            _ => None,
+        })
+        .expect("heads opens the search");
+    apply(&mut state, Action::TakeCard { card: take }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), before - 1 + 1);
+}
+
+#[test]
+fn gravity_gemstone_raises_both_actives_retreat_cost() {
+    let mut set = build();
+    let gemstone = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-gravity-gemstone",
+        name: "Gravity Gemstone",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::RaisesBothActiveRetreatWhileCarrierActive(1),
+    }));
+    let mut state = game(&set, gemstone, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let my_active = state.player(player).active.unwrap();
+    let their_active = state.player(opponent).active.unwrap();
+    let my_before = state.effective_retreat_cost(my_active);
+    let their_before = state.effective_retreat_cost(their_active);
+
+    let tool = deal_new_card(&mut state, player, gemstone);
+    state.pokemon[my_active.index()].attached.push(tool);
+
+    assert_eq!(state.effective_retreat_cost(my_active), my_before + 1);
+    assert_eq!(state.effective_retreat_cost(their_active), their_before + 1);
+}
+
+#[test]
+fn the_coin_and_retreat_cards_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Poké Ball", "Rescue Board", "Gravity Gemstone"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}

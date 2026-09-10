@@ -2895,6 +2895,12 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::CoinFlipThen(inner) => {
+            if state.rng.flip() {
+                resolve_trainer(state, player, card, *inner);
+            }
+        }
+
         TrainerEffect::DrawThenBonusIfOpponentPrizesAtMost {
             base,
             bonus,
@@ -3189,6 +3195,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::DrawsWhenDefenderIsHit(_)
         | TrainerEffect::ReducesDamageFromType { .. }
         | TrainerEffect::IncreasesHpForNamePrefix { .. }
+        | TrainerEffect::RaisesBothActiveRetreatWhileCarrierActive(_)
         | TrainerEffect::BonusDamageVsActiveEx(_)
         | TrainerEffect::ReducesDamageFromAbilityHolders(_)
         | TrainerEffect::MovesEnergyFromAttackerToTheirBench

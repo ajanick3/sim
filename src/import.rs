@@ -382,6 +382,25 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Maximum Belt" => (free, TrainerEffect::BonusDamageVsActiveEx(50)),
         "Sacred Charm" => (free, TrainerEffect::ReducesDamageFromAbilityHolders(30)),
         "Lively Stadium" => (free, TrainerEffect::StadiumBoostsBasicHp(30)),
+        "Rescue Board" => (free, TrainerEffect::ReducesRetreatCost(1)),
+        "Gravity Gemstone" => (
+            free,
+            TrainerEffect::RaisesBothActiveRetreatWhileCarrierActive(1),
+        ),
+        "Poké Ball" => (
+            free,
+            TrainerEffect::CoinFlipThen(Box::new(TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::AnyPokemon,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            })),
+        ),
         "Team Rocket's Proton" => (
             free,
             TrainerEffect::Decide {
