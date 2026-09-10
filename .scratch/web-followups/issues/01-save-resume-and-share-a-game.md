@@ -19,21 +19,38 @@ recipe and applies each index in order.
 - **Export / resume, no server.** The page can hand the player the recipe
   (a link with the recipe encoded, or a downloaded file) and rebuild the
   game from one it is given. Pure client, no new infrastructure.
-- **Shared, server-held.** A small service stores a recipe under an
-  unguessable id and appends an action index as each move is applied. Any
-  client that opens the id replays to the current point. Last-writer-wins
-  is acceptable; live turn-by-turn sync is out of scope (see spec).
+- **Shared, server-held.** A store keeps a recipe under an unguessable id
+  and appends an action index as each move is applied. Any client that
+  opens the id replays to the current point. Last-writer-wins is
+  acceptable; live turn-by-turn sync is out of scope (see spec).
+
+## Storage: Neon serverless Postgres
+
+The operator supplied Neon's "Add Postgres to a Next.js app on Vercel"
+guide. The direction:
+
+- Connect a Neon project through the Vercel dashboard; `vercel env pull`
+  brings `DATABASE_URL` into `.env.development.local`.
+- `npm install @neondatabase/serverless`; call `neon(process.env.DATABASE_URL)`
+  from a Next.js Server Action (`'use server'`).
+- Schema, created in the Neon SQL editor:
+  - `games (id text primary key, recipe jsonb not null, engine_version
+    text not null, created_at timestamptz default now())`
+  - `moves (game_id text references games(id), seq int, action_index int,
+    primary key (game_id, seq))`
+- A Server Action `createGame(recipe)` inserts the row and returns the id;
+  `appendMove(id, seq, index)` inserts one `moves` row; a loader reads the
+  recipe and every `moves` row ordered by `seq`.
 
 ## Open questions for triage
 
-- Where the service runs. Vercel already hosts `web/` — a serverless
-  route plus a KV store is the least new infrastructure. Confirm that is
-  the direction before building.
-- Whether the recipe is validated server-side (replay it through
-  `sim-wasm` on write) or trusted from the client and only replayed on
-  read.
-- How a resumed game handles an engine change that alters a replay — pin
-  the engine version into the recipe, or accept that old links may break.
+- Whether `appendMove` validates server-side (replay through `sim-wasm` in
+  the action) or trusts the client and only the reader replays.
+- How a resumed game handles an engine change that alters a replay — the
+  recipe carries `engine_version`; decide whether a mismatch warns, blocks,
+  or is ignored.
+- Whether `moves.seq` gaps or races need handling beyond the primary-key
+  conflict (last-writer-wins is acceptable per the spec).
 
 ## Acceptance criteria
 
@@ -41,8 +58,9 @@ recipe and applies each index in order.
       indices, matching the game those moves produced live.
 - [ ] The page exports the current game as a recipe and resumes one from a
       recipe it is given, with no server.
-- [ ] A server stores a recipe by id, accepts appended action indices, and
-      serves the recipe to any client that has the id.
+- [ ] A Neon Postgres store, written through Next.js Server Actions, keeps
+      a recipe by id, accepts appended action indices, and serves both to
+      any client that has the id.
 - [ ] Two browsers opening the same id see the same board, one client's
       moves visible to the other on reload.
 - [ ] The recipe records which engine version produced it.

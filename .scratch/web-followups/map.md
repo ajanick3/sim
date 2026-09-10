@@ -24,4 +24,9 @@ fast (`selfplay` runs thousands per second).
 
 ## Decisions so far
 
-_none yet_
+Storage direction set 2026-09-10: Neon serverless Postgres, written through
+Next.js Server Actions, per the operator-supplied "Add Postgres to a
+Next.js app on Vercel" guide. `DATABASE_URL` comes from `vercel env pull`.
+Tables live in tickets 01 (`games`, `moves`) and 02 (`bug_reports`).
+Not yet built — the Neon project and Vercel link are provisioning steps
+the operator runs.
