@@ -1287,7 +1287,7 @@ fn searches_energy_attaches_to_benched_of_type_then_damages_it() {
             20,
         ),
     };
-    let (mut state, carrier_def) = game(ability, 3);
+    let (mut state, _carrier_def) = game(ability, 3);
     let player = state.current;
     let active = state.player(player).active.unwrap();
 

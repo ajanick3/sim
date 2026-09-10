@@ -4,6 +4,9 @@
 name = "sim-wasm"
 version = "0.1.0"
 edition = "2024"
+description = "The browser boundary for the sim engine: a WebAssembly handle over one game."
+repository = "https://github.com/ajanick3/sim"
+publish = false
 
 [lib]
 crate-type = ["cdylib", "rlib"]

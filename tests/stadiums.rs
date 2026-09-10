@@ -3,9 +3,8 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Ability, AbilityEffect, Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon,
-    PromoteFollowUp, Requirement, Slot, Stage, TargetFilter, Then, Trainer, TrainerEffect,
-    TrainerKind, TurnBonusTarget, Type, Zone,
+    Ability, AbilityEffect, Attack, CardDb, CardDef, Energy, Pokemon, Stage, Trainer, TrainerEffect,
+    TrainerKind, Type,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId};
@@ -181,19 +180,6 @@ fn offered(state: &GameState) -> Vec<CardId> {
             _ => None,
         })
         .collect()
-}
-
-/// Put a copy of `def` into the discard pile, taking it from the library.
-fn deal_to_discard(state: &mut GameState, player: PlayerId, def: CardDefId) -> CardId {
-    let card = *state
-        .player(player)
-        .library
-        .iter()
-        .find(|c| state.cards[c.index()].def == def)
-        .expect("the deck holds this card");
-    state.players[player.index()].library.retain(|c| *c != card);
-    state.players[player.index()].discard.push(card);
-    card
 }
 
 

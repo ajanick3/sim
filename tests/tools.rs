@@ -3,12 +3,10 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, PromoteFollowUp,
-    Requirement, Slot, Stage, TargetFilter, Trainer, TrainerEffect, TrainerKind, TurnBonusTarget,
-    Type, Zone,
+    Attack, CardDb, CardDef, Energy, Pokemon, Stage, Trainer, TrainerEffect, TrainerKind, Type,
 };
 use sim::engine::apply;
-use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
+use sim::ids::{CardDefId, CardId, PlayerId};
 use sim::rng::SeededRng;
 use sim::state::GameState;
 use sim::state::Phase;
@@ -170,17 +168,6 @@ fn deal_new_card(state: &mut GameState, player: PlayerId, def: CardDefId) -> Car
     let card = CardId(state.cards.len() as u32);
     state.cards.push(sim::state::Card { def, owner: player });
     card
-}
-
-/// Every card the current `Deciding` phase offers.
-fn offered(state: &GameState) -> Vec<CardId> {
-    legal_actions(state)
-        .into_iter()
-        .filter_map(|a| match a {
-            Action::TakeCard { card } => Some(card),
-            _ => None,
-        })
-        .collect()
 }
 
 /// Put a copy of `def` into the discard pile, taking it from the library.
