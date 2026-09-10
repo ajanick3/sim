@@ -182,7 +182,9 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             state
                 .log
                 .push(format!("{player:?} attaches {energy} to {name}."));
-            if state.immune_under_festival_grounds(target) {
+            if state.immune_under_festival_grounds(target)
+                || state.carries_special_condition_immunity(target)
+            {
                 state.clear_conditions(target);
             }
             if let Some(crate::card::EnergyEffect::DrawCardsOnAttachFromHand(count)) =

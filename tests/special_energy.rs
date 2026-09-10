@@ -726,3 +726,57 @@ fn prism_energy_is_admitted_from_the_artifact() {
         "at least one Prism Energy print should play"
     );
 }
+
+// --- Beyond the field: type-plus-rider Special Energy ---
+
+#[test]
+fn magnetic_metal_energy_removes_the_retreat_cost() {
+    let (mut state, mon) = one_pokemon_game(100, Type::Metal);
+    assert_eq!(state.effective_retreat_cost(mon), 1, "the printed cost");
+    let def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-magnetic-metal",
+        name: "Magnetic Metal Energy",
+        kind: Type::Metal,
+        effect: Some(EnergyEffect::CarrierHasNoRetreatCost),
+    }));
+    attach(&mut state, mon, def);
+    assert_eq!(state.effective_retreat_cost(mon), 0);
+}
+
+#[test]
+fn bubbly_water_energy_makes_the_carrier_immune_to_conditions() {
+    let mut state = game_through_setup_of_type(3, Type::Water);
+    let player = state.current;
+    let mon = state.player(player).active.unwrap();
+    state.inflict(mon, sim::card::Condition::Poisoned);
+    assert!(!state.pokemon(mon).conditions.is_empty(), "Poisoned lands first");
+
+    let def = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-bubbly-water",
+        name: "Bubbly Water Energy",
+        kind: Type::Water,
+        effect: Some(EnergyEffect::CarrierImmuneToSpecialConditions),
+    }));
+    let card = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def, owner: player });
+    state.players[player.index()].hand.push(card);
+    apply(&mut state, Action::AttachEnergy { card, target: mon }).unwrap();
+    assert!(state.pokemon(mon).conditions.is_empty(), "shed on attach");
+
+    state.inflict(mon, sim::card::Condition::Asleep);
+    assert!(state.pokemon(mon).conditions.is_empty(), "and none can land while attached");
+}
+
+#[test]
+fn the_type_plus_rider_special_energy_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Rocky Fighting Energy", "Magnetic Metal Energy", "Bubbly Water Energy"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
