@@ -1,7 +1,7 @@
 "use client";
 
-import { ENERGY_COLOR } from "./energy";
 import type { WirePokemon } from "../view";
+import { EnergyIcon, energyKind } from "./EnergyIcon";
 import { CARD_SIZE } from "./sizes";
 import { damageSpot, type Art } from "./shared";
 
@@ -109,19 +109,17 @@ export function LiveMon({
         </span>
       )}
 
-      {/* Energy row, bottom-centre — a glossy bead per attached Energy,
-          in its printed type colour. */}
+      {/* Energy row, bottom-centre — one type icon per attached Energy. */}
       <span className="absolute inset-x-0 bottom-0.5 z-10 flex justify-center gap-[3px]">
         {energies.map((c) => {
-          const colour = ENERGY_COLOR[c.energy_type as string] ?? "var(--color-dim)";
-          return (
+          const kind = energyKind(c.energy_type);
+          return kind ? (
+            <EnergyIcon key={c.id} kind={kind} size={11} decorative />
+          ) : (
             <span
               key={c.id}
               title={`${c.energy_type} Energy`}
-              className="size-2 rounded-full border border-black/50 shadow-[0_1px_1.5px_rgba(0,0,0,0.55)]"
-              style={{
-                background: `radial-gradient(circle at 32% 28%, rgba(255,255,255,0.75), ${colour} 62%)`,
-              }}
+              className="size-2 rounded-full border border-black/50 bg-dim"
             />
           );
         })}
