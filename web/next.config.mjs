@@ -7,7 +7,12 @@ const nextConfig = {
   // A config redirect forwards the `?g=` recipe; a redirecting page would
   // drop it, so Back / Forward could not step through a shared game.
   async redirects() {
-    return [{ source: "/live", destination: "/", permanent: true }];
+    return [
+      { source: "/live", destination: "/", permanent: true },
+      // Storybook is built into `public/storybook` by `prebuild`. Its
+      // index uses relative asset paths, so land on the file itself.
+      { source: "/storybook", destination: "/storybook/index.html", permanent: false },
+    ];
   },
 };
 
