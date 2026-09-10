@@ -1283,6 +1283,27 @@ pub struct Ability {
     pub effect: AbilityEffect,
 }
 
+/// Whether an Ability's "once during your turn" limit covers every copy
+/// the player controls at once, rather than one use per Pokémon. True
+/// only for the prints that spell out "You can't use more than 1 [Name]
+/// Ability each turn" (or a wording that means the same). Matched by
+/// name, the same real-world-knowledge discipline `known_ability` and
+/// `known_energy` hold; each name is unique to its print. `Last-Ditch
+/// Catch` prints the clause as "more than 1 Ability that has
+/// 'Last-Ditch' in its name" — no other "Last-Ditch" Ability is in the
+/// pool, so its own name is a faithful key. See ADR 0097.
+pub fn ability_is_scoped_to_its_name(name: &str) -> bool {
+    matches!(
+        name,
+        "Fan Call"
+            | "Flip the Script"
+            | "Last-Ditch Catch"
+            | "Lunar Cycle"
+            | "Run Errand"
+            | "Subjugating Chains"
+    )
+}
+
 /// What an Ability actually does, once the engine can run it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AbilityEffect {

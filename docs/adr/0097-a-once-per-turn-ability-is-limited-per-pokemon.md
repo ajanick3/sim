@@ -9,18 +9,21 @@ first `Drakloak` to use `Recon Directive` spent the limit for every other
 blocked ordinary play. The rulebook makes "Once during your turn" a
 per-Pokémon limit: each `Drakloak` gets its own use. A separate clause,
 "You can't use more than 1 [Name] Ability each turn", is what scopes a limit
-to the name across every copy; four cards in the pool print it —
+to the name across every copy; six cards in the pool print it —
+`Fan Rotom`'s `Fan Call`, `Fezandipiti ex`'s `Flip the Script`,
 `Lunatone`'s `Lunar Cycle`, `Mega Kangaskhan ex`'s `Run Errand`,
-`Fezandipiti ex`'s `Flip the Script`, and `Pecharunt ex`'s
-`Subjugating Chains`.
+`Meowth ex`'s `Last-Ditch Catch`, and `Pecharunt ex`'s
+`Subjugating Chains`. `Last-Ditch Catch` prints it as "more than 1 Ability
+that has 'Last-Ditch' in its name"; no other such Ability is in the pool,
+so its own name keys it faithfully.
 
 ## Decision
 
 `Limit::AbilityUsed` carries the `PokemonId` as well: `(PlayerId, PokemonId,
 &'static str)`. A new variant `Limit::AbilityUsedByName(PlayerId,
-&'static str)` keeps the old, name-wide key for the four cards whose text
+&'static str)` keeps the old, name-wide key for the six cards whose text
 asks for it. `Limit::for_ability_use` picks the variant, reading
-`card::ability_is_scoped_to_its_name`, a name match over those four — the
+`card::ability_is_scoped_to_its_name`, a name match over those six — the
 same real-world-knowledge-by-name discipline `known_ability` and
 `known_energy` already use. Every `spend` and `is_spent` site goes through
 the helper.

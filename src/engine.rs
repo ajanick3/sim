@@ -1197,7 +1197,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 .expect("legal_actions offers UseAbility only for a Pokemon carrying one");
             match ability.effect {
                 crate::card::AbilityEffect::OncePerTurnWhileActiveMayDrawCards(count) => {
-                    state.spend(Limit::AbilityUsed(player, ability.name));
+                    state.spend(Limit::for_ability_use(player, pokemon, ability.name));
                     for _ in 0..count {
                         state.draw(player);
                     }
@@ -1205,7 +1205,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     state.log.push(format!("{player:?} uses {name}'s {}.", ability.name));
                 }
                 crate::card::AbilityEffect::OncePerTurnIfKnockedOutLastTurnMayDrawCards(count) => {
-                    state.spend(Limit::AbilityUsed(player, ability.name));
+                    state.spend(Limit::for_ability_use(player, pokemon, ability.name));
                     for _ in 0..count {
                         state.draw(player);
                     }
@@ -1218,7 +1218,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     state.phase = Phase::DecidingToUseTealDance { player, pokemon };
                 }
                 crate::card::AbilityEffect::OncePerTurnMayDrawThenShuffleSelfIntoDeck(count) => {
-                    state.spend(Limit::AbilityUsed(player, ability.name));
+                    state.spend(Limit::for_ability_use(player, pokemon, ability.name));
                     let mut drew_any = false;
                     for _ in 0..count {
                         if state.draw(player) {
@@ -1250,7 +1250,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     }
                 }
                 crate::card::AbilityEffect::OncePerTurnWhileActiveMayShuffleSelfIntoDeck => {
-                    state.spend(Limit::AbilityUsed(player, ability.name));
+                    state.spend(Limit::for_ability_use(player, pokemon, ability.name));
                     let has_bench = !state.player(player).bench.is_empty();
                     if has_bench {
                         let name = state.pokemon_def(pokemon).name;
@@ -1299,7 +1299,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     // Spent here, unlike the choices above: the card's own
                     // text makes the discard the cost of using this Ability
                     // at all, not an optional follow-up once it is open.
-                    state.spend(Limit::AbilityUsed(player, ability.name));
+                    state.spend(Limit::for_ability_use(player, pokemon, ability.name));
                     state.phase = Phase::DiscardingHandCardThenDrawing { player, pokemon, draw };
                 }
                 crate::card::AbilityEffect::OncePerTurnMayAttachBasicEnergyOfTypeFromHandToChosenThenHeal(
@@ -1389,7 +1389,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     // the rest on the bottom always happens once opened —
                     // there is no "decline" step left to spend it on.
                     let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-                    state.spend(Limit::AbilityUsed(player, ability.name));
+                    state.spend(Limit::for_ability_use(player, pokemon, ability.name));
                     state.phase = Phase::LookingAtTopCardsToTakeOne { player, pokemon, count };
                 }
                 crate::card::AbilityEffect::OncePerTurnMayLookAtTopCardsAttachFoundBasicEnergyOfType(
@@ -1399,7 +1399,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     // Spent immediately, the same reasoning as
                     // `OncePerTurnMayLookAtTopCardsTakeOneRestToBottom`.
                     let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-                    state.spend(Limit::AbilityUsed(player, ability.name));
+                    state.spend(Limit::for_ability_use(player, pokemon, ability.name));
                     state.phase =
                         Phase::ResolvingEnergyFoundInTopPeek { player, pokemon, kind, remaining: count };
                 }
@@ -1419,7 +1419,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             state.players[player.index()].library.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
@@ -1440,11 +1440,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::AcceptPsychicDraw => {
-            let (player, name, count) = match state.phase {
-                Phase::DecidingToUsePsychicDraw { player, name, count } => (player, name, count),
+            let (player, pokemon, name, count) = match state.phase {
+                Phase::DecidingToUsePsychicDraw { player, pokemon, name, count } => {
+                    (player, pokemon, name, count)
+                }
                 _ => return Err(IllegalAction),
             };
-            state.spend(Limit::AbilityUsed(player, name));
+            state.spend(Limit::for_ability_use(player, pokemon, name));
             for _ in 0..count {
                 state.draw(player);
             }
@@ -1462,11 +1464,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::AcceptJewelSeeker => {
-            let (player, name, count) = match state.phase {
-                Phase::DecidingToUseJewelSeeker { player, name, count } => (player, name, count),
+            let (player, pokemon, name, count) = match state.phase {
+                Phase::DecidingToUseJewelSeeker { player, pokemon, name, count } => {
+                    (player, pokemon, name, count)
+                }
                 _ => return Err(IllegalAction),
             };
-            state.spend(Limit::AbilityUsed(player, name));
+            state.spend(Limit::for_ability_use(player, pokemon, name));
             state.phase = Phase::SearchingLibraryForTrainerCards { player, remaining: count };
         }
 
@@ -1832,7 +1836,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             state.remove_from_hand(player, card);
             state.pokemon[pokemon.index()].attached.push(card);
             state.draw(player);
@@ -1859,7 +1863,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             let target_name = state.pokemon_def(target).name;
             if state.bench_damage_counters_blocked(player, target) {
                 // `Battle Cage`: the Ability is still used — Dusknoir
@@ -1899,7 +1903,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             state.players[player.index()].library.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
@@ -1925,7 +1929,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             state.players[player.index()].library.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
@@ -1962,7 +1966,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             state.players[player.index()].discard.retain(|c| *c != card);
             state.pokemon[target.index()].attached.push(card);
             let name = state.def_of(card).name();
@@ -1994,7 +1998,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             else {
                 unreachable!("this phase only ever opens for this effect");
             };
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             state.remove_from_hand(player, card);
             state.pokemon[target.index()].attached.push(card);
             state.pokemon[target.index()].damage = state.pokemon(target).damage.saturating_sub(heal);
@@ -2049,7 +2053,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             state.pokemon[source.index()].damage -= count;
             let source_name = state.pokemon_def(source).name;
             let target_name = state.pokemon_def(target).name;
@@ -2144,7 +2148,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             state.players[player.index()].library.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
@@ -2170,7 +2174,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             let (owner, card) = state.stadium.take().expect("legal_actions offers this only with a Stadium in play");
             state.players[owner.index()].discard.push(card);
             let name = state.def_of(card).name();
@@ -2196,7 +2200,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             let side = &mut state.players[player.index()];
             let old_active = side.active.expect("this trigger only fires with an Active in place");
             side.active = Some(pokemon);
@@ -2248,7 +2252,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             let energy = *state.players[player.index()]
                 .library
                 .iter()
@@ -2273,7 +2277,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
-            state.spend(Limit::AbilityUsed(player, ability.name));
+            state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             state.players[player.index()].library.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
@@ -2310,7 +2314,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 Phase::DecidingToUseSubjugatingChains { player, name, .. } => (player, name),
                 _ => return Err(IllegalAction),
             };
-            state.spend(Limit::AbilityUsed(player, name));
+            // Subjugating Chains is one of the four name-scoped Abilities.
+            state.spend(Limit::AbilityUsedByName(player, name));
             let side = &mut state.players[player.index()];
             let old_active = side.active.expect("this Ability needs an Active to swap with");
             side.active = Some(target);
@@ -4666,7 +4671,7 @@ fn trigger_last_ditch_catch(state: &mut GameState, player: PlayerId, pokemon: Po
     if !matches!(ability.effect, crate::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter) {
         return;
     }
-    if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
+    if state.is_spent(Limit::for_ability_use(player, pokemon, ability.name)) {
         return;
     }
     let any_supporter = state
@@ -4692,7 +4697,7 @@ fn trigger_snow_sink(state: &mut GameState, player: PlayerId, pokemon: PokemonId
     if !matches!(ability.effect, crate::card::AbilityEffect::WhenBenchedFromHandMayDiscardStadium) {
         return;
     }
-    if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
+    if state.is_spent(Limit::for_ability_use(player, pokemon, ability.name)) {
         return;
     }
     if state.stadium.is_some() {
@@ -4716,7 +4721,7 @@ fn trigger_rapid_vernier(state: &mut GameState, player: PlayerId, pokemon: Pokem
     ) {
         return;
     }
-    if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
+    if state.is_spent(Limit::for_ability_use(player, pokemon, ability.name)) {
         return;
     }
     state.phase = Phase::DecidingToSwitchInForRapidVernier { player, pokemon };
@@ -4736,10 +4741,11 @@ fn trigger_psychic_draw(state: &mut GameState, player: PlayerId, target: Pokemon
     let crate::card::AbilityEffect::WhenEvolvedFromHandMayDrawCards(count) = ability.effect else {
         return;
     };
-    if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
+    if state.is_spent(Limit::for_ability_use(player, target, ability.name)) {
         return;
     }
-    state.phase = Phase::DecidingToUsePsychicDraw { player, name: ability.name, count };
+    state.phase =
+        Phase::DecidingToUsePsychicDraw { player, pokemon: target, name: ability.name, count };
 }
 
 /// `Noctowl`'s `Jewel Seeker`, the same "evolved from hand" trigger
@@ -4757,13 +4763,14 @@ fn trigger_jewel_seeker(state: &mut GameState, player: PlayerId, target: Pokemon
     else {
         return;
     };
-    if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
+    if state.is_spent(Limit::for_ability_use(player, target, ability.name)) {
         return;
     }
     if !state.has_tera_in_play(player) {
         return;
     }
-    state.phase = Phase::DecidingToUseJewelSeeker { player, name: ability.name, count };
+    state.phase =
+        Phase::DecidingToUseJewelSeeker { player, pokemon: target, name: ability.name, count };
 }
 
 fn powerglass_owner(state: &GameState) -> Option<PlayerId> {

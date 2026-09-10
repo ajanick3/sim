@@ -412,7 +412,7 @@ fn evolving_into_a_lethal_carryover_ko_s_before_any_evolve_triggered_ability() {
 
     assert_ne!(
         state.phase,
-        Phase::DecidingToUsePsychicDraw { player, name: "Psychic Draw", count: 2 },
+        Phase::DecidingToUsePsychicDraw { player, pokemon: basic, name: "Psychic Draw", count: 2 },
         "the Knockout takes effect before Psychic Draw could be activated"
     );
     assert!(

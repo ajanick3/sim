@@ -80,11 +80,27 @@ pub enum Limit {
     /// `Team Rocket's Factory`, `Lumiose City`. Only one Stadium is ever in
     /// play, so one variant covers whichever it is.
     StadiumEffectUsed(PlayerId),
-    /// An Ability named "You can't use more than 1 [Name] Ability each
-    /// turn" — keyed by the player using it and the Ability's own
-    /// name, not by which Pokémon carries it, since the restriction is
-    /// printed to cover every copy the player controls at once.
-    AbilityUsed(PlayerId, &'static str),
+    /// A "once during your turn" Ability, spent per Pokémon: the player,
+    /// the Pokémon that used it, and the Ability's own name. Each copy a
+    /// player controls gets its own use. See ADR 0097.
+    AbilityUsed(PlayerId, PokemonId, &'static str),
+    /// An Ability printing "You can't use more than 1 [Name] Ability
+    /// each turn" — keyed by the player and the name alone, since that
+    /// clause covers every copy at once. Only the four prints
+    /// `card::ability_is_scoped_to_its_name` names.
+    AbilityUsedByName(PlayerId, &'static str),
+}
+
+impl Limit {
+    /// The limit an Ability use spends: name-wide for the four prints
+    /// whose text scopes it that way, per Pokémon otherwise.
+    pub fn for_ability_use(player: PlayerId, pokemon: PokemonId, name: &'static str) -> Limit {
+        if crate::card::ability_is_scoped_to_its_name(name) {
+            Limit::AbilityUsedByName(player, name)
+        } else {
+            Limit::AbilityUsed(player, pokemon, name)
+        }
+    }
 }
 
 /// One player's zones.
@@ -415,12 +431,22 @@ pub enum Phase {
     /// `player` just evolved from hand, and the evolution's own
     /// Ability may draw `count` cards. `Kadabra`'s and `Alakazam`'s
     /// `Psychic Draw`.
-    DecidingToUsePsychicDraw { player: PlayerId, name: &'static str, count: u32 },
+    DecidingToUsePsychicDraw {
+        player: PlayerId,
+        pokemon: PokemonId,
+        name: &'static str,
+        count: u32,
+    },
     /// The same "evolved from hand" moment `DecidingToUsePsychicDraw`
     /// opens from, but accepting moves to
     /// `SearchingLibraryForTrainerCards` rather than drawing outright.
     /// `Noctowl`'s `Jewel Seeker`.
-    DecidingToUseJewelSeeker { player: PlayerId, name: &'static str, count: u32 },
+    DecidingToUseJewelSeeker {
+        player: PlayerId,
+        pokemon: PokemonId,
+        name: &'static str,
+        count: u32,
+    },
     /// `player` may take up to `remaining` more Trainer cards of any
     /// kind from their own library, revealing them, then shuffles —
     /// the narrower mirror of `SearchingLibraryForAnyCards`, offering

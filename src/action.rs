@@ -1692,7 +1692,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         if state.abilities_disabled_for(pokemon) {
             continue;
         }
-        if state.is_spent(Limit::AbilityUsed(player, ability.name)) {
+        if state.is_spent(Limit::for_ability_use(player, pokemon, ability.name)) {
             continue;
         }
         let eligible = match ability.effect {
