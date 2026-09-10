@@ -2872,6 +2872,38 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::DrawUpToHandSize(target) => {
+            while state.player(player).hand.len() < target as usize {
+                if !state.draw(player) {
+                    break;
+                }
+            }
+        }
+
+        TrainerEffect::CoinFlipDraw { heads, tails } => {
+            let count = if state.rng.flip() { heads } else { tails };
+            for _ in 0..count {
+                state.draw(player);
+            }
+        }
+
+        TrainerEffect::DrawPerOpponentMegaEx => {
+            let count = state
+                .player(player.opponent())
+                .in_play()
+                .iter()
+                .filter(|p| {
+                    state
+                        .pokemon_def(**p)
+                        .markers
+                        .contains(&crate::card::Marker::Mega)
+                })
+                .count();
+            for _ in 0..count {
+                state.draw(player);
+            }
+        }
+
         TrainerEffect::ShuffleHandThenDraw {
             normal,
             at_six_prizes,

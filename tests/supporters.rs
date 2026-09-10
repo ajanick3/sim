@@ -1943,3 +1943,145 @@ fn the_heal_supporters_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: draw variants ---
+
+fn with_draw_variants(set: Set) -> (Set, CardDefId, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let picnicker = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-picnicker",
+        name: "Picnicker",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::CoinFlipDraw { heads: 4, tails: 2 },
+    }));
+    let jett = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-jett",
+        name: "Jett",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::DrawPerOpponentMegaEx,
+    }));
+    let iris = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-iris",
+        name: "Iris's Fighting Spirit",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::DiscardOtherCardsFromHand(1)),
+        effect: TrainerEffect::DrawUpToHandSize(6),
+    }));
+    let mega = db.add(CardDef::Pokemon(Pokemon {
+        markers: vec![sim::card::Marker::Mega, sim::card::Marker::Ex],
+        print_id: "test-mega-ex",
+        name: "Megamon ex",
+        hp: 330,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 3,
+        prizes: 3,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Stomp",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    (Set { db, ..set }, picnicker, jett, iris, mega)
+}
+
+#[test]
+fn picnicker_draws_four_on_heads_and_two_on_tails() {
+    use sim::rng::ScriptedRng;
+    for (flip, expected) in [(vec![1u32], 4), (vec![0u32], 2)] {
+        let (set, picnicker, ..) = with_draw_variants(build());
+        let decklist = deck(&set, picnicker);
+        let mut state = GameState::new(
+            set.db.clone(),
+            [decklist.clone(), decklist],
+            Box::new(ScriptedRng::new(flip)),
+        );
+        for _ in 0..2 {
+            while state.phase != Phase::Main && !state.is_over() {
+                let a = legal_actions(&state)[0];
+                apply(&mut state, a).unwrap();
+            }
+            if state.turn_number > 1 {
+                break;
+            }
+            apply(&mut state, Action::EndTurn).unwrap();
+        }
+        let player = state.current;
+        let card = ensure_in_hand(&mut state, player, picnicker);
+        let before = state.player(player).hand.len();
+        apply(&mut state, Action::PlayTrainer { card }).unwrap();
+        assert_eq!(state.player(player).hand.len(), before - 1 + expected);
+    }
+}
+
+#[test]
+fn jett_draws_one_per_opponent_mega_ex() {
+    let (set, _p, jett, _i, mega) = with_draw_variants(build());
+    let mut state = game(&set, jett, 3);
+    let player = state.current;
+    let opp = player.opponent();
+    for _ in 0..2 {
+        let c = deal_new_card(&mut state, opp, mega);
+        let m = state.put_into_play(opp, c);
+        state.players[opp.index()].bench.push(m);
+    }
+    let card = ensure_in_hand(&mut state, player, jett);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), before - 1 + 2);
+}
+
+#[test]
+fn iris_draws_up_to_six_after_the_discard_cost() {
+    let (set, _p, _j, iris, _m) = with_draw_variants(build());
+    let mut state = game(&set, iris, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, iris);
+    // Trim the hand so drawing up to six actually draws.
+    while state.player(player).hand.len() > 3 {
+        let spare = *state
+            .player(player)
+            .hand
+            .iter()
+            .find(|c| **c != card)
+            .unwrap();
+        let side = &mut state.players[player.index()];
+        side.hand.retain(|c| *c != spare);
+        side.library.push(spare);
+    }
+    // Hand is now [iris, one spare, one spare] — enough to pay the cost.
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    // Pay the one-card discard cost, then the draw resolves.
+    let pay = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::PayWithCard { .. }))
+        .expect("a card to discard for the cost");
+    apply(&mut state, pay).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), 6);
+}
+
+#[test]
+fn the_draw_variant_supporters_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Picnicker", "Jett", "Iris's Fighting Spirit"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
