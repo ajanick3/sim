@@ -455,6 +455,23 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             },
         ),
         "Jett" => (free, TrainerEffect::DrawPerOpponentMegaEx),
+        "Emcee's Hype" => (
+            free,
+            TrainerEffect::DrawThenBonusIfOpponentPrizesAtMost {
+                base: 2,
+                bonus: 2,
+                at_most: 3,
+            },
+        ),
+        "Billy & O'Nare" => (
+            free,
+            TrainerEffect::DrawThenBonusIfHandAtLeast {
+                base: 2,
+                bonus: 2,
+                at_least: 10,
+            },
+        ),
+        "Emma" => (free, TrainerEffect::DrawPerPokemonInOpponentHand),
         "Iris's Fighting Spirit" => (
             Some(Requirement::DiscardOtherCardsFromHand(1)),
             TrainerEffect::DrawUpToHandSize(6),

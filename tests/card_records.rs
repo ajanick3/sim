@@ -272,5 +272,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // `CardFilter::PokemonOfType`) take it to 835.
     // Tarragon and Philippe (discard retrieval; Philippe adds
     // `TargetFilter::OfType`) take it to 839.
-    assert_eq!(admitted, 839, "coverage moves only on purpose");
+    // Emcee's Hype, Billy & O'Nare (conditional bonus draws),
+    // and Emma (draw per Pokemon in the opponent's hand) take it to 844.
+    assert_eq!(admitted, 844, "coverage moves only on purpose");
 }

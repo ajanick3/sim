@@ -384,6 +384,15 @@ pub enum TrainerEffect {
     /// Draw one card for each Mega Evolution Pokémon ex the opponent has
     /// in play. `Jett`.
     DrawPerOpponentMegaEx,
+    /// Draw `base`, then `bonus` more when the opponent has at most this
+    /// many Prizes remaining. `Emcee's Hype`.
+    DrawThenBonusIfOpponentPrizesAtMost { base: u32, bonus: u32, at_most: usize },
+    /// Draw `base`, then `bonus` more when the player's hand then holds at
+    /// least this many cards. `Billy & O'Nare`.
+    DrawThenBonusIfHandAtLeast { base: u32, bonus: u32, at_least: usize },
+    /// The opponent reveals their hand; draw one card for each Pokémon in
+    /// it. `Emma`.
+    DrawPerPokemonInOpponentHand,
     /// Discard the player's whole hand, then draw this many. Unlike
     /// `ShuffleHandThenDraw`, what is given up does not go back in the
     /// deck. `Carmine`.

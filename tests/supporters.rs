@@ -2499,3 +2499,114 @@ fn philippe_attaches_metal_energy_from_the_discard_to_a_metal_pokemon() {
     assert_eq!(took, 2, "both Metal Energy offered");
     assert_eq!(state.pokemon(steel).attached.len(), 2, "both Metal Energy landed");
 }
+
+// --- Beyond the field: conditional-draw Supporters ---
+
+fn with_conditional_draw(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let emcee = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-emcee",
+        name: "Emcee's Hype",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::DrawThenBonusIfOpponentPrizesAtMost {
+            base: 2,
+            bonus: 2,
+            at_most: 3,
+        },
+    }));
+    let billy = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-billy",
+        name: "Billy & O'Nare",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::DrawThenBonusIfHandAtLeast {
+            base: 2,
+            bonus: 2,
+            at_least: 10,
+        },
+    }));
+    let emma = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-emma",
+        name: "Emma",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::DrawPerPokemonInOpponentHand,
+    }));
+    (Set { db, ..set }, emcee, billy, emma)
+}
+
+#[test]
+fn emcees_hype_draws_two_more_when_the_opponent_is_low_on_prizes() {
+    let (set, emcee, ..) = with_conditional_draw(build());
+    let mut state = game(&set, emcee, 3);
+    let player = state.current;
+    let opp = player.opponent();
+    while state.player(opp).prizes.len() > 3 {
+        let p = state.players[opp.index()].prizes.pop().unwrap();
+        state.players[opp.index()].discard.push(p);
+    }
+    let card = ensure_in_hand(&mut state, player, emcee);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), before - 1 + 4, "2 + 2 bonus");
+}
+
+#[test]
+fn billy_and_onare_draws_two_more_only_at_ten_in_hand() {
+    let (set, _e, billy, _emma) = with_conditional_draw(build());
+    let mut state = game(&set, billy, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, billy);
+    // Force the hand to exactly [Billy] + 8 spares. Play Billy (-> 8),
+    // draw 2 (-> 10), and the hand-of-ten bonus draws 2 more.
+    let side = &mut state.players[player.index()];
+    side.hand.retain(|c| *c == card);
+    for _ in 0..8 {
+        let c = deal_new_card(&mut state, player, set.energy);
+        state.players[player.index()].library.push(c);
+        let c = state.players[player.index()].library.pop().unwrap();
+        state.players[player.index()].hand.push(c);
+    }
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), 12);
+}
+
+#[test]
+fn emma_draws_one_per_pokemon_in_the_opponents_hand() {
+    let (set, _e, _b, emma) = with_conditional_draw(build());
+    let mut state = game(&set, emma, 3);
+    let player = state.current;
+    let opp = player.opponent();
+    // Clear the opponent's hand, then give them exactly three Pokemon.
+    let hand = std::mem::take(&mut state.players[opp.index()].hand);
+    state.players[opp.index()].library.extend(hand);
+    for _ in 0..3 {
+        let c = deal_new_card(&mut state, opp, set.mon);
+        state.players[opp.index()].hand.push(c);
+    }
+    let card = ensure_in_hand(&mut state, player, emma);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), before - 1 + 3);
+}
+
+#[test]
+fn the_conditional_draw_supporters_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Emcee's Hype", "Billy & O'Nare", "Emma"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
