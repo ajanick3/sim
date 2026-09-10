@@ -2887,6 +2887,52 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::DrawThenBonusIfOpponentPrizesAtMost {
+            base,
+            bonus,
+            at_most,
+        } => {
+            for _ in 0..base {
+                state.draw(player);
+            }
+            if state.player(player.opponent()).prizes.len() <= at_most {
+                for _ in 0..bonus {
+                    state.draw(player);
+                }
+            }
+        }
+
+        TrainerEffect::DrawThenBonusIfHandAtLeast {
+            base,
+            bonus,
+            at_least,
+        } => {
+            for _ in 0..base {
+                state.draw(player);
+            }
+            if state.player(player).hand.len() >= at_least {
+                for _ in 0..bonus {
+                    state.draw(player);
+                }
+            }
+        }
+
+        TrainerEffect::DrawPerPokemonInOpponentHand => {
+            let count = state
+                .player(player.opponent())
+                .hand
+                .iter()
+                .filter(|c| state.def_of(**c).as_pokemon().is_some())
+                .count();
+            let opponent = player.opponent();
+            state
+                .log
+                .push(format!("{opponent:?} reveals their hand."));
+            for _ in 0..count {
+                state.draw(player);
+            }
+        }
+
         TrainerEffect::DrawPerOpponentMegaEx => {
             let count = state
                 .player(player.opponent())

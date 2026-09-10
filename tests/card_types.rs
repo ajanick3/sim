@@ -103,7 +103,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Rocket's Archer, and Cassiopeia take it to 225.
     // Firebreather and Canari take it to 220.
     // Tarragon and Philippe take it to 216.
-    assert_eq!(trainers, 216, "the Trainers still refused, by kind");
+    // Emcee's Hype, Billy & O'Nare, and Emma take it to 211.
+    assert_eq!(trainers, 211, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and
