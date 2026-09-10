@@ -11,5 +11,5 @@
     "react/set-state-in-effect": "warn",
     "react/exhaustive-effect-dependencies": "warn"
   },
-  "ignorePatterns": [".next", "public/pkg", "out"]
+  "ignorePatterns": [".next", "out", "public", "storybook-static"]
 }
