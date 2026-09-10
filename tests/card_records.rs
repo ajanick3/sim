@@ -312,5 +312,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Awakening Drum (`DrawPerOwnPokemonWithMarker(Ancient)`), Reboot Pod
     // (`AttachBasicEnergyFromDiscardToEachFuture`), and Perilous Jungle
     // (`StadiumExtraPoisonDamage`, read at Checkup) take it to 902.
-    assert_eq!(admitted, 902, "coverage moves only on purpose");
+    // The next-turn side shields — Jasmine's Gaze, Iron Defender,
+    // Roxie's Performance (`GrantSideShieldNextTurn`, ADR 0098; a new
+    // `side_shield_next_turn` state field) — take it to 910.
+    assert_eq!(admitted, 910, "coverage moves only on purpose");
 }

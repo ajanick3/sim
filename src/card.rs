@@ -403,6 +403,10 @@ pub enum TrainerEffect {
     /// A Stadium: at Pokémon Checkup, a Poisoned non-Darkness Pokémon
     /// either side takes this much more. `Perilous Jungle`.
     StadiumExtraPoisonDamage(u32),
+    /// Grant a side-wide effect for the opponent's next turn — see
+    /// `SideShield` and ADR 0098. `Jasmine's Gaze`, `Iron Defender`,
+    /// `Roxie's Performance`.
+    GrantSideShieldNextTurn(SideShield),
     /// Draw `base`, then `bonus` more when the opponent has at most this
     /// many Prizes remaining. `Emcee's Hype`.
     DrawThenBonusIfOpponentPrizesAtMost { base: u32, bonus: u32, at_most: usize },
@@ -627,6 +631,22 @@ pub enum TrainerEffect {
     /// at every site that would otherwise offer, trigger, or read a
     /// standing Ability effect. `Team Rocket's Watchtower`.
     AbilitiesDisabled,
+}
+
+/// A side-wide effect a card grants for the opponent's next turn, held in
+/// `GameState::side_shield_next_turn` with the player who granted it. See
+/// ADR 0098.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SideShield {
+    /// Every one of the granting player's Pokémon takes this much less
+    /// damage from the opponent's attacks. `Jasmine's Gaze`.
+    DamageReduction(u32),
+    /// The granting player's Pokémon of this type take this much less.
+    /// `Iron Defender`.
+    DamageReductionForType(Type, u32),
+    /// The opponent's Poisoned Pokémon cannot retreat.
+    /// `Roxie's Performance`.
+    OpponentPoisonedCannotRetreat,
 }
 
 /// What a card demands before it may be played at all.

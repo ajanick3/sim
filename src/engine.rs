@@ -3024,6 +3024,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::GrantSideShieldNextTurn(shield) => {
+            state.side_shield_next_turn = Some((player, shield));
+        }
+
         TrainerEffect::InflictOnOpponentActive(first, second) => {
             if let Some(active) = state.player(player.opponent()).active {
                 state.inflict(active, first);
@@ -4781,6 +4785,25 @@ fn damage_dealt_with(
         && state.pokemon_def(defender).name.contains(word)
     {
         damage = damage.saturating_sub(amount);
+    }
+
+    // A side shield a Supporter granted last turn: read for a defender
+    // the granting player owns, while it is the opponent's turn (ADR 0098).
+    if let Some((granted_by, shield)) = state.side_shield_next_turn
+        && state.pokemon(defender).owner == granted_by
+        && state.current != granted_by
+    {
+        match shield {
+            crate::card::SideShield::DamageReduction(amount) => {
+                damage = damage.saturating_sub(amount);
+            }
+            crate::card::SideShield::DamageReductionForType(kind, amount)
+                if state.pokemon_def(defender).kind == kind =>
+            {
+                damage = damage.saturating_sub(amount);
+            }
+            _ => {}
+        }
     }
 
     // Step 33c: a Tool on the defender that softens attacks from one

@@ -2798,3 +2798,86 @@ fn the_peek_search_supporters_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: a Supporter that shields its side next turn (ADR 0098) ---
+
+fn drive_to_main_s(state: &mut GameState) {
+    while state.phase != Phase::Main && !state.is_over() {
+        let a = legal_actions(state)[0];
+        apply(state, a).unwrap();
+    }
+}
+
+#[test]
+fn jasmines_gaze_softens_the_opponents_attacks_next_turn_only() {
+    let mut set = build();
+    let gaze = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-jasmines-gaze",
+        name: "Jasmine's Gaze",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::GrantSideShieldNextTurn(
+            sim::card::SideShield::DamageReduction(30),
+        ),
+    }));
+    let big_hitter = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-big-hitter",
+        name: "Bigmon",
+        hp: 200,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack { name: "Wallop", cost: vec![Type::Colorless], base_damage: 100, inflicts: None, effect: None }],
+    }));
+    let mut state = game(&set, gaze, 3);
+    let me = state.current;
+    let opp = me.opponent();
+
+    // The opponent will swing with a 100-damage attacker.
+    let hitter_card = deal_new_card(&mut state, opp, big_hitter);
+    let hitter = state.put_into_play(opp, hitter_card);
+    state.players[opp.index()].active = Some(hitter);
+    let my_wall = state.player(me).active.unwrap();
+
+    let card = ensure_in_hand(&mut state, me, gaze);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::EndTurn).unwrap();
+    drive_to_main_s(&mut state);
+    assert_eq!(state.current, opp);
+
+    // Pay for and use the opponent's attack.
+    let energy = *state.player(opp).library.iter().find(|c| state.def_of(**c).is_energy()).unwrap();
+    state.players[opp.index()].library.retain(|c| *c != energy);
+    state.pokemon[hitter.index()].attached.push(energy);
+    let attack = legal_actions(&state).into_iter().find(|a| matches!(a, Action::Attack { .. })).unwrap();
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(state.pokemon(my_wall).damage, 70, "100 - 30 from Jasmine's Gaze");
+
+    // Using an attack ends the opponent's turn; mine begins, and the
+    // shield is cleared.
+    drive_to_main_s(&mut state);
+    assert_eq!(state.current, me);
+    assert!(state.side_shield_next_turn.is_none(), "cleared on my next turn");
+}
+
+#[test]
+fn the_side_shield_supporters_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Jasmine's Gaze", "Iron Defender", "Roxie's Performance"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
