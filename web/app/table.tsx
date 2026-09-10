@@ -41,8 +41,10 @@ export default function Table({ variant = "classic" }: { variant?: BoardVariant 
   const [log, setLog] = useState<string[]>([]);
   const [seat, setSeat] = useState<number | undefined>(undefined);
   const [over, setOver] = useState(false);
-  const [revealed, setRevealed] = useState(false);
+  const [revealedState, setRevealed] = useState(false);
   const [busy, setBusy] = useState(false);
+  // The live board is a solo review surface — no pass-the-device gate.
+  const revealed = variant === "live" ? true : revealedState;
 
   const gameRef = useRef<Game | null>(null);
   const dataRef = useRef<CardData | null>(null);
