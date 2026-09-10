@@ -376,6 +376,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
     let free = None;
     Some(match name {
         "Boss's Orders" => (free, TrainerEffect::SwitchOpponentActive),
+        "Cheren" | "Friends in Paldea" | "Urbain" => (free, TrainerEffect::Draw(3)),
         "Tool Scrapper" => (free, TrainerEffect::MayDiscardUpToTwoToolsAnywhere),
         "Briar" => (
             Some(Requirement::OpponentPrizesExactly(2)),
