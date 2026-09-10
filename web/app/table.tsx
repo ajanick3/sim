@@ -204,8 +204,16 @@ export default function Table({ variant = "classic" }: { variant?: BoardVariant 
     );
   }
 
+  const live = variant === "live";
+
   return (
-    <main className="mx-auto max-w-[960px] px-3 py-4 sm:px-4 sm:py-6">
+    <main
+      className={
+        live
+          ? "mx-auto flex h-[100dvh] max-w-[1100px] flex-col overflow-hidden px-3 py-2"
+          : "mx-auto max-w-[960px] px-3 py-4 sm:px-4 sm:py-6"
+      }
+    >
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h1 className="m-0 text-[18px]">sim</h1>
         <span className="ml-auto flex gap-2">
@@ -222,44 +230,46 @@ export default function Table({ variant = "classic" }: { variant?: BoardVariant 
         </span>
       </header>
 
-      {over ? (
-        <Banner>{log[log.length - 1] ?? "Game over."}</Banner>
-      ) : !revealed && seat !== undefined ? (
-        <Centre>
-          <p className="text-dim">Pass the device.</p>
-          <button onClick={() => setRevealed(true)}>{SEAT_NAME[seat]} — tap to reveal</button>
-        </Centre>
-      ) : (
-        view &&
-        (variant === "live" ? (
-          <LiveBoard
-            view={view}
-            actions={actions}
-            meta={meta}
-            selection={selection}
-            onSelect={setSelection}
-            art={(printId: string) => artUrl(artIndex, printId)}
-            seat={seat}
-            busy={busy}
-            onAct={act}
-            log={log}
-          />
+      <div className={live ? "min-h-0 flex-1 overflow-hidden" : "contents"}>
+        {over ? (
+          <Banner>{log[log.length - 1] ?? "Game over."}</Banner>
+        ) : !revealed && seat !== undefined ? (
+          <Centre>
+            <p className="text-dim">Pass the device.</p>
+            <button onClick={() => setRevealed(true)}>{SEAT_NAME[seat]} — tap to reveal</button>
+          </Centre>
         ) : (
-          <Board
-            view={view}
-            actions={actions}
-            meta={meta}
-            selection={selection}
-            onSelect={setSelection}
-            art={(printId: string) => artUrl(artIndex, printId)}
-            seat={seat}
-            busy={busy}
-            onAct={act}
-          />
-        ))
-      )}
+          view &&
+          (variant === "live" ? (
+            <LiveBoard
+              view={view}
+              actions={actions}
+              meta={meta}
+              selection={selection}
+              onSelect={setSelection}
+              art={(printId: string) => artUrl(artIndex, printId)}
+              seat={seat}
+              busy={busy}
+              onAct={act}
+              log={log}
+            />
+          ) : (
+            <Board
+              view={view}
+              actions={actions}
+              meta={meta}
+              selection={selection}
+              onSelect={setSelection}
+              art={(printId: string) => artUrl(artIndex, printId)}
+              seat={seat}
+              busy={busy}
+              onAct={act}
+            />
+          ))
+        )}
+      </div>
 
-      <LogPanel lines={log} />
+      {!live && <LogPanel lines={log} />}
     </main>
   );
 }

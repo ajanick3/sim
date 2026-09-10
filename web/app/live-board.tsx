@@ -253,80 +253,84 @@ export function LiveBoard({
   const dragSrc = dragCard ? art(dragCard.print_id) : null;
 
   return (
-    <div className="mt-3">
-      <div className="flex gap-2">
-        <div className="min-w-0 flex-1 rounded-xl border border-edge bg-felt p-2">
-          <SideRow
-            side={opp}
-            label={`${SEAT_NAME[opp.player]} Opponent`}
-            art={art}
-            meta={meta}
-            selection={selection}
-            dropTargets={dropTargets}
-            onPokemon={onPokemon}
-          />
+    <div className="flex h-full min-h-0 flex-col gap-1 pt-1">
+      <div className="flex min-h-0 flex-1 gap-2">
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-edge bg-felt p-2">
+          <div className="flex min-h-0 flex-1 flex-col justify-center gap-1 overflow-y-auto">
+            <SideRow
+              side={opp}
+              label={`${SEAT_NAME[opp.player]} Opponent`}
+              art={art}
+              meta={meta}
+              selection={selection}
+              dropTargets={dropTargets}
+              onPokemon={onPokemon}
+            />
 
-          {/* Centre lane: stadium on the left, the two Actives stacked. */}
-          <div className="my-1.5 flex items-center justify-center gap-3">
-            <StadiumSlot />
-            <div className="flex flex-col items-center gap-1">
-              <LiveMon
-                mon={opp.active}
-                active
-                art={art}
-                {...monHooks(opp.active, meta, selection, dropTargets, onPokemon)}
-              />
-              <div className="h-px w-24 bg-white/15" aria-hidden />
-              <div className="relative">
+            {/* Centre lane: stadium on the left, the two Actives stacked. */}
+            <div className="flex items-center justify-center gap-3">
+              <StadiumSlot />
+              <div className="flex flex-col items-center gap-1">
                 <LiveMon
-                  mon={mine.active}
+                  mon={opp.active}
                   active
                   art={art}
-                  placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
-                  {...monHooks(
-                    mine.active,
-                    meta,
-                    selection,
-                    dropTargets,
-                    onPokemon,
-                    attackMoves.length > 0,
-                  )}
+                  {...monHooks(opp.active, meta, selection, dropTargets, onPokemon)}
                 />
-                {activeSelected && attackMoves.length > 0 && (
-                  <div
-                    className="absolute inset-x-1 bottom-1 z-30 flex flex-col gap-1"
-                    data-keep-selection
-                  >
-                    {attackMoves.map((a) => (
-                      <button
-                        key={a.index}
-                        type="button"
-                        data-keep-selection
-                        disabled={busy}
-                        onClick={() => onAct(a.index)}
-                        className="rounded bg-accent px-2 py-1 text-[11px] font-bold text-black shadow-[0_2px_6px_rgba(0,0,0,0.5)] hover:brightness-110 disabled:opacity-50"
-                      >
-                        {a.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                <div className="h-px w-24 bg-white/15" aria-hidden />
+                <div className="relative">
+                  <LiveMon
+                    mon={mine.active}
+                    active
+                    art={art}
+                    placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
+                    {...monHooks(
+                      mine.active,
+                      meta,
+                      selection,
+                      dropTargets,
+                      onPokemon,
+                      attackMoves.length > 0,
+                    )}
+                  />
+                  {activeSelected && attackMoves.length > 0 && (
+                    <div
+                      className="absolute inset-x-1 bottom-1 z-30 flex flex-col gap-1"
+                      data-keep-selection
+                    >
+                      {attackMoves.map((a) => (
+                        <button
+                          key={a.index}
+                          type="button"
+                          data-keep-selection
+                          disabled={busy}
+                          onClick={() => onAct(a.index)}
+                          className="rounded bg-accent px-2 py-1 text-[11px] font-bold text-black shadow-[0_2px_6px_rgba(0,0,0,0.5)] hover:brightness-110 disabled:opacity-50"
+                        >
+                          {a.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
+              <StadiumSlot ghost />
             </div>
-            <StadiumSlot ghost />
+
+            <SideRow
+              side={mine}
+              label={`${SEAT_NAME[mine.player]} You`}
+              mine
+              art={art}
+              meta={meta}
+              selection={selection}
+              dropTargets={dropTargets}
+              onPokemon={onPokemon}
+              onPlaceBench={benchPlace >= 0 ? () => onAct(benchPlace) : undefined}
+            />
           </div>
 
-          <SideRow
-            side={mine}
-            label={`${SEAT_NAME[mine.player]} You`}
-            mine
-            art={art}
-            meta={meta}
-            selection={selection}
-            dropTargets={dropTargets}
-            onPokemon={onPokemon}
-            onPlaceBench={benchPlace >= 0 ? () => onAct(benchPlace) : undefined}
-          />
+          {prompt && !firstTurn && <PromptBar prompt={prompt} busy={busy} onAct={onAct} />}
 
           <HandStrip
             hand={view.your_hand}
@@ -353,95 +357,95 @@ export function LiveBoard({
         />
       </div>
 
-      {firstTurn ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="w-full max-w-md rounded-xl border border-edge bg-bg p-6 text-center">
-            <div className="text-[13px] uppercase tracking-widest text-dim">Coin flip</div>
-            <p className="mt-1 text-lg font-semibold">
-              {seat === you ? "You choose who goes first" : "Choose who goes first"}
-            </p>
-            <div className="mt-5 flex justify-center gap-3">
-              <button
-                onClick={() => firstTurn.goFirst >= 0 && onAct(firstTurn.goFirst)}
-                disabled={busy || firstTurn.goFirst < 0}
-                className="rounded-lg border-accent bg-accent px-6 py-3 text-base font-bold text-black disabled:opacity-40"
-              >
-                Go first
-              </button>
-              <button
-                onClick={() => firstTurn.goSecond >= 0 && onAct(firstTurn.goSecond)}
-                disabled={busy || firstTurn.goSecond < 0}
-                className="rounded-lg px-6 py-3 text-base font-bold disabled:opacity-40"
-              >
-                Go second
-              </button>
+      <div className="shrink-0">
+        {firstTurn ? (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+            <div className="w-full max-w-md rounded-xl border border-edge bg-bg p-6 text-center">
+              <div className="text-[13px] uppercase tracking-widest text-dim">Coin flip</div>
+              <p className="mt-1 text-lg font-semibold">
+                {seat === you ? "You choose who goes first" : "Choose who goes first"}
+              </p>
+              <div className="mt-5 flex justify-center gap-3">
+                <button
+                  onClick={() => firstTurn.goFirst >= 0 && onAct(firstTurn.goFirst)}
+                  disabled={busy || firstTurn.goFirst < 0}
+                  className="rounded-lg border-accent bg-accent px-6 py-3 text-base font-bold text-black disabled:opacity-40"
+                >
+                  Go first
+                </button>
+                <button
+                  onClick={() => firstTurn.goSecond >= 0 && onAct(firstTurn.goSecond)}
+                  disabled={busy || firstTurn.goSecond < 0}
+                  className="rounded-lg px-6 py-3 text-base font-bold disabled:opacity-40"
+                >
+                  Go second
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      ) : decision ? (
-        <DecisionBar
-          actions={actions}
-          decision={decision}
-          busy={busy}
-          onAct={onAct}
-          art={art}
-          meta={meta}
-        />
-      ) : prompt ? (
-        <PromptBar prompt={prompt} busy={busy} onAct={onAct} />
-      ) : (
-        <div className="mt-2" data-keep-selection>
-          {selection && (
-            <div className="flex items-center gap-2 text-[12px]">
-              <span className="rounded bg-accent px-1.5 py-0.5 font-semibold text-black">
-                {selectedName ?? "Selected"}
-              </span>
-              <span className="text-dim">
-                {activeSelected && attackMoves.length > 0
-                  ? "tap an attack on your Active"
-                  : abilityMoves.length > 0
-                    ? "use its Ability, or tap away"
-                    : only && only.length === 0
-                      ? "no move from here — tap away to cancel"
-                      : confirmIndex !== undefined
-                        ? "tap ✅ on the card to play it"
-                        : "tap a highlighted spot on the board"}
-              </span>
-            </div>
-          )}
-          {abilityMoves.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              {abilityMoves.map((a) => (
-                <button
-                  key={a.index}
-                  type="button"
-                  data-keep-selection
-                  disabled={busy}
-                  onClick={() => onAct(a.index)}
-                  className="rounded-md border-accent bg-accent/15 px-3 py-1.5 text-[12px] font-bold text-accent disabled:opacity-50"
-                >
-                  ⚡ {a.label}
-                </button>
-              ))}
-            </div>
-          )}
-          {/* The full list stays here as an escape hatch for phases that
+        ) : decision ? (
+          <DecisionBar
+            actions={actions}
+            decision={decision}
+            busy={busy}
+            onAct={onAct}
+            art={art}
+            meta={meta}
+          />
+        ) : (
+          <div className="mt-2" data-keep-selection>
+            {selection && (
+              <div className="flex items-center gap-2 text-[12px]">
+                <span className="rounded bg-accent px-1.5 py-0.5 font-semibold text-black">
+                  {selectedName ?? "Selected"}
+                </span>
+                <span className="text-dim">
+                  {activeSelected && attackMoves.length > 0
+                    ? "tap an attack on your Active"
+                    : abilityMoves.length > 0
+                      ? "use its Ability, or tap away"
+                      : only && only.length === 0
+                        ? "no move from here — tap away to cancel"
+                        : confirmIndex !== undefined
+                          ? "tap ✅ on the card to play it"
+                          : "tap a highlighted spot on the board"}
+                </span>
+              </div>
+            )}
+            {abilityMoves.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {abilityMoves.map((a) => (
+                  <button
+                    key={a.index}
+                    type="button"
+                    data-keep-selection
+                    disabled={busy}
+                    onClick={() => onAct(a.index)}
+                    className="rounded-md border-accent bg-accent/15 px-3 py-1.5 text-[12px] font-bold text-accent disabled:opacity-50"
+                  >
+                    ⚡ {a.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            {/* The full list stays here as an escape hatch for phases that
               have no on-board affordance yet. */}
-          <details className="mt-2 text-[12px] text-dim">
-            <summary className="cursor-pointer">All actions</summary>
-            <div className="mt-1">
-              <ActionPanel
-                actions={actions}
-                only={only}
-                onClearSelection={() => onSelect(null)}
-                seat={seat}
-                busy={busy}
-                onAct={onAct}
-              />
-            </div>
-          </details>
-        </div>
-      )}
+            <details className="mt-2 text-[12px] text-dim">
+              <summary className="cursor-pointer">All actions</summary>
+              <div className="mt-1">
+                <ActionPanel
+                  actions={actions}
+                  only={only}
+                  onClearSelection={() => onSelect(null)}
+                  seat={seat}
+                  busy={busy}
+                  onAct={onAct}
+                />
+              </div>
+            </details>
+          </div>
+        )}
+      </div>
 
       {drag && (
         <div
@@ -656,7 +660,7 @@ function LiveMon({
   placeHere?: () => void;
 }) {
   const size = active
-    ? "w-[228px] h-[140px]"
+    ? "w-[200px] h-[118px]"
     : small
       ? "w-[64px] min-h-[90px]"
       : "w-[96px] min-h-[134px]";
@@ -859,7 +863,7 @@ function HandStrip({
   };
 
   return (
-    <div className="mt-2 rounded-lg border-2 border-cyan-400/60 p-1.5">
+    <div className="mt-1 shrink-0 rounded-lg border-2 border-cyan-400/60 p-1">
       <div className="mb-1 text-[10px] uppercase tracking-widest text-dim">
         Hand ({hand.length})
       </div>
@@ -895,7 +899,7 @@ function HandStrip({
                       )
                         onConfirm(confirmIndex);
                     }}
-                    className={`group relative h-[96px] w-[132px] flex-none touch-none overflow-hidden rounded-[7px] bg-white transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-2 hover:scale-[1.05] disabled:opacity-50 ${
+                    className={`group relative h-[82px] w-[116px] flex-none touch-none overflow-hidden rounded-[7px] bg-white transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-2 hover:scale-[1.05] disabled:opacity-50 ${
                       draggingCard === c.id ? "opacity-30" : ""
                     } ${selected ? "ring-2 ring-accent" : ""} ${
                       tossing === c.id
@@ -1021,7 +1025,7 @@ function PromptBar({
   onAct: (index: number) => void;
 }) {
   return (
-    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-edge bg-bg p-3">
+    <div className="mt-1 flex flex-wrap items-center justify-center gap-2 rounded-lg border border-accent/60 bg-accent/10 p-2">
       <span className="mr-1 font-bold">{prompt.verb}</span>
       {prompt.accepts.map(({ label, index }) => (
         <button
