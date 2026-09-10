@@ -162,7 +162,7 @@ describe("<Mon> card shape", () => {
     ],
   };
 
-  it("renders every Pokemon at the same width whatever it carries", () => {
+  it("renders every Pokemon from the same fixed-size card class", () => {
     render(
       <>
         <Mon mon={bare} />
@@ -171,10 +171,10 @@ describe("<Mon> card shape", () => {
       </>,
     );
     const [a, b, c] = screen.getAllByTestId("mon-card");
-    expect(b.style.width).toBe(a.style.width);
-    expect(c.style.width).toBe(a.style.width);
-    expect(a.style.width).not.toBe("");
-    expect(b.style.minHeight).toBe(a.style.minHeight);
+    for (const el of [a, b, c]) {
+      expect(el.className).toContain("w-[132px]");
+      expect(el.className).toContain("min-h-[96px]");
+    }
   });
 
   it("draws a copy badge only when a copy index is given", () => {
