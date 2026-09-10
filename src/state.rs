@@ -1058,7 +1058,8 @@ impl GameState {
                     | crate::card::EnergyEffect::ProvidesAnyTypeIfAttachedToBasic
                     | crate::card::EnergyEffect::CarrierHasNoRetreatCost
                     | crate::card::EnergyEffect::CarrierImmuneToSpecialConditions
-                    | crate::card::EnergyEffect::CarrierAttacksHitOpponentActiveHarder(_),
+                    | crate::card::EnergyEffect::CarrierAttacksHitOpponentActiveHarder(_)
+                    | crate::card::EnergyEffect::PreventsBenchDamageWhileCarrierTypeMatches,
                 )
                 | None => 0,
             })
@@ -1352,16 +1353,28 @@ impl GameState {
     /// own carve-out. `Shaymin`'s `Flower Curtain`.
     pub fn bench_attack_damage_blocked(&self, by: PlayerId, target: PokemonId) -> bool {
         let owner = self.pokemon(target).owner;
-        owner != by
-            && self.player(owner).active != Some(target)
-            && self.pokemon_def(target).prizes == 1
+        if owner == by || self.player(owner).active == Some(target) {
+            return false;
+        }
+        let non_rule_box_shield = self.pokemon_def(target).prizes == 1
             && self.player(owner).in_play().iter().any(|p| {
                 !self.abilities_disabled_for(*p)
                     && self.pokemon_def(*p).ability.is_some_and(|a| {
                         a.effect
                             == crate::card::AbilityEffect::PassivePreventsAttackDamageToNonRuleBoxBench
                     })
+            });
+        // `Shadowy Darkness Energy` shields only its own carrier, and
+        // only while the carrier's own type matches the type it provides.
+        let carrier_kind = self.pokemon_def(target).kind;
+        let energy_shield = self.pokemon(target).attached.iter().any(|c| {
+            self.def_of(*c).as_energy().is_some_and(|e| {
+                e.effect
+                    == Some(crate::card::EnergyEffect::PreventsBenchDamageWhileCarrierTypeMatches)
+                    && e.kind == carrier_kind
             })
+        });
+        non_rule_box_shield || energy_shield
     }
 
     /// Whether `target`, sitting on its own owner's Bench, is

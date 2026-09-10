@@ -56,9 +56,15 @@ More clusters merged:
 - #268 next-turn side shield — ADR 0098, `GameState::side_shield_next_turn`, `GrantSideShieldNextTurn`.
 - #270 Items — Lumiose Galette, Dragon Elixir (`HealActiveAndClearConditions`, `HealChosenPlain` of type).
 - #272 type-matched Special Energy — Nitro Fire (`ReattachesAfterOwnDiscardByAttackEffect` reskin), Voltaic Lightning (`CarrierAttacksHitOpponentActiveHarder`, a step-32e read in `damage_dealt_with`).
+- #273 Shadowy Darkness Energy — `PreventsBenchDamageWhileCarrierTypeMatches`, a second clause in `bench_attack_damage_blocked`.
 
-Coverage at #272: 914 / 3051 prints (30.0%). Refused, by kind:
-Supporter 60, Item 46, Tool 20, Stadium 20, Special Energy 7.
+Coverage at #273: 915 / 3051 prints (30.0%). Refused, by kind:
+Supporter 60, Item 46, Tool 20, Stadium 20, Special Energy 6.
+
+Special Energy still refused: Ignition, Legacy, Neo Upper (a
+conditional-provision family — provides X, or Y off an Evolution /
+Stage 2 — plus Ignition's end-of-turn self-discard); Team Rocket's
+Energy (needs the deferred name-prefix Pokemon filter).
 
 Deferred — the tier that needs its own design/ADR before it is cheap:
 - **Trainer-as-Pokémon**: the eight "Antique … Fossil" Items play as a

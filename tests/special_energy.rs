@@ -870,6 +870,95 @@ fn tackle() -> sim::card::Attack {
     }
 }
 
+/// Bench a fresh Basic of `kind` for `PlayerId::One`, holding one card
+/// of `energy_def` if given. Returns the benched Pokemon.
+fn bench_a_pokemon(
+    state: &mut GameState,
+    kind: Type,
+    energy_def: Option<sim::ids::CardDefId>,
+) -> sim::ids::PokemonId {
+    let def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-benched-carrier",
+        name: "Benchmon",
+        hp: 100,
+        kind,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let card = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def, owner: PlayerId::One });
+    let mon = state.put_into_play(PlayerId::One, card);
+    state.players[PlayerId::One.index()].bench.push(mon);
+    if let Some(energy_def) = energy_def {
+        let ec = sim::ids::CardId(state.cards.len() as u32);
+        state.cards.push(sim::state::Card { def: energy_def, owner: PlayerId::One });
+        state.pokemon[mon.index()].attached.push(ec);
+    }
+    mon
+}
+
+#[test]
+fn shadowy_darkness_energy_blocks_bench_damage_to_a_matching_carrier() {
+    let (mut state, _active) = one_pokemon_game(100, Type::Colorless);
+    let shadowy = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-shadowy-darkness-energy",
+        name: "Shadowy Darkness Energy",
+        kind: Type::Darkness,
+        effect: Some(EnergyEffect::PreventsBenchDamageWhileCarrierTypeMatches),
+    }));
+    let benched = bench_a_pokemon(&mut state, Type::Darkness, Some(shadowy));
+
+    assert!(
+        state.bench_attack_damage_blocked(PlayerId::Two, benched),
+        "an opponent's attack does no damage to the benched carrier"
+    );
+}
+
+#[test]
+fn shadowy_darkness_energy_does_nothing_off_a_non_darkness_carrier() {
+    let (mut state, _active) = one_pokemon_game(100, Type::Colorless);
+    let shadowy = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-shadowy-darkness-energy-wrong-type",
+        name: "Shadowy Darkness Energy",
+        kind: Type::Darkness,
+        effect: Some(EnergyEffect::PreventsBenchDamageWhileCarrierTypeMatches),
+    }));
+    let benched = bench_a_pokemon(&mut state, Type::Water, Some(shadowy));
+
+    assert!(
+        !state.bench_attack_damage_blocked(PlayerId::Two, benched),
+        "only a Darkness carrier is shielded"
+    );
+}
+
+#[test]
+fn without_shadowy_darkness_energy_the_bench_damage_lands() {
+    let (mut state, _active) = one_pokemon_game(100, Type::Colorless);
+    let benched = bench_a_pokemon(&mut state, Type::Darkness, None);
+
+    assert!(!state.bench_attack_damage_blocked(PlayerId::Two, benched));
+}
+
+#[test]
+fn shadowy_darkness_energy_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Shadowy Darkness Energy" && c.playable.is_some()),
+        "Shadowy Darkness Energy should play"
+    );
+}
+
 #[test]
 fn the_type_matched_attack_rider_energy_are_admitted_from_the_artifact() {
     let import = sim::import::load(
