@@ -403,6 +403,11 @@ pub enum TrainerEffect {
     /// Inflict up to two Special Conditions on the opponent's Active.
     /// `Dangerous Laser` reads Burned and Confused.
     InflictOnOpponentActive(Condition, Option<Condition>),
+    /// A Tool: the Pokémon it is attached to takes `amount` less damage
+    /// from attacks by an opponent's Pokémon of `kind`, after Weakness
+    /// and Resistance. The "-Berry" Tools (`Babiri`, `Colbur`, `Occa`,
+    /// `Passho`, `Payapa`, `Haban`).
+    ReducesDamageFromType { kind: Type, amount: u32 },
     /// Confuse both Active Pokémon that are not of this type. `Dark Bell`
     /// spares a Darkness Active on either side.
     ConfuseBothActivesExceptType(Type),

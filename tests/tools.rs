@@ -941,3 +941,84 @@ fn without_powerglass_the_turn_ends_without_a_phase() {
     apply(&mut state, Action::EndTurn).unwrap();
     assert_ne!(state.current, player, "the turn just ends, no Powerglass to ask about");
 }
+
+// --- Beyond the field: the "-Berry" damage-reduction Tools ---
+
+fn with_babiri_berry(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let berry = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-babiri-berry",
+        name: "Babiri Berry",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::ReducesDamageFromType {
+            kind: Type::Metal,
+            amount: 60,
+        },
+    }));
+    let metal_attacker = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-metal-attacker",
+        name: "Steelbreaker",
+        hp: 200,
+        kind: Type::Metal,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Heavy Slam",
+            cost: vec![Type::Colorless],
+            base_damage: 100,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    (Set { db, ..set }, berry, metal_attacker)
+}
+
+#[test]
+fn babiri_berry_softens_a_metal_attack_by_sixty() {
+    let (set, berry, metal_attacker) = with_babiri_berry(build());
+    let mut state = game(&set, berry, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+
+    // Swap the attacker's Active for a Metal one.
+    let atk_card = deal_new_card(&mut state, attacker_player, metal_attacker);
+    let atk = state.put_into_play(attacker_player, atk_card);
+    state.players[attacker_player.index()].active = Some(atk);
+
+    let defender = state.player(defender_player).active.unwrap();
+    let tool = deal_new_card(&mut state, defender_player, berry);
+    state.pokemon[defender.index()].attached.push(tool);
+
+    pay_and_attack(&mut state, attacker_player);
+
+    assert_eq!(state.pokemon(defender).damage, 40, "100 - 60");
+}
+
+#[test]
+fn the_berry_tools_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in [
+        "Babiri Berry",
+        "Colbur Berry",
+        "Occa Berry",
+        "Passho Berry",
+        "Payapa Berry",
+        "Haban Berry",
+    ] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}

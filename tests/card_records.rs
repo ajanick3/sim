@@ -292,5 +292,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // and Brilliant Blender (a `Decide` to the discard) take it to 873.
     // Dangerous Laser (`InflictOnOpponentActive` — Burned and Confused)
     // and Dark Bell (`ConfuseBothActivesExceptType`) take it to 876.
-    assert_eq!(admitted, 876, "coverage moves only on purpose");
+    // The six "-Berry" damage-reduction Tools (Babiri, Colbur, Occa,
+    // Passho, Payapa, Haban) — a `ReducesDamageFromType` read for the
+    // defender in `damage_dealt_with`, after Weakness and Resistance —
+    // take it to 882.
+    assert_eq!(admitted, 882, "coverage moves only on purpose");
 }

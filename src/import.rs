@@ -379,6 +379,30 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Cheren" | "Friends in Paldea" | "Urbain" => (free, TrainerEffect::Draw(3)),
         "Cook" => (free, TrainerEffect::HealActive(70)),
         "Hole-Digging Shovel" => (free, TrainerEffect::DiscardTopOfDeck(2)),
+        "Babiri Berry" => (
+            free,
+            TrainerEffect::ReducesDamageFromType { kind: Type::Metal, amount: 60 },
+        ),
+        "Colbur Berry" => (
+            free,
+            TrainerEffect::ReducesDamageFromType { kind: Type::Darkness, amount: 60 },
+        ),
+        "Occa Berry" => (
+            free,
+            TrainerEffect::ReducesDamageFromType { kind: Type::Fire, amount: 60 },
+        ),
+        "Passho Berry" => (
+            free,
+            TrainerEffect::ReducesDamageFromType { kind: Type::Water, amount: 60 },
+        ),
+        "Payapa Berry" => (
+            free,
+            TrainerEffect::ReducesDamageFromType { kind: Type::Psychic, amount: 60 },
+        ),
+        "Haban Berry" => (
+            free,
+            TrainerEffect::ReducesDamageFromType { kind: Type::Dragon, amount: 60 },
+        ),
         "Dangerous Laser" => (
             free,
             TrainerEffect::InflictOnOpponentActive(
