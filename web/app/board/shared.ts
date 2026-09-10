@@ -134,3 +134,16 @@ export function asPrompt(actions: string[]): Prompt | null {
   const name = actions[decline].replace(/^Decline (the )?/, "");
   return { verb: `Use ${name}?`, accepts, decline };
 }
+
+export type CoinResult = "heads" | "tails";
+
+/** The coin-flip results in a run of log lines, oldest first. The engine
+ *  logs each as "<player> flips heads." / "tails." */
+export function coinFlipsIn(lines: string[]): CoinResult[] {
+  const out: CoinResult[] = [];
+  for (const line of lines) {
+    const m = /\bflips (heads|tails)\.$/.exec(line);
+    if (m) out.push(m[1] as CoinResult);
+  }
+  return out;
+}
