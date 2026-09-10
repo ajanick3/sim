@@ -1,11 +1,26 @@
 import { describe, expect, it } from "vitest";
 import {
   AUTO_ADVANCE_CAP,
+  copyBadges,
   gateAfterSeat,
   shouldAutoAdvance,
   sides,
   type AutoAdvanceInput,
 } from "./session";
+
+describe("copyBadges", () => {
+  it("leaves a unique name without a badge", () => {
+    expect(copyBadges(["Pikachu", "Snorlax", null])).toEqual([undefined, undefined, undefined]);
+  });
+
+  it("numbers each copy of a repeated name from zero", () => {
+    expect(copyBadges(["Dreepy", "Dreepy", "Rotom", "Dreepy"])).toEqual([0, 1, undefined, 2]);
+  });
+
+  it("counts names independently and skips empty slots", () => {
+    expect(copyBadges(["A", null, "A", "B", "B"])).toEqual([0, undefined, 1, 0, 1]);
+  });
+});
 
 describe("sides", () => {
   it("maps the viewer to their own side and the other to the opponent", () => {

@@ -19,6 +19,33 @@ export function gateAfterSeat(
   return { shown: next, reveal: false };
 }
 
+/**
+ * A subtle per-copy colour, so two Pokémon of the same name on one side
+ * can be told apart. Cycles red, green, blue, yellow — enough for a full
+ * four-of playset.
+ */
+export const COPY_COLORS = ["#E4593E", "#63B95B", "#5AA7E4", "#F4D023"];
+
+/**
+ * For each Pokémon on a side (active first, then the Bench; `null` for an
+ * empty slot), the 0-based index of that Pokémon among the copies that
+ * share its name — or `undefined` when the name is unique on the side, so
+ * no badge is drawn.
+ */
+export function copyBadges(names: (string | null)[]): (number | undefined)[] {
+  const total = new Map<string, number>();
+  for (const n of names) {
+    if (n !== null) total.set(n, (total.get(n) ?? 0) + 1);
+  }
+  const seen = new Map<string, number>();
+  return names.map((n) => {
+    if (n === null || (total.get(n) ?? 0) < 2) return undefined;
+    const i = seen.get(n) ?? 0;
+    seen.set(n, i + 1);
+    return i;
+  });
+}
+
 export const AUTO_ADVANCE_CAP = 100;
 
 export interface AutoAdvanceInput {
