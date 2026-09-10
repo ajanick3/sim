@@ -117,6 +117,16 @@ export function LiveBoard({
     .map((m, i) => ({ m, i }))
     .filter(({ m }) => m.kind === "Attack")
     .map(({ i }) => ({ index: i, label: actions[i].replace(/^Attack:?\s*/, "") }));
+  // Retreat names the promoted Bench Pokémon as its target, not the
+  // Active — but the Active is what retreats, so put the choice on it.
+  const retreatMoves = meta
+    .map((m, i) => ({ m, i }))
+    .filter(({ m }) => m.kind === "Retreat")
+    .map(({ i }) => ({
+      index: i,
+      label: actions[i].replace(/^Retreat, promoting /, "Retreat ▸ "),
+    }));
+  const onCardMoves = [...attackMoves, ...retreatMoves];
   const activeSelected =
     selection?.kind === "pokemon" && mine.active != null && selection.id === mine.active.id;
 
@@ -291,10 +301,10 @@ export function LiveBoard({
                       selection,
                       dropTargets,
                       onPokemon,
-                      attackMoves.length > 0,
+                      onCardMoves.length > 0,
                     )}
                   />
-                  {activeSelected && attackMoves.length > 0 && (
+                  {activeSelected && onCardMoves.length > 0 && (
                     <div
                       className="absolute inset-x-1 bottom-1 z-30 flex flex-col gap-1"
                       data-keep-selection
@@ -307,6 +317,18 @@ export function LiveBoard({
                           disabled={busy}
                           onClick={() => onAct(a.index)}
                           className="rounded bg-accent px-2 py-1 text-[11px] font-bold text-black shadow-[0_2px_6px_rgba(0,0,0,0.5)] hover:brightness-110 disabled:opacity-50"
+                        >
+                          {a.label}
+                        </button>
+                      ))}
+                      {retreatMoves.map((a) => (
+                        <button
+                          key={a.index}
+                          type="button"
+                          data-keep-selection
+                          disabled={busy}
+                          onClick={() => onAct(a.index)}
+                          className="rounded bg-warn px-2 py-1 text-[11px] font-bold text-black shadow-[0_2px_6px_rgba(0,0,0,0.5)] hover:brightness-110 disabled:opacity-50"
                         >
                           {a.label}
                         </button>
@@ -415,8 +437,8 @@ export function LiveBoard({
                   {selectedName ?? "Selected"}
                 </span>
                 <span className="text-dim">
-                  {activeSelected && attackMoves.length > 0
-                    ? "tap an attack on your Active"
+                  {activeSelected && onCardMoves.length > 0
+                    ? "tap an attack or retreat on your Active"
                     : abilityMoves.length > 0
                       ? "use its Ability, or tap away"
                       : only && only.length === 0
