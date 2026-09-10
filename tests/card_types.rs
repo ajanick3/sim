@@ -114,7 +114,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Maximum Belt and Sacred Charm take it to 172.
     // Lively Stadium and Full Metal Lab take it to 170.
     // The name-prefix cards take it to 164.
-    assert_eq!(trainers, 164, "the Trainers still refused, by kind");
+    // Poké Ball, Rescue Board, and Gravity Gemstone take it to 159.
+    assert_eq!(trainers, 159, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

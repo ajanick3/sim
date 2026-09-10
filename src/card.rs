@@ -384,6 +384,12 @@ pub enum TrainerEffect {
     /// Flip a coin, then draw `heads` on heads or `tails` on tails.
     /// `Picnicker`.
     CoinFlipDraw { heads: u32, tails: u32 },
+    /// Flip a coin; on heads, resolve the wrapped effect. On tails,
+    /// nothing. `Poké Ball`.
+    CoinFlipThen(Box<TrainerEffect>),
+    /// A Tool: while its carrier is the Active, the Retreat Cost of both
+    /// Active Pokémon is `amount` higher. `Gravity Gemstone`.
+    RaisesBothActiveRetreatWhileCarrierActive(u32),
     /// Draw one card for each Mega Evolution Pokémon ex the opponent has
     /// in play. `Jett`.
     DrawPerOpponentMegaEx,
@@ -685,6 +691,12 @@ impl Trainer {
         }];
         match &self.effect {
             TrainerEffect::Decide { slots, .. } => slots,
+            // `Poké Ball` wraps its search in a coin flip; once heads
+            // opens it, the slot read-back still needs to find it.
+            TrainerEffect::CoinFlipThen(inner) => match &**inner {
+                TrainerEffect::Decide { slots, .. } => slots,
+                _ => &[],
+            },
             TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn => &LUMIOSE_CITY_SLOT,
             _ => &[],
         }

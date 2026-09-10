@@ -305,5 +305,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // (a new `CardFilter::BasicPokemonNameContains`), Cynthia's Power
     // Weight (`IncreasesHpForNamePrefix`), Granite Cave
     // (`StadiumReducesDamageForNamePrefix`) take it to 894.
-    assert_eq!(admitted, 894, "coverage moves only on purpose");
+    // Poké Ball (`CoinFlipThen`, a coin-gated wrapper), Rescue Board
+    // (a `ReducesRetreatCost` reskin, its low-HP clause left out), and
+    // Gravity Gemstone (`RaisesBothActiveRetreatWhileCarrierActive`)
+    // take it to 899.
+    assert_eq!(admitted, 899, "coverage moves only on purpose");
 }
