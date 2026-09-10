@@ -59,5 +59,7 @@ export interface WireView {
   turn_number: number;
   phase: string;
   your_hand: WireCard[];
+  /** The Stadium card in play, or null. */
+  stadium: WireCard | null;
   sides: [WireSide, WireSide];
 }

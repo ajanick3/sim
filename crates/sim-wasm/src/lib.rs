@@ -324,6 +324,8 @@ struct WireView {
     turn_number: u32,
     phase: String,
     your_hand: Vec<WireCard>,
+    /// The Stadium card in play, or null.
+    stadium: Option<WireCard>,
     sides: [WireSide; 2],
 }
 
@@ -392,6 +394,7 @@ fn wire_view(db: &CardDb, view: &PlayerView) -> WireView {
         turn_number: view.turn_number,
         phase: phase_tag(view),
         your_hand: view.your_hand.iter().map(|c| wire_card(db, c)).collect(),
+        stadium: view.stadium.as_ref().map(|c| wire_card(db, c)),
         sides: [
             wire_side(db, view.side(PlayerId::One)),
             wire_side(db, view.side(PlayerId::Two)),

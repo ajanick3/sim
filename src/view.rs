@@ -62,6 +62,8 @@ pub struct PlayerView {
     pub phase: Phase,
     /// Your own hand. The opponent's is a count on their side.
     pub your_hand: Vec<CardView>,
+    /// The Stadium in play, or none.
+    pub stadium: Option<CardView>,
     sides: [SideView; 2],
 }
 
@@ -78,6 +80,7 @@ impl PlayerView {
                 .iter()
                 .map(|card| card_view(state, *card))
                 .collect(),
+            stadium: state.stadium.map(|(_, card)| card_view(state, card)),
             sides: [
                 side_view(state, PlayerId::One),
                 side_view(state, PlayerId::Two),
