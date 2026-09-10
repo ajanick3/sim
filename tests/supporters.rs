@@ -1782,3 +1782,45 @@ fn briar_is_admitted_from_the_artifact() {
         .expect("Briar plays");
     assert_eq!(card.effect, TrainerEffect::GrantsBonusPrizeIfOwnTeraAttackerKnocksOutThisTurn);
 }
+
+// --- Beyond the field: plain-draw Supporters ---
+
+fn with_plain_draw(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let cheren = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-cheren",
+        name: "Cheren",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Draw(3),
+    }));
+    (Set { db, ..set }, cheren)
+}
+
+#[test]
+fn cheren_draws_three() {
+    let (set, cheren) = with_plain_draw(build());
+    let mut state = game(&set, cheren, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, cheren);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    // Cheren left the hand for the discard, then drew three.
+    assert_eq!(state.player(player).hand.len(), before - 1 + 3);
+}
+
+#[test]
+fn the_plain_draw_supporters_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Cheren", "Friends in Paldea", "Urbain"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}

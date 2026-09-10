@@ -2866,6 +2866,12 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             };
         }
 
+        TrainerEffect::Draw(count) => {
+            for _ in 0..count {
+                state.draw(player);
+            }
+        }
+
         TrainerEffect::ShuffleHandThenDraw {
             normal,
             at_six_prizes,

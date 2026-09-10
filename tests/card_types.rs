@@ -95,7 +95,11 @@ fn the_kinds_add_up_to_the_pool() {
     // Cage (two prints) took it to 256; Team Rocket's Watchtower
     // (two prints) took it to 254; Colress's Tenacity (two prints)
     // takes it to 252.
-    assert_eq!(trainers, 252, "the Trainers still refused, by kind");
+    //
+    // The standard-trainers effort opens beyond the field: Cheren,
+    // Friends in Paldea, and Urbain — a plain `Draw(3)` Supporter,
+    // five prints — take it to 247.
+    assert_eq!(trainers, 247, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

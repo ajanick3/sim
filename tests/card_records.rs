@@ -259,5 +259,9 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Toxic Subjugation and Poison Chain close Pecharunt's own last
     // two prints, taking it to 803 — every sample-deck slot the
     // engine can play, it now does.
-    assert_eq!(admitted, 803, "coverage moves only on purpose");
+    //
+    // Beyond the field: the standard-trainers effort. Cheren,
+    // Friends in Paldea, and Urbain — a plain `Draw(3)` Supporter,
+    // five prints between them — take it to 808.
+    assert_eq!(admitted, 808, "coverage moves only on purpose");
 }

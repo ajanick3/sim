@@ -133,6 +133,50 @@ fn main() {
         }
     }
 
+    // Standard-wide coverage, over every card in the artifact rather than
+    // only the field. The standard-trainers effort works down the Trainer
+    // and Special Energy rows here; the field tables below stay frozen.
+    let mut all_total: BTreeMap<&'static str, usize> = BTreeMap::new();
+    let mut all_built: BTreeMap<&'static str, usize> = BTreeMap::new();
+    let mut counted: HashSet<String> = HashSet::new();
+    for card in &import.cards {
+        let kind = card.raw["category"].as_str().unwrap_or("");
+        let label = if kind == "Trainer" {
+            match card.raw["trainerType"].as_str().unwrap_or("") {
+                "Supporter" => "Supporters",
+                "Item" => "Items",
+                "Tool" => "Tools",
+                "Stadium" => "Stadiums",
+                _ => continue,
+            }
+        } else if kind == "Energy" {
+            "Special Energy"
+        } else {
+            continue;
+        };
+        if !counted.insert(card.name.clone()) {
+            continue;
+        }
+        *all_total.entry(label).or_default() += 1;
+        let name_built = import
+            .cards
+            .iter()
+            .any(|c| c.name == card.name && c.playable.is_some());
+        if name_built {
+            *all_built.entry(label).or_default() += 1;
+        }
+    }
+    println!("### Standard coverage\n");
+    println!("Every card in the artifact, by name; the tables below track the field.\n");
+    println!("| Kind | Built | Total |");
+    println!("| --- | --- | --- |");
+    for kind in ["Supporters", "Items", "Tools", "Stadiums", "Special Energy"] {
+        let total = all_total.get(kind).copied().unwrap_or(0);
+        let done = all_built.get(kind).copied().unwrap_or(0);
+        println!("| {kind} | {done} | {total} |");
+    }
+    println!();
+
     for kind in ["Supporter", "Item", "Tool", "Stadium", "Energy", "Pokemon"] {
         let mut names: Vec<&String> = kind_of
             .iter()

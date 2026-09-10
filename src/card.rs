@@ -367,6 +367,9 @@ pub enum TrainerEffect {
     /// playing this Stadium, and attaching Energy while it is already in
     /// play. `Festival Grounds`.
     EnergizedPokemonImmuneToSpecialConditions,
+    /// Draw this many cards. No cost, no target. `Cheren`,
+    /// `Friends in Paldea`, `Urbain`.
+    Draw(u32),
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
