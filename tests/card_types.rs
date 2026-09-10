@@ -118,7 +118,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Awakening Drum, Reboot Pod, and Perilous Jungle take it to 156.
     // Jasmine's Gaze, Iron Defender, and Roxie's Performance take it to 148.
     // Lumiose Galette and Dragon Elixir take it to 146.
-    assert_eq!(trainers, 146, "the Trainers still refused, by kind");
+    // Precious Trolley and Energy Search Pro take it to 144.
+    assert_eq!(trainers, 144, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

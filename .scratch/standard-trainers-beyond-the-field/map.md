@@ -57,9 +57,10 @@ More clusters merged:
 - #270 Items — Lumiose Galette, Dragon Elixir (`HealActiveAndClearConditions`, `HealChosenPlain` of type).
 - #272 type-matched Special Energy — Nitro Fire (`ReattachesAfterOwnDiscardByAttackEffect` reskin), Voltaic Lightning (`CarrierAttacksHitOpponentActiveHarder`, a step-32e read in `damage_dealt_with`).
 - #273 Shadowy Darkness Energy — `PreventsBenchDamageWhileCarrierTypeMatches`, a second clause in `bench_attack_damage_blocked`.
+- #274 unlimited searches — Precious Trolley (`Decide`, Basic Pokemon to Bench), Energy Search Pro (`Decide`, Basic Energy of distinct types to hand via `excludes_type_of_previous`).
 
-Coverage at #273: 915 / 3051 prints (30.0%). Refused, by kind:
-Supporter 60, Item 46, Tool 20, Stadium 20, Special Energy 6.
+Coverage at #274: 917 / 3051 prints (30.1%). Refused, by kind:
+Supporter 60, Item 44, Tool 20, Stadium 20, Special Energy 6.
 
 Special Energy still refused: Ignition, Legacy, Neo Upper (a
 conditional-provision family — provides X, or Y off an Evolution /
