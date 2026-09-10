@@ -383,6 +383,12 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Sacred Charm" => (free, TrainerEffect::ReducesDamageFromAbilityHolders(30)),
         "Lively Stadium" => (free, TrainerEffect::StadiumBoostsBasicHp(30)),
         "Rescue Board" => (free, TrainerEffect::ReducesRetreatCost(1)),
+        "Awakening Drum" => (
+            free,
+            TrainerEffect::DrawPerOwnPokemonWithMarker(crate::card::Marker::Ancient),
+        ),
+        "Reboot Pod" => (free, TrainerEffect::AttachBasicEnergyFromDiscardToEachFuture),
+        "Perilous Jungle" => (free, TrainerEffect::StadiumExtraPoisonDamage(20)),
         "Gravity Gemstone" => (
             free,
             TrainerEffect::RaisesBothActiveRetreatWhileCarrierActive(1),

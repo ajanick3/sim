@@ -309,5 +309,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // (a `ReducesRetreatCost` reskin, its low-HP clause left out), and
     // Gravity Gemstone (`RaisesBothActiveRetreatWhileCarrierActive`)
     // take it to 899.
-    assert_eq!(admitted, 899, "coverage moves only on purpose");
+    // Awakening Drum (`DrawPerOwnPokemonWithMarker(Ancient)`), Reboot Pod
+    // (`AttachBasicEnergyFromDiscardToEachFuture`), and Perilous Jungle
+    // (`StadiumExtraPoisonDamage`, read at Checkup) take it to 902.
+    assert_eq!(admitted, 902, "coverage moves only on purpose");
 }

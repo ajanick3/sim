@@ -4,7 +4,7 @@
 use sim::action::{Action, legal_actions};
 use sim::card::{
     Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
-    Then, Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    Marker, Then, Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId};
@@ -1744,6 +1744,88 @@ fn the_coin_and_retreat_cards_are_admitted_from_the_artifact() {
     )
     .unwrap();
     for name in ["Poké Ball", "Rescue Board", "Gravity Gemstone"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
+
+// --- Beyond the field: marker-count Items and a Checkup Stadium ---
+
+fn marked_basic(db: &mut CardDb, print_id: &'static str, name: &'static str, marker: Marker) -> CardDefId {
+    db.add(CardDef::Pokemon(Pokemon {
+        markers: vec![marker],
+        print_id,
+        name,
+        hp: 120,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack { name: "Hit", cost: vec![Type::Colorless], base_damage: 10, inflicts: None, effect: None }],
+    }))
+}
+
+#[test]
+fn awakening_drum_draws_one_per_ancient_pokemon() {
+    let mut set = build();
+    let ancient = marked_basic(&mut set.db, "test-ancient-mon", "Ancientmon", Marker::Ancient);
+    let drum = plain_item(&mut set.db, "test-awakening-drum", "Awakening Drum", TrainerEffect::DrawPerOwnPokemonWithMarker(Marker::Ancient));
+    let mut state = game(&set, drum, 3);
+    let player = state.current;
+    for _ in 0..3 {
+        let c = deal_new_card(&mut state, player, ancient);
+        let m = state.put_into_play(player, c);
+        state.players[player.index()].bench.push(m);
+    }
+    let card = ensure_in_hand(&mut state, player, drum);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), before - 1 + 3);
+}
+
+#[test]
+fn reboot_pod_attaches_a_basic_energy_to_each_future_pokemon() {
+    let mut set = build();
+    let future = marked_basic(&mut set.db, "test-future-mon", "Futuremon", Marker::Future);
+    let pod = plain_item(&mut set.db, "test-reboot-pod", "Reboot Pod", TrainerEffect::AttachBasicEnergyFromDiscardToEachFuture);
+    let mut state = game(&set, pod, 3);
+    let player = state.current;
+    let mut futures = vec![];
+    for _ in 0..2 {
+        let c = deal_new_card(&mut state, player, future);
+        let m = state.put_into_play(player, c);
+        state.players[player.index()].bench.push(m);
+        futures.push(m);
+    }
+    for _ in 0..3 {
+        let e = deal_new_card(&mut state, player, set.energy);
+        state.players[player.index()].discard.push(e);
+    }
+    let card = ensure_in_hand(&mut state, player, pod);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    for f in futures {
+        assert_eq!(state.pokemon(f).attached.len(), 1, "each Future Pokemon got one");
+    }
+}
+
+#[test]
+fn the_marker_cards_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Awakening Drum", "Reboot Pod", "Perilous Jungle"] {
         assert!(
             import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
             "{name} should play",

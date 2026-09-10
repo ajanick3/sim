@@ -115,7 +115,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Lively Stadium and Full Metal Lab take it to 170.
     // The name-prefix cards take it to 164.
     // Poké Ball, Rescue Board, and Gravity Gemstone take it to 159.
-    assert_eq!(trainers, 159, "the Trainers still refused, by kind");
+    // Awakening Drum, Reboot Pod, and Perilous Jungle take it to 156.
+    assert_eq!(trainers, 156, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and
