@@ -3187,6 +3187,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::FewerPrizeIfLilliesKnockedOutByAttack
         | TrainerEffect::DamagesAttackerWhenDefenderIsHit(_)
         | TrainerEffect::DrawsWhenDefenderIsHit(_)
+        | TrainerEffect::ReducesDamageFromType { .. }
         | TrainerEffect::MovesEnergyFromAttackerToTheirBench
         | TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd => {
             unreachable!(
@@ -4702,6 +4703,21 @@ fn damage_dealt_with(
         }
         if state.pokemon_def(defender).resistance == Some(attacker_type) {
             damage = damage.saturating_sub(30);
+        }
+    }
+
+    // Step 33b: a Tool on the defender that softens attacks from one
+    // attacker type — the "-Berry" Tools. After Weakness and Resistance,
+    // per the printed text. `Jamming Tower` turns Tool reads off.
+    if !state.tools_disabled() {
+        let attacker_type = state.pokemon_def(attacker).kind;
+        for tool in &state.pokemon(defender).attached {
+            if let Some(&crate::card::TrainerEffect::ReducesDamageFromType { kind, amount }) =
+                state.def_of(*tool).as_trainer().map(|t| &t.effect)
+                && kind == attacker_type
+            {
+                damage = damage.saturating_sub(amount);
+            }
         }
     }
 
