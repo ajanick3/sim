@@ -7,6 +7,7 @@
 // search / discard prompts. Reached at /live. Shares the engine wiring
 // with the classic board; only the presentation differs.
 
+import { useEffect } from "react";
 import { ActionPanel, CardArt, ENERGY_COLOR } from "./table";
 import {
   COPY_COLORS,
@@ -112,6 +113,19 @@ export function LiveBoard({
   // A tapped hand card (or Pokémon) narrows the action panel to just its
   // moves, so the next step is a short list, not the whole turn.
   const only = selection ? movesForSelection(meta, selection) : undefined;
+  // A selected card with one unambiguous move shows a ✅ over itself.
+  const confirmIndex =
+    selection?.kind === "hand" && only && only.length === 1 ? only[0] : undefined;
+
+  // Click anywhere that isn't part of the selection flow to cancel it.
+  useEffect(() => {
+    if (!selection) return;
+    const onDown = (e: Event) => {
+      if (!(e.target as HTMLElement).closest("[data-keep-selection]")) onSelect(null);
+    };
+    document.addEventListener("pointerdown", onDown, true);
+    return () => document.removeEventListener("pointerdown", onDown, true);
+  }, [selection, onSelect]);
 
   // A selected hand card that can go to the Bench / the empty Active spot —
   // tapped straight onto an empty slot, no button needed.
@@ -189,6 +203,8 @@ export function LiveBoard({
             meta={meta}
             selection={selection}
             onHand={onHand}
+            onConfirm={onAct}
+            confirmIndex={confirmIndex}
             art={art}
           />
         </div>
@@ -235,31 +251,39 @@ export function LiveBoard({
           busy={busy}
           onAct={onAct}
           art={art}
-          hand={view.your_hand}
           meta={meta}
         />
       ) : (
-        <div className="mt-3">
+        <div className="mt-2" data-keep-selection>
           {selection && (
-            <div className="mb-1.5 flex items-center gap-2 text-[12px]">
+            <div className="flex items-center gap-2 text-[12px]">
               <span className="rounded bg-accent px-1.5 py-0.5 font-semibold text-black">
                 {selectedName ?? "Selected"}
               </span>
               <span className="text-dim">
                 {only && only.length === 0
-                  ? "no move from here"
-                  : "choose an action, or tap again to cancel"}
+                  ? "no move from here — tap away to cancel"
+                  : confirmIndex !== undefined
+                    ? "tap ✅ on the card to play it"
+                    : "tap a highlighted spot on the board"}
               </span>
             </div>
           )}
-          <ActionPanel
-            actions={actions}
-            only={only}
-            onClearSelection={() => onSelect(null)}
-            seat={seat}
-            busy={busy}
-            onAct={onAct}
-          />
+          {/* The full list stays here as an escape hatch for phases that
+              have no on-board affordance yet. */}
+          <details className="mt-2 text-[12px] text-dim">
+            <summary className="cursor-pointer">All actions</summary>
+            <div className="mt-1">
+              <ActionPanel
+                actions={actions}
+                only={only}
+                onClearSelection={() => onSelect(null)}
+                seat={seat}
+                busy={busy}
+                onAct={onAct}
+              />
+            </div>
+          </details>
         </div>
       )}
 
@@ -441,6 +465,7 @@ function LiveMon({
     return (
       <button
         type="button"
+        data-keep-selection
         disabled={!placeHere}
         onClick={placeHere}
         className={`${size} flex flex-none items-center justify-center rounded-md border border-dashed text-[9px] disabled:cursor-default ${
@@ -466,6 +491,7 @@ function LiveMon({
   return (
     <button
       type="button"
+      data-keep-selection
       disabled={!interactive}
       onClick={onSelect}
       className={`deal-in ${size} relative flex flex-none flex-col overflow-hidden rounded-md border bg-panel transition-colors disabled:cursor-default disabled:opacity-100 ${ring} ${
@@ -553,12 +579,17 @@ function HandStrip({
   meta,
   selection,
   onHand,
+  onConfirm,
+  confirmIndex,
   art,
 }: {
   hand: WireCard[];
   meta: WireActionMeta[];
   selection: Selection;
   onHand: (card: number) => void;
+  onConfirm: (index: number) => void;
+  /** The one move a selected card resolves to, if it is unambiguous. */
+  confirmIndex?: number;
   art: Art;
 }) {
   // One row per category, in play order. Rows after the first slide up so
@@ -588,19 +619,35 @@ function HandStrip({
                 const selected = selection?.kind === "hand" && selection.card === c.id;
                 const src = art(c.print_id);
                 return (
-                  <button
+                  <div
                     key={c.id}
-                    type="button"
-                    disabled={!playable}
-                    onClick={() => onHand(c.id)}
-                    className={`relative -ml-3 h-[150px] w-[104px] flex-none overflow-hidden rounded-md border bg-panel transition-transform first:ml-0 hover:z-20 hover:-translate-y-6 disabled:translate-y-0 disabled:opacity-50 ${
-                      selected
-                        ? "z-20 -translate-y-6 border-accent ring-2 ring-accent"
-                        : "border-edge"
+                    data-keep-selection
+                    className={`relative -ml-3 h-[150px] w-[104px] flex-none transition-transform first:ml-0 hover:z-20 hover:-translate-y-6 ${
+                      selected ? "z-30 -translate-y-6" : ""
                     }`}
                   >
-                    <CardFace src={src} name={c.name} energyType={c.energy_type} />
-                  </button>
+                    <button
+                      type="button"
+                      disabled={!playable}
+                      onClick={() => onHand(c.id)}
+                      className={`block size-full overflow-hidden rounded-md border bg-panel disabled:opacity-50 ${
+                        selected ? "border-accent ring-2 ring-accent" : "border-edge"
+                      }`}
+                    >
+                      <CardFace src={src} name={c.name} energyType={c.energy_type} />
+                    </button>
+                    {selected && confirmIndex !== undefined && (
+                      <button
+                        type="button"
+                        data-keep-selection
+                        onClick={() => onConfirm(confirmIndex)}
+                        aria-label="Confirm"
+                        className="absolute left-1/2 top-1/2 z-40 grid size-11 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-black/40 bg-emerald-500 text-xl shadow-lg hover:bg-emerald-400"
+                      >
+                        ✅
+                      </button>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -674,7 +721,6 @@ function DecisionBar({
   busy,
   onAct,
   art,
-  hand,
   meta,
 }: {
   actions: string[];
@@ -682,7 +728,6 @@ function DecisionBar({
   busy: boolean;
   onAct: (index: number) => void;
   art: Art;
-  hand: WireCard[];
   meta: WireActionMeta[];
 }) {
   const isFinish = (l: string) => /^(Stop |Finish|Take no more|Move on|Decline)/.test(l);
@@ -690,12 +735,6 @@ function DecisionBar({
   const choices = actions
     .map((label, index) => ({ label, index }))
     .filter(({ label }) => !isFinish(label));
-
-  const cardById = new Map(hand.map((c) => [c.id, c] as const));
-  const cardFor = (index: number) => {
-    const c = meta[index]?.card;
-    return c === null || c === undefined ? undefined : cardById.get(c);
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
@@ -715,8 +754,8 @@ function DecisionBar({
         </div>
         <div className="flex flex-wrap justify-center gap-2 overflow-y-auto p-3">
           {choices.map(({ label, index }) => {
-            const card = cardFor(index);
-            const src = card ? art(card.print_id) : null;
+            const face = meta[index]?.card_face ?? null;
+            const src = face ? art(face.print_id) : null;
             return (
               <button
                 key={index}
@@ -727,8 +766,8 @@ function DecisionBar({
               >
                 <CardFace
                   src={src}
-                  name={card?.name ?? label}
-                  energyType={card?.energy_type ?? null}
+                  name={face?.name ?? label.replace(/^Take /, "")}
+                  energyType={face?.energy_type ?? null}
                 />
               </button>
             );

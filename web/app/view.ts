@@ -44,6 +44,13 @@ export interface WireActionMeta {
   card: number | null;
   /** The Pokémon in play the action names, or null. */
   target: number | null;
+  /** Enough to draw the named card's face, for any zone (e.g. a deck search). */
+  card_face?: {
+    print_id: string;
+    name: string;
+    energy_type: string | null;
+    category: string;
+  } | null;
 }
 
 export interface WireView {

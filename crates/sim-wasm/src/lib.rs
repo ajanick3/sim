@@ -152,6 +152,16 @@ impl Game {
                     kind: action_kind(*action),
                     card,
                     target,
+                    card_face: card.map(|i| {
+                        let id = sim::ids::CardId(i as u32);
+                        let def = self.state.def_of(id);
+                        WireCardFace {
+                            print_id: def.print_id().to_string(),
+                            name: def.name().to_string(),
+                            energy_type: def.as_energy().map(|e| format!("{:?}", e.kind)),
+                            category: card_category(def),
+                        }
+                    }),
                 }
             })
             .collect();
@@ -218,6 +228,17 @@ struct ActionMeta {
     kind: String,
     card: Option<usize>,
     target: Option<usize>,
+    /// Enough to draw the face of the card this action names — set for
+    /// any zone, so a deck-search prompt can show real art.
+    card_face: Option<WireCardFace>,
+}
+
+#[derive(Serialize)]
+struct WireCardFace {
+    print_id: String,
+    name: String,
+    energy_type: Option<String>,
+    category: String,
 }
 
 /// The `Action` variant's name, from its `Debug` form — the same trick
