@@ -175,7 +175,7 @@ export default function Table() {
   if (status.kind === "error") {
     return (
       <Centre>
-        <p style={{ color: "var(--warn)", maxWidth: 480 }}>{status.message}</p>
+        <p className="max-w-[480px] text-warn">{status.message}</p>
         <button onClick={() => startGame(newRecipe(randomSeed(), DECK_KEYS.a, DECK_KEYS.b))}>
           Try again
         </button>
@@ -184,14 +184,14 @@ export default function Table() {
   }
 
   return (
-    <main style={{ maxWidth: 960, margin: "0 auto", padding: "24px 16px" }}>
-      <header style={{ display: "flex", alignItems: "baseline", gap: 12 }}>
-        <h1 style={{ fontSize: 18, margin: 0 }}>sim</h1>
-        <span style={{ color: "var(--dim)" }}>
+    <main className="mx-auto max-w-[960px] px-4 py-6">
+      <header className="flex items-baseline gap-[12px]">
+        <h1 className="m-0 text-[18px]">sim</h1>
+        <span className="text-dim">
           Dragapult ex &nbsp;vs&nbsp; Alakazam &nbsp;·&nbsp; turn {view?.turn_number ?? 0}{" "}
           &nbsp;·&nbsp; {view?.phase}
         </span>
-        <span style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+        <span className="ml-auto flex gap-2">
           <CopyLinkButton />
           <button
             onClick={() => startGame(newRecipe(randomSeed(), DECK_KEYS.a, DECK_KEYS.b), "push")}
@@ -205,7 +205,7 @@ export default function Table() {
         <Banner>{log[log.length - 1] ?? "Game over."}</Banner>
       ) : !revealed && seat !== undefined ? (
         <Centre>
-          <p style={{ color: "var(--dim)" }}>Pass the device.</p>
+          <p className="text-dim">Pass the device.</p>
           <button onClick={() => setRevealed(true)}>{SEAT_NAME[seat]} — tap to reveal</button>
         </Centre>
       ) : (
@@ -253,40 +253,36 @@ function Board({
 }) {
   const seats = sides(view.you);
   return (
-    <div style={{ display: "grid", gap: 16, marginTop: 16 }}>
+    <div className="mt-4 grid gap-4">
       <Side side={view.sides[seats.opponent]} label={`${SEAT_NAME[seats.opponent]} Opponent`} />
       <Side side={view.sides[seats.mine]} label={`${SEAT_NAME[seats.mine]} You`} mine />
 
       <section>
-        <h2 style={h2}>Your hand ({view.your_hand.length})</h2>
-        <div style={{ color: "var(--dim)" }}>
-          {view.your_hand.map((c) => c.name).join(" · ") || "—"}
-        </div>
+        <SectionHeading className="mb-1.5">Your hand ({view.your_hand.length})</SectionHeading>
+        <div className="text-dim">{view.your_hand.map((c) => c.name).join(" · ") || "—"}</div>
       </section>
 
       <section>
-        <h2 style={h2}>{seat !== undefined ? `${SEAT_NAME[seat]} to act` : "Waiting"}</h2>
-        <div style={{ display: "grid", gap: 10 }}>
+        <SectionHeading className="mb-1.5">
+          {seat !== undefined ? `${SEAT_NAME[seat]} to act` : "Waiting"}
+        </SectionHeading>
+        <div className="grid gap-[10px]">
           {groupActions(actions).map((g) => (
             <div key={g.group}>
-              <div style={{ ...h2, margin: "0 0 4px" }}>{g.group}</div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              <SectionHeading className="mb-1">{g.group}</SectionHeading>
+              <div className="flex flex-wrap gap-2">
                 {g.items.map((item) => (
                   <button
                     key={item.index}
                     disabled={busy}
                     onClick={() => onAct(item.index)}
-                    style={{ display: "flex", alignItems: "center", gap: 6 }}
+                    className="flex items-center gap-1.5"
                   >
                     {item.copy !== undefined && (
                       <span
                         aria-hidden
-                        style={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          background: COPY_COLORS[item.copy % COPY_COLORS.length],
-                        }}
+                        className="size-2 rounded-full"
+                        style={{ background: COPY_COLORS[item.copy % COPY_COLORS.length] }}
                       />
                     )}
                     {item.label}
@@ -305,38 +301,16 @@ function Side({ side, label, mine = false }: { side: WireSide; label: string; mi
   const lineup = [side.active, ...side.bench];
   const badges = copyBadges(lineup.map((m) => m?.name ?? null));
   return (
-    <section
-      style={{
-        background: "var(--panel)",
-        border: `1px solid ${mine ? "var(--accent)" : "var(--edge)"}`,
-        borderRadius: 8,
-        padding: 12,
-      }}
-    >
-      <div style={{ display: "flex", gap: 12, color: "var(--dim)", fontSize: 12 }}>
-        <strong style={{ color: "var(--text)" }}>{label}</strong>
+    <section className={`rounded-lg border bg-panel p-3 ${mine ? "border-accent" : "border-edge"}`}>
+      <div className="flex gap-3 text-[12px] text-dim">
+        <strong className="text-text">{label}</strong>
         <span>hand {side.hand_count}</span>
         <span>deck {side.library_count}</span>
         <span>prizes {side.prize_count}</span>
       </div>
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: 8,
-          marginTop: 8,
-        }}
-      >
+      <div className="mt-2 flex flex-col items-center gap-2">
         <Mon mon={side.active} active copy={badges[0]} />
-        <div
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "center",
-            gap: 8,
-          }}
-        >
+        <div className="flex flex-wrap justify-center gap-2">
           {side.bench.map((m, i) => (
             <Mon key={i} mon={m} copy={badges[i + 1]} />
           ))}
@@ -358,7 +332,7 @@ export function Mon({
 }) {
   if (!mon) {
     return (
-      <div data-testid="mon-card" style={{ ...monBox, color: "var(--dim)" }}>
+      <div data-testid="mon-card" className={`${MON_BOX} border-edge text-dim`}>
         {active ? "no Active" : ""}
       </div>
     );
@@ -366,53 +340,29 @@ export function Mon({
   return (
     <div
       data-testid="mon-card"
-      style={{
-        ...monBox,
-        borderColor: active ? "var(--accent)" : "var(--edge)",
-      }}
+      className={`${MON_BOX} ${active ? "border-accent" : "border-edge"}`}
     >
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 4,
-          fontWeight: 600,
-          maxWidth: "100%",
-        }}
-      >
+      <div className="flex max-w-full items-center gap-1 font-semibold">
         {copy !== undefined && (
           <span
             data-testid="copy-badge"
             title={`copy ${copy + 1}`}
-            style={{
-              flex: "none",
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: COPY_COLORS[copy % COPY_COLORS.length],
-            }}
+            className="size-2 flex-none rounded-full"
+            style={{ background: COPY_COLORS[copy % COPY_COLORS.length] }}
           />
         )}
-        <span
-          style={{
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {mon.name}
-        </span>
+        <span className="overflow-hidden text-ellipsis whitespace-nowrap">{mon.name}</span>
       </div>
-      <div style={{ color: "var(--dim)", fontSize: 12 }}>
+      <div className="text-[12px] text-dim">
         {mon.remaining_hp}/{mon.hp} HP
       </div>
       {/* Reserve the attachment row's height so a Pokémon with no
           attachments is the same shape as one carrying Energy. */}
-      <div style={{ minHeight: 14, display: "flex", alignItems: "center" }}>
+      <div className="flex min-h-[14px] items-center">
         <Attachments cards={mon.attached} />
       </div>
       {mon.conditions.length > 0 && (
-        <div style={{ color: "var(--warn)", fontSize: 12 }}>{mon.conditions.join(", ")}</div>
+        <div className="text-[12px] text-warn">{mon.conditions.join(", ")}</div>
       )}
     </div>
   );
@@ -437,32 +387,17 @@ function Attachments({ cards }: { cards: WireCard[] }) {
   const energies = cards.filter((c) => c.energy_type);
   const others = cards.length - energies.length;
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        flexWrap: "wrap",
-        gap: 4,
-        marginTop: 4,
-      }}
-    >
+    <div className="mt-1 flex flex-wrap items-center gap-1">
       {energies.map((c) => (
         <span
           key={c.id}
           title={`${c.energy_type} Energy`}
-          style={{
-            width: 10,
-            height: 10,
-            borderRadius: "50%",
-            background: ENERGY_COLOR[c.energy_type as string] ?? "var(--dim)",
-            border: "1px solid rgba(0,0,0,0.35)",
-          }}
+          className="size-2.5 rounded-full border border-black/35"
+          style={{ background: ENERGY_COLOR[c.energy_type as string] ?? "var(--color-dim)" }}
         />
       ))}
       {others > 0 && (
-        <span style={{ color: "var(--dim)", fontSize: 12 }}>
-          {`+${others} tool${others > 1 ? "s" : ""}`}
-        </span>
+        <span className="text-[12px] text-dim">{`+${others} tool${others > 1 ? "s" : ""}`}</span>
       )}
     </div>
   );
@@ -474,21 +409,11 @@ function LogPanel({ lines }: { lines: string[] }) {
     ref.current?.scrollTo(0, ref.current.scrollHeight);
   }, [lines]);
   return (
-    <section style={{ marginTop: 24 }}>
-      <h2 style={h2}>Log</h2>
+    <section className="mt-6">
+      <SectionHeading className="mb-1.5">Log</SectionHeading>
       <div
         ref={ref}
-        style={{
-          background: "var(--panel)",
-          border: "1px solid var(--edge)",
-          borderRadius: 8,
-          padding: 12,
-          maxHeight: 220,
-          overflowY: "auto",
-          fontSize: 13,
-          color: "var(--dim)",
-          whiteSpace: "pre-wrap",
-        }}
+        className="max-h-[220px] overflow-y-auto whitespace-pre-wrap rounded-lg border border-edge bg-panel p-3 text-[13px] text-dim"
       >
         {lines.length ? lines.join("\n") : "—"}
       </div>
@@ -498,17 +423,7 @@ function LogPanel({ lines }: { lines: string[] }) {
 
 function Centre({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        minHeight: "60vh",
-        display: "flex",
-        flexDirection: "column",
-        gap: 12,
-        alignItems: "center",
-        justifyContent: "center",
-        textAlign: "center",
-      }}
-    >
+    <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-center">
       {children}
     </div>
   );
@@ -516,42 +431,27 @@ function Centre({ children }: { children: React.ReactNode }) {
 
 function Banner({ children }: { children: React.ReactNode }) {
   return (
-    <div
-      style={{
-        marginTop: 16,
-        padding: 16,
-        background: "var(--panel)",
-        border: "1px solid var(--accent)",
-        borderRadius: 8,
-        fontWeight: 600,
-      }}
-    >
+    <div className="mt-4 rounded-lg border border-accent bg-panel p-4 font-semibold">
       {children}
     </div>
   );
 }
 
-const h2: React.CSSProperties = {
-  fontSize: 13,
-  textTransform: "uppercase",
-  letterSpacing: 0.5,
-  color: "var(--dim)",
-  margin: "0 0 6px",
-};
+function SectionHeading({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <h2 className={`m-0 text-[13px] uppercase tracking-[0.5px] text-dim ${className}`}>
+      {children}
+    </h2>
+  );
+}
 
 // Every Pokémon renders in a card of this fixed shape, so a full Bench
 // reads as an even row whatever each Pokémon is carrying.
-const monBox: React.CSSProperties = {
-  width: 132,
-  minHeight: 96,
-  boxSizing: "border-box",
-  padding: 8,
-  border: "1px solid var(--edge)",
-  borderRadius: 6,
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 4,
-  textAlign: "center",
-};
+const MON_BOX =
+  "box-border flex w-[132px] min-h-[96px] flex-col items-center justify-center gap-1 rounded-md border p-2 text-center";

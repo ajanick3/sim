@@ -1,24 +1,42 @@
-:root {
-  color-scheme: dark;
-  --bg: #14161a;
-  --panel: #1d2026;
-  --edge: #2c313a;
-  --text: #e7e9ee;
-  --dim: #9aa2b1;
-  --accent: #6ea8fe;
-  --warn: #f0a24b;
+@import "tailwindcss";
+
+/* The palette the whole UI reads. Declared to Tailwind's theme so the
+   same names work as utilities (bg-panel, text-dim, border-edge) and as
+   CSS variables (var(--color-dim)) for the few dynamic styles that stay
+   inline. */
+@theme {
+  --color-bg: #14161a;
+  --color-panel: #1d2026;
+  --color-edge: #2c313a;
+  --color-text: #e7e9ee;
+  --color-dim: #9aa2b1;
+  --color-accent: #6ea8fe;
+  --color-warn: #f0a24b;
+
+  /* The type colours a card's Energy and copy badges use. */
+  --color-energy-grass: #63b95b;
+  --color-energy-fire: #e4593e;
+  --color-energy-water: #5aa7e4;
+  --color-energy-lightning: #f4d023;
+  --color-energy-psychic: #a461c2;
+  --color-energy-fighting: #c4622d;
+  --color-energy-darkness: #5b5466;
+  --color-energy-metal: #a8a8b5;
+  --color-energy-fairy: #e993d0;
+  --color-energy-dragon: #7b6c4e;
+  --color-energy-colorless: #c6c0b7;
 }
 
-* {
-  box-sizing: border-box;
+:root {
+  color-scheme: dark;
 }
 
 html,
 body {
   margin: 0;
   padding: 0;
-  background: var(--bg);
-  color: var(--text);
+  background: var(--color-bg);
+  color: var(--color-text);
   font:
     14px/1.5 ui-sans-serif,
     system-ui,
@@ -29,16 +47,16 @@ body {
 
 button {
   font: inherit;
-  color: var(--text);
-  background: var(--panel);
-  border: 1px solid var(--edge);
+  color: var(--color-text);
+  background: var(--color-panel);
+  border: 1px solid var(--color-edge);
   border-radius: 6px;
   padding: 6px 10px;
   cursor: pointer;
 }
 
 button:hover:not(:disabled) {
-  border-color: var(--accent);
+  border-color: var(--color-accent);
 }
 
 button:disabled {
