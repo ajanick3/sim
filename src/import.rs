@@ -382,6 +382,42 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Maximum Belt" => (free, TrainerEffect::BonusDamageVsActiveEx(50)),
         "Sacred Charm" => (free, TrainerEffect::ReducesDamageFromAbilityHolders(30)),
         "Lively Stadium" => (free, TrainerEffect::StadiumBoostsBasicHp(30)),
+        "Team Rocket's Proton" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicPokemonNameContains("Team Rocket's"),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 3,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
+        "Hop's Bag" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Library,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicPokemonNameContains("Hop's"),
+                    to: Destination::Bench,
+                    limit: 2,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
+        "Cynthia's Power Weight" => (
+            free,
+            TrainerEffect::IncreasesHpForNamePrefix { word: "Cynthia's", amount: 70 },
+        ),
+        "Granite Cave" => (
+            free,
+            TrainerEffect::StadiumReducesDamageForNamePrefix { word: "Steven's", amount: 30 },
+        ),
         "Full Metal Lab" => (
             free,
             TrainerEffect::StadiumReducesDamageToType { kind: Type::Metal, amount: 30 },
