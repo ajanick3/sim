@@ -397,6 +397,18 @@ pub enum TrainerEffect {
     /// `ShuffleHandThenDraw`, what is given up does not go back in the
     /// deck. `Carmine`.
     DiscardHandThenDraw(u32),
+    /// Shuffle the player's hand into their Library, flip a coin, then
+    /// draw `heads` or `tails`. `Drasna`.
+    ShuffleHandThenCoinFlipDraw { heads: u32, tails: u32 },
+    /// Both players shuffle their hand into their Library, flip one coin,
+    /// then draw — the player and the opponent each drawing the amount
+    /// their side's `*_heads` / `*_tails` names for that flip. `Harlequin`.
+    BothShuffleHandThenCoinFlipDraw {
+        you_heads: u32,
+        opponent_heads: u32,
+        you_tails: u32,
+        opponent_tails: u32,
+    },
     /// Shuffle the player's hand into their Library, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },

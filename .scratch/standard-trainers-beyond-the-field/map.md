@@ -28,3 +28,19 @@ has, in a new shape.
 Ticket 01 resolved 2026-09-10: `TrainerEffect::Draw(u32)` admits the plain-draw
 Supporters (`Cheren`, `Friends in Paldea`, `Urbain`), and `progress_table` now
 prints a Standard-coverage summary; details under [the ticket's Answer](issues/01-plain-draw-supporters.md).
+
+Supporter clusters merged (each a PR, TDD, guards + README moved):
+- #248 plain draw — `Draw(u32)`.
+- #249 heals — `HealActive` reskin, `HealEachYours { amount, of_type }`.
+- #250 draw variants — `CoinFlipDraw`, `DrawPerOpponentMegaEx`, `DrawUpToHandSize`.
+- #251 hand refresh — `DiscardHandThenDraw`, `BothShuffleHandThenDraw` reskin, `Decide` last-card.
+- #252 deck search — `Decide` reskin, new `CardFilter::PokemonOfType`.
+- #253 discard retrieval — `Decide` reskin, new `TargetFilter::OfType`.
+- #254 conditional draw — `DrawThenBonusIf*`, `DrawPerPokemonInOpponentHand`.
+
+Standard Supporters at #254: 25 of 78 names.
+Still deferred: next-turn restrictions (Roxie's, Jasmine's Gaze, Acerola's),
+name-prefix "X's Pokémon" searches (Ethan's Adventure, Team Rocket's *),
+peek-and-discard-rest (Explorer's Guidance, Drayton), Tyme's HP-guess minigame,
+Salvatore (evolve from deck), the "first turn allowed" flag (Carmine's rider,
+Team Rocket's Proton), Amarys' end-of-turn discard.

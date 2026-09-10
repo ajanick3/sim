@@ -472,6 +472,22 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             },
         ),
         "Emma" => (free, TrainerEffect::DrawPerPokemonInOpponentHand),
+        "Drasna" => (
+            free,
+            TrainerEffect::ShuffleHandThenCoinFlipDraw { heads: 8, tails: 3 },
+        ),
+        "Harlequin" => (
+            free,
+            TrainerEffect::BothShuffleHandThenCoinFlipDraw {
+                you_heads: 5,
+                opponent_heads: 3,
+                you_tails: 3,
+                opponent_tails: 5,
+            },
+        ),
+        // The optional pre-draw discard is a player line this build skips;
+        // the mandatory "draw up to five" is the whole of the rest.
+        "Naveen" => (free, TrainerEffect::DrawUpToHandSize(5)),
         "Iris's Fighting Spirit" => (
             Some(Requirement::DiscardOtherCardsFromHand(1)),
             TrainerEffect::DrawUpToHandSize(6),
