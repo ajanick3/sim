@@ -8,12 +8,53 @@
 // with the classic board; only the presentation differs.
 
 import { ActionPanel, CardArt, ENERGY_COLOR } from "./table";
-import { COPY_COLORS, copyBadges, targetsForHandCard, type Selection } from "./session";
+import {
+  COPY_COLORS,
+  copyBadges,
+  movesForSelection,
+  targetsForHandCard,
+  type Selection,
+} from "./session";
 import type { WireActionMeta, WireCard, WirePokemon, WireSide, WireView } from "./view";
 
 const SEAT_NAME = ["🥇", "🥈"];
 
 type Art = (printId: string) => string | null;
+
+/** The face of a card in a tile: real art when there is any, a drawn
+ *  Energy card for Basic Energy (TCGdex has no art for those), else the
+ *  name. */
+function CardFace({
+  src,
+  name,
+  energyType,
+}: {
+  src: string | null;
+  name: string;
+  energyType: string | null;
+}) {
+  if (src) return <CardArt src={src} alt={name} />;
+  if (energyType) {
+    const colour = ENERGY_COLOR[energyType] ?? "var(--color-dim)";
+    return (
+      <span
+        className="absolute inset-0 flex flex-col items-center justify-center gap-1"
+        style={{ background: `radial-gradient(circle at 50% 40%, ${colour}33, transparent 70%)` }}
+      >
+        <span
+          className="size-8 rounded-full border-2 border-black/40"
+          style={{ background: colour }}
+        />
+        <span className="text-[8px] uppercase tracking-widest text-dim">{energyType}</span>
+      </span>
+    );
+  }
+  return (
+    <span className="absolute inset-0 p-1 text-left text-[10px] font-semibold leading-tight">
+      {name}
+    </span>
+  );
+}
 
 export function LiveBoard({
   view,
@@ -59,6 +100,16 @@ export function LiveBoard({
     onSelect(selection?.kind === "hand" && selection.card === card ? null : { kind: "hand", card });
 
   const decision = asDecision(actions);
+  // A tapped hand card (or Pokémon) narrows the action panel to just its
+  // moves, so the next step is a short list, not the whole turn.
+  const only = selection ? movesForSelection(meta, selection) : undefined;
+  const selectedName =
+    selection?.kind === "hand"
+      ? view.your_hand.find((c) => c.id === selection.card)?.name
+      : selection?.kind === "pokemon"
+        ? [mine.active, ...mine.bench, opp.active, ...opp.bench].find((m) => m?.id === selection.id)
+            ?.name
+        : undefined;
 
   return (
     <div className="mt-3">
@@ -123,9 +174,21 @@ export function LiveBoard({
         />
       ) : (
         <div className="mt-3">
+          {selection && (
+            <div className="mb-1.5 flex items-center gap-2 text-[12px]">
+              <span className="rounded bg-accent px-1.5 py-0.5 font-semibold text-black">
+                {selectedName ?? "Selected"}
+              </span>
+              <span className="text-dim">
+                {only && only.length === 0
+                  ? "no move from here"
+                  : "choose an action, or tap again to cancel"}
+              </span>
+            </div>
+          )}
           <ActionPanel
             actions={actions}
-            only={undefined}
+            only={only}
             onClearSelection={() => onSelect(null)}
             seat={seat}
             busy={busy}
@@ -378,13 +441,7 @@ function HandStrip({
                 selected ? "border-accent ring-2 ring-accent" : "border-edge"
               }`}
             >
-              {src ? (
-                <CardArt src={src} alt={c.name} />
-              ) : (
-                <span className="p-1 text-left text-[10px] font-semibold leading-tight">
-                  {c.name}
-                </span>
-              )}
+              <CardFace src={src} name={c.name} energyType={c.energy_type} />
             </button>
           );
         })}
@@ -474,11 +531,9 @@ function DecisionBar({
     .filter(({ label }) => !isFinish(label));
 
   const cardById = new Map(hand.map((c) => [c.id, c] as const));
-  const artFor = (index: number) => {
+  const cardFor = (index: number) => {
     const c = meta[index]?.card;
-    if (c === null || c === undefined) return null;
-    const card = cardById.get(c);
-    return card ? art(card.print_id) : null;
+    return c === null || c === undefined ? undefined : cardById.get(c);
   };
 
   return (
@@ -497,7 +552,8 @@ function DecisionBar({
       </div>
       <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
         {choices.map(({ label, index }) => {
-          const src = artFor(index);
+          const card = cardFor(index);
+          const src = card ? art(card.print_id) : null;
           return (
             <button
               key={index}
@@ -506,13 +562,11 @@ function DecisionBar({
               onClick={() => onAct(index)}
               className="relative h-[150px] w-[108px] flex-none overflow-hidden rounded-md border border-edge bg-panel transition-transform hover:-translate-y-1 disabled:opacity-50"
             >
-              {src ? (
-                <CardArt src={src} alt={label} />
-              ) : (
-                <span className="block p-1 text-left text-[11px] font-semibold leading-tight">
-                  {label}
-                </span>
-              )}
+              <CardFace
+                src={src}
+                name={card?.name ?? label}
+                energyType={card?.energy_type ?? null}
+              />
             </button>
           );
         })}
