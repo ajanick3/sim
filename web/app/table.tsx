@@ -207,13 +207,7 @@ export default function Table({ variant = "classic" }: { variant?: BoardVariant 
   const live = variant === "live";
 
   return (
-    <main
-      className={
-        live
-          ? "mx-auto flex h-[100dvh] max-w-[1100px] flex-col overflow-hidden px-3 py-2"
-          : "mx-auto max-w-[960px] px-3 py-4 sm:px-4 sm:py-6"
-      }
-    >
+    <main className="mx-auto max-w-[960px] px-3 py-4 sm:px-4 sm:py-6">
       <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h1 className="m-0 text-[18px]">sim</h1>
         <span className="ml-auto flex gap-2">
@@ -230,7 +224,7 @@ export default function Table({ variant = "classic" }: { variant?: BoardVariant 
         </span>
       </header>
 
-      <div className={live ? "min-h-0 flex-1 overflow-hidden" : "contents"}>
+      <div className="contents">
         {over ? (
           <Banner>{log[log.length - 1] ?? "Game over."}</Banner>
         ) : !revealed && seat !== undefined ? (

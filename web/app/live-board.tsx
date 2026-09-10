@@ -92,8 +92,11 @@ export function LiveBoard({
   const mine = view.sides[you];
   const opp = view.sides[you === 1 ? 0 : 1];
   const endTurn = meta.findIndex((m) => m.kind === "EndTurn");
+  // Setup: once the Bench is as the player wants it, this ends placing.
+  const finishPlacing = meta.findIndex((m) => m.kind === "FinishPlacing");
   const [showLog, setShowLog] = useState(false);
   const [showRail, setShowRail] = useState(true);
+  const [discardView, setDiscardView] = useState<{ label: string; cards: WireCard[] } | null>(null);
 
   const dropTargets =
     selection?.kind === "hand"
@@ -278,10 +281,10 @@ export function LiveBoard({
   const dragSrc = dragCard ? art(dragCard.print_id) : null;
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-1 pt-1">
-      <div className="flex min-h-0 flex-1 gap-2">
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden rounded-xl border border-edge bg-felt p-2">
-          <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
+    <div className="mt-3">
+      <div className="flex gap-2">
+        <div className="min-w-0 flex-1 rounded-xl border border-edge bg-felt p-2">
+          <div className="flex flex-col gap-1">
             <SideRow
               side={opp}
               label={`${SEAT_NAME[opp.player]} Opponent`}
@@ -290,6 +293,7 @@ export function LiveBoard({
               selection={selection}
               dropTargets={dropTargets}
               onPokemon={onPokemon}
+              onViewDiscard={(cards, label) => setDiscardView({ cards, label })}
             />
 
             {/* Centre lane: stadium on the left, the two Actives stacked. */}
@@ -364,6 +368,7 @@ export function LiveBoard({
               dropTargets={dropTargets}
               onPokemon={onPokemon}
               onPlaceBench={benchPlace >= 0 ? () => onAct(benchPlace) : undefined}
+              onViewDiscard={(cards, label) => setDiscardView({ cards, label })}
             />
           </div>
 
@@ -413,7 +418,18 @@ export function LiveBoard({
         </button>
       )}
 
-      <div className="shrink-0">
+      {finishPlacing >= 0 && (
+        <button
+          type="button"
+          onClick={() => onAct(finishPlacing)}
+          disabled={busy}
+          className="fixed bottom-5 left-1/2 z-40 -translate-x-1/2 rounded-full border-accent bg-accent px-7 py-3 text-sm font-bold text-black shadow-[0_10px_28px_rgba(0,0,0,0.55)] disabled:opacity-50"
+        >
+          ✓ Done placing
+        </button>
+      )}
+
+      <div>
         {firstTurn ? (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
             <div className="w-full max-w-md rounded-xl border border-edge bg-bg p-6 text-center">
@@ -542,6 +558,40 @@ export function LiveBoard({
           </div>
         </div>
       )}
+
+      {discardView && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center"
+          onClick={() => setDiscardView(null)}
+        >
+          <div
+            className="flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-lg border border-edge bg-bg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-edge px-3 py-2">
+              <span className="text-[12px] uppercase tracking-widest text-dim">
+                {discardView.label} ({discardView.cards.length})
+              </span>
+              <button className="text-[13px]" onClick={() => setDiscardView(null)}>
+                Close
+              </button>
+            </div>
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(84px,1fr))] gap-2 overflow-y-auto p-3">
+              {discardView.cards.length === 0 && (
+                <span className="text-[13px] text-dim">empty</span>
+              )}
+              {discardView.cards.map((c, i) => (
+                <span
+                  key={i}
+                  className="relative block aspect-[5/7] overflow-hidden rounded-[6px] border border-black/10 bg-white shadow-[0_1px_3px_rgba(28,16,8,0.5)]"
+                >
+                  <CardFace src={art(c.print_id)} name={c.name} energyType={c.energy_type} />
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -573,6 +623,7 @@ function SideRow({
   dropTargets,
   onPokemon,
   onPlaceBench,
+  onViewDiscard,
 }: {
   side: WireSide;
   label: string;
@@ -583,6 +634,7 @@ function SideRow({
   dropTargets: Map<number, number>;
   onPokemon: (id: number) => void;
   onPlaceBench?: () => void;
+  onViewDiscard?: (cards: WireCard[], label: string) => void;
 }) {
   // Five slots: the Pokémon on the Bench, then empty pads to fill.
   const slots = [...side.bench, ...Array(Math.max(0, 5 - side.bench.length)).fill(null)];
@@ -620,7 +672,17 @@ function SideRow({
           )}
         </div>
       </div>
-      <DeckPile deck={side.library_count} discard={side.discard} art={art} mine={mine} />
+      <DeckPile
+        deck={side.library_count}
+        discard={side.discard}
+        art={art}
+        mine={mine}
+        onView={
+          onViewDiscard && side.discard.length > 0
+            ? () => onViewDiscard(side.discard, `${label} — discard`)
+            : undefined
+        }
+      />
     </div>
   );
 }
@@ -648,11 +710,13 @@ function DeckPile({
   discard,
   art,
   mine = false,
+  onView,
 }: {
   deck: number;
   discard: WireCard[];
   art: Art;
   mine?: boolean;
+  onView?: () => void;
 }) {
   const top = discard.at(-1);
   return (
@@ -662,9 +726,14 @@ function DeckPile({
           {deck}
         </span>
       </div>
-      <div
+      <button
+        type="button"
+        data-keep-selection
         data-toss-target={mine ? "discard" : undefined}
-        className="relative h-[64px] w-[46px] overflow-hidden rounded border border-white/15 bg-panel"
+        onClick={onView}
+        disabled={!onView}
+        aria-label="View discard pile"
+        className="relative h-[64px] w-[46px] overflow-hidden rounded border border-white/15 bg-panel p-0 disabled:cursor-default enabled:hover:border-accent"
       >
         {top && art(top.print_id) ? (
           <CardArt src={art(top.print_id)!} alt={top.name} />
@@ -676,7 +745,7 @@ function DeckPile({
         <span className="absolute inset-x-0 bottom-0 bg-black/60 text-center text-[9px]">
           {discard.length}
         </span>
-      </div>
+      </button>
     </div>
   );
 }
@@ -924,7 +993,7 @@ function HandStrip({
   };
 
   return (
-    <div className="mt-1 shrink-0 rounded-lg border-2 border-cyan-400/60 p-1">
+    <div className="mt-1 rounded-lg border-2 border-cyan-400/60 p-1">
       <div className="mb-1 text-[10px] uppercase tracking-widest text-dim">
         Hand ({hand.length})
       </div>
