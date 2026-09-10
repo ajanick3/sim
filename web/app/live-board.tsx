@@ -100,6 +100,15 @@ export function LiveBoard({
     onSelect(selection?.kind === "hand" && selection.card === card ? null : { kind: "hand", card });
 
   const decision = asDecision(actions);
+  // The coin-flip winner picks who starts — a full-board modal, not two
+  // buttons in a list.
+  const firstTurn =
+    actions.length > 0 && actions.every((a) => /takes the first turn$/.test(a))
+      ? {
+          goFirst: actions.findIndex((a) => a.startsWith(["One", "Two"][you])),
+          goSecond: actions.findIndex((a) => !a.startsWith(["One", "Two"][you])),
+        }
+      : null;
   // A tapped hand card (or Pokémon) narrows the action panel to just its
   // moves, so the next step is a short list, not the whole turn.
   const only = selection ? movesForSelection(meta, selection) : undefined;
@@ -194,7 +203,32 @@ export function LiveBoard({
         />
       </div>
 
-      {decision ? (
+      {firstTurn ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="w-full max-w-md rounded-xl border border-edge bg-bg p-6 text-center">
+            <div className="text-[13px] uppercase tracking-widest text-dim">Coin flip</div>
+            <p className="mt-1 text-lg font-semibold">
+              {seat === you ? "You choose who goes first" : "Choose who goes first"}
+            </p>
+            <div className="mt-5 flex justify-center gap-3">
+              <button
+                onClick={() => firstTurn.goFirst >= 0 && onAct(firstTurn.goFirst)}
+                disabled={busy || firstTurn.goFirst < 0}
+                className="rounded-lg border-accent bg-accent px-6 py-3 text-base font-bold text-black disabled:opacity-40"
+              >
+                Go first
+              </button>
+              <button
+                onClick={() => firstTurn.goSecond >= 0 && onAct(firstTurn.goSecond)}
+                disabled={busy || firstTurn.goSecond < 0}
+                className="rounded-lg px-6 py-3 text-base font-bold disabled:opacity-40"
+              >
+                Go second
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : decision ? (
         <DecisionBar
           actions={actions}
           decision={decision}
