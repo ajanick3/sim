@@ -5,7 +5,7 @@
 // prize counts and END TURN, and a decision bar for search / discard
 // prompts. `game-shell.tsx` drives it; this file only lays out a view.
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { ActionPanel } from "./ActionPanel";
 import { movesForSelection, targetsForHandCard, type Selection } from "../session";
@@ -191,14 +191,15 @@ export function LiveBoard({
   // spots light up) and floats a card ghost under the pointer. Releasing
   // over a highlighted Pokémon or an empty slot plays the move; releasing
   // anywhere else just leaves the card selected for a tap.
-  const [drag, setDrag] = useState<{
-    card: number;
-    x: number;
-    y: number;
-    over: string | null;
-  } | null>(null);
+  // `drag` (start / end) and `hoverDropId` (target crossings) change
+  // rarely and re-render the board. The ghost follows the pointer every
+  // frame, so its position is written straight to the DOM, not to state.
+  const [drag, setDrag] = useState<{ card: number } | null>(null);
+  const [hoverDropId, setHoverDropId] = useState<string | null>(null);
   const pending = useRef<{ card: number; x: number; y: number; started: boolean } | null>(null);
   const suppressClick = useRef(false);
+  const ghostRef = useRef<HTMLDivElement>(null);
+  const ghostPos = useRef({ x: 0, y: 0 });
 
   // The window listeners fire long after render, so they read the live
   // board — the drop targets and empty-slot moves — from a ref.
@@ -206,19 +207,27 @@ export function LiveBoard({
   useEffect(() => {
     board.current = { dropTargets, benchPlace, activePlace };
   });
-  const resolveDrop = (dropId: string): number | null => {
+  const resolveDrop = useCallback((dropId: string): number | null => {
     const b = board.current;
     if (dropId.startsWith("mon:")) return b.dropTargets.get(Number(dropId.slice(4))) ?? null;
     if (dropId === "slot:bench") return b.benchPlace >= 0 ? b.benchPlace : null;
     if (dropId === "slot:active") return b.activePlace >= 0 ? b.activePlace : null;
     return null;
-  };
+  }, []);
 
   const startDrag = (card: number, e: ReactPointerEvent) => {
     if (busy) return;
     suppressClick.current = false;
     pending.current = { card, x: e.clientX, y: e.clientY, started: false };
   };
+
+  // Put the ghost under the pointer the moment it mounts.
+  useLayoutEffect(() => {
+    if (drag && ghostRef.current) {
+      ghostRef.current.style.left = `${ghostPos.current.x}px`;
+      ghostRef.current.style.top = `${ghostPos.current.y}px`;
+    }
+  }, [drag]);
 
   useEffect(() => {
     const dropIdAt = (x: number, y: number) =>
@@ -233,15 +242,23 @@ export function LiveBoard({
         if (Math.hypot(e.clientX - p.x, e.clientY - p.y) < 8) return;
         p.started = true;
         onSelect({ kind: "hand", card: p.card });
+        ghostPos.current = { x: e.clientX, y: e.clientY };
+        setDrag({ card: p.card });
+      }
+      ghostPos.current = { x: e.clientX, y: e.clientY };
+      if (ghostRef.current) {
+        ghostRef.current.style.left = `${e.clientX}px`;
+        ghostRef.current.style.top = `${e.clientY}px`;
       }
       const over = dropIdAt(e.clientX, e.clientY);
-      const landable = over ? resolveDrop(over) != null : false;
-      setDrag({ card: p.card, x: e.clientX, y: e.clientY, over: landable ? over : null });
+      const landable = over && resolveDrop(over) != null ? over : null;
+      setHoverDropId((cur) => (cur === landable ? cur : landable));
     };
     const end = (e: PointerEvent) => {
       const p = pending.current;
       pending.current = null;
       setDrag(null);
+      setHoverDropId(null);
       if (!p?.started) return;
       suppressClick.current = true;
       const id = dropIdAt(e.clientX, e.clientY);
@@ -256,9 +273,8 @@ export function LiveBoard({
       window.removeEventListener("pointerup", end);
       window.removeEventListener("pointercancel", end);
     };
-  }, [onSelect, onAct, busy]);
+  }, [onSelect, onAct, resolveDrop]);
 
-  const hoverDropId = drag?.over ?? null;
   const dragCard = drag ? view.your_hand.find((c) => c.id === drag.card) : undefined;
   const dragSrc = dragCard ? art(dragCard.print_id) : null;
 
@@ -519,8 +535,8 @@ export function LiveBoard({
 
       {drag && (
         <div
-          className="pointer-events-none fixed z-[60] h-[132px] w-[96px] -translate-x-1/2 -translate-y-1/2 rotate-3 overflow-hidden rounded-card border border-black/10 bg-card shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
-          style={{ left: drag.x, top: drag.y }}
+          ref={ghostRef}
+          className="pointer-events-none fixed left-0 top-0 z-[60] h-[132px] w-[96px] -translate-x-1/2 -translate-y-1/2 rotate-3 overflow-hidden rounded-card border border-black/10 bg-card shadow-[0_10px_30px_rgba(0,0,0,0.5)]"
         >
           {dragSrc ? (
             // eslint-disable-next-line @next/next/no-img-element
