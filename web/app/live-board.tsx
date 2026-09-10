@@ -166,23 +166,25 @@ export function LiveBoard({
             onPokemon={onPokemon}
           />
 
-          {/* Centre lane: stadium, then the two Actives nose to nose. */}
-          <div className="my-1.5 flex items-center justify-center gap-2">
+          {/* Centre lane: stadium on the left, the two Actives stacked. */}
+          <div className="my-1.5 flex items-center justify-center gap-3">
             <StadiumSlot />
-            <LiveMon
-              mon={opp.active}
-              active
-              art={art}
-              {...monHooks(opp.active, meta, selection, dropTargets, onPokemon)}
-            />
-            <div className="h-px w-6 bg-white/15" aria-hidden />
-            <LiveMon
-              mon={mine.active}
-              active
-              art={art}
-              placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
-              {...monHooks(mine.active, meta, selection, dropTargets, onPokemon)}
-            />
+            <div className="flex flex-col items-center gap-1">
+              <LiveMon
+                mon={opp.active}
+                active
+                art={art}
+                {...monHooks(opp.active, meta, selection, dropTargets, onPokemon)}
+              />
+              <div className="h-px w-24 bg-white/15" aria-hidden />
+              <LiveMon
+                mon={mine.active}
+                active
+                art={art}
+                placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
+                {...monHooks(mine.active, meta, selection, dropTargets, onPokemon)}
+              />
+            </div>
             <StadiumSlot ghost />
           </div>
 
@@ -457,7 +459,7 @@ function LiveMon({
   placeHere?: () => void;
 }) {
   const size = active
-    ? "w-[156px] h-[116px]"
+    ? "w-[228px] h-[140px]"
     : small
       ? "w-[64px] min-h-[90px]"
       : "w-[96px] min-h-[134px]";
@@ -507,7 +509,7 @@ function LiveMon({
             src={src}
             alt={mon.name}
             loading="lazy"
-            className="absolute inset-0 size-full object-cover object-[50%_16%]"
+            className="absolute inset-0 size-full scale-[1.18] object-cover object-[50%_33%]"
           />
         ) : (
           <CardArt src={src} alt={mon.name} />
@@ -665,7 +667,7 @@ function HandStrip({
                       )
                         onConfirm(confirmIndex);
                     }}
-                    className={`relative h-[150px] w-[104px] flex-none transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-4 hover:scale-[1.06] disabled:opacity-50 ${
+                    className={`group relative h-[150px] w-auto flex-none transition-transform duration-150 will-change-transform hover:z-20 hover:-translate-y-4 hover:scale-[1.06] disabled:opacity-50 ${
                       tossing === c.id
                         ? "card-toss z-40"
                         : selected
@@ -679,14 +681,16 @@ function HandStrip({
                         src={src}
                         alt={c.name}
                         loading="lazy"
-                        className={`size-full rounded-[6px] object-contain drop-shadow-md ${
-                          selected ? "ring-2 ring-accent" : ""
+                        className={`block h-full w-auto rounded-[7px] bg-white object-cover transition-shadow ${
+                          selected
+                            ? "shadow-[0_0_0_3px_var(--color-accent),0_18px_38px_-8px_rgba(0,0,0,0.75)]"
+                            : "shadow-[0_2px_3px_rgba(0,0,0,0.45),0_9px_20px_-5px_rgba(0,0,0,0.55)] group-hover:shadow-[0_8px_14px_rgba(0,0,0,0.5),0_20px_40px_-8px_rgba(0,0,0,0.6)]"
                         }`}
                       />
                     ) : (
                       <span
-                        className={`absolute inset-0 rounded-md border bg-panel ${
-                          selected ? "border-accent ring-2 ring-accent" : "border-edge"
+                        className={`relative block h-full w-[104px] overflow-hidden rounded-[7px] border bg-white text-neutral-800 shadow-[0_2px_3px_rgba(0,0,0,0.45),0_9px_20px_-5px_rgba(0,0,0,0.55)] ${
+                          selected ? "border-accent ring-2 ring-accent" : "border-black/10"
                         }`}
                       >
                         <CardFace src={null} name={c.name} energyType={c.energy_type} />
@@ -820,17 +824,17 @@ function DecisionBar({
                 type="button"
                 disabled={busy}
                 onClick={() => onAct(index)}
-                className="relative h-[176px] w-[126px] flex-none transition-transform hover:-translate-y-1 hover:scale-[1.04] disabled:opacity-50"
+                className="relative h-[184px] w-auto flex-none transition-transform hover:-translate-y-1 hover:scale-[1.04] disabled:opacity-50"
               >
                 {src ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={src}
                     alt={face?.name ?? label}
-                    className="size-full rounded-[6px] object-contain drop-shadow-md"
+                    className="block h-full w-auto rounded-[8px] bg-white object-cover shadow-[0_3px_5px_rgba(0,0,0,0.5),0_14px_30px_-6px_rgba(0,0,0,0.6)]"
                   />
                 ) : (
-                  <span className="absolute inset-0 rounded-md border border-edge bg-panel">
+                  <span className="relative block h-full w-[132px] overflow-hidden rounded-[8px] border border-black/10 bg-white text-neutral-800 shadow-[0_3px_5px_rgba(0,0,0,0.5),0_14px_30px_-6px_rgba(0,0,0,0.6)]">
                     <CardFace
                       src={null}
                       name={face?.name ?? label.replace(/^Take /, "")}
