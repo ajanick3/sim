@@ -1518,10 +1518,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 // "Up to 2" — legal even holding no Darkness Pokémon at all.
                 TrainerEffect::JaninesSecretArt => true,
                 // An Energy on the opponent's board to discard. Only the
-                // no-coin card is gated: `Crushing Hammer` still flips
+                // no-coin cards are gated: `Crushing Hammer` still flips
                 // with nothing to hit, so it stays playable.
                 TrainerEffect::DiscardOpponentEnergy => {
                     state.has_energy_in_play(player.opponent())
+                }
+                TrainerEffect::DiscardOpponentSpecialEnergy => {
+                    state.has_special_energy_in_play(player.opponent())
                 }
                 // A Stage 2 in hand, and a Basic under it in play. Rare
                 // Candy is only playable at all where the pair already
