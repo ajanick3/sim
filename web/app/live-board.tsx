@@ -7,7 +7,7 @@
 // search / discard prompts. Reached at /live. Shares the engine wiring
 // with the classic board; only the presentation differs.
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ActionPanel, CardArt, ENERGY_COLOR } from "./table";
 import {
   COPY_COLORS,
@@ -730,11 +730,24 @@ function DecisionBar({
   art: Art;
   meta: WireActionMeta[];
 }) {
+  const [peeking, setPeeking] = useState(false);
   const isFinish = (l: string) => /^(Stop |Finish|Take no more|Move on|Decline)/.test(l);
   const finish = actions.findIndex(isFinish);
   const choices = actions
     .map((label, index) => ({ label, index }))
     .filter(({ label }) => !isFinish(label));
+
+  if (peeking) {
+    return (
+      <button
+        type="button"
+        onClick={() => setPeeking(false)}
+        className="fixed bottom-4 right-4 z-50 rounded-lg border-accent bg-accent px-4 py-2 font-bold text-black shadow-lg"
+      >
+        ↩ Resume choosing
+      </button>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
@@ -772,6 +785,15 @@ function DecisionBar({
               </button>
             );
           })}
+        </div>
+        <div className="flex justify-end border-t border-edge p-2">
+          <button
+            type="button"
+            onClick={() => setPeeking(true)}
+            className="rounded px-3 py-1 text-[13px]"
+          >
+            View board
+          </button>
         </div>
       </div>
     </div>
