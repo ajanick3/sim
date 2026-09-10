@@ -2709,3 +2709,92 @@ fn the_shuffle_coin_draw_supporters_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: peek-and-search Supporters ---
+
+fn with_peek_search(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let hassel = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-hassel",
+        name: "Hassel",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::KnockedOutDuringOpponentsLastTurn),
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![Slot {
+                filter: CardFilter::AnyCard,
+                to: Destination::Zone(Zone::Hand),
+                limit: 3,
+                excludes_type_of_previous: false,
+                peek: Some(8),
+            }],
+            then: None,
+        },
+    }));
+    let drayton = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-drayton",
+        name: "Drayton",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Library,
+            slots: vec![
+                Slot {
+                    filter: CardFilter::AnyPokemon,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: Some(7),
+                },
+                Slot {
+                    filter: CardFilter::AnyTrainer,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: Some(7),
+                },
+            ],
+            then: None,
+        },
+    }));
+    (Set { db, ..set }, hassel, drayton)
+}
+
+#[test]
+fn hassel_takes_up_to_three_of_the_top_eight_after_a_knockout() {
+    let (set, hassel, _d) = with_peek_search(build());
+    let mut state = game(&set, hassel, 3);
+    let player = state.current;
+    state.knocked_out_last_turn[player.index()] = true;
+    let card = ensure_in_hand(&mut state, player, hassel);
+    let before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let mut took = 0;
+    while took < 3 {
+        let Some(t) = offered(&state).first().copied() else {
+            break;
+        };
+        apply(&mut state, Action::TakeCard { card: t }).unwrap();
+        took += 1;
+    }
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(took, 3, "the card lets you take up to three");
+    assert_eq!(state.player(player).hand.len(), before - 1 + 3);
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn the_peek_search_supporters_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Hassel", "Drayton"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
