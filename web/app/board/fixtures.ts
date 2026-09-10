@@ -2,7 +2,7 @@
 // network: `noArt` draws every card as its fallback face, `swatchArt`
 // hands back a tiny inline gradient so the <img> path renders too.
 
-import type { WireActionMeta, WireCard, WirePokemon, WireSide, WireView } from "../../view";
+import type { WireActionMeta, WireCard, WirePokemon, WireSide, WireView } from "../view";
 import type { Art } from "./shared";
 
 export const noArt: Art = () => null;

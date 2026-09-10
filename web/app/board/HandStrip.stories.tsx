@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { fn } from "storybook/test";
-import type { WireActionMeta } from "../../view";
+import type { WireActionMeta } from "../view";
 import { card, noArt, psychicEnergy, swatchArt } from "./fixtures";
 import { HandStrip } from "./HandStrip";
 

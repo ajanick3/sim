@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/nextjs";
 import { fn } from "storybook/test";
-import type { WireView } from "../../view";
+import type { WireView } from "../view";
 import { defender, pokemon, sampleView, side, swatchArt } from "./fixtures";
 import { LiveBoard } from "./LiveBoard";
 

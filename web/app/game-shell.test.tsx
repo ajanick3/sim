@@ -45,8 +45,7 @@ vi.mock("./wasm", () => ({
   })),
 }));
 
-import Table, { LogPanel, Mon } from "./table";
-import type { WirePokemon } from "./view";
+import GameShell from "./game-shell";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -58,9 +57,9 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("<Table> recipe wiring", () => {
+describe("<GameShell> recipe wiring", () => {
   it("starts a fresh game and writes a recipe to the address bar", async () => {
-    render(<Table />);
+    render(<GameShell />);
     await screen.findByText("Copy link");
 
     await waitFor(() => {
@@ -84,7 +83,7 @@ describe("<Table> recipe wiring", () => {
         }),
     );
 
-    render(<Table />);
+    render(<GameShell />);
     await screen.findByText("Copy link");
 
     await waitFor(() => expect(replayStandard).toHaveBeenCalled());
@@ -95,7 +94,7 @@ describe("<Table> recipe wiring", () => {
   });
 
   it("rebuilds the game to whatever recipe Back or Forward lands on", async () => {
-    render(<Table />);
+    render(<GameShell />);
     await screen.findByText("Copy link");
     replayStandard.mockClear();
 
@@ -124,15 +123,11 @@ describe("<Table> recipe wiring", () => {
 
   it("pushes a history entry for each move so Back steps through them", async () => {
     const pushSpy = vi.spyOn(window.history, "pushState");
-    render(<Table />);
+    render(<GameShell />);
 
-    // Past the reveal gate first: the action buttons hide behind it.
-    const reveal = await screen.findByRole("button", { name: /tap to reveal/ });
-    await domAct(async () => {
-      reveal.click();
-    });
-
-    const button = await screen.findByRole("button", { name: "Action A" });
+    // The board keeps the raw action list in a collapsed "All actions"
+    // panel; the buttons are in the DOM, just hidden.
+    const button = await screen.findByRole("button", { name: "Action A", hidden: true });
     pushSpy.mockClear();
 
     await domAct(async () => {
@@ -142,106 +137,5 @@ describe("<Table> recipe wiring", () => {
     await waitFor(() => expect(pushSpy).toHaveBeenCalledTimes(1));
     expect(gameStub.apply).toHaveBeenCalledWith(0);
     pushSpy.mockRestore();
-  });
-});
-
-describe("<Mon> card shape", () => {
-  const bare: WirePokemon = {
-    id: 0,
-    name: "Pikachu",
-    print_id: "test-0",
-    hp: 60,
-    damage: 0,
-    remaining_hp: 60,
-    conditions: [],
-    attached: [],
-  };
-  const loaded: WirePokemon = {
-    id: 1,
-    name: "A Very Long Pokemon Name ex",
-    print_id: "test-1",
-    hp: 340,
-    damage: 120,
-    remaining_hp: 220,
-    conditions: ["Asleep", "Poisoned"],
-    attached: [
-      {
-        id: 1,
-        name: "Fire Energy",
-        def: 0,
-        energy_type: "Fire",
-        print_id: "e-1",
-        category: "energy",
-      },
-      {
-        id: 2,
-        name: "Water Energy",
-        def: 0,
-        energy_type: "Water",
-        print_id: "e-2",
-        category: "energy",
-      },
-      { id: 3, name: "Rescue Board", def: 0, energy_type: null, print_id: "t-3", category: "tool" },
-    ],
-  };
-
-  it("renders every Pokemon from the same fixed-size card class", () => {
-    render(
-      <>
-        <Mon mon={bare} />
-        <Mon mon={loaded} />
-        <Mon mon={null} />
-      </>,
-    );
-    const [a, b, c] = screen.getAllByTestId("mon-card");
-    for (const el of [a, b, c]) {
-      expect(el.className).toContain("w-[104px]");
-      expect(el.className).toContain("min-h-[132px]");
-    }
-  });
-
-  it("draws a copy badge only when a copy index is given", () => {
-    const { rerender } = render(<Mon mon={bare} />);
-    expect(screen.queryByTestId("copy-badge")).toBeNull();
-
-    rerender(<Mon mon={bare} copy={2} />);
-    const badge = screen.getByTestId("copy-badge");
-    expect(badge.style.background).toBe("rgb(90, 167, 228)"); // COPY_COLORS[2], blue
-  });
-
-  it("is clickable only when it is a legal move's target", () => {
-    const pick = vi.fn();
-    const { rerender } = render(<Mon mon={bare} onSelect={pick} />);
-    const card = screen.getByTestId("mon-card") as HTMLButtonElement;
-    expect(card.disabled).toBe(true);
-    card.click();
-    expect(pick).not.toHaveBeenCalled();
-
-    rerender(<Mon mon={bare} selectable onSelect={pick} />);
-    (screen.getByTestId("mon-card") as HTMLButtonElement).click();
-    expect(pick).toHaveBeenCalledTimes(1);
-  });
-
-  it("rings itself when selected and a drop target when a card can land", () => {
-    const { rerender } = render(<Mon mon={bare} selectable selected onSelect={() => {}} />);
-    expect(screen.getByTestId("mon-card").className).toContain("ring-accent");
-
-    rerender(<Mon mon={bare} selectable dropTarget onSelect={() => {}} />);
-    expect(screen.getByTestId("mon-card").className).toContain("ring-warn");
-  });
-});
-
-describe("<LogPanel>", () => {
-  it("renders one row per line and animates only the newest", () => {
-    render(<LogPanel lines={["first", "second", "third"]} />);
-    const rows = screen.getAllByText(/first|second|third/);
-    expect(rows).toHaveLength(3);
-    expect(rows[2].className).toContain("line-in");
-    expect(rows[0].className).not.toContain("line-in");
-  });
-
-  it("shows a dash when the log is empty", () => {
-    render(<LogPanel lines={[]} />);
-    expect(screen.getByText("—")).toBeInTheDocument();
   });
 });

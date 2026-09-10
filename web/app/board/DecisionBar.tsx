@@ -1,6 +1,6 @@
 "use client";
 
-import type { WireActionMeta } from "../../view";
+import type { WireActionMeta } from "../view";
 import { CardFace } from "./CardFace";
 import type { Art, DecisionKind } from "./shared";
 

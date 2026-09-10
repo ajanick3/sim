@@ -9,9 +9,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import type { PointerEvent as ReactPointerEvent } from "react";
-import { ActionPanel } from "../../table";
-import { movesForSelection, targetsForHandCard, type Selection } from "../../session";
-import type { WireActionMeta, WireCard, WireView } from "../../view";
+import { ActionPanel } from "./ActionPanel";
+import { movesForSelection, targetsForHandCard, type Selection } from "../session";
+import type { WireActionMeta, WireCard, WireView } from "../view";
 import { CardFace } from "./CardFace";
 import { DecisionBar } from "./DecisionBar";
 import { HandStrip } from "./HandStrip";

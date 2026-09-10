@@ -1,7 +1,7 @@
 // Pure helpers and shared types for the /live board components.
 
-import type { Selection } from "../../session";
-import type { WireActionMeta, WireCard, WirePokemon } from "../../view";
+import type { Selection } from "../session";
+import type { WireActionMeta, WireCard, WirePokemon } from "../view";
 
 /** Resolve a print id to an image URL, or null when there is no art. */
 export type Art = (printId: string) => string | null;

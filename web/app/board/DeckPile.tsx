@@ -1,7 +1,7 @@
 "use client";
 
-import { CardArt } from "../../table";
-import type { WireCard } from "../../view";
+import { CardArt } from "./CardArt";
+import type { WireCard } from "../view";
 import { CARD_SIZE } from "./sizes";
 import type { Art } from "./shared";
 

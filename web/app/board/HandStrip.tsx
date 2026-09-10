@@ -2,8 +2,8 @@
 
 import type { PointerEvent as ReactPointerEvent, RefObject } from "react";
 import { useState } from "react";
-import type { Selection } from "../../session";
-import type { WireActionMeta, WireCard } from "../../view";
+import type { Selection } from "../session";
+import type { WireActionMeta, WireCard } from "../view";
 import { CardFace } from "./CardFace";
 import { CARD_SIZE } from "./sizes";
 import { splitHandRows, type Art } from "./shared";
@@ -42,7 +42,9 @@ export function HandStrip({
   const rows = splitHandRows(hand);
   const [tossing, setTossing] = useState<number | null>(null);
   const reduce =
-    typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
   const onCardClick = (c: WireCard, selected: boolean, el: HTMLElement) => {
     if (selected && confirmIndex !== undefined) {

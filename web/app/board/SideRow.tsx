@@ -1,7 +1,7 @@
 "use client";
 
-import type { Selection } from "../../session";
-import type { WireActionMeta, WireCard, WireSide } from "../../view";
+import type { Selection } from "../session";
+import type { WireActionMeta, WireCard, WireSide } from "../view";
 import { DeckPile } from "./DeckPile";
 import { LiveMon } from "./LiveMon";
 import { PrizeStack } from "./PrizeStack";
