@@ -5,6 +5,8 @@ export interface WireCard {
   id: number;
   name: string;
   def: number;
+  /** TCGdex print id — the key card art is filed under. */
+  print_id: string;
   /** The Energy type this card provides, e.g. "Fire", or null if not an Energy. */
   energy_type: string | null;
 }
@@ -13,6 +15,8 @@ export interface WirePokemon {
   /** Stable id for this Pokémon in play — matches an action's `target`. */
   id: number;
   name: string;
+  /** TCGdex print id of this Pokémon's top card. */
+  print_id: string;
   hp: number;
   damage: number;
   remaining_hp: number;

@@ -203,6 +203,8 @@ struct WireCard {
     id: usize,
     name: String,
     def: usize,
+    /// TCGdex print id — the key card art is filed under.
+    print_id: String,
     /// The Energy type this card provides, e.g. `"Fire"`, or `null` when
     /// the card is not an Energy — a Tool, say.
     energy_type: Option<String>,
@@ -257,6 +259,7 @@ fn action_handles(action: Action) -> (Option<usize>, Option<usize>) {
 struct WirePokemon {
     id: usize,
     name: String,
+    print_id: String,
     hp: u32,
     damage: u32,
     remaining_hp: u32,
@@ -290,6 +293,7 @@ fn wire_card(db: &CardDb, card: &sim::view::CardView) -> WireCard {
         id: card.id.index(),
         name: card.name.to_string(),
         def: card.def.index(),
+        print_id: card.print_id.to_string(),
         energy_type: db
             .get(card.def)
             .as_energy()
@@ -301,6 +305,7 @@ fn wire_pokemon(db: &CardDb, pokemon: &sim::view::PokemonView) -> WirePokemon {
     WirePokemon {
         id: pokemon.id.index(),
         name: pokemon.name.to_string(),
+        print_id: pokemon.print_id.to_string(),
         hp: pokemon.hp,
         damage: pokemon.damage,
         remaining_hp: pokemon.remaining_hp,

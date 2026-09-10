@@ -149,6 +149,7 @@ describe("<Mon> card shape", () => {
   const bare: WirePokemon = {
     id: 0,
     name: "Pikachu",
+    print_id: "test-0",
     hp: 60,
     damage: 0,
     remaining_hp: 60,
@@ -158,14 +159,15 @@ describe("<Mon> card shape", () => {
   const loaded: WirePokemon = {
     id: 1,
     name: "A Very Long Pokemon Name ex",
+    print_id: "test-1",
     hp: 340,
     damage: 120,
     remaining_hp: 220,
     conditions: ["Asleep", "Poisoned"],
     attached: [
-      { id: 1, name: "Fire Energy", def: 0, energy_type: "Fire" },
-      { id: 2, name: "Water Energy", def: 0, energy_type: "Water" },
-      { id: 3, name: "Rescue Board", def: 0, energy_type: null },
+      { id: 1, name: "Fire Energy", def: 0, energy_type: "Fire", print_id: "e-1" },
+      { id: 2, name: "Water Energy", def: 0, energy_type: "Water", print_id: "e-2" },
+      { id: 3, name: "Rescue Board", def: 0, energy_type: null, print_id: "t-3" },
     ],
   };
 
