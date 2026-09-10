@@ -38,9 +38,43 @@ Supporter clusters merged (each a PR, TDD, guards + README moved):
 - #253 discard retrieval — `Decide` reskin, new `TargetFilter::OfType`.
 - #254 conditional draw — `DrawThenBonusIf*`, `DrawPerPokemonInOpponentHand`.
 
-Standard Supporters at #254: 25 of 78 names.
-Still deferred: next-turn restrictions (Roxie's, Jasmine's Gaze, Acerola's),
-name-prefix "X's Pokémon" searches (Ethan's Adventure, Team Rocket's *),
-peek-and-discard-rest (Explorer's Guidance, Drayton), Tyme's HP-guess minigame,
-Salvatore (evolve from deck), the "first turn allowed" flag (Carmine's rider,
-Team Rocket's Proton), Amarys' end-of-turn discard.
+More clusters merged:
+- #255 shuffle-then-coin draw — `ShuffleHandThenCoinFlipDraw`, `BothShuffleHandThenCoinFlipDraw`.
+- #256 peek search — Hassel, Drayton (`Decide` + `peek` reskins).
+- #257 Special Energy — `PreventsAttackEffectsOnCarrier` reskin, `CarrierHasNoRetreatCost`, `CarrierImmuneToSpecialConditions`.
+- #258 heal-chosen — `HealChosenPlain { amount, of_type }`; `Phase::HealingChosen` gains `clear_conditions` + `of_type`.
+- #259 Item searches — six `Decide` reskins, `Then::EndTurnIfMoved`.
+- #260 Item deck-manip — `DiscardTopOfDeck`, `SwitchOutOpponentActive`, `Decide` to discard.
+- #261 Item conditions — `InflictOnOpponentActive`, `ConfuseBothActivesExceptType`.
+- #262 "-Berry" Tools — `ReducesDamageFromType`, a defender-Tool read in `damage_dealt_with`.
+- #263 conditional-damage Tools — `BonusDamageVsActiveEx`, `ReducesDamageFromAbilityHolders`.
+
+Coverage at #263: 886 / 3051 prints (29.0%). Refused, by kind:
+Supporter 69, Item 54, Tool 27, Stadium 24, Special Energy 9.
+
+Deferred — the tier that needs its own design/ADR before it is cheap:
+- **Trainer-as-Pokémon**: the eight "Antique … Fossil" Items play as a
+  60-HP Basic. A whole mechanic; no seam for it yet.
+- **Next-turn player-wide effects**: Roxie's Performance, Jasmine's Gaze,
+  Acerola's Mischief, Iron Defender. `opponent_next_turn_restriction`
+  is keyed to one `PokemonId` + an `AttackEffect`; a Supporter/Item
+  shield over a whole side needs a new store and clear/arm logic.
+- **Name-prefix Pokémon filters**: "Ethan's Pokémon", "Team Rocket's
+  Pokémon", "Hop's Pokémon" — a `PokemonNameContains` filter (mirror
+  `SupporterNameContains`), then Ethan's Adventure, Team Rocket's Proton,
+  Hop's Bag, Team Rocket's Great Ball, Cynthia's Power Weight, Light Ball.
+- **Peek-then-discard/reorder the rest**: Explorer's Guidance, Deduction
+  Kit, Roto-Stick, Grimsley's Move — the `Decide`/`peek` leftover is
+  always "shuffle back" today.
+- **Interactive opponent choice**: Lt. Surge's Bargain, Meddling Memo,
+  Team Rocket's Bother-Bot, Tyme's HP-guess minigame.
+- **Ancient / Future markers**: Awakening Drum, Reboot Pod — the `Marker`
+  enum has Ex/Mega/Tera only.
+- **"Playable on the first turn" allowance**: Carmine's rider, Team
+  Rocket's Proton, Call Bell, Chill Teaser Toy.
+- **Retreat-cost modifier Tools**: Rescue Board, Gravity Gemstone,
+  Heavy Baton, Sparkling Crystal, Counter Gain.
+- **Attack-granting Tools**: Core Memory, Technical Machine: Fluorite.
+- Coin-gated searches (Poké Ball, Energy Coin, Team Rocket's Great Ball),
+  the many single-effect one-offs (Scoop Up Cyclone, Megaton Blower,
+  Great Haul Net, Precious Trolley, Redeemable Ticket, …).

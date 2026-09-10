@@ -379,6 +379,8 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Cheren" | "Friends in Paldea" | "Urbain" => (free, TrainerEffect::Draw(3)),
         "Cook" => (free, TrainerEffect::HealActive(70)),
         "Hole-Digging Shovel" => (free, TrainerEffect::DiscardTopOfDeck(2)),
+        "Maximum Belt" => (free, TrainerEffect::BonusDamageVsActiveEx(50)),
+        "Sacred Charm" => (free, TrainerEffect::ReducesDamageFromAbilityHolders(30)),
         "Babiri Berry" => (
             free,
             TrainerEffect::ReducesDamageFromType { kind: Type::Metal, amount: 60 },

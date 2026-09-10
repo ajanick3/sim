@@ -408,6 +408,14 @@ pub enum TrainerEffect {
     /// and Resistance. The "-Berry" Tools (`Babiri`, `Colbur`, `Occa`,
     /// `Passho`, `Payapa`, `Haban`).
     ReducesDamageFromType { kind: Type, amount: u32 },
+    /// A Tool on the attacker: its attacks do `amount` more damage to an
+    /// opponent's Active that is a Pokémon ex, before Weakness and
+    /// Resistance. `Maximum Belt`.
+    BonusDamageVsActiveEx(u32),
+    /// A Tool on the defender: it takes `amount` less damage from attacks
+    /// by an opponent's Pokémon that has an Ability, after Weakness and
+    /// Resistance. `Sacred Charm`.
+    ReducesDamageFromAbilityHolders(u32),
     /// Confuse both Active Pokémon that are not of this type. `Dark Bell`
     /// spares a Darkness Active on either side.
     ConfuseBothActivesExceptType(Type),
