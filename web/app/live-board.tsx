@@ -117,6 +117,9 @@ export function LiveBoard({
     selection?.kind === "pokemon" && mine.active != null && selection.id === mine.active.id;
 
   const decision = asDecision(actions);
+  // A yes/no Ability prompt ("Use Psychic Draw" / "Decline Psychic
+  // Draw") — surfaced as its own bar, not left in the All-actions list.
+  const prompt = decision ? null : asPrompt(actions);
   // The coin-flip winner picks who starts — a full-board modal, not two
   // buttons in a list.
   const firstTurn =
@@ -300,6 +303,8 @@ export function LiveBoard({
           art={art}
           meta={meta}
         />
+      ) : prompt ? (
+        <PromptBar prompt={prompt} busy={busy} onAct={onAct} />
       ) : (
         <div className="mt-2" data-keep-selection>
           {selection && (
@@ -824,6 +829,57 @@ function asDecision(actions: string[]): { kind: DecisionKind; verb: string } | n
   if (test(/^Choose /)) return { kind: "choose", verb: "Make a choice" };
   if (test(/^Discard .* to pay/)) return { kind: "pay", verb: "Discard to pay the cost" };
   return null;
+}
+
+type Prompt = { verb: string; accepts: { label: string; index: number }[]; decline: number };
+
+/** A "may" Ability the engine is waiting on — the action set is one or
+ *  more ways to use it plus a single "Decline …". Returns null when
+ *  there is no "Decline …" line, so an ordinary turn is never caught. */
+function asPrompt(actions: string[]): Prompt | null {
+  const decline = actions.findIndex((a) => /^Decline /.test(a));
+  if (decline < 0) return null;
+  const accepts = actions
+    .map((label, index) => ({ label, index }))
+    .filter(({ index }) => index !== decline);
+  if (accepts.length === 0) return null;
+  const name = actions[decline].replace(/^Decline (the )?/, "");
+  return { verb: `Use ${name}?`, accepts, decline };
+}
+
+function PromptBar({
+  prompt,
+  busy,
+  onAct,
+}: {
+  prompt: Prompt;
+  busy: boolean;
+  onAct: (index: number) => void;
+}) {
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-edge bg-bg p-3">
+      <span className="mr-1 font-bold">{prompt.verb}</span>
+      {prompt.accepts.map(({ label, index }) => (
+        <button
+          key={index}
+          type="button"
+          disabled={busy}
+          onClick={() => onAct(index)}
+          className="rounded-md border-accent bg-accent px-4 py-1.5 font-bold text-black disabled:opacity-50"
+        >
+          {label}
+        </button>
+      ))}
+      <button
+        type="button"
+        disabled={busy}
+        onClick={() => onAct(prompt.decline)}
+        className="rounded-md px-4 py-1.5 text-dim disabled:opacity-50"
+      >
+        Decline
+      </button>
+    </div>
+  );
 }
 
 function DecisionBar({
