@@ -5,6 +5,8 @@
 export interface Game {
   legal_actions(): string;
   apply(index: number): void;
+  /** Every action index applied so far, oldest first, as JSON `number[]`. */
+  history(): string;
   log(): string;
   player_to_act(): number | undefined;
   is_over(): boolean;
@@ -22,6 +24,13 @@ export interface SimWasm {
   Game: {
     synthetic: (seed: bigint) => Game;
     standard: (data: CardData, deckA: string, deckB: string, seed: bigint) => Game;
+    replay_standard: (
+      data: CardData,
+      deckA: string,
+      deckB: string,
+      seed: bigint,
+      indices: Uint32Array | number[],
+    ) => Game;
   };
 }
 

@@ -39,7 +39,9 @@ export class CardData {
 if (Symbol.dispose) CardData.prototype[Symbol.dispose] = CardData.prototype.free;
 
 /**
- * One game, held open across calls.
+ * One game, held open across calls. `applied` records the index of every
+ * action taken, in order — the tail of a recipe that can rebuild this game
+ * from its start (ticket `web-followups/01`).
  */
 export class Game {
     static __wrap(ptr) {
@@ -66,6 +68,22 @@ export class Game {
         const ret = wasm.game_apply(this.__wbg_ptr, index);
         if (ret[1]) {
             throw takeFromExternrefTable0(ret[0]);
+        }
+    }
+    /**
+     * Every action index applied so far, oldest first. JSON `number[]`.
+     * @returns {string}
+     */
+    history() {
+        let deferred1_0;
+        let deferred1_1;
+        try {
+            const ret = wasm.game_history(this.__wbg_ptr);
+            deferred1_0 = ret[0];
+            deferred1_1 = ret[1];
+            return getStringFromWasm0(ret[0], ret[1]);
+        } finally {
+            wasm.__wbindgen_free(deferred1_0, deferred1_1, 1);
         }
     }
     /**
@@ -116,6 +134,31 @@ export class Game {
     player_to_act() {
         const ret = wasm.game_player_to_act(this.__wbg_ptr);
         return ret === 0xFFFFFF ? undefined : ret;
+    }
+    /**
+     * Rebuild a Standard game and replay `indices` from its start, each an
+     * index into the legal-action list at that point. The end state is the
+     * game those moves produced live.
+     * @param {CardData} data
+     * @param {string} deck_a
+     * @param {string} deck_b
+     * @param {bigint} seed
+     * @param {Uint32Array} indices
+     * @returns {Game}
+     */
+    static replay_standard(data, deck_a, deck_b, seed, indices) {
+        _assertClass(data, CardData);
+        const ptr0 = passStringToWasm0(deck_a, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len0 = WASM_VECTOR_LEN;
+        const ptr1 = passStringToWasm0(deck_b, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+        const len1 = WASM_VECTOR_LEN;
+        const ptr2 = passArray32ToWasm0(indices, wasm.__wbindgen_malloc);
+        const len2 = WASM_VECTOR_LEN;
+        const ret = wasm.game_replay_standard(data.__wbg_ptr, ptr0, len0, ptr1, len1, seed, ptr2, len2);
+        if (ret[2]) {
+            throw takeFromExternrefTable0(ret[1]);
+        }
+        return Game.__wrap(ret[0]);
     }
     /**
      * A game of the Standard set. Each decklist is the text of a `.txt`
@@ -210,12 +253,27 @@ function getStringFromWasm0(ptr, len) {
     return decodeText(ptr >>> 0, len);
 }
 
+let cachedUint32ArrayMemory0 = null;
+function getUint32ArrayMemory0() {
+    if (cachedUint32ArrayMemory0 === null || cachedUint32ArrayMemory0.byteLength === 0) {
+        cachedUint32ArrayMemory0 = new Uint32Array(wasm.memory.buffer);
+    }
+    return cachedUint32ArrayMemory0;
+}
+
 let cachedUint8ArrayMemory0 = null;
 function getUint8ArrayMemory0() {
     if (cachedUint8ArrayMemory0 === null || cachedUint8ArrayMemory0.byteLength === 0) {
         cachedUint8ArrayMemory0 = new Uint8Array(wasm.memory.buffer);
     }
     return cachedUint8ArrayMemory0;
+}
+
+function passArray32ToWasm0(arg, malloc) {
+    const ptr = malloc(arg.length * 4, 4) >>> 0;
+    getUint32ArrayMemory0().set(arg, ptr / 4);
+    WASM_VECTOR_LEN = arg.length;
+    return ptr;
 }
 
 function passStringToWasm0(arg, malloc, realloc) {
@@ -295,6 +353,7 @@ function __wbg_finalize_init(instance, module) {
     wasmInstance = instance;
     wasm = instance.exports;
     wasmModule = module;
+    cachedUint32ArrayMemory0 = null;
     cachedUint8ArrayMemory0 = null;
     wasm.__wbindgen_start();
     return wasm;

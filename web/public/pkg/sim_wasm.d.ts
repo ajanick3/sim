@@ -16,7 +16,9 @@ export class CardData {
 }
 
 /**
- * One game, held open across calls.
+ * One game, held open across calls. `applied` records the index of every
+ * action taken, in order — the tail of a recipe that can rebuild this game
+ * from its start (ticket `web-followups/01`).
  */
 export class Game {
     private constructor();
@@ -26,6 +28,10 @@ export class Game {
      * Apply the action at `index` in the current `legal_actions` list.
      */
     apply(index: number): void;
+    /**
+     * Every action index applied so far, oldest first. JSON `number[]`.
+     */
+    history(): string;
     /**
      * Whether the game has finished.
      */
@@ -43,6 +49,12 @@ export class Game {
      * Which seat must act next, `0` or `1`, or nothing once the game is over.
      */
     player_to_act(): number | undefined;
+    /**
+     * Rebuild a Standard game and replay `indices` from its start, each an
+     * index into the legal-action list at that point. The end state is the
+     * game those moves produced live.
+     */
+    static replay_standard(data: CardData, deck_a: string, deck_b: string, seed: bigint, indices: Uint32Array): Game;
     /**
      * A game of the Standard set. Each decklist is the text of a `.txt`
      * deck file. Both must be fully playable.
@@ -67,10 +79,12 @@ export interface InitOutput {
     readonly __wbg_game_free: (a: number, b: number) => void;
     readonly carddata_new: (a: number, b: number) => [number, number, number];
     readonly game_apply: (a: number, b: number) => [number, number];
+    readonly game_history: (a: number) => [number, number];
     readonly game_is_over: (a: number) => number;
     readonly game_legal_actions: (a: number) => [number, number];
     readonly game_log: (a: number) => [number, number];
     readonly game_player_to_act: (a: number) => number;
+    readonly game_replay_standard: (a: number, b: number, c: number, d: number, e: number, f: bigint, g: number, h: number) => [number, number, number];
     readonly game_standard: (a: number, b: number, c: number, d: number, e: number, f: bigint) => [number, number, number];
     readonly game_synthetic: (a: bigint) => number;
     readonly game_view: (a: number) => [number, number];
