@@ -18,9 +18,12 @@ it with the context an agent needs to reproduce:
 - the last N log lines and the current `view()` JSON;
 - the engine version.
 
-Where the report goes is the triage question. Options: a GitHub issue via a
-small serverless route, an entry in the same store ticket 01 uses, or a
-plain webhook. It must land somewhere an agent reads, not only a human.
+Where the report goes is the triage question. Simplest, given ticket 01
+brings in Neon Postgres: a `bug_reports` table
+(`id`, `game_id`, `recipe jsonb`, `log jsonb`, `view jsonb`,
+`engine_version`, `note text`, `created_at`), written by a Server Action.
+An agent reads the table. A GitHub issue or a webhook could forward from
+there later.
 
 ## Depends on
 
@@ -28,7 +31,8 @@ plain webhook. It must land somewhere an agent reads, not only a human.
 
 ## Open questions for triage
 
-- Destination: GitHub issue, a store the agent polls, or a chat webhook.
+- Whether the Neon `bug_reports` table is the final destination or a
+  staging point that forwards to a GitHub issue.
 - Whether reports are rate-limited or need any spam guard, given no login.
 - How much of the log to attach by default.
 
