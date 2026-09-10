@@ -3,9 +3,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { loadSim, type CardData, type Game } from "./wasm";
 import { gateAfterSeat, shouldAutoAdvance, sides } from "./session";
+import { newRecipe, readRecipeParam, writeRecipeParam, type Recipe } from "./recipe";
 import type { WireCard, WirePokemon, WireSide, WireView } from "./view";
 
-const DECKS = { a: "/decks/dragapult.txt", b: "/decks/alakazam.txt" };
+// The two curated decks, by the key a recipe stores.
+const DECK_KEYS = { a: "dragapult", b: "alakazam" };
+const deckPath = (key: string) => `/decks/${key}.txt`;
+const randomSeed = () => Math.floor(Math.random() * 1_000_000_000);
+
 // Seat 0 is the first player, seat 1 the second — shown as medals.
 const SEAT_NAME = ["🥇", "🥈"];
 
@@ -24,6 +29,20 @@ export default function Table() {
   const gameRef = useRef<Game | null>(null);
   const dataRef = useRef<CardData | null>(null);
   const shownSeat = useRef<number | undefined>(undefined);
+  const seedRef = useRef(0);
+
+  // The recipe for the game as it stands: seed and decks fixed at the
+  // start, moves read live from the handle. This is what a shareable link
+  // and, later, the server row carry.
+  const currentRecipe = useCallback((): Recipe => {
+    const moves = gameRef.current ? (JSON.parse(gameRef.current.history()) as number[]) : [];
+    return { v: 1, seed: seedRef.current, a: DECK_KEYS.a, b: DECK_KEYS.b, moves };
+  }, []);
+
+  const syncUrl = useCallback(() => {
+    if (!gameRef.current) return;
+    window.history.replaceState(null, "", writeRecipeParam(currentRecipe()));
+  }, [currentRecipe]);
 
   const refresh = useCallback(() => {
     const game = gameRef.current;
@@ -39,8 +58,8 @@ export default function Table() {
     if (!gate.reveal) setRevealed(false);
   }, []);
 
-  const newGame = useCallback(
-    async (seed: number) => {
+  const startGame = useCallback(
+    async (recipe: Recipe) => {
       try {
         const sim = await loadSim();
         if (!dataRef.current) {
@@ -48,24 +67,33 @@ export default function Table() {
           dataRef.current = sim.CardData.new(cards);
         }
         const [a, b] = await Promise.all([
-          fetch(DECKS.a).then((r) => r.text()),
-          fetch(DECKS.b).then((r) => r.text()),
+          fetch(deckPath(recipe.a)).then((r) => r.text()),
+          fetch(deckPath(recipe.b)).then((r) => r.text()),
         ]);
         gameRef.current?.free();
-        gameRef.current = sim.Game.standard(dataRef.current, a, b, BigInt(seed));
+        seedRef.current = recipe.seed;
+        gameRef.current = sim.Game.replay_standard(
+          dataRef.current,
+          a,
+          b,
+          BigInt(recipe.seed),
+          recipe.moves,
+        );
         shownSeat.current = undefined;
         setStatus({ kind: "playing" });
         refresh();
+        syncUrl();
       } catch (err) {
         setStatus({ kind: "error", message: String(err) });
       }
     },
-    [refresh],
+    [refresh, syncUrl],
   );
 
   useEffect(() => {
-    void newGame(Math.floor(Math.random() * 1_000_000_000));
-  }, [newGame]);
+    const shared = readRecipeParam(window.location.search);
+    void startGame(shared ?? newRecipe(randomSeed(), DECK_KEYS.a, DECK_KEYS.b));
+  }, [startGame]);
 
   const act = useCallback(
     (index: number) => {
@@ -75,13 +103,14 @@ export default function Table() {
       try {
         game.apply(index);
         refresh();
+        syncUrl();
       } catch (err) {
         setStatus({ kind: "error", message: String(err) });
       } finally {
         setBusy(false);
       }
     },
-    [busy, refresh],
+    [busy, refresh, syncUrl],
   );
 
   // A step with exactly one legal action forces the player's hand — there
@@ -118,7 +147,9 @@ export default function Table() {
     return (
       <Centre>
         <p style={{ color: "var(--warn)", maxWidth: 480 }}>{status.message}</p>
-        <button onClick={() => newGame(Math.floor(Math.random() * 1e9))}>Try again</button>
+        <button onClick={() => startGame(newRecipe(randomSeed(), DECK_KEYS.a, DECK_KEYS.b))}>
+          Try again
+        </button>
       </Centre>
     );
   }
@@ -131,12 +162,12 @@ export default function Table() {
           Dragapult ex &nbsp;vs&nbsp; Alakazam &nbsp;·&nbsp; turn {view?.turn_number ?? 0}{" "}
           &nbsp;·&nbsp; {view?.phase}
         </span>
-        <button
-          style={{ marginLeft: "auto" }}
-          onClick={() => newGame(Math.floor(Math.random() * 1e9))}
-        >
-          New game
-        </button>
+        <span style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+          <CopyLinkButton />
+          <button onClick={() => startGame(newRecipe(randomSeed(), DECK_KEYS.a, DECK_KEYS.b))}>
+            New game
+          </button>
+        </span>
       </header>
 
       {over ? (
@@ -152,6 +183,27 @@ export default function Table() {
 
       <LogPanel lines={log} />
     </main>
+  );
+}
+
+// The address bar already holds the recipe (`syncUrl`), so a share link is
+// just the current URL.
+function CopyLinkButton() {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      onClick={() => {
+        navigator.clipboard?.writeText(window.location.href).then(
+          () => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          },
+          () => {},
+        );
+      }}
+    >
+      {copied ? "Copied" : "Copy link"}
+    </button>
   );
 }
 

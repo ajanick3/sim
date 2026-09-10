@@ -54,13 +54,21 @@ guide. The direction:
 
 ## Acceptance criteria
 
-- [ ] `sim-wasm` rebuilds a game from a recipe and its list of action
-      indices, matching the game those moves produced live.
-- [ ] The page exports the current game as a recipe and resumes one from a
-      recipe it is given, with no server.
+- [x] `sim-wasm` rebuilds a game from a recipe and its list of action
+      indices, matching the game those moves produced live. — PR #238
+      (`Game::replay_standard`, `Game::history`).
+- [x] The page exports the current game as a recipe and resumes one from a
+      recipe it is given, with no server. — PR #247. The recipe rides in
+      the `?g=` query string; `syncUrl` rewrites it on every move; a
+      "Copy link" button shares the current URL. `app/recipe.ts` encodes,
+      decodes, and validates.
 - [ ] A Neon Postgres store, written through Next.js Server Actions, keeps
       a recipe by id, accepts appended action indices, and serves both to
-      any client that has the id.
+      any client that has the id. — blocked: needs the Neon project
+      created and linked to Vercel (`DATABASE_URL` via `vercel env pull`).
 - [ ] Two browsers opening the same id see the same board, one client's
-      moves visible to the other on reload.
-- [ ] The recipe records which engine version produced it.
+      moves visible to the other on reload. — a shared *link* already
+      works (PR #247); a shared, updating *id* needs the server above.
+- [ ] The recipe records which engine version produced it. — deferred to
+      the server slice, where a persisted game outlives a redeploy. The
+      recipe already carries `v: 1`, its own format version.

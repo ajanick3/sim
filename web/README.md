@@ -7,6 +7,10 @@ The engine runs as WebAssembly. It compiles from `crates/sim-wasm` and holds
 the whole game in the tab; nothing but a card artifact and two deck files
 crosses from the page. See `docs/adr/0096-the-engine-compiles-to-wasm-behind-an-opaque-handle.md`.
 
+The current game is encoded into the `?g=` query string — its seed, decks,
+and every move — so a link resumes the exact position (`app/recipe.ts`,
+replayed by `Game.replay_standard`). "Copy link" shares it.
+
 ## Run it
 
 ```sh
