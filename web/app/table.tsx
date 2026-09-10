@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { loadSim, type CardData, type Game } from "./wasm";
-import { gateAfterSeat, shouldAutoAdvance, sides } from "./session";
+import { COPY_COLORS, copyBadges, gateAfterSeat, shouldAutoAdvance, sides } from "./session";
 import { newRecipe, readRecipeParam, writeRecipeParam, type Recipe } from "./recipe";
 import type { WireCard, WirePokemon, WireSide, WireView } from "./view";
 
@@ -272,6 +272,8 @@ function Board({
 }
 
 function Side({ side, label, mine = false }: { side: WireSide; label: string; mine?: boolean }) {
+  const lineup = [side.active, ...side.bench];
+  const badges = copyBadges(lineup.map((m) => m?.name ?? null));
   return (
     <section
       style={{
@@ -296,7 +298,7 @@ function Side({ side, label, mine = false }: { side: WireSide; label: string; mi
           marginTop: 8,
         }}
       >
-        <Mon mon={side.active} active />
+        <Mon mon={side.active} active copy={badges[0]} />
         <div
           style={{
             display: "flex",
@@ -306,7 +308,7 @@ function Side({ side, label, mine = false }: { side: WireSide; label: string; mi
           }}
         >
           {side.bench.map((m, i) => (
-            <Mon key={i} mon={m} />
+            <Mon key={i} mon={m} copy={badges[i + 1]} />
           ))}
         </div>
       </div>
@@ -314,7 +316,16 @@ function Side({ side, label, mine = false }: { side: WireSide; label: string; mi
   );
 }
 
-export function Mon({ mon, active = false }: { mon: WirePokemon | null; active?: boolean }) {
+export function Mon({
+  mon,
+  active = false,
+  copy,
+}: {
+  mon: WirePokemon | null;
+  active?: boolean;
+  /** Index among same-named copies on this side; a colour badge is drawn when set. */
+  copy?: number;
+}) {
   if (!mon) {
     return (
       <div data-testid="mon-card" style={{ ...monBox, color: "var(--dim)" }}>
@@ -332,14 +343,35 @@ export function Mon({ mon, active = false }: { mon: WirePokemon | null; active?:
     >
       <div
         style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 4,
           fontWeight: 600,
           maxWidth: "100%",
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
         }}
       >
-        {mon.name}
+        {copy !== undefined && (
+          <span
+            data-testid="copy-badge"
+            title={`copy ${copy + 1}`}
+            style={{
+              flex: "none",
+              width: 8,
+              height: 8,
+              borderRadius: "50%",
+              background: COPY_COLORS[copy % COPY_COLORS.length],
+            }}
+          />
+        )}
+        <span
+          style={{
+            overflow: "hidden",
+            textOverflow: "ellipsis",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {mon.name}
+        </span>
       </div>
       <div style={{ color: "var(--dim)", fontSize: 12 }}>
         {mon.remaining_hp}/{mon.hp} HP

@@ -176,4 +176,13 @@ describe("<Mon> card shape", () => {
     expect(a.style.width).not.toBe("");
     expect(b.style.minHeight).toBe(a.style.minHeight);
   });
+
+  it("draws a copy badge only when a copy index is given", () => {
+    const { rerender } = render(<Mon mon={bare} />);
+    expect(screen.queryByTestId("copy-badge")).toBeNull();
+
+    rerender(<Mon mon={bare} copy={2} />);
+    const badge = screen.getByTestId("copy-badge");
+    expect(badge.style.background).toBe("rgb(90, 167, 228)"); // COPY_COLORS[2], blue
+  });
 });
