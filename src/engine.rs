@@ -4463,10 +4463,10 @@ fn damage_dealt_with(
                     damage += bonus;
                 }
             }
-            crate::card::TrainerEffect::BonusDamageIfPoisonedVsActive(bonus) => {
-                if state.has_condition(attacker, Condition::Poisoned) {
-                    damage += bonus;
-                }
+            crate::card::TrainerEffect::BonusDamageIfPoisonedVsActive(bonus)
+                if state.has_condition(attacker, Condition::Poisoned) =>
+            {
+                damage += bonus;
             }
             _ => {}
         }

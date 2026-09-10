@@ -3,12 +3,11 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, PromoteFollowUp,
-    Requirement, Slot, Stage, TargetFilter, Trainer, TrainerEffect, TrainerKind, TurnBonusTarget,
-    Type, Zone,
+    Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
+    Trainer, TrainerEffect, TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
-use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
+use sim::ids::{CardDefId, CardId, PlayerId};
 use sim::rng::SeededRng;
 use sim::state::GameState;
 use sim::state::Phase;
