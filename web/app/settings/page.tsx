@@ -138,10 +138,10 @@ export default function SettingsPage() {
         <div className="mt-1 flex flex-wrap justify-center gap-3">
           {filtered.map((entry) => {
             const single = entry.prints.length === 1;
-            const printId = resolvePrint(entry.name, entry.prints, prefs, null);
+            const printId = resolvePrint(entry.key, entry.prints, prefs, null);
             return (
               <PlayingCard
-                key={entry.name}
+                key={entry.key}
                 size="picker"
                 crop="full"
                 src={artUrl(artIndex, printId)}
@@ -189,7 +189,7 @@ export default function SettingsPage() {
                   name={openEntry.name}
                   interactive
                   onClick={() => {
-                    setPrefs(savePrintPref(openEntry.name, printId));
+                    setPrefs(savePrintPref(openEntry.key, printId));
                     setOpenEntry(null);
                   }}
                   className="cursor-pointer transition-transform hover:scale-110 active:scale-110 active:shadow-card-raised"

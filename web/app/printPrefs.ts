@@ -1,7 +1,11 @@
-// This player's preferred Print for each card name, kept in
-// localStorage so the choice applies everywhere the app shows that
-// card's art — a viewer preference, not a Decklist fact. See the
-// "Print" glossary entry in docs/architecture/glossary.md.
+// This player's preferred Print for each card, kept in localStorage so
+// the choice applies everywhere the app shows that card's art — a
+// viewer preference, not a Decklist fact. See the "Print" glossary
+// entry in docs/architecture/glossary.md.
+//
+// Keyed by `identityOf`/`CatalogEntry.key`, not bare card name — a
+// name alone can name two unrelated cards (see prints.ts), and keying
+// by name would let a preference set on one bleed onto the other.
 
 import type { PrintPrefs } from "./prints";
 
@@ -20,8 +24,8 @@ export function loadPrintPrefs(): PrintPrefs {
 
 /** Save one card's preferred print and return the updated map, so the
  *  caller can update its own state without a second read. */
-export function savePrintPref(name: string, printId: string): PrintPrefs {
-  const next = { ...loadPrintPrefs(), [name]: printId };
+export function savePrintPref(key: string, printId: string): PrintPrefs {
+  const next = { ...loadPrintPrefs(), [key]: printId };
   try {
     localStorage.setItem(KEY, JSON.stringify(next));
   } catch {
