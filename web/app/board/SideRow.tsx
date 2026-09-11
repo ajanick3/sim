@@ -16,12 +16,17 @@ const BENCH_COLUMN_PX = 64;
 const BENCH_GAP_PX = 6;
 const FAR_SCALE = 0.75;
 
+const CHIP = "rounded-full bg-panel/70 px-2 py-0.5 backdrop-blur";
+
 /** One player's row: prize stack, the Bench (five columns wide at
  *  least; a raised Bench limit squishes the row narrower rather than
- *  wrapping it), and the deck / discard pile. `mine` tints it, scales
- *  the Bench to its full near-side width, and lets empty slots be
- *  placed onto — the opponent's Bench renders the same grid capped to
- *  `FAR_SCALE` of that width. */
+ *  wrapping it), and the deck / discard pile. The seat label and hand
+ *  count used to sit inside the bordered panel as a header line,
+ *  costing it a whole row of height the Bench could use instead — they
+ *  now sit below the panel as two small chips. `mine` tints the panel,
+ *  scales the Bench to its full near-side width, and lets empty slots
+ *  be placed onto — the opponent's Bench renders the same grid capped
+ *  to `FAR_SCALE` of that width. */
 export function SideRow({
   side,
   label,
@@ -53,49 +58,51 @@ export function SideRow({
   const slots = [...side.bench, ...Array(Math.max(0, cols - side.bench.length)).fill(null)];
   const maxWidth = (5 * BENCH_COLUMN_PX + 4 * BENCH_GAP_PX) * (mine ? 1 : FAR_SCALE);
   return (
-    <div className={`flex items-start gap-2 ${mine ? "" : "flex-row-reverse"}`}>
-      <PrizeStack count={side.prize_count} />
-      <div
-        className={`min-w-0 flex-1 rounded-lg border-2 p-1.5 ${
-          mine ? "border-accent/60" : "border-warn/50"
-        }`}
-      >
-        <div className="mb-1 flex items-center justify-between text-[10px] uppercase tracking-widest text-dim">
-          <span>{label}</span>
-          <span>hand {side.hand_count}</span>
-        </div>
+    <div className="flex flex-col gap-1">
+      <div className={`flex items-start gap-2 ${mine ? "" : "flex-row-reverse"}`}>
+        <PrizeStack count={side.prize_count} />
         <div
-          className={`grid gap-1.5 ${mine ? "" : "ml-auto"}`}
-          style={{
-            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
-            maxWidth: `${maxWidth}px`,
-          }}
+          className={`min-w-0 flex-1 rounded-lg border-2 p-1.5 ${
+            mine ? "border-accent/60" : "border-warn/50"
+          }`}
         >
-          {slots.map((m, i) =>
-            m ? (
-              <LiveMon
-                key={i}
-                mon={m}
-                art={art}
-                {...monHooks(m, meta, selection, dropTargets, onPokemon, false, hoverDropId)}
-              />
-            ) : (
-              <LiveMon key={i} mon={null} art={art} placeHere={mine ? onPlaceBench : undefined} />
-            ),
-          )}
+          <div
+            className={`grid gap-1.5 ${mine ? "" : "ml-auto"}`}
+            style={{
+              gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+              maxWidth: `${maxWidth}px`,
+            }}
+          >
+            {slots.map((m, i) =>
+              m ? (
+                <LiveMon
+                  key={i}
+                  mon={m}
+                  art={art}
+                  {...monHooks(m, meta, selection, dropTargets, onPokemon, false, hoverDropId)}
+                />
+              ) : (
+                <LiveMon key={i} mon={null} art={art} placeHere={mine ? onPlaceBench : undefined} />
+              ),
+            )}
+          </div>
         </div>
+        <DeckPile
+          deck={side.deck_count}
+          discard={side.discard}
+          art={art}
+          mine={mine}
+          onView={
+            onViewDiscard && side.discard.length > 0
+              ? () => onViewDiscard(side.discard, `${label} — discard`)
+              : undefined
+          }
+        />
       </div>
-      <DeckPile
-        deck={side.deck_count}
-        discard={side.discard}
-        art={art}
-        mine={mine}
-        onView={
-          onViewDiscard && side.discard.length > 0
-            ? () => onViewDiscard(side.discard, `${label} — discard`)
-            : undefined
-        }
-      />
+      <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-widest text-dim">
+        <span className={CHIP}>{label}</span>
+        <span className={CHIP}>hand {side.hand_count}</span>
+      </div>
     </div>
   );
 }
