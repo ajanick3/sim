@@ -109,7 +109,7 @@ export default function SettingsPage() {
             className="rounded-md border border-edge bg-transparent px-3 py-1.5 text-[13px] outline-none focus:border-accent"
           />
         </div>
-        <div className="mx-auto flex max-w-[560px] flex-wrap gap-2">
+        <div className="mx-auto flex max-w-[560px] flex-wrap items-center gap-2">
           {CATEGORY_FILTERS.map(({ bucket, label }) => {
             const active = activeBuckets.has(bucket);
             return (
@@ -117,14 +117,19 @@ export default function SettingsPage() {
                 key={bucket}
                 onClick={() => toggleBucket(bucket)}
                 aria-pressed={active}
-                className={`rounded-full border px-3 py-1 text-[12px] ${
-                  active ? "border-accent bg-accent/10 text-text" : "border-edge text-dim"
+                className={`rounded-full border px-3 py-1 text-[12px] transition-colors ${
+                  active
+                    ? "border-accent bg-accent text-bg font-semibold"
+                    : "border-edge text-dim opacity-50 hover:opacity-80"
                 }`}
               >
                 {label}
               </button>
             );
           })}
+          <span className="ml-auto text-[12px] text-dim">
+            {filtered.length} of {entries.length}
+          </span>
         </div>
         <div className="mt-1 flex flex-wrap justify-center gap-3">
           {filtered.map((entry) => {
