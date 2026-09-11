@@ -14,6 +14,8 @@ import { decodeRecipe, encodeRecipe, newRecipe, type Recipe } from "./recipe";
 import { artUrl, loadArtIndex, type ArtIndex } from "./art";
 import { DEFAULT_DECKS } from "./decks";
 import { noteRecent } from "./recent";
+import { loadPrintPrefs } from "./printPrefs";
+import { buildPrintIndex, resolveCardPrint, type CatalogCard, type PrintIndex } from "./prints";
 import { LiveBoard } from "./board/LiveBoard";
 import type { WireActionMeta, WireView } from "./view";
 
@@ -40,6 +42,8 @@ export default function GameShell() {
 
   const gameRef = useRef<Game | null>(null);
   const dataRef = useRef<CardData | null>(null);
+  const printIndexRef = useRef<PrintIndex>({ byId: new Map() });
+  const [printPrefs, setPrintPrefs] = useState<Record<string, string>>({});
   const recipeRef = useRef<Recipe | null>(null);
   // The `?g=` we last wrote, so reacting to our own URL change is a no-op.
   const lastWritten = useRef<string | null>(null);
@@ -76,6 +80,13 @@ export default function GameShell() {
         if (!dataRef.current) {
           const cards = await fetch("/cards.json").then((r) => r.text());
           dataRef.current = sim.CardData.new(cards);
+          try {
+            const catalog = JSON.parse(cards) as { cards: CatalogCard[] };
+            printIndexRef.current = buildPrintIndex(catalog.cards ?? []);
+          } catch {
+            // Print preferences are a display nicety, not a game
+            // requirement — an unparsable artifact just skips them.
+          }
         }
         const [a, b] = await Promise.all([
           fetch(deckPath(recipe.a)).then((r) => r.text()),
@@ -107,6 +118,7 @@ export default function GameShell() {
 
   useEffect(() => {
     void loadArtIndex().then(setArtIndex);
+    setPrintPrefs(loadPrintPrefs());
   }, []);
 
   // The single source of what game is on screen: the query string.
@@ -166,7 +178,11 @@ export default function GameShell() {
     }
   }, [actions, status.kind, over, busy, act]);
 
-  const art = useMemo(() => (printId: string) => artUrl(artIndex, printId), [artIndex]);
+  const art = useMemo(
+    () => (printId: string) =>
+      artUrl(artIndex, resolveCardPrint(printIndexRef.current, printId, printPrefs)),
+    [artIndex, printPrefs],
+  );
 
   if (status.kind === "loading") {
     return <Centre>Loading the engine…</Centre>;
