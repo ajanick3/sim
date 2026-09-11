@@ -1,5 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { bucketOf, catalogEntries, defaultPrint, printsFor, type CatalogCard } from "./prints";
+import {
+  bucketOf,
+  catalogEntries,
+  defaultPrint,
+  printsFor,
+  resolvePrint,
+  type CatalogCard,
+} from "./prints";
 
 const card = (
   over: Partial<CatalogCard> & Pick<CatalogCard, "id" | "name" | "category">,
@@ -85,5 +92,29 @@ describe("catalogEntries", () => {
 describe("defaultPrint", () => {
   it("is the first print id, sorted", () => {
     expect(defaultPrint(["mep-037", "me01-003"])).toBe("me01-003");
+  });
+});
+
+describe("resolvePrint", () => {
+  const prints = ["me01-003", "mep-037"];
+
+  it("prefers the player's stored preference", () => {
+    expect(
+      resolvePrint("Mega Venusaur ex", prints, { "Mega Venusaur ex": "mep-037" }, "me01-003"),
+    ).toBe("mep-037");
+  });
+
+  it("falls back to the context print when no preference is stored", () => {
+    expect(resolvePrint("Mega Venusaur ex", prints, {}, "mep-037")).toBe("mep-037");
+  });
+
+  it("falls back to the deterministic first print when neither is set", () => {
+    expect(resolvePrint("Mega Venusaur ex", prints, {}, null)).toBe("me01-003");
+  });
+
+  it("ignores a stored preference that no longer names a known print", () => {
+    expect(
+      resolvePrint("Mega Venusaur ex", prints, { "Mega Venusaur ex": "stale-999" }, "mep-037"),
+    ).toBe("mep-037");
   });
 });

@@ -87,3 +87,24 @@ export function catalogEntries(cards: CatalogCard[]): CatalogEntry[] {
 export function defaultPrint(prints: string[]): string {
   return [...prints].sort()[0];
 }
+
+/** A card name → chosen print id map, as `localStorage` keeps it. */
+export type PrintPrefs = Record<string, string>;
+
+/** Which Print to show for a card, in three tiers: the player's
+ *  stored preference (if it still names a known print), then the
+ *  current context's own resolved print (a Decklist's pin, or the
+ *  engine's name-only pick), then the deterministic fallback. A
+ *  preference always wins over the context — that's the point of a
+ *  preference — but a stale one (naming a print no longer in the
+ *  catalog) is skipped rather than shown broken. */
+export function resolvePrint(
+  name: string,
+  prints: string[],
+  prefs: PrintPrefs,
+  contextPrint: string | null,
+): string {
+  const preferred = prefs[name];
+  if (preferred && prints.includes(preferred)) return preferred;
+  return contextPrint ?? defaultPrint(prints);
+}
