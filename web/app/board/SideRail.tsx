@@ -1,7 +1,10 @@
 "use client";
 
-/** The right-hand rail: turn number, both prize counts, the END TURN
- *  button, a log button, and a » to collapse the whole rail. */
+/** Turn number, both prize counts, END TURN, a log button, and a » to
+ *  collapse the lot — floating over the board as a column of small,
+ *  unobtrusive FABs pinned to the right edge and centred in the
+ *  viewport, rather than a boxed sidebar that eats into the board's
+ *  own width. */
 export function SideRail({
   myPrizes,
   oppPrizes,
@@ -21,36 +24,42 @@ export function SideRail({
   onLog: () => void;
   onHide: () => void;
 }) {
+  const fab =
+    "grid place-items-center rounded-full border border-edge bg-panel/80 shadow-[0_2px_10px_rgba(0,0,0,0.4)] backdrop-blur transition-colors";
   return (
-    <div className="flex w-[72px] flex-none flex-col items-center gap-2 pt-1">
+    <div className="fixed right-2 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2.5">
       <button
         onClick={onHide}
         aria-label="Hide controls"
-        className="w-full rounded-md border-edge py-0.5 text-[11px] text-dim transition-colors hover:border-accent hover:text-text"
+        className={`${fab} size-7 text-[11px] text-dim hover:border-accent hover:text-text`}
       >
         ›
       </button>
-      <div className="text-[10px] text-dim">turn {turn}</div>
-      <div className="grid h-9 w-9 place-items-center rounded bg-prize text-lg font-bold">
+      <span className="rounded-full bg-panel/70 px-2 py-0.5 text-[9px] text-dim backdrop-blur">
+        turn {turn}
+      </span>
+      <div className={`${fab} size-9 border-none bg-prize/90 text-base font-bold text-black`}>
         {oppPrizes}
       </div>
       <button
         onClick={onEndTurn}
         disabled={!canEndTurn}
-        className="w-full rounded-md border-warn bg-warn/20 px-1 py-2 text-[11px] font-bold leading-tight text-warn disabled:opacity-40"
+        className={`${fab} size-14 border-warn/70 bg-warn/25 text-[10px] font-bold leading-tight text-warn disabled:opacity-40`}
       >
         END
         <br />
         TURN
       </button>
-      <div className="grid h-9 w-9 place-items-center rounded bg-accent text-lg font-bold text-black">
+      <div className={`${fab} size-9 border-none bg-accent/90 text-base font-bold text-black`}>
         {myPrizes}
       </div>
-      <div className="text-[10px] text-dim">{yourTurn ? "your move" : "waiting"}</div>
+      <span className="rounded-full bg-panel/70 px-2 py-0.5 text-[9px] text-dim backdrop-blur">
+        {yourTurn ? "your move" : "waiting"}
+      </span>
       <button
         onClick={onLog}
         aria-label="Log"
-        className="mt-1 grid size-9 place-items-center rounded-full border-edge text-base"
+        className={`${fab} size-9 text-base hover:border-accent`}
       >
         📜
       </button>
