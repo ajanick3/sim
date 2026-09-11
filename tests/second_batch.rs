@@ -3,8 +3,9 @@
 
 use sim::action::{Action, legal_actions};
 use sim::card::{
-    Attack, CardDb, CardDef, CardFilter, Destination, Energy, EnergyEffect, Pokemon, Requirement,
-    Slot, Stage, TargetFilter, Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    Ability, AbilityEffect, Attack, CardDb, CardDef, CardFilter, Destination, Energy,
+    EnergyEffect, Pokemon, Requirement, Slot, Stage, TargetFilter, Trainer, TrainerEffect,
+    TrainerKind, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
@@ -1488,6 +1489,70 @@ fn rare_candy_evolves_the_basic_straight_to_the_stage_2() {
     assert!(state.is_spent(sim::state::Limit::Evolved(small)));
     // Rare Candy itself, and the Stage 2 it played, both left the hand.
     assert_eq!(state.player(player).hand.len(), hand_before - 2);
+}
+
+/// A Stage 2 that carries `Psychic Draw`'s "evolved from hand" trigger,
+/// on top of the same chain `with_rare_candy` already builds — Rare
+/// Candy's evolve is a hand evolution too, the same as the ordinary one.
+fn with_psychic_draw_stage2(set: Set, rare_candy: CardDefId) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let stage2 = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-stage2-draw",
+        name: "Hugemon Draw",
+        hp: 180,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 1,
+        stage: Stage::Stage2,
+        evolve_from: Some("Bigmon"),
+        evolves_from_basic: Some("Smallmon"),
+        ability: Some(Ability {
+            name: "Psychic Draw",
+            effect: AbilityEffect::WhenEvolvedFromHandMayDrawCards(2),
+        }),
+        attacks: vec![Attack {
+            name: "Slam",
+            cost: vec![Type::Colorless, Type::Colorless],
+            base_damage: 60,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    (Set { db, ..set }, rare_candy, stage2)
+}
+
+#[test]
+fn rare_candy_triggers_the_stage_2s_evolved_from_hand_ability() {
+    let (set, rare_candy) = with_rare_candy(build());
+    let (set, rare_candy, stage2_draw) = with_psychic_draw_stage2(set, rare_candy);
+    let mut state = game(&set, rare_candy, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, rare_candy);
+    let small = put_in_play_from_an_earlier_turn(&mut state, player, set.small);
+    let stage2 = deal_new_card(&mut state, player, stage2_draw);
+    state.players[player.index()].hand.push(stage2);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(
+        &mut state,
+        Action::EvolveSkippingOneStage {
+            card: stage2,
+            target: small,
+        },
+    )
+    .unwrap();
+
+    assert!(
+        matches!(
+            state.phase,
+            Phase::DecidingToUsePsychicDraw { pokemon, .. } if pokemon == small
+        ),
+        "Rare Candy's evolve is a hand evolution too, so Psychic Draw offers its draw: {:?}",
+        state.phase
+    );
 }
 
 #[test]

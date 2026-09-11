@@ -2456,6 +2456,10 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 .push(format!("{player:?} uses Rare Candy: evolves into {name}."));
             state.phase = Phase::Main;
             settle(state);
+            if !state.pokemon(target).knocked_out {
+                trigger_psychic_draw(state, player, target);
+                trigger_jewel_seeker(state, player, target);
+            }
         }
 
         Action::DiscardOpponentEnergy { card } => {
@@ -5081,8 +5085,9 @@ fn trigger_rapid_vernier(state: &mut GameState, player: PlayerId, pokemon: Pokem
 
 /// `Kadabra`'s and `Alakazam`'s `Psychic Draw`, and any future Ability
 /// sharing its "evolved from hand" trigger: checked right after
-/// `Action::Evolve` finishes, the same spot `trigger_last_ditch_catch`
-/// reads a benched-from-hand trigger from.
+/// `Action::Evolve` and `Action::EvolveSkippingOneStage` (Rare Candy)
+/// finish, the same spot `trigger_last_ditch_catch` reads a
+/// benched-from-hand trigger from.
 fn trigger_psychic_draw(state: &mut GameState, player: PlayerId, target: PokemonId) {
     if state.abilities_disabled_for(target) {
         return;
