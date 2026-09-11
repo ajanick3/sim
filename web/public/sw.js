@@ -7,7 +7,14 @@
 // Bump CACHE_NAME by hand when a change here should force every open
 // tab onto a clean cache; a normal app deploy does not need it, since
 // asset URLs already change with their content hash.
-const CACHE_NAME = "sim-v1";
+//
+// v2: art.ts now asks for "/high.webp" once the app is installed
+// (still "/low.webp" in a plain tab) — a different URL either way for
+// anyone who had it installed under v1, so old installs would
+// otherwise keep the orphaned low-res bytes forever alongside the new
+// ones, since nothing here ever evicts a cached entry on its own. The
+// bump drops the old cache outright.
+const CACHE_NAME = "sim-v2";
 
 self.addEventListener("install", () => {
   self.skipWaiting();

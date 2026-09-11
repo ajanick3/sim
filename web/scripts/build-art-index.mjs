@@ -1,6 +1,6 @@
 // Build public/art-index.json: a map from every TCGdex print id in the
 // card artifact to the base URL its images live at. The app appends a
-// quality suffix (e.g. "/low.webp") at render time and falls back to a
+// quality suffix (e.g. "/high.webp") at render time and falls back to a
 // drawn card when an id is missing or its image 404s.
 //
 // Run by hand — it hits the network — and commit the result:

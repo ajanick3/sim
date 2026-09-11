@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { loadRecent } from "../recent";
-import { artUrl, loadArtIndex, type ArtIndex } from "../art";
+import { artUrl, isInstalled, loadArtIndex, type ArtIndex, type ArtQuality } from "../art";
 import { catalogEntries, resolvePrint, type CatalogCard, type CatalogEntry } from "../prints";
 import { loadPrintPrefs, savePrintPref } from "../printPrefs";
 import { PlayingCard } from "../board/PlayingCard";
@@ -24,6 +24,7 @@ export default function SettingsPage() {
   const [recentCount, setRecentCount] = useState(0);
   const [cards, setCards] = useState<CatalogCard[]>([]);
   const [artIndex, setArtIndex] = useState<ArtIndex>({});
+  const [artQuality, setArtQuality] = useState<ArtQuality>("low");
   const [query, setQuery] = useState("");
   const [activeBuckets, setActiveBuckets] = useState<Set<string>>(
     () => new Set(CATEGORY_FILTERS.map((f) => f.bucket)),
@@ -34,6 +35,7 @@ export default function SettingsPage() {
   useEffect(() => {
     setRecentCount(loadRecent().length);
     setPrefs(loadPrintPrefs());
+    setArtQuality(isInstalled() ? "high" : "low");
     void fetch("/cards.json")
       .then((r) => (r.ok ? r.json() : { cards: [] }))
       .then((data: { cards: CatalogCard[] }) => setCards(data.cards ?? []))
@@ -144,7 +146,7 @@ export default function SettingsPage() {
                 key={entry.key}
                 size="picker"
                 crop="full"
-                src={artUrl(artIndex, printId)}
+                src={artUrl(artIndex, printId, artQuality)}
                 name={entry.name}
                 dimmed={single}
                 disabled={single}
@@ -185,7 +187,7 @@ export default function SettingsPage() {
                   key={printId}
                   size="picker"
                   crop="full"
-                  src={artUrl(artIndex, printId)}
+                  src={artUrl(artIndex, printId, artQuality)}
                   name={openEntry.name}
                   interactive
                   onClick={() => {

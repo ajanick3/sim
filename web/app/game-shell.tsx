@@ -11,7 +11,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { loadSim, type CardData, type Game } from "./wasm";
 import { shouldAutoAdvance, type Selection } from "./session";
 import { decodeRecipe, encodeRecipe, newRecipe, type Recipe } from "./recipe";
-import { artUrl, loadArtIndex, type ArtIndex } from "./art";
+import { artUrl, isInstalled, loadArtIndex, type ArtIndex, type ArtQuality } from "./art";
 import { DEFAULT_DECKS } from "./decks";
 import { noteRecent } from "./recent";
 import { loadPrintPrefs } from "./printPrefs";
@@ -34,6 +34,7 @@ export default function GameShell() {
   const [meta, setMeta] = useState<WireActionMeta[]>([]);
   const [selection, setSelection] = useState<Selection>(null);
   const [artIndex, setArtIndex] = useState<ArtIndex>({});
+  const [artQuality, setArtQuality] = useState<ArtQuality>("low");
   const [log, setLog] = useState<string[]>([]);
   const [seat, setSeat] = useState<number | undefined>(undefined);
   const [over, setOver] = useState(false);
@@ -118,6 +119,7 @@ export default function GameShell() {
 
   useEffect(() => {
     void loadArtIndex().then(setArtIndex);
+    setArtQuality(isInstalled() ? "high" : "low");
     setPrintPrefs(loadPrintPrefs());
   }, []);
 
@@ -181,8 +183,8 @@ export default function GameShell() {
 
   const art = useMemo(
     () => (printId: string) =>
-      artUrl(artIndex, resolveCardPrint(printIndexRef.current, printId, printPrefs)),
-    [artIndex, printPrefs],
+      artUrl(artIndex, resolveCardPrint(printIndexRef.current, printId, printPrefs), artQuality),
+    [artIndex, printPrefs, artQuality],
   );
 
   if (status.kind === "loading") {
