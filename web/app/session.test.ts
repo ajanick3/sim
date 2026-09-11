@@ -122,6 +122,14 @@ describe("shouldAutoAdvance", () => {
   it("does not advance while the engine is still loading", () => {
     expect(shouldAutoAdvance({ ...base, playing: false })).toBe(false);
   });
+
+  it("does not advance placing the opening Active, even with one Basic in hand", () => {
+    expect(shouldAutoAdvance({ ...base, phase: "PlacingActive" })).toBe(false);
+  });
+
+  it("advances normally in every other phase", () => {
+    expect(shouldAutoAdvance({ ...base, phase: "Main" })).toBe(true);
+  });
 });
 
 describe("movesForSelection / targetsForHandCard", () => {
