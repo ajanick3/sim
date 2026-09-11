@@ -59,9 +59,11 @@ export const HAND_ORDER = [
   "energy",
 ] as const;
 
-/** Sort the hand by category, then break it into at most two rows at the
- *  category boundary nearest the middle. One row until it would hold more
- *  than six; then two rows, each at least three wide. */
+/** Sort the hand by category, then break it into two rows at the
+ *  category boundary nearest the middle — always two, so the Hand's
+ *  own container is a fixed height whatever the hand holds. A hand of
+ *  one card is the one case with nothing to split; it renders alone in
+ *  the first row. */
 export function splitHandRows(hand: WireCard[]): WireCard[][] {
   const order = HAND_ORDER as readonly string[];
   const rank = (c: string) => {
@@ -70,7 +72,7 @@ export function splitHandRows(hand: WireCard[]): WireCard[][] {
   };
   const sorted = [...hand].sort((a, b) => rank(a.category) - rank(b.category));
   const n = sorted.length;
-  if (n <= 6) return [sorted];
+  if (n <= 1) return [sorted];
   const target = Math.ceil(n / 2);
   const boundaries: number[] = [];
   for (let i = 1; i < n; i++) {
@@ -81,7 +83,7 @@ export function splitHandRows(hand: WireCard[]): WireCard[][] {
     const best = boundaries.reduce((p, c) => (Math.abs(c - target) < Math.abs(p - target) ? c : p));
     if (Math.abs(best - target) <= 2) split = best;
   }
-  split = Math.max(3, Math.min(split, n - 3));
+  split = Math.max(1, Math.min(split, n - 1));
   return [sorted.slice(0, split), sorted.slice(split)];
 }
 

@@ -17,9 +17,12 @@ function SectionHeading({
   );
 }
 
-/** The full legal-action list, grouped by kind. On the board this is the
+/** The full legal-action list, grouped by kind, each move a squarish
+ *  chip rather than a wide list row. At phone width this is still the
  *  collapsed "All actions" escape hatch for a phase with no on-board
- *  affordance yet; `only` narrows it to the current selection's moves. */
+ *  affordance yet; from tablet width up it sits permanently in the
+ *  centre lane, across from the Stadium. `only` narrows it to the
+ *  current selection's moves either way. */
 export function ActionPanel({
   actions,
   only,
@@ -56,13 +59,13 @@ export function ActionPanel({
         {groups.map((g) => (
           <div key={g.group}>
             <SectionHeading className="mb-1">{g.group}</SectionHeading>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(60px,1fr))] gap-1.5">
               {g.items.map((item) => (
                 <button
                   key={item.index}
                   disabled={busy}
                   onClick={() => onAct(item.index)}
-                  className="flex min-h-[34px] items-center gap-1.5"
+                  className="flex min-h-[52px] flex-col items-center justify-center gap-1 rounded-md px-1.5 py-1.5 text-center text-[11px] leading-tight"
                 >
                   {item.copy !== undefined && (
                     <span

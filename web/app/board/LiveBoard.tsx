@@ -62,6 +62,20 @@ export function LiveBoard({
   const [showLog, setShowLog] = useState(false);
   const [showRail, setShowRail] = useState(true);
   const [discardView, setDiscardView] = useState<{ label: string; cards: WireCard[] } | null>(null);
+  // Tablet width and up gets the permanent action column in the centre
+  // lane; below that it falls back to the collapsed "All actions" spot
+  // under the Hand. Rendered once either way, not both — a pure CSS
+  // toggle would leave the same buttons in the DOM twice. Defaults to
+  // the phone layout until mounted, so the first paint is stable.
+  const [wideBoard, setWideBoard] = useState(false);
+  useEffect(() => {
+    if (typeof window.matchMedia !== "function") return;
+    const mq = window.matchMedia("(min-width: 768px)");
+    const update = () => setWideBoard(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
 
   const dropTargets =
     selection?.kind === "hand"
@@ -189,6 +203,15 @@ export function LiveBoard({
           (m) => m.card === selection.card && m.target === null && m.kind === "PlaceActive",
         )
       : -1;
+  // A selected Stadium in hand — tapped straight onto its own slot, the
+  // same no-button pattern as the Bench and Active spots.
+  const stadiumPlace =
+    selection?.kind === "hand" &&
+    view.your_hand.find((c) => c.id === selection.card)?.category === "stadium"
+      ? meta.findIndex(
+          (m) => m.card === selection.card && m.target === null && m.kind === "PlayTrainer",
+        )
+      : -1;
   const selectedName =
     selection?.kind === "hand"
       ? view.your_hand.find((c) => c.id === selection.card)?.name
@@ -214,15 +237,16 @@ export function LiveBoard({
 
   // The window listeners fire long after render, so they read the live
   // board — the drop targets and empty-slot moves — from a ref.
-  const board = useRef({ dropTargets, benchPlace, activePlace });
+  const board = useRef({ dropTargets, benchPlace, activePlace, stadiumPlace });
   useEffect(() => {
-    board.current = { dropTargets, benchPlace, activePlace };
+    board.current = { dropTargets, benchPlace, activePlace, stadiumPlace };
   });
   const resolveDrop = useCallback((dropId: string): number | null => {
     const b = board.current;
     if (dropId.startsWith("mon:")) return b.dropTargets.get(Number(dropId.slice(4))) ?? null;
     if (dropId === "slot:bench") return b.benchPlace >= 0 ? b.benchPlace : null;
     if (dropId === "slot:active") return b.activePlace >= 0 ? b.activePlace : null;
+    if (dropId === "slot:stadium") return b.stadiumPlace >= 0 ? b.stadiumPlace : null;
     return null;
   }, []);
 
@@ -306,13 +330,23 @@ export function LiveBoard({
               hoverDropId={hoverDropId}
             />
 
-            {/* Centre lane: stadium on the left, the two Actives stacked. */}
+            {/* Centre lane: Stadium, the two Actives stacked, and — from
+                tablet width up — the action list across from the
+                Stadium. Below that width there is no room for a fourth
+                column, so it falls back to the collapsed "All actions"
+                spot under the Hand instead; see the `md:hidden` details
+                below. */}
             <div className="flex items-center justify-center gap-3">
-              <StadiumSlot card={view.stadium} art={art} />
+              <StadiumSlot
+                card={view.stadium}
+                art={art}
+                placeHere={stadiumPlace >= 0 ? () => onAct(stadiumPlace) : undefined}
+              />
               <div className="flex flex-col items-center gap-1">
                 <LiveMon
                   mon={opp.active}
                   active
+                  far
                   art={art}
                   {...monHooks(
                     opp.active,
@@ -385,6 +419,18 @@ export function LiveBoard({
                 </button>
               ) : (
                 <StadiumSlot ghost />
+              )}
+              {wideBoard && !firstTurn && !decision && (
+                <div className="max-h-[170px] w-[168px] flex-none overflow-y-auto rounded-lg border border-edge bg-panel/40 p-1.5">
+                  <ActionPanel
+                    actions={actions}
+                    only={only}
+                    onClearSelection={() => onSelect(null)}
+                    seat={seat}
+                    busy={busy}
+                    onAct={onAct}
+                  />
+                </div>
               )}
             </div>
 
@@ -530,21 +576,24 @@ export function LiveBoard({
                 ))}
               </div>
             )}
-            {/* The full list stays here as an escape hatch for phases that
-              have no on-board affordance yet. */}
-            <details className="mt-2 text-[12px] text-dim">
-              <summary className="cursor-pointer">All actions</summary>
-              <div className="mt-1">
-                <ActionPanel
-                  actions={actions}
-                  only={only}
-                  onClearSelection={() => onSelect(null)}
-                  seat={seat}
-                  busy={busy}
-                  onAct={onAct}
-                />
-              </div>
-            </details>
+            {/* Below tablet width, the centre lane has no room for the
+                permanent panel above, so this collapsed escape hatch
+                takes over for phases with no on-board affordance yet. */}
+            {!wideBoard && (
+              <details className="mt-2 text-[12px] text-dim">
+                <summary className="cursor-pointer">All actions</summary>
+                <div className="mt-1">
+                  <ActionPanel
+                    actions={actions}
+                    only={only}
+                    onClearSelection={() => onSelect(null)}
+                    seat={seat}
+                    busy={busy}
+                    onAct={onAct}
+                  />
+                </div>
+              </details>
+            )}
           </div>
         )}
       </div>

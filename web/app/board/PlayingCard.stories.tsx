@@ -7,7 +7,7 @@ const meta = {
   title: "board/PlayingCard",
   component: PlayingCard,
   args: {
-    size: "hand",
+    size: "picker",
     src: swatchArt("munkidori"),
     name: "Munkidori",
     energyType: null,
