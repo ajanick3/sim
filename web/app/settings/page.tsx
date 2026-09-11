@@ -38,48 +38,52 @@ export default function SettingsPage() {
   };
 
   return (
-    <main className="mx-auto max-w-[560px] px-4 py-8">
-      <header className="flex items-baseline justify-between">
-        <h1 className="m-0 text-[20px]">Settings</h1>
-        <Link href="/" className="text-[13px] text-dim no-underline hover:text-text">
-          Decks
-        </Link>
-      </header>
+    <main className="px-4 py-8">
+      <div className="mx-auto max-w-[560px]">
+        <header className="flex items-baseline justify-between">
+          <h1 className="m-0 text-[20px]">Settings</h1>
+          <Link href="/" className="text-[13px] text-dim no-underline hover:text-text">
+            Decks
+          </Link>
+        </header>
 
-      <section className="mt-6 flex flex-col gap-2">
-        <h2 className="m-0 text-[13px] uppercase tracking-widest text-dim">Recent games</h2>
-        <p className="m-0 text-[13px] text-dim">
-          {recentCount} saved in this browser. They are keyed by seed and decks, and hold the latest
-          position of each.
-        </p>
-        <button
-          onClick={clearRecent}
-          disabled={recentCount === 0}
-          className="w-fit rounded-md border border-edge px-3 py-1.5 text-[13px] hover:border-accent disabled:opacity-40"
-        >
-          Clear recent games
-        </button>
-      </section>
+        <section className="mt-6 flex flex-col gap-2">
+          <h2 className="m-0 text-[13px] uppercase tracking-widest text-dim">Recent games</h2>
+          <p className="m-0 text-[13px] text-dim">
+            {recentCount} saved in this browser. They are keyed by seed and decks, and hold the
+            latest position of each.
+          </p>
+          <button
+            onClick={clearRecent}
+            disabled={recentCount === 0}
+            className="w-fit rounded-md border border-edge px-3 py-1.5 text-[13px] hover:border-accent disabled:opacity-40"
+          >
+            Clear recent games
+          </button>
+        </section>
 
-      <section className="mt-8 flex flex-col gap-1">
-        <h2 className="m-0 text-[13px] uppercase tracking-widest text-dim">Motion</h2>
-        <p className="m-0 text-[13px] text-dim">
-          Card and coin animations follow your system “reduce motion” setting.
-        </p>
-      </section>
+        <section className="mt-8 flex flex-col gap-1">
+          <h2 className="m-0 text-[13px] uppercase tracking-widest text-dim">Motion</h2>
+          <p className="m-0 text-[13px] text-dim">
+            Card and coin animations follow your system “reduce motion” setting.
+          </p>
+        </section>
+      </div>
 
       <section className="mt-8 flex flex-col gap-2">
-        <h2 className="m-0 text-[13px] uppercase tracking-widest text-dim">Card prints</h2>
-        <p className="m-0 text-[13px] text-dim">
-          Pick which art a card shows. A card with only one known print can’t be changed.
-        </p>
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search cards…"
-          className="rounded-md border border-edge bg-transparent px-3 py-1.5 text-[13px] outline-none focus:border-accent"
-        />
-        <div className="mt-1 flex flex-wrap gap-3">
+        <div className="mx-auto flex max-w-[560px] flex-col gap-2">
+          <h2 className="m-0 text-[13px] uppercase tracking-widest text-dim">Card prints</h2>
+          <p className="m-0 text-[13px] text-dim">
+            Pick which art a card shows. A card with only one known print can’t be changed.
+          </p>
+          <input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search cards…"
+            className="rounded-md border border-edge bg-transparent px-3 py-1.5 text-[13px] outline-none focus:border-accent"
+          />
+        </div>
+        <div className="mt-1 flex flex-wrap justify-center gap-3">
           {filtered.map((entry) => {
             const single = entry.prints.length === 1;
             const printId = defaultPrint(entry.prints);
