@@ -212,13 +212,21 @@ export function LiveBoard({
           (m) => m.card === selection.card && m.target === null && m.kind === "PlayTrainer",
         )
       : -1;
+  const selectedMon =
+    selection?.kind === "pokemon"
+      ? ([mine.active, ...mine.bench, opp.active, ...opp.bench].find(
+          (m) => m?.id === selection.id,
+        ) ?? null)
+      : null;
   const selectedName =
     selection?.kind === "hand"
       ? view.your_hand.find((c) => c.id === selection.card)?.name
-      : selection?.kind === "pokemon"
-        ? [mine.active, ...mine.bench, opp.active, ...opp.bench].find((m) => m?.id === selection.id)
-            ?.name
-        : undefined;
+      : (selectedMon?.name ?? undefined);
+  // Tapping a Pokémon with something to do on it — attack, retreat, an
+  // Ability — zooms it in full-size with its moves laid out beside it,
+  // rather than cramming buttons onto the card itself.
+  const showMonActions =
+    selectedMon != null && ((activeSelected && onCardMoves.length > 0) || abilityMoves.length > 0);
 
   // --- Drag a hand card onto the board --------------------------------
   // A pointer drag past a small threshold selects the card (so the valid
@@ -359,54 +367,21 @@ export function LiveBoard({
                   )}
                 />
                 <div className="h-px w-24 bg-white/15" aria-hidden />
-                <div className="relative">
-                  <LiveMon
-                    mon={mine.active}
-                    active
-                    art={art}
-                    placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
-                    {...monHooks(
-                      mine.active,
-                      meta,
-                      selection,
-                      dropTargets,
-                      onPokemon,
-                      onCardMoves.length > 0,
-                      hoverDropId,
-                    )}
-                  />
-                  {activeSelected && onCardMoves.length > 0 && (
-                    <div
-                      className="absolute inset-x-1 bottom-1 z-30 flex flex-col gap-1"
-                      data-keep-selection
-                    >
-                      {attackMoves.map((a) => (
-                        <button
-                          key={a.index}
-                          type="button"
-                          data-keep-selection
-                          disabled={busy}
-                          onClick={() => onAct(a.index)}
-                          className="rounded bg-accent px-2 py-1 text-[11px] font-bold text-black shadow-[0_2px_6px_rgba(0,0,0,0.5)] hover:brightness-110 disabled:opacity-50"
-                        >
-                          {a.label}
-                        </button>
-                      ))}
-                      {retreatMoves.map((a) => (
-                        <button
-                          key={a.index}
-                          type="button"
-                          data-keep-selection
-                          disabled={busy}
-                          onClick={() => onAct(a.index)}
-                          className="rounded bg-warn px-2 py-1 text-[11px] font-bold text-black shadow-[0_2px_6px_rgba(0,0,0,0.5)] hover:brightness-110 disabled:opacity-50"
-                        >
-                          {a.label}
-                        </button>
-                      ))}
-                    </div>
+                <LiveMon
+                  mon={mine.active}
+                  active
+                  art={art}
+                  placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
+                  {...monHooks(
+                    mine.active,
+                    meta,
+                    selection,
+                    dropTargets,
+                    onPokemon,
+                    onCardMoves.length > 0,
+                    hoverDropId,
                   )}
-                </div>
+                />
               </div>
               {finishPlacing >= 0 ? (
                 <button
@@ -542,38 +517,18 @@ export function LiveBoard({
           />
         ) : (
           <div className="mt-2" data-keep-selection>
-            {selection && (
+            {selection && !showMonActions && (
               <div className="flex items-center gap-2 text-[12px]">
                 <span className="rounded bg-accent px-1.5 py-0.5 font-semibold text-black">
                   {selectedName ?? "Selected"}
                 </span>
                 <span className="text-dim">
-                  {activeSelected && onCardMoves.length > 0
-                    ? "tap an attack or retreat on your Active"
-                    : abilityMoves.length > 0
-                      ? "use its Ability, or tap away"
-                      : only && only.length === 0
-                        ? "no move from here — tap away to cancel"
-                        : confirmIndex !== undefined
-                          ? "tap ✅ on the card to play it"
-                          : "tap a highlighted spot on the board"}
+                  {only && only.length === 0
+                    ? "no move from here — tap away to cancel"
+                    : confirmIndex !== undefined
+                      ? "tap ✅ on the card to play it"
+                      : "tap a highlighted spot on the board"}
                 </span>
-              </div>
-            )}
-            {abilityMoves.length > 0 && (
-              <div className="mt-2 flex flex-wrap gap-2">
-                {abilityMoves.map((a) => (
-                  <button
-                    key={a.index}
-                    type="button"
-                    data-keep-selection
-                    disabled={busy}
-                    onClick={() => onAct(a.index)}
-                    className="rounded-md border-accent bg-accent/15 px-3 py-1.5 text-[12px] font-bold text-accent disabled:opacity-50"
-                  >
-                    ⚡ {a.label}
-                  </button>
-                ))}
               </div>
             )}
             {/* Below tablet width, the centre lane has no room for the
@@ -597,6 +552,68 @@ export function LiveBoard({
           </div>
         )}
       </div>
+
+      {showMonActions && selectedMon && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => onSelect(null)}
+        >
+          <div
+            className="flex w-full max-w-lg flex-col items-center gap-4 rounded-xl border border-edge bg-bg p-4 sm:flex-row sm:items-start"
+            data-keep-selection
+            onClick={(e) => e.stopPropagation()}
+          >
+            <span className="relative block aspect-[5/7] w-[180px] flex-none overflow-hidden rounded-card border border-black/10 bg-card shadow-card-raised">
+              <CardFace src={art(selectedMon.print_id)} name={selectedMon.name} energyType={null} />
+            </span>
+            <div className="flex w-full flex-1 flex-col gap-2">
+              <div className="text-[14px] font-semibold">{selectedMon.name}</div>
+              {activeSelected &&
+                attackMoves.map((a) => (
+                  <button
+                    key={`attack-${a.index}`}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onAct(a.index)}
+                    className="rounded-md bg-accent px-3 py-2 text-left text-[13px] font-bold text-black hover:brightness-110 disabled:opacity-50"
+                  >
+                    ⚔ {a.label}
+                  </button>
+                ))}
+              {activeSelected &&
+                retreatMoves.map((a) => (
+                  <button
+                    key={`retreat-${a.index}`}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onAct(a.index)}
+                    className="rounded-md bg-warn px-3 py-2 text-left text-[13px] font-bold text-black hover:brightness-110 disabled:opacity-50"
+                  >
+                    ↺ {a.label}
+                  </button>
+                ))}
+              {abilityMoves.map((a) => (
+                <button
+                  key={`ability-${a.index}`}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onAct(a.index)}
+                  className="rounded-md border-accent bg-accent/15 px-3 py-2 text-left text-[13px] font-bold text-accent hover:bg-accent/25 disabled:opacity-50"
+                >
+                  ⚡ {a.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => onSelect(null)}
+                className="mt-1 self-start text-[12px] text-dim"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {flipRun && (
         <CoinFlip key={flipRun.id} results={flipRun.results} onDone={() => setFlipRun(null)} />
