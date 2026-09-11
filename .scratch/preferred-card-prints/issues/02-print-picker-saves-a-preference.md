@@ -1,5 +1,7 @@
 # 02 — Tapping a card opens a print picker that saves a preference
 
+Status: claimed
+
 **What to build:** Tapping an enabled tile in the catalog grid (ticket
 01) opens a modal listing every known Print of that card name, with
 nothing pre-highlighted — the modal never implies a choice was already
