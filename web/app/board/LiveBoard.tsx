@@ -562,9 +562,26 @@ export function LiveBoard({
             data-keep-selection
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="relative block aspect-[5/7] w-[180px] flex-none overflow-hidden rounded-card border border-black/10 bg-card shadow-card-raised">
-              <CardFace src={art(selectedMon.print_id)} name={selectedMon.name} energyType={null} />
-            </span>
+            {(() => {
+              const monArt = art(selectedMon.print_id);
+              // A fixed 5:7 crop box clips real art whose own aspect
+              // doesn't match exactly — `object-contain` at a bounded
+              // height shows the whole card instead, letterboxed rather
+              // than cut. The no-art fallback keeps the cropped box; it
+              // has nothing to clip.
+              return monArt ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={monArt}
+                  alt={selectedMon.name}
+                  className="max-h-[50vh] w-[180px] flex-none rounded-card object-contain shadow-card-raised"
+                />
+              ) : (
+                <span className="relative block aspect-[5/7] w-[180px] flex-none overflow-hidden rounded-card border border-black/10 bg-card shadow-card-raised">
+                  <CardFace src={null} name={selectedMon.name} energyType={null} />
+                </span>
+              );
+            })()}
             <div className="flex w-full flex-1 flex-col gap-2">
               <div className="text-[14px] font-semibold">{selectedMon.name}</div>
               {activeSelected &&

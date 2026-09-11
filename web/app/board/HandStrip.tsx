@@ -85,7 +85,7 @@ export function HandStrip({
   };
 
   return (
-    <div className="mt-1 rounded-lg border-2 border-accent/60 p-1">
+    <div className="mt-1 p-1">
       <div className="mb-1 text-[10px] uppercase tracking-widest text-dim">
         Hand ({hand.length})
       </div>
