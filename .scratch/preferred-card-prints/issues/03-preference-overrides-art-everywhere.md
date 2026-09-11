@@ -1,5 +1,7 @@
 # 03 — The preference applies everywhere art renders, overriding a decklist's pin
 
+Status: claimed
+
 **What to build:** Every other place the app resolves a card's art by
 print id — the board, the deck builder, the log, anywhere `artUrl` is
 called with a print id sourced from a live game or a parsed Decklist —
