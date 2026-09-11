@@ -139,10 +139,11 @@ export default function SettingsPage() {
                 name={entry.name}
                 dimmed={single}
                 disabled={single}
+                interactive={!single}
                 className={
                   single
                     ? "cursor-default"
-                    : "cursor-pointer transition-transform hover:scale-110 active:scale-110"
+                    : "cursor-pointer transition-transform hover:scale-110 active:scale-110 active:shadow-card-raised"
                 }
               />
             );
