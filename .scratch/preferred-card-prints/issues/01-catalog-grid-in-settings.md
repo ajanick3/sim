@@ -1,6 +1,6 @@
 # 01 — Settings shows the catalog as a grouped, searchable grid
 
-Status: claimed
+Status: resolved
 
 **What to build:** The Settings page grows a new section: every distinct
 card name from `public/cards.json` as a tile, grouped by category
@@ -29,3 +29,18 @@ tile.
 - [ ] A search box filters the visible tiles by name substring.
 - [ ] `npm run test`, `npm run lint`, `npm run typecheck`,
       `npm run build` all pass.
+
+## Answer
+
+Resolved 2026-09-11, branch `feat/print-catalog-grid`, commit `f69a935`.
+
+`web/app/prints.ts` carries `CATALOG_ORDER`, `bucketOf`,
+`catalogEntries`, `printsFor`, and `defaultPrint`, all covered in
+`web/app/prints.test.ts` (9 tests) and checked against the real
+`public/cards.json` shape (`Pokemon`/`Trainer`/`Energy` categories,
+`Supporter`/`Item`/`Tool`/`Stadium` trainer types — no surprises
+against the fixtures). The Settings page fetches `/cards.json` and the
+art index, and renders a searchable `flex-wrap` grid of `picker`-sized
+`PlayingCard` tiles in catalog order; a single-print name renders
+`disabled`/`dimmed`. `npm run test` (83 passing), `lint`, `tsc
+--noEmit`, and `next build` all pass.
