@@ -17,6 +17,9 @@ One physical card in one game. It is created at setup, it never moves in memory,
 **Card definition**:
 What a card says as printed, shared by every copy of it.
 
+**Print**:
+One release of a Card definition, identified by its TCGdex print id (set code and card number). Two Prints of the same name normally share one Card definition — same rules text, different art — but the engine treats each Print as pinned independently: a Decklist line names an exact Print, and nothing assumes two Prints of a name are interchangeable. A viewer's preferred Print is a display choice only; it never changes which Card definition a game plays.
+
 **Seat**:
 One of the two sides of a game. A seat is not a turn order: the opening coin flip decides who goes first, so either seat may start.
 
