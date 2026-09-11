@@ -41,13 +41,20 @@ export function StadiumSlot({
       data-drop-id={placeHere ? "slot:stadium" : undefined}
       disabled={!placeHere}
       onClick={placeHere}
-      className={`${CARD_SIZE.stadium} flex flex-none flex-col items-center justify-center rounded-card border border-dashed text-center text-[8px] disabled:cursor-default ${
+      className={`${CARD_SIZE.stadium} flex flex-none flex-col items-center justify-center gap-1 rounded-2xl border border-dashed text-center text-[9px] disabled:cursor-default ${
         placeHere
           ? "border-accent bg-accent/10 text-accent animate-pulse"
           : "border-white/15 text-dim"
       } ${ghost ? "invisible" : ""}`}
     >
-      {placeHere ? "place here" : "stadium"}
+      {placeHere ? (
+        "place here"
+      ) : (
+        <>
+          <span className="text-[15px] leading-none">+</span>
+          Stadium
+        </>
+      )}
     </button>
   );
 }
