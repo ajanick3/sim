@@ -323,147 +323,145 @@ export function LiveBoard({
 
   return (
     <div className="mt-3">
-      <div className="flex gap-2">
-        <div className="min-w-0 flex-1 rounded-xl border border-edge bg-felt p-2">
-          <div className="flex flex-col gap-1">
-            <SideRow
-              side={opp}
-              label={`${SEAT_NAME[opp.player]} Opponent`}
-              art={art}
-              meta={meta}
-              selection={selection}
-              dropTargets={dropTargets}
-              onPokemon={onPokemon}
-              onViewDiscard={(cards, label) => setDiscardView({ cards, label })}
-              hoverDropId={hoverDropId}
-            />
+      <div className="mx-auto w-full max-w-[560px] rounded-xl border border-edge bg-felt p-2">
+        <div className="flex flex-col gap-1">
+          <SideRow
+            side={opp}
+            label={`${SEAT_NAME[opp.player]} Opponent`}
+            art={art}
+            meta={meta}
+            selection={selection}
+            dropTargets={dropTargets}
+            onPokemon={onPokemon}
+            onViewDiscard={(cards, label) => setDiscardView({ cards, label })}
+            hoverDropId={hoverDropId}
+          />
 
-            {/* Centre lane: Stadium, the two Actives stacked, and — from
+          {/* Centre lane: Stadium, the two Actives stacked, and — from
                 tablet width up — the action list across from the
                 Stadium. Below that width there is no room for a fourth
                 column, so it falls back to the collapsed "All actions"
                 spot under the Hand instead; see the `md:hidden` details
                 below. */}
-            <div className="flex items-center justify-center gap-3">
-              <StadiumSlot
-                card={view.stadium}
+          <div className="flex items-center justify-center gap-3">
+            <StadiumSlot
+              card={view.stadium}
+              art={art}
+              placeHere={stadiumPlace >= 0 ? () => onAct(stadiumPlace) : undefined}
+            />
+            <div className="flex flex-col items-center gap-1">
+              <LiveMon
+                mon={opp.active}
+                active
+                far
                 art={art}
-                placeHere={stadiumPlace >= 0 ? () => onAct(stadiumPlace) : undefined}
+                {...monHooks(
+                  opp.active,
+                  meta,
+                  selection,
+                  dropTargets,
+                  onPokemon,
+                  false,
+                  hoverDropId,
+                )}
               />
-              <div className="flex flex-col items-center gap-1">
-                <LiveMon
-                  mon={opp.active}
-                  active
-                  far
-                  art={art}
-                  {...monHooks(
-                    opp.active,
-                    meta,
-                    selection,
-                    dropTargets,
-                    onPokemon,
-                    false,
-                    hoverDropId,
-                  )}
-                />
-                <div className="h-px w-24 bg-white/15" aria-hidden />
-                <LiveMon
-                  mon={mine.active}
-                  active
-                  art={art}
-                  placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
-                  {...monHooks(
-                    mine.active,
-                    meta,
-                    selection,
-                    dropTargets,
-                    onPokemon,
-                    onCardMoves.length > 0,
-                    hoverDropId,
-                  )}
+              <div className="h-px w-24 bg-white/15" aria-hidden />
+              <LiveMon
+                mon={mine.active}
+                active
+                art={art}
+                placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
+                {...monHooks(
+                  mine.active,
+                  meta,
+                  selection,
+                  dropTargets,
+                  onPokemon,
+                  onCardMoves.length > 0,
+                  hoverDropId,
+                )}
+              />
+            </div>
+            {finishPlacing >= 0 ? (
+              <button
+                type="button"
+                onClick={() => onAct(finishPlacing)}
+                disabled={busy}
+                className="h-[118px] w-[96px] flex-none rounded-lg border-2 border-accent bg-accent/15 px-2 text-sm font-bold leading-tight text-accent hover:bg-accent/25 disabled:opacity-50"
+              >
+                ✓ Done placing
+              </button>
+            ) : (
+              <StadiumSlot ghost />
+            )}
+            {wideBoard && !firstTurn && !decision && (
+              <div className="max-h-[170px] w-[168px] flex-none overflow-y-auto rounded-lg border border-edge bg-panel/40 p-1.5">
+                <ActionPanel
+                  actions={actions}
+                  only={only}
+                  onClearSelection={() => onSelect(null)}
+                  seat={seat}
+                  busy={busy}
+                  onAct={onAct}
                 />
               </div>
-              {finishPlacing >= 0 ? (
-                <button
-                  type="button"
-                  onClick={() => onAct(finishPlacing)}
-                  disabled={busy}
-                  className="h-[118px] w-[96px] flex-none rounded-lg border-2 border-accent bg-accent/15 px-2 text-sm font-bold leading-tight text-accent hover:bg-accent/25 disabled:opacity-50"
-                >
-                  ✓ Done placing
-                </button>
-              ) : (
-                <StadiumSlot ghost />
-              )}
-              {wideBoard && !firstTurn && !decision && (
-                <div className="max-h-[170px] w-[168px] flex-none overflow-y-auto rounded-lg border border-edge bg-panel/40 p-1.5">
-                  <ActionPanel
-                    actions={actions}
-                    only={only}
-                    onClearSelection={() => onSelect(null)}
-                    seat={seat}
-                    busy={busy}
-                    onAct={onAct}
-                  />
-                </div>
-              )}
-            </div>
-
-            <SideRow
-              side={mine}
-              label={`${SEAT_NAME[mine.player]} You`}
-              mine
-              art={art}
-              meta={meta}
-              selection={selection}
-              dropTargets={dropTargets}
-              onPokemon={onPokemon}
-              onPlaceBench={benchPlace >= 0 ? () => onAct(benchPlace) : undefined}
-              onViewDiscard={(cards, label) => setDiscardView({ cards, label })}
-              hoverDropId={hoverDropId}
-            />
+            )}
           </div>
 
-          {prompt && !firstTurn && <PromptBar prompt={prompt} busy={busy} onAct={onAct} />}
-          {promoting && (
-            <div className="mt-1 rounded-lg border border-warn/60 bg-warn/10 p-2 text-center text-[12px] font-semibold text-warn">
-              Choose a new Active — tap a Benched Pokémon, tap again to promote it
-            </div>
-          )}
-          {distributing > 0 && (
-            <div className="mt-1 rounded-lg border border-warn/60 bg-warn/10 p-2 text-center text-[12px] font-semibold text-warn">
-              Place {distributing} more damage counter{distributing === 1 ? "" : "s"} — tap an
-              opponent&apos;s Benched Pokémon, tap again to place one
-            </div>
-          )}
-
-          <HandStrip
-            hand={view.your_hand}
+          <SideRow
+            side={mine}
+            label={`${SEAT_NAME[mine.player]} You`}
+            mine
+            art={art}
             meta={meta}
             selection={selection}
-            onHand={onHand}
-            onConfirm={onAct}
-            confirmIndex={confirmIndex}
-            art={art}
-            onCardPointerDown={startDrag}
-            suppressClickRef={suppressClick}
-            draggingCard={drag?.card ?? null}
+            dropTargets={dropTargets}
+            onPokemon={onPokemon}
+            onPlaceBench={benchPlace >= 0 ? () => onAct(benchPlace) : undefined}
+            onViewDiscard={(cards, label) => setDiscardView({ cards, label })}
+            hoverDropId={hoverDropId}
           />
         </div>
 
-        {showRail && (
-          <SideRail
-            myPrizes={mine.prize_count}
-            oppPrizes={opp.prize_count}
-            turn={view.turn_number}
-            yourTurn={seat === you}
-            canEndTurn={endTurn >= 0 && !busy}
-            onEndTurn={() => endTurn >= 0 && onAct(endTurn)}
-            onLog={() => setShowLog(true)}
-            onHide={() => setShowRail(false)}
-          />
+        {prompt && !firstTurn && <PromptBar prompt={prompt} busy={busy} onAct={onAct} />}
+        {promoting && (
+          <div className="mt-1 rounded-lg border border-warn/60 bg-warn/10 p-2 text-center text-[12px] font-semibold text-warn">
+            Choose a new Active — tap a Benched Pokémon, tap again to promote it
+          </div>
         )}
+        {distributing > 0 && (
+          <div className="mt-1 rounded-lg border border-warn/60 bg-warn/10 p-2 text-center text-[12px] font-semibold text-warn">
+            Place {distributing} more damage counter{distributing === 1 ? "" : "s"} — tap an
+            opponent&apos;s Benched Pokémon, tap again to place one
+          </div>
+        )}
+
+        <HandStrip
+          hand={view.your_hand}
+          meta={meta}
+          selection={selection}
+          onHand={onHand}
+          onConfirm={onAct}
+          confirmIndex={confirmIndex}
+          art={art}
+          onCardPointerDown={startDrag}
+          suppressClickRef={suppressClick}
+          draggingCard={drag?.card ?? null}
+        />
       </div>
+
+      {showRail && (
+        <SideRail
+          myPrizes={mine.prize_count}
+          oppPrizes={opp.prize_count}
+          turn={view.turn_number}
+          yourTurn={seat === you}
+          canEndTurn={endTurn >= 0 && !busy}
+          onEndTurn={() => endTurn >= 0 && onAct(endTurn)}
+          onLog={() => setShowLog(true)}
+          onHide={() => setShowRail(false)}
+        />
+      )}
 
       {!showRail && (
         <button
