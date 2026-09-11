@@ -85,10 +85,14 @@ for it.
   small wrapped adapter (`loadPrintPrefs` / `savePrintPref`) matching
   the try/catch-and-degrade shape `loadRecent`/`clearRecent` already
   use in `web/app/settings/page.tsx`.
-- **Grouping**: reuses the `HAND_ORDER` category list and sort
-  approach `splitHandRows` already applies to a hand
-  (`web/app/board/shared.ts`) — category order, then name — as a
-  general catalog-ordering convention, not a one-off for this grid.
+- **Grouping**: a new `CATALOG_ORDER` constant, its own symbol
+  alongside `HAND_ORDER` rather than reusing it — the two start
+  identical (pokémon, supporter, item, tool, stadium, special-energy,
+  energy) but are allowed to drift; a hand's ordering needs and a
+  catalog browse's needs are not guaranteed to stay the same thing.
+  Within a category, the catalog additionally sorts alphabetically by
+  name — a need `splitHandRows` never had, since a hand is small and
+  unordered within a category.
 - **Print resolution has three tiers, checked in order:**
   1. The player's stored preference for that card name, if set.
   2. The current context's own resolved Print — a Decklist line's
