@@ -172,14 +172,14 @@ export default function SettingsPage() {
             {filtered.length} of {entries.length}
           </span>
         </div>
-        <div className="mt-1 flex flex-wrap justify-center gap-3">
+        <div className="mx-auto mt-1 grid max-w-[720px] grid-cols-5 gap-3">
           {filtered.map((entry) => {
             const single = entry.prints.length === 1;
             const printId = resolvePrint(entry.key, entry.prints, prefs, null);
             return (
               <PlayingCard
                 key={entry.key}
-                size="picker"
+                size="fluid"
                 crop="full"
                 src={artUrl(artIndex, printId, artQuality)}
                 name={entry.name}
@@ -216,11 +216,11 @@ export default function SettingsPage() {
                 Close
               </button>
             </div>
-            <div className="flex flex-wrap justify-center gap-3 overflow-y-auto p-3">
+            <div className="grid grid-cols-5 gap-3 overflow-y-auto p-3">
               {openEntry.prints.map((printId) => (
                 <PlayingCard
                   key={printId}
-                  size="picker"
+                  size="fluid"
                   crop="full"
                   src={artUrl(artIndex, printId, artQuality)}
                   name={openEntry.name}
