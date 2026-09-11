@@ -77,14 +77,25 @@ for it.
   way, client-side, with no server work.
 - **Domain term added**: **Print**, defined in
   `docs/architecture/glossary.md` — one release of a Card definition,
-  identified by its TCGdex print id, normally sharing rules text with
-  every other Print of the same Card definition but pinned
-  independently wherever it's named.
-- **Storage**: a `localStorage` map from card name to a chosen print
-  id, alongside the existing `sim.recent` key, read/written through a
-  small wrapped adapter (`loadPrintPrefs` / `savePrintPref`) matching
-  the try/catch-and-degrade shape `loadRecent`/`clearRecent` already
-  use in `web/app/settings/page.tsx`.
+  identified by its TCGdex print id, pinned independently wherever
+  it's named. A shared card name is *not* enough to say two Prints
+  share a Card definition (see Further Notes and `identityOf` below);
+  `identityOf` is the real test.
+- **Card identity, not bare name, is the grouping and storage key
+  throughout** ("card name" below is shorthand for this): `identityOf`
+  (`web/app/prints.ts`) fingerprints a card's name plus every
+  rules-relevant field (stage, hp, types, retreat, weaknesses,
+  resistances, attacks, abilities, trainerType, energyType, effect —
+  excluding `id`/`set`/`localId` and flavor-only `description`). Two
+  Prints share an identity only if they share all of that; two cards
+  that merely share a `name` render as two separate catalog entries,
+  each showing its own (also unrelated) art — no extra label needed to
+  tell them apart, since the art already differs.
+- **Storage**: a `localStorage` map from a card's identity to a chosen
+  print id, alongside the existing `sim.recent` key, read/written
+  through a small wrapped adapter (`loadPrintPrefs` / `savePrintPref`)
+  matching the try/catch-and-degrade shape `loadRecent`/`clearRecent`
+  already use in `web/app/settings/page.tsx`.
 - **Grouping**: a new `CATALOG_ORDER` constant, its own symbol
   alongside `HAND_ORDER` rather than reusing it — the two start
   identical (pokémon, supporter, item, tool, stadium, special-energy,
@@ -105,15 +116,14 @@ for it.
      to the grid tile's own thumbnail only — it does not touch the
      picker modal's highlight state (tier 3 is a display default, not
      an implied choice).
-- **New pure logic**, in `web/app/board/shared.ts` or a new sibling
-  module (`web/app/prints.ts`) if `shared.ts` gets crowded:
-  - A function grouping the full card list into category-then-name
-    order for the grid.
-  - A function collecting every Print (from `public/cards.json`) that
-    shares one card name.
-  - A function resolving the three-tier print choice above, given a
-    card name, the stored preference map, and an optional context
-    print id.
+- **New pure logic**, landed in `web/app/prints.ts`:
+  - `identityOf`, computing the card-identity fingerprint above.
+  - `catalogEntries`, grouping the full card list by identity into
+    category-then-name order for the grid, each entry carrying every
+    Print id sharing that identity.
+  - `resolvePrint`, the three-tier print choice above, given a card's
+    identity, its known Prints, the stored preference map, and an
+    optional context print id.
 - **Settings page** (`web/app/settings/page.tsx`) grows a new section
   below Motion: a searchable grid of tiles (art via `artUrl`, one tile
   per distinct card name), each tile disabled when its name has only
@@ -157,25 +167,34 @@ for it.
 - Any change to the TCGdex import pipeline (`tools/import_cards.py`,
   `data/cards.json`) — no new fields, no variant fetching beyond what
   already lands there.
-- Handling same-name-different-rules-text Prints (the case
-  `docs/adr/0020-a-trainer-name-is-matched-unless-a-print-overrides-it.md`
-  anticipates for Trainers). This feature assumes, like the rest of
-  the codebase today, that Prints of one name share rules text; it
-  does not add or change any safeguard for the day that's false.
+- Changing how the *engine* resolves a Decklist line's card name during
+  deck import (`docs/adr/0020-a-trainer-name-is-matched-unless-a-print-overrides-it.md`'s
+  `known_trainer_by_print` override table). Ticket 01 found that
+  same-name-different-rules-text Prints are common, not rare (see
+  Further Notes), and the catalog now groups by rules text instead of
+  bare name to keep them apart in the picker — but that's a
+  display-layer fix only, unrelated to how the engine picks a
+  `CardDef` from a Decklist line's name.
 - Scoping the catalog grid to only the cards a player has actually
   used (their saved decks / recent games). The grid always shows the
   whole catalog; a search box is the only narrowing tool.
 
 ## Further Notes
 
-- `public/cards.json` groups Prints of one name by the literal `name`
-  string only — this is TCGdex's own relation, not something this
-  repository imposes (confirmed: TCGdex's API carries no shared
-  "card" id across Prints, only matching names).
-- 889 card names in the current catalog have two or more known Prints
-  as of the last import; this is a lower bound, since `data/cards.json`
-  only holds Standard-legal (regulation mark H/I/J) Prints — an older,
-  rotated-out Print of a still-legal card name is not in the file.
+- `public/cards.json` relates cards only by the literal `name` string —
+  this is TCGdex's own relation, not something this repository imposes
+  (confirmed: TCGdex's API carries no shared "card" id across Prints).
+  Ticket 01 found this relation is not enough on its own: of 889 names
+  that share with another card in the catalog, 468 differ in some
+  rules-relevant field (a name collision between two unrelated cards,
+  e.g. two Pokémon both named "Abra" with 50 HP/no Ability and 40
+  HP/an Ability) and only 421 are genuinely the same card reprinted.
+  The catalog now groups by name **and** a rules-text fingerprint
+  (`identityOf` in `web/app/prints.ts`) — 716 of 2035 resulting
+  entries have 2+ known Prints once name collisions are split out;
+  this is a lower bound, since `data/cards.json` only holds
+  Standard-legal (regulation mark H/I/J) Prints — an older, rotated-out
+  Print of a still-legal card is not in the file.
 - This spec's design work happened as a `/grill-with-docs` session;
   the domain-modeling half of that session already landed the
   **Print** glossary term ahead of this spec.

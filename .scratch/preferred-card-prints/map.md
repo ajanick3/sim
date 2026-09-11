@@ -18,3 +18,8 @@ Ticket 01 resolved 2026-09-11: the Settings page shows the full card
 catalog as a searchable, category-grouped grid, each tile's art
 resolved by a new deterministic fallback; details under
 [the ticket's Answer](issues/01-catalog-grid-in-settings.md).
+
+Ticket 02 resolved 2026-09-11: tapping a catalog tile opens a print
+picker that saves a preference to localStorage and updates the tile;
+details under
+[the ticket's Answer](issues/02-print-picker-saves-a-preference.md).

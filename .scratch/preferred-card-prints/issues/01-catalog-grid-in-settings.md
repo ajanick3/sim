@@ -53,3 +53,16 @@ search box, and gave a tappable tile a hover/tap scale-and-lift. None
 of this was asked for by the AC above; it's UI polish requested
 alongside review of this ticket, kept on this branch since it's the
 same PR (#320) rather than opening a separate one.
+
+## Errata
+
+2026-09-11: `printsFor`/`catalogEntries` above grouped by bare card
+`name`, per this ticket's own wording ("collects every Print sharing
+one card name"). Reviewing PR #321 (ticket 02) surfaced real data
+where that's wrong: two prints both named "Abra" carry 50 HP/no
+Ability and 40 HP/an Ability — unrelated cards, not two Prints of one
+card. Of 889 same-named groups, 468 actually differ in some
+rules-relevant field. Fixed on `feat/print-picker-preference`
+(commit `e793ccb`): grouping now keys on `identityOf` (name plus a
+rules-text fingerprint), and `printsFor` was removed along with it.
+See the corrected **Print** glossary entry and spec.

@@ -4,7 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { loadRecent } from "../recent";
 import { artUrl, loadArtIndex, type ArtIndex } from "../art";
-import { catalogEntries, defaultPrint, type CatalogCard } from "../prints";
+import { catalogEntries, resolvePrint, type CatalogCard, type CatalogEntry } from "../prints";
+import { loadPrintPrefs, savePrintPref } from "../printPrefs";
 import { PlayingCard } from "../board/PlayingCard";
 
 /** The catalog's buckets a player can filter by, in `CATALOG_ORDER`.
@@ -27,9 +28,12 @@ export default function SettingsPage() {
   const [activeBuckets, setActiveBuckets] = useState<Set<string>>(
     () => new Set(CATEGORY_FILTERS.map((f) => f.bucket)),
   );
+  const [prefs, setPrefs] = useState<Record<string, string>>({});
+  const [openEntry, setOpenEntry] = useState<CatalogEntry | null>(null);
 
   useEffect(() => {
     setRecentCount(loadRecent().length);
+    setPrefs(loadPrintPrefs());
     void fetch("/cards.json")
       .then((r) => (r.ok ? r.json() : { cards: [] }))
       .then((data: { cards: CatalogCard[] }) => setCards(data.cards ?? []))
@@ -134,10 +138,10 @@ export default function SettingsPage() {
         <div className="mt-1 flex flex-wrap justify-center gap-3">
           {filtered.map((entry) => {
             const single = entry.prints.length === 1;
-            const printId = defaultPrint(entry.prints);
+            const printId = resolvePrint(entry.key, entry.prints, prefs, null);
             return (
               <PlayingCard
-                key={entry.name}
+                key={entry.key}
                 size="picker"
                 crop="full"
                 src={artUrl(artIndex, printId)}
@@ -145,6 +149,7 @@ export default function SettingsPage() {
                 dimmed={single}
                 disabled={single}
                 interactive={!single}
+                onClick={single ? undefined : () => setOpenEntry(entry)}
                 className={
                   single
                     ? "cursor-default"
@@ -155,6 +160,45 @@ export default function SettingsPage() {
           })}
         </div>
       </section>
+
+      {openEntry && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-3 sm:items-center"
+          onClick={() => setOpenEntry(null)}
+        >
+          <div
+            className="flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-lg border border-edge bg-bg"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b border-edge p-3">
+              <h3 className="m-0 text-[14px] font-semibold">{openEntry.name}</h3>
+              <button
+                onClick={() => setOpenEntry(null)}
+                className="text-[13px] text-dim hover:text-text"
+              >
+                Close
+              </button>
+            </div>
+            <div className="flex flex-wrap justify-center gap-3 overflow-y-auto p-3">
+              {openEntry.prints.map((printId) => (
+                <PlayingCard
+                  key={printId}
+                  size="picker"
+                  crop="full"
+                  src={artUrl(artIndex, printId)}
+                  name={openEntry.name}
+                  interactive
+                  onClick={() => {
+                    setPrefs(savePrintPref(openEntry.key, printId));
+                    setOpenEntry(null);
+                  }}
+                  className="cursor-pointer transition-transform hover:scale-110 active:scale-110 active:shadow-card-raised"
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
