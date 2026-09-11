@@ -40,7 +40,7 @@ export function LiveMon({
   /** Empty slot: a selected hand card can be placed here. */
   placeHere?: () => void;
 }) {
-  const size = active ? (far ? "activeFar" : "active") : "benchFluid";
+  const size = active ? (far ? "activeFar" : "active") : "fluid";
   const crop = active ? "top" : "full";
   if (!mon) {
     return (

@@ -7,9 +7,11 @@ import type { WireActionMeta, WireCard } from "../view";
 import { PlayingCard } from "./PlayingCard";
 import { splitHandRows, type Art } from "./shared";
 
-/** The hand: cards sorted by category into two fixed-height rows, each
- *  the whole card. The block's own height never changes — a hand that
- *  overflows it scrolls vertically rather than growing a third row.
+/** The hand: cards sorted by category into two rows of five columns
+ *  each, the whole card, sized to the screen rather than a fixed pixel
+ *  width — small on a phone, larger on anything wider, always five
+ *  across. The block's own height tracks that width, so a hand that
+ *  overflows two rows scrolls vertically rather than growing a third.
  *  Tapping a selected card confirms it with a toss animation toward the
  *  move's destination; a press-and-drag starts a drag the board
  *  resolves. */
@@ -90,9 +92,9 @@ export function HandStrip({
       {hand.length === 0 ? (
         <span className="px-2 py-8 text-[11px] text-dim">empty</span>
       ) : (
-        <div className="flex h-[376px] flex-col gap-2 overflow-y-auto">
+        <div className="mx-auto flex aspect-[25/14] max-w-[560px] flex-col gap-2 overflow-y-auto">
           {rows.map((row, ri) => (
-            <div key={ri} className="flex flex-wrap justify-center gap-2">
+            <div key={ri} className="grid grid-cols-5 gap-2">
               {row.map((c) => {
                 const playable = meta.some((x) => x.card === c.id);
                 const selected = selection?.kind === "hand" && selection.card === c.id;
@@ -100,7 +102,7 @@ export function HandStrip({
                 return (
                   <PlayingCard
                     key={c.id}
-                    size="picker"
+                    size="fluid"
                     crop="full"
                     src={src}
                     name={c.name}
