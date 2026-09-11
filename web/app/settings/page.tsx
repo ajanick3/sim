@@ -139,7 +139,11 @@ export default function SettingsPage() {
                 name={entry.name}
                 dimmed={single}
                 disabled={single}
-                className={single ? "cursor-default" : "cursor-pointer"}
+                className={
+                  single
+                    ? "cursor-default"
+                    : "cursor-pointer transition-transform hover:scale-110 active:scale-110"
+                }
               />
             );
           })}
