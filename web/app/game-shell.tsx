@@ -171,12 +171,13 @@ export default function GameShell() {
         over,
         busy,
         steps: autoSteps.current,
+        phase: view?.phase,
       })
     ) {
       autoSteps.current += 1;
       act(0);
     }
-  }, [actions, status.kind, over, busy, act]);
+  }, [actions, status.kind, over, busy, act, view]);
 
   const art = useMemo(
     () => (printId: string) =>

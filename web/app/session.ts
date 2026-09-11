@@ -181,7 +181,16 @@ export interface AutoAdvanceInput {
   busy: boolean;
   /** Consecutive auto-advances taken since the last real choice. */
   steps: number;
+  /** The wire's current phase tag, e.g. "Main", "PlacingActive". */
+  phase?: string;
 }
+
+/** Phases where a sole legal action is still a real choice the player
+ *  should see land, not a forced step to skip past. Setup's opening
+ *  Active is the one place a single Basic in hand still deserves its
+ *  own tap — a mulligan hand of exactly one Basic is not "no choice",
+ *  it's the choice. */
+const NEVER_AUTO_ADVANCE = new Set(["PlacingActive"]);
 
 /**
  * Whether the UI should apply the sole legal action for the player. Only
@@ -195,6 +204,7 @@ export function shouldAutoAdvance(i: AutoAdvanceInput): boolean {
     i.revealed &&
     !i.over &&
     !i.busy &&
-    i.steps < AUTO_ADVANCE_CAP
+    i.steps < AUTO_ADVANCE_CAP &&
+    !(i.phase != null && NEVER_AUTO_ADVANCE.has(i.phase))
   );
 }
