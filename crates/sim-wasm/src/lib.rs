@@ -13,6 +13,7 @@ use sim::engine::apply;
 use sim::ids::{CardDefId, PlayerId};
 use sim::import::{Import, load};
 use sim::rng::SeededRng;
+use sim::state::Phase;
 use sim::view::PlayerView;
 use wasm_bindgen::prelude::*;
 
@@ -336,6 +337,10 @@ struct WireView {
     /// of it — null otherwise. The board dims the cards this search cannot
     /// take. See ADR 0101.
     library_in_search: Option<Vec<WireCard>>,
+    /// How many Phantom Dive-style damage counters are still to place,
+    /// or null in every other phase. The board shows a "place N more"
+    /// hint while this runs.
+    counters_to_place: Option<u32>,
     sides: [WireSide; 2],
 }
 
@@ -409,10 +414,22 @@ fn wire_view(db: &CardDb, view: &PlayerView) -> WireView {
             .library_in_search
             .as_ref()
             .map(|cards| cards.iter().map(|c| wire_card(db, c)).collect()),
+        counters_to_place: counters_to_place(view),
         sides: [
             wire_side(db, view.side(PlayerId::One)),
             wire_side(db, view.side(PlayerId::Two)),
         ],
+    }
+}
+
+/// How many Phantom Dive-style damage counters this player still has to
+/// place, or `None` in every other phase. A single `_` arm, so it needs
+/// no upkeep as phases are added — the note at `phase_tag`'s call site
+/// only warns off a full match on the enum, not a one-line read of it.
+fn counters_to_place(view: &PlayerView) -> Option<u32> {
+    match view.phase {
+        Phase::DistributingDamageCounters { remaining, .. } => Some(remaining),
+        _ => None,
     }
 }
 

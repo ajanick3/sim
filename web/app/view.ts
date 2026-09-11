@@ -64,5 +64,8 @@ export interface WireView {
   /** Your whole library, sorted, while you search the whole of it — null
    *  otherwise. The picker dims the cards the current search cannot take. */
   library_in_search: WireCard[] | null;
+  /** How many Phantom Dive-style damage counters are still to place, or
+   *  null in every other phase. */
+  counters_to_place: number | null;
   sides: [WireSide, WireSide];
 }

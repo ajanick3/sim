@@ -19,7 +19,15 @@ import { PromptBar } from "./PromptBar";
 import { SideRail } from "./SideRail";
 import { SideRow } from "./SideRow";
 import { StadiumSlot } from "./StadiumSlot";
-import { asDecision, asPrompt, coinFlipsIn, monHooks, SEAT_NAME, type Art } from "./shared";
+import {
+  asDecision,
+  asPrompt,
+  coinFlipsIn,
+  countersToPlace,
+  monHooks,
+  SEAT_NAME,
+  type Art,
+} from "./shared";
 import type { CoinResult } from "./shared";
 
 export function LiveBoard({
@@ -118,6 +126,9 @@ export function LiveBoard({
   const prompt = decision ? null : asPrompt(actions);
   // After a Knockout the player must pick a new Active from the Bench.
   const promoting = actions.length > 0 && actions.every((a) => /^Promote /.test(a));
+  // Phantom Dive / Hex Hurl: how many damage counters are still to place
+  // on the opponent's Bench, one tap at a time. 0 in every other phase.
+  const distributing = countersToPlace(actions, view.counters_to_place);
   // The coin-flip winner picks who starts — a full-board modal, not two
   // buttons in a list.
   const firstTurn =
@@ -396,6 +407,12 @@ export function LiveBoard({
           {promoting && (
             <div className="mt-1 rounded-lg border border-warn/60 bg-warn/10 p-2 text-center text-[12px] font-semibold text-warn">
               Choose a new Active — tap a Benched Pokémon, tap again to promote it
+            </div>
+          )}
+          {distributing > 0 && (
+            <div className="mt-1 rounded-lg border border-warn/60 bg-warn/10 p-2 text-center text-[12px] font-semibold text-warn">
+              Place {distributing} more damage counter{distributing === 1 ? "" : "s"} — tap an
+              opponent&apos;s Benched Pokémon, tap again to place one
             </div>
           )}
 

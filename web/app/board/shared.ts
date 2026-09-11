@@ -139,6 +139,16 @@ export function asPrompt(actions: string[]): Prompt | null {
   return { verb: `Use ${name}?`, accepts, decline };
 }
 
+/** Phantom Dive and Hex Hurl put several damage counters on the
+ *  opponent's Bench, one tap at a time. Given the acting player's legal
+ *  actions and the wire's `counters_to_place`, this is how many are
+ *  still to place — 0 when the board is in any other phase. */
+export function countersToPlace(actions: string[], remaining: number | null): number {
+  if (actions.length === 0) return 0;
+  if (!actions.every((a) => /^Place a damage counter on /.test(a))) return 0;
+  return remaining ?? 0;
+}
+
 export type CoinResult = "heads" | "tails";
 
 /** The coin-flip results in a run of log lines, oldest first. The engine
