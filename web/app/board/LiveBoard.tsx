@@ -189,6 +189,15 @@ export function LiveBoard({
           (m) => m.card === selection.card && m.target === null && m.kind === "PlaceActive",
         )
       : -1;
+  // A selected Stadium in hand — tapped straight onto its own slot, the
+  // same no-button pattern as the Bench and Active spots.
+  const stadiumPlace =
+    selection?.kind === "hand" &&
+    view.your_hand.find((c) => c.id === selection.card)?.category === "stadium"
+      ? meta.findIndex(
+          (m) => m.card === selection.card && m.target === null && m.kind === "PlayTrainer",
+        )
+      : -1;
   const selectedName =
     selection?.kind === "hand"
       ? view.your_hand.find((c) => c.id === selection.card)?.name
@@ -214,15 +223,16 @@ export function LiveBoard({
 
   // The window listeners fire long after render, so they read the live
   // board — the drop targets and empty-slot moves — from a ref.
-  const board = useRef({ dropTargets, benchPlace, activePlace });
+  const board = useRef({ dropTargets, benchPlace, activePlace, stadiumPlace });
   useEffect(() => {
-    board.current = { dropTargets, benchPlace, activePlace };
+    board.current = { dropTargets, benchPlace, activePlace, stadiumPlace };
   });
   const resolveDrop = useCallback((dropId: string): number | null => {
     const b = board.current;
     if (dropId.startsWith("mon:")) return b.dropTargets.get(Number(dropId.slice(4))) ?? null;
     if (dropId === "slot:bench") return b.benchPlace >= 0 ? b.benchPlace : null;
     if (dropId === "slot:active") return b.activePlace >= 0 ? b.activePlace : null;
+    if (dropId === "slot:stadium") return b.stadiumPlace >= 0 ? b.stadiumPlace : null;
     return null;
   }, []);
 
@@ -308,7 +318,11 @@ export function LiveBoard({
 
             {/* Centre lane: stadium on the left, the two Actives stacked. */}
             <div className="flex items-center justify-center gap-3">
-              <StadiumSlot card={view.stadium} art={art} />
+              <StadiumSlot
+                card={view.stadium}
+                art={art}
+                placeHere={stadiumPlace >= 0 ? () => onAct(stadiumPlace) : undefined}
+              />
               <div className="flex flex-col items-center gap-1">
                 <LiveMon
                   mon={opp.active}
