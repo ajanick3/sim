@@ -16,18 +16,18 @@ tile.
 
 **Blocked by:** None — can start immediately
 
-- [ ] A new pure function groups and orders the full card list by
+- [x] A new pure function groups and orders the full card list by
       `CATALOG_ORDER` then name; covered by direct unit tests (given a
       card list, this order out), no DOM involved.
-- [ ] A new pure function collects every Print sharing one card name
+- [x] A new pure function collects every Print sharing one card name
       from the loaded catalog; covered by direct unit tests.
-- [ ] The Settings page renders one tile per distinct card name, in
+- [x] The Settings page renders one tile per distinct card name, in
       that order, each showing its deterministic-fallback art via
       `artUrl`.
-- [ ] A card name with exactly one known Print renders its tile
+- [x] A card name with exactly one known Print renders its tile
       disabled (no tap affordance).
-- [ ] A search box filters the visible tiles by name substring.
-- [ ] `npm run test`, `npm run lint`, `npm run typecheck`,
+- [x] A search box filters the visible tiles by name substring.
+- [x] `npm run test`, `npm run lint`, `npm run typecheck`,
       `npm run build` all pass.
 
 ## Answer
@@ -44,3 +44,12 @@ art index, and renders a searchable `flex-wrap` grid of `picker`-sized
 `PlayingCard` tiles in catalog order; a single-print name renders
 `disabled`/`dimmed`. `npm run test` (83 passing), `lint`, `tsc
 --noEmit`, and `next build` all pass.
+
+Beyond this ticket's AC, follow-up commits on the same branch also
+made the grid span full width outside the narrow settings column,
+added a row of category toggle buttons (with a pressed/dim visual
+state and a filtered/total count) narrowing the grid alongside the
+search box, and gave a tappable tile a hover/tap scale-and-lift. None
+of this was asked for by the AC above; it's UI polish requested
+alongside review of this ticket, kept on this branch since it's the
+same PR (#320) rather than opening a separate one.
