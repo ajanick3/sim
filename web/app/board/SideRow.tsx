@@ -67,7 +67,7 @@ export function SideRow({
           }`}
         >
           <div
-            className={`grid gap-1.5 ${mine ? "" : "ml-auto"}`}
+            className="mx-auto grid gap-1.5"
             style={{
               gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
               maxWidth: `${maxWidth}px`,

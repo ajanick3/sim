@@ -2,9 +2,11 @@
 
 /** Turn number, both prize counts, END TURN, a log button, and a » to
  *  collapse the lot — floating over the board as a column of small,
- *  unobtrusive FABs pinned to the right edge and centred in the
- *  viewport, rather than a boxed sidebar that eats into the board's
- *  own width. */
+ *  unobtrusive FABs pinned to the right edge of, and vertically
+ *  centred within, whatever block the caller positions this inside
+ *  (the two Benches and the centre lane between them), rather than a
+ *  boxed sidebar that eats into the board's own width or a rail
+ *  centred on the whole page. */
 export function SideRail({
   myPrizes,
   oppPrizes,
@@ -27,7 +29,7 @@ export function SideRail({
   const fab =
     "grid place-items-center rounded-full border border-edge bg-panel/80 shadow-[0_2px_10px_rgba(0,0,0,0.4)] backdrop-blur transition-colors";
   return (
-    <div className="fixed right-2 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2.5">
+    <div className="absolute right-1 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2.5">
       <button
         onClick={onHide}
         aria-label="Hide controls"

@@ -95,6 +95,11 @@ export function HandStrip({
         <div className="mx-auto flex aspect-[25/14] max-w-[560px] flex-col gap-2 overflow-y-auto">
           {rows.map((row, ri) => (
             <div key={ri} className="grid grid-cols-5 gap-2">
+              {/* A row short of five centres instead of hugging the
+                  grid's start column. */}
+              {Array.from({ length: Math.max(0, Math.floor((5 - row.length) / 2)) }, (_, i) => (
+                <div key={`pad-${i}`} aria-hidden />
+              ))}
               {row.map((c) => {
                 const playable = meta.some((x) => x.card === c.id);
                 const selected = selection?.kind === "hand" && selection.card === c.id;
