@@ -30,3 +30,10 @@ Next.js app on Vercel" guide. `DATABASE_URL` comes from `vercel env pull`.
 Tables live in tickets 01 (`games`, `moves`) and 02 (`bug_reports`).
 Not yet built — the Neon project and Vercel link are provisioning steps
 the operator runs.
+
+Ticket 01 triage resolved 2026-09-11: `appendMove` trusts the client and
+validates on read, an `engine_version` mismatch warns rather than blocks,
+and `moves.seq` races get no handling beyond the primary-key conflict.
+Status set to `ready-for-human` — the Neon/Vercel provisioning step still
+gates the remaining AC; details under
+[the ticket](issues/01-save-resume-and-share-a-game.md).
