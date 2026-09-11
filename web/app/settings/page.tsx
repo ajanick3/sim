@@ -138,7 +138,7 @@ export default function SettingsPage() {
       </div>
 
       <section className="mt-8 flex flex-col gap-2">
-        <div className="mx-auto flex max-w-[560px] flex-col gap-2">
+        <div className="mx-auto w-full max-w-[560px] flex flex-col gap-2">
           <h2 className="m-0 text-[13px] uppercase tracking-widest text-dim">Card prints</h2>
           <p className="m-0 text-[13px] text-dim">
             Pick which art a card shows. A card with only one known print can’t be changed.
@@ -150,7 +150,7 @@ export default function SettingsPage() {
             className="rounded-md border border-edge bg-transparent px-3 py-1.5 text-[13px] outline-none focus:border-accent"
           />
         </div>
-        <div className="mx-auto flex max-w-[560px] flex-wrap items-center gap-2">
+        <div className="mx-auto w-full max-w-[560px] flex flex-wrap items-center gap-2">
           {CATEGORY_FILTERS.map(({ bucket, label }) => {
             const active = activeBuckets.has(bucket);
             return (
@@ -172,7 +172,7 @@ export default function SettingsPage() {
             {filtered.length} of {entries.length}
           </span>
         </div>
-        <div className="mx-auto mt-1 grid max-w-[720px] grid-cols-5 gap-3">
+        <div className="mx-auto mt-1 w-full max-w-[720px] grid grid-cols-5 gap-3">
           {filtered.map((entry) => {
             const single = entry.prints.length === 1;
             const printId = resolvePrint(entry.key, entry.prints, prefs, null);
