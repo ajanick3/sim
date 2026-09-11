@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  buildPrintIndex,
   bucketOf,
   catalogEntries,
   defaultPrint,
   identityOf,
+  resolveCardPrint,
   resolvePrint,
   type CatalogCard,
 } from "./prints";
@@ -153,5 +155,35 @@ describe("resolvePrint", () => {
 
   it("ignores a stored preference that no longer names a known print", () => {
     expect(resolvePrint("key-1", prints, { "key-1": "stale-999" }, "mep-037")).toBe("mep-037");
+  });
+});
+
+describe("resolveCardPrint", () => {
+  const cards: CatalogCard[] = [
+    card({ id: "me01-003", name: "Mega Venusaur ex", category: "Pokemon", hp: 340 }),
+    card({ id: "mep-037", name: "Mega Venusaur ex", category: "Pokemon", hp: 340 }),
+    card({ id: "me01-054", name: "Abra", category: "Pokemon", hp: 50 }),
+    card({ id: "sv06-080", name: "Abra", category: "Pokemon", hp: 40 }),
+  ];
+  const index = buildPrintIndex(cards);
+
+  it("resolves through the print's own identity, preference over context", () => {
+    const key = identityOf(cards[0]);
+    expect(resolveCardPrint(index, "me01-003", { [key]: "mep-037" })).toBe("mep-037");
+  });
+
+  it("falls back to the context print with no stored preference", () => {
+    expect(resolveCardPrint(index, "me01-003", {})).toBe("me01-003");
+  });
+
+  it("never conflates two different cards that share a name", () => {
+    // A preference keyed by "Abra" alone (bare name, not identity) must
+    // not affect either Abra print — proves the index keys by identity.
+    expect(resolveCardPrint(index, "me01-054", { Abra: "sv06-080" })).toBe("me01-054");
+    expect(resolveCardPrint(index, "sv06-080", { Abra: "me01-054" })).toBe("sv06-080");
+  });
+
+  it("returns the context print unchanged for a print id not in the catalog", () => {
+    expect(resolveCardPrint(index, "unknown-999", {})).toBe("unknown-999");
   });
 });
