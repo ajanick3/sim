@@ -13,8 +13,8 @@ export type CardSize = "active" | "activeFar" | "fluid" | "pile" | "picker" | "s
  *  stack), `picker` (a search grid) and `stadium` (the Stadium slot, a
  *  little larger to carry its text). */
 export const CARD_SIZE: Record<CardSize, string> = {
-  active: "w-[200px] h-[118px]",
-  activeFar: "w-[150px] h-[89px]",
+  active: "w-[168px] h-[235px]",
+  activeFar: "w-[126px] h-[176px]",
   fluid: "w-full aspect-[5/7]",
   pile: "w-[46px] h-[64px]",
   picker: "w-[132px] h-[184px]",
