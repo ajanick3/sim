@@ -16,7 +16,7 @@ export const Active: Story = { args: { active: true } };
 export const ActiveNoArt: Story = { args: { active: true, art: noArt } };
 export const Bench: Story = { args: { mon: pokemon({ name: "Dreepy", hp: 70 }) } };
 export const BenchSmall: Story = {
-  args: { small: true, mon: pokemon({ name: "Dreepy", hp: 70 }) },
+  args: { mon: pokemon({ name: "Dreepy", hp: 70 }) },
 };
 export const Damaged: Story = { args: { active: true, mon: defender() } };
 export const WithEnergyAndCondition: Story = {
@@ -55,4 +55,4 @@ export const DropTargetHovered: Story = {
   args: { selectable: true, dropTarget: true, hovered: true },
 };
 export const EmptyActive: Story = { args: { mon: null, active: true } };
-export const EmptyPlaceHere: Story = { args: { mon: null, small: true, placeHere: fn() } };
+export const EmptyPlaceHere: Story = { args: { mon: null, placeHere: fn() } };

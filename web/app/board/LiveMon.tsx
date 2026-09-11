@@ -6,14 +6,18 @@ import { PlayingCard } from "./PlayingCard";
 import { CARD_SIZE } from "./sizes";
 import { damageSpot, type Art } from "./shared";
 
-/** One Pokémon in play — Active or Bench — as a tray card showing the
- *  top slice of its print, with HP, damage counter, attached Energy and
- *  any Special Conditions laid over it. `mon = null` draws an empty
- *  slot a held card can be tapped onto when `placeHere` is set. */
+/** One Pokémon in play. The Active stays the top-of-print slice this
+ *  board has always shown, at your own scale or the opponent's smaller
+ *  `far` one; the Bench now shows the whole card, sized by whatever
+ *  grid column its `SideRow` gives it — the near/far scale for Bench
+ *  lives there, not here. HP, damage counter, attached Energy and any
+ *  Special Conditions lay over either shape the same way. `mon = null`
+ *  draws an empty slot a held card can be tapped onto when `placeHere`
+ *  is set. */
 export function LiveMon({
   mon,
   active = false,
-  small = false,
+  far = false,
   art,
   onSelect,
   selectable = false,
@@ -24,7 +28,8 @@ export function LiveMon({
 }: {
   mon: WirePokemon | null;
   active?: boolean;
-  small?: boolean;
+  /** The opponent's Active — smaller, farther down the perspective. */
+  far?: boolean;
   art: Art;
   onSelect?: () => void;
   selectable?: boolean;
@@ -35,7 +40,8 @@ export function LiveMon({
   /** Empty slot: a selected hand card can be placed here. */
   placeHere?: () => void;
 }) {
-  const size = active ? "active" : small ? "benchSmall" : "bench";
+  const size = active ? (far ? "activeFar" : "active") : "benchFluid";
+  const crop = active ? "top" : "full";
   if (!mon) {
     return (
       <button
@@ -62,7 +68,7 @@ export function LiveMon({
     <PlayingCard
       surface="tray"
       size={size}
-      crop="top"
+      crop={crop}
       src={art(mon.print_id)}
       name={mon.name}
       selected={selected}
@@ -90,7 +96,7 @@ export function LiveMon({
       {mon.damage > 0 && (
         <span
           className={`absolute z-10 grid -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-2 border-black/50 bg-damage font-black text-black shadow-[0_2px_5px_rgba(0,0,0,0.6)] ${
-            active ? "size-11 text-base" : "size-6 text-[10px]"
+            active ? (far ? "size-8 text-[13px]" : "size-11 text-base") : "size-6 text-[10px]"
           }`}
           style={damageSpot(mon.id)}
         >

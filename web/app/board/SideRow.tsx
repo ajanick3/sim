@@ -7,8 +7,21 @@ import { LiveMon } from "./LiveMon";
 import { PrizeStack } from "./PrizeStack";
 import { monHooks, type Art } from "./shared";
 
-/** One player's row: prize stack, the five Bench slots, and the deck /
- *  discard pile. `mine` tints it and lets empty slots be placed onto. */
+// A near-side Bench column: five whole cards side by side, this wide
+// each, with this much air between them. The opponent's Bench caps at
+// a fraction of this width instead — the same "farther away" read the
+// Active row already gives their card, done here at the row level
+// since a Bench card's own size is fluid, not a fixed token.
+const BENCH_COLUMN_PX = 64;
+const BENCH_GAP_PX = 6;
+const FAR_SCALE = 0.75;
+
+/** One player's row: prize stack, the Bench (five columns wide at
+ *  least; a raised Bench limit squishes the row narrower rather than
+ *  wrapping it), and the deck / discard pile. `mine` tints it, scales
+ *  the Bench to its full near-side width, and lets empty slots be
+ *  placed onto — the opponent's Bench renders the same grid capped to
+ *  `FAR_SCALE` of that width. */
 export function SideRow({
   side,
   label,
@@ -34,8 +47,11 @@ export function SideRow({
   onViewDiscard?: (cards: WireCard[], label: string) => void;
   hoverDropId?: string | null;
 }) {
-  // Five slots: the Pokémon on the Bench, then empty pads to fill.
-  const slots = [...side.bench, ...Array(Math.max(0, 5 - side.bench.length)).fill(null)];
+  // At least five columns; a raised Bench limit adds more instead of
+  // wrapping a second row.
+  const cols = Math.max(5, side.bench.length);
+  const slots = [...side.bench, ...Array(Math.max(0, cols - side.bench.length)).fill(null)];
+  const maxWidth = (5 * BENCH_COLUMN_PX + 4 * BENCH_GAP_PX) * (mine ? 1 : FAR_SCALE);
   return (
     <div className={`flex items-start gap-2 ${mine ? "" : "flex-row-reverse"}`}>
       <PrizeStack count={side.prize_count} />
@@ -48,24 +64,23 @@ export function SideRow({
           <span>{label}</span>
           <span>hand {side.hand_count}</span>
         </div>
-        <div className="flex flex-wrap gap-1.5">
+        <div
+          className={`grid gap-1.5 ${mine ? "" : "ml-auto"}`}
+          style={{
+            gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+            maxWidth: `${maxWidth}px`,
+          }}
+        >
           {slots.map((m, i) =>
             m ? (
               <LiveMon
                 key={i}
                 mon={m}
                 art={art}
-                small
                 {...monHooks(m, meta, selection, dropTargets, onPokemon, false, hoverDropId)}
               />
             ) : (
-              <LiveMon
-                key={i}
-                mon={null}
-                art={art}
-                small
-                placeHere={mine ? onPlaceBench : undefined}
-              />
+              <LiveMon key={i} mon={null} art={art} placeHere={mine ? onPlaceBench : undefined} />
             ),
           )}
         </div>

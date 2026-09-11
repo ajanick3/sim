@@ -39,11 +39,17 @@ describe("damageSpot", () => {
 });
 
 describe("splitHandRows", () => {
-  it("keeps a hand of six or fewer in one row, sorted by category", () => {
+  it("splits even a small hand into two rows, sorted by category", () => {
     const hand = [card("energy", 1), card("pokemon", 2), card("item", 3)];
     const rows = splitHandRows(hand);
+    expect(rows).toHaveLength(2);
+    expect(rows.flat().map((c) => c.category)).toEqual(["pokemon", "item", "energy"]);
+  });
+
+  it("puts a hand of one card alone in the first row", () => {
+    const rows = splitHandRows([card("pokemon", 1)]);
     expect(rows).toHaveLength(1);
-    expect(rows[0].map((c) => c.category)).toEqual(["pokemon", "item", "energy"]);
+    expect(rows[0]).toHaveLength(1);
   });
 
   it("splits a larger hand into two rows of at least three", () => {

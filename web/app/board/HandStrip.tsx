@@ -7,10 +7,12 @@ import type { WireActionMeta, WireCard } from "../view";
 import { PlayingCard } from "./PlayingCard";
 import { splitHandRows, type Art } from "./shared";
 
-/** The hand: cards sorted by category into one or two rows, each card
- *  the top slice of its print. Tapping a selected card confirms it with
- *  a toss animation toward the move's destination; a press-and-drag
- *  starts a drag the board resolves. */
+/** The hand: cards sorted by category into two fixed-height rows, each
+ *  the whole card. The block's own height never changes — a hand that
+ *  overflows it scrolls vertically rather than growing a third row.
+ *  Tapping a selected card confirms it with a toss animation toward the
+ *  move's destination; a press-and-drag starts a drag the board
+ *  resolves. */
 export function HandStrip({
   hand,
   meta,
@@ -88,7 +90,7 @@ export function HandStrip({
       {hand.length === 0 ? (
         <span className="px-2 py-8 text-[11px] text-dim">empty</span>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex h-[376px] flex-col gap-2 overflow-y-auto">
           {rows.map((row, ri) => (
             <div key={ri} className="flex flex-wrap justify-center gap-2">
               {row.map((c) => {
@@ -98,7 +100,8 @@ export function HandStrip({
                 return (
                   <PlayingCard
                     key={c.id}
-                    size="hand"
+                    size="picker"
+                    crop="full"
                     src={src}
                     name={c.name}
                     energyType={c.energy_type}
