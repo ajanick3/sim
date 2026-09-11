@@ -6,6 +6,7 @@ import { loadRecent } from "../recent";
 import { artUrl, isInstalled, loadArtIndex, type ArtIndex, type ArtQuality } from "../art";
 import { catalogEntries, resolvePrint, type CatalogCard, type CatalogEntry } from "../prints";
 import { loadPrintPrefs, savePrintPref } from "../printPrefs";
+import { warmCache } from "../warmCache";
 import { PlayingCard } from "../board/PlayingCard";
 
 /** The catalog's buckets a player can filter by, in `CATALOG_ORDER`.
@@ -31,6 +32,8 @@ export default function SettingsPage() {
   );
   const [prefs, setPrefs] = useState<Record<string, string>>({});
   const [openEntry, setOpenEntry] = useState<CatalogEntry | null>(null);
+  const [warming, setWarming] = useState(false);
+  const [warmProgress, setWarmProgress] = useState<{ done: number; total: number } | null>(null);
 
   useEffect(() => {
     setRecentCount(loadRecent().length);
@@ -69,6 +72,20 @@ export default function SettingsPage() {
     setRecentCount(0);
   };
 
+  const warmOfflineCache = async () => {
+    const urls = Object.keys(artIndex)
+      .map((id) => artUrl(artIndex, id, artQuality))
+      .filter((u): u is string => u != null);
+    setWarming(true);
+    setWarmProgress({ done: 0, total: urls.length });
+    await warmCache(
+      urls,
+      (url) => fetch(url, { mode: "no-cors" }),
+      (done, total) => setWarmProgress({ done, total }),
+    );
+    setWarming(false);
+  };
+
   return (
     <main className="px-4 py-8">
       <div className="mx-auto max-w-[560px]">
@@ -99,6 +116,24 @@ export default function SettingsPage() {
           <p className="m-0 text-[13px] text-dim">
             Card and coin animations follow your system “reduce motion” setting.
           </p>
+        </section>
+
+        <section className="mt-8 flex flex-col gap-2">
+          <h2 className="m-0 text-[13px] uppercase tracking-widest text-dim">Offline art</h2>
+          <p className="m-0 text-[13px] text-dim">
+            Once installed, art is cached the first time each card shows up in a game. This fetches
+            every known card's art once, up front, so the whole catalog works offline without
+            waiting for it to come up in play.
+          </p>
+          <button
+            onClick={warmOfflineCache}
+            disabled={warming || Object.keys(artIndex).length === 0}
+            className="w-fit rounded-md border border-edge px-3 py-1.5 text-[13px] hover:border-accent disabled:opacity-40"
+          >
+            {warming
+              ? `Caching ${warmProgress?.done ?? 0} of ${warmProgress?.total ?? 0}…`
+              : `Cache all card art (${Object.keys(artIndex).length})`}
+          </button>
         </section>
       </div>
 
