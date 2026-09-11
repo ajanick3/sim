@@ -202,34 +202,41 @@ export default function GameShell() {
   }
 
   return (
-    <main className="mx-auto max-w-[960px] px-3 py-4 sm:px-4 sm:py-6">
-      <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <Link href="/" className="m-0 text-[18px] no-underline">
-          sim
-        </Link>
-        <span className="ml-auto flex gap-2">
-          <CopyLinkButton />
-          <Link
-            href="/"
-            className="rounded-md border border-edge px-2.5 py-1 text-[13px] no-underline hover:border-accent"
-          >
-            New game
+    <main className="mx-auto max-w-[960px] py-4 sm:px-4 sm:py-6">
+      {/* The board below wants the phone's full width, edge to edge —
+          only the header and the game-over banner keep a side gutter,
+          and only below the width `main` starts padding itself. */}
+      <div className="px-3 sm:px-0">
+        <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+          <Link href="/" className="m-0 text-[18px] no-underline">
+            sim
           </Link>
-          <Link
-            href="/settings"
-            className="rounded-md border border-edge px-2.5 py-1 text-[13px] no-underline hover:border-accent"
-          >
-            Settings
-          </Link>
-        </span>
-        <span className="basis-full text-[12px] text-dim sm:text-[13px]">
-          {matchup ? `${deckLabel(matchup.a)} vs ${deckLabel(matchup.b)}` : ""} &nbsp;·&nbsp; turn{" "}
-          {view?.turn_number ?? 0} &nbsp;·&nbsp; {view?.phase}
-        </span>
-      </header>
+          <span className="ml-auto flex gap-2">
+            <CopyLinkButton />
+            <Link
+              href="/"
+              className="rounded-md border border-edge px-2.5 py-1 text-[13px] no-underline hover:border-accent"
+            >
+              New game
+            </Link>
+            <Link
+              href="/settings"
+              className="rounded-md border border-edge px-2.5 py-1 text-[13px] no-underline hover:border-accent"
+            >
+              Settings
+            </Link>
+          </span>
+          <span className="basis-full text-[12px] text-dim sm:text-[13px]">
+            {matchup ? `${deckLabel(matchup.a)} vs ${deckLabel(matchup.b)}` : ""} &nbsp;·&nbsp; turn{" "}
+            {view?.turn_number ?? 0} &nbsp;·&nbsp; {view?.phase}
+          </span>
+        </header>
+      </div>
 
       {over ? (
-        <Banner>{log[log.length - 1] ?? "Game over."}</Banner>
+        <div className="px-3 sm:px-0">
+          <Banner>{log[log.length - 1] ?? "Game over."}</Banner>
+        </div>
       ) : (
         view && (
           <LiveBoard
