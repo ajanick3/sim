@@ -176,3 +176,17 @@ fn a_targeted_action_names_a_pokemon_in_view() {
         }
     }
 }
+
+#[test]
+fn a_view_always_reports_the_damage_counter_split() {
+    // `counters_to_place` tells the board how many Phantom Dive-style
+    // counters are still to place. It is null in every other phase, but
+    // the key is always there so the front end never guesses.
+    let game = Game::synthetic(1);
+    let view: serde_json::Value = serde_json::from_str(&game.view()).unwrap();
+    assert!(view.get("counters_to_place").is_some(), "the key is always present");
+    assert!(
+        view["counters_to_place"].is_null(),
+        "null outside the distribution phase"
+    );
+}

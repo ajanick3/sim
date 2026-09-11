@@ -103,6 +103,7 @@ export const sampleView: WireView = {
   your_hand: sampleHand,
   stadium: card({ name: "Area Zero Underdepths", category: "stadium" }),
   library_in_search: null,
+  counters_to_place: null,
   sides: [
     side({ player: 0 }),
     side({

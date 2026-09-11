@@ -1,6 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import type { WireActionMeta, WireCard, WirePokemon } from "../view";
-import { asDecision, asPrompt, coinFlipsIn, damageSpot, monHooks, splitHandRows } from "./shared";
+import {
+  asDecision,
+  asPrompt,
+  coinFlipsIn,
+  countersToPlace,
+  damageSpot,
+  monHooks,
+  splitHandRows,
+} from "./shared";
 
 const card = (category: string, id = 0): WireCard => ({
   id,
@@ -173,5 +181,24 @@ describe("coinFlipsIn", () => {
 
   it("is empty when nothing flipped", () => {
     expect(coinFlipsIn(["One wins the coin flip.", "One draws 7."])).toEqual([]);
+  });
+});
+
+describe("countersToPlace", () => {
+  it("is the wire count when every action places a counter", () => {
+    const actions = ["Place a damage counter on Dreepy", "Place a damage counter on Zubat"];
+    expect(countersToPlace(actions, 4)).toBe(4);
+  });
+
+  it("is 0 when the board is in any other phase", () => {
+    expect(countersToPlace(["Attack: Phantom Dive (200 damage)", "End turn"], 4)).toBe(0);
+  });
+
+  it("is 0 with no actions", () => {
+    expect(countersToPlace([], 4)).toBe(0);
+  });
+
+  it("falls back to 0 when the wire carries no count", () => {
+    expect(countersToPlace(["Place a damage counter on Dreepy"], null)).toBe(0);
   });
 });

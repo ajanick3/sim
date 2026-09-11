@@ -33,6 +33,7 @@ const gameStub = {
       your_hand: [],
       stadium: null,
       library_in_search: null,
+      counters_to_place: null,
       sides: [side(), side()],
     }),
   free: vi.fn(),
