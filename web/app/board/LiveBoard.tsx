@@ -324,7 +324,7 @@ export function LiveBoard({
   return (
     <div className="mt-3">
       <div className="mx-auto w-full max-w-[560px] rounded-xl border border-edge bg-felt p-2">
-        <div className="flex flex-col gap-1">
+        <div className="relative flex flex-col gap-1">
           <SideRow
             side={opp}
             label={`${SEAT_NAME[opp.player]} Opponent`}
@@ -421,6 +421,32 @@ export function LiveBoard({
             onViewDiscard={(cards, label) => setDiscardView({ cards, label })}
             hoverDropId={hoverDropId}
           />
+
+          {/* Pinned to this block specifically — vertically centred
+              between the two Benches, not the whole viewport — rather
+              than a page-level fixed rail. */}
+          {showRail ? (
+            <SideRail
+              myPrizes={mine.prize_count}
+              oppPrizes={opp.prize_count}
+              turn={view.turn_number}
+              yourTurn={seat === you}
+              canEndTurn={endTurn >= 0 && !busy}
+              onEndTurn={() => endTurn >= 0 && onAct(endTurn)}
+              onLog={() => setShowLog(true)}
+              onHide={() => setShowRail(false)}
+            />
+          ) : (
+            <button
+              type="button"
+              onClick={() => setShowRail(true)}
+              aria-label="Show controls"
+              className="absolute right-1 top-1/2 z-40 flex -translate-y-1/2 items-center gap-1.5 rounded-l-lg border border-r-0 border-edge bg-panel/95 py-3 pl-2.5 pr-2 text-[11px] font-semibold uppercase tracking-wider text-dim shadow-[0_4px_14px_rgba(0,0,0,0.4)] backdrop-blur transition-colors hover:border-accent hover:text-text"
+            >
+              <span aria-hidden>‹</span>
+              <span className="[writing-mode:vertical-rl]">Controls</span>
+            </button>
+          )}
         </div>
 
         {prompt && !firstTurn && <PromptBar prompt={prompt} busy={busy} onAct={onAct} />}
@@ -449,31 +475,6 @@ export function LiveBoard({
           draggingCard={drag?.card ?? null}
         />
       </div>
-
-      {showRail && (
-        <SideRail
-          myPrizes={mine.prize_count}
-          oppPrizes={opp.prize_count}
-          turn={view.turn_number}
-          yourTurn={seat === you}
-          canEndTurn={endTurn >= 0 && !busy}
-          onEndTurn={() => endTurn >= 0 && onAct(endTurn)}
-          onLog={() => setShowLog(true)}
-          onHide={() => setShowRail(false)}
-        />
-      )}
-
-      {!showRail && (
-        <button
-          type="button"
-          onClick={() => setShowRail(true)}
-          aria-label="Show controls"
-          className="fixed right-3 top-1/2 z-40 flex -translate-y-1/2 items-center gap-1.5 rounded-l-lg border border-r-0 border-edge bg-panel/95 py-3 pl-2.5 pr-2 text-[11px] font-semibold uppercase tracking-wider text-dim shadow-[0_4px_14px_rgba(0,0,0,0.4)] backdrop-blur transition-colors hover:border-accent hover:text-text"
-        >
-          <span aria-hidden>‹</span>
-          <span className="[writing-mode:vertical-rl]">Controls</span>
-        </button>
-      )}
 
       <div>
         {firstTurn ? (
