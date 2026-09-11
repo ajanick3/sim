@@ -7,11 +7,26 @@ import { artUrl, loadArtIndex, type ArtIndex } from "../art";
 import { catalogEntries, defaultPrint, type CatalogCard } from "../prints";
 import { PlayingCard } from "../board/PlayingCard";
 
+/** The catalog's buckets a player can filter by, in `CATALOG_ORDER`.
+ *  Plain Energy is left out — `public/cards.json` never carries a
+ *  Basic Energy, so that bucket is always empty. */
+const CATEGORY_FILTERS = [
+  { bucket: "pokemon", label: "Pokémon" },
+  { bucket: "supporter", label: "Supporters" },
+  { bucket: "item", label: "Items" },
+  { bucket: "tool", label: "Tools" },
+  { bucket: "stadium", label: "Stadiums" },
+  { bucket: "special-energy", label: "Energy" },
+] as const;
+
 export default function SettingsPage() {
   const [recentCount, setRecentCount] = useState(0);
   const [cards, setCards] = useState<CatalogCard[]>([]);
   const [artIndex, setArtIndex] = useState<ArtIndex>({});
   const [query, setQuery] = useState("");
+  const [activeBuckets, setActiveBuckets] = useState<Set<string>>(
+    () => new Set(CATEGORY_FILTERS.map((f) => f.bucket)),
+  );
 
   useEffect(() => {
     setRecentCount(loadRecent().length);
@@ -25,8 +40,19 @@ export default function SettingsPage() {
   const entries = useMemo(() => catalogEntries(cards), [cards]);
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? entries.filter((e) => e.name.toLowerCase().includes(q)) : entries;
-  }, [entries, query]);
+    return entries.filter(
+      (e) => activeBuckets.has(e.bucket) && (!q || e.name.toLowerCase().includes(q)),
+    );
+  }, [entries, query, activeBuckets]);
+
+  const toggleBucket = (bucket: string) => {
+    setActiveBuckets((prev) => {
+      const next = new Set(prev);
+      if (next.has(bucket)) next.delete(bucket);
+      else next.add(bucket);
+      return next;
+    });
+  };
 
   const clearRecent = () => {
     try {
@@ -82,6 +108,23 @@ export default function SettingsPage() {
             placeholder="Search cards…"
             className="rounded-md border border-edge bg-transparent px-3 py-1.5 text-[13px] outline-none focus:border-accent"
           />
+        </div>
+        <div className="mx-auto flex max-w-[560px] flex-wrap gap-2">
+          {CATEGORY_FILTERS.map(({ bucket, label }) => {
+            const active = activeBuckets.has(bucket);
+            return (
+              <button
+                key={bucket}
+                onClick={() => toggleBucket(bucket)}
+                aria-pressed={active}
+                className={`rounded-full border px-3 py-1 text-[12px] ${
+                  active ? "border-accent bg-accent/10 text-text" : "border-edge text-dim"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
         <div className="mt-1 flex flex-wrap justify-center gap-3">
           {filtered.map((entry) => {
