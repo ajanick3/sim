@@ -1,7 +1,7 @@
 # Save, resume, and share a game across clients
 
 Type: task
-Status: needs-triage
+Status: ready-for-human
 
 The operator asked for "a way to export board state to resume later" and
 "some sort of server persistent state across clients".
@@ -42,15 +42,33 @@ guide. The direction:
   `appendMove(id, seq, index)` inserts one `moves` row; a loader reads the
   recipe and every `moves` row ordered by `seq`.
 
-## Open questions for triage
+## Decided at triage (2026-09-11)
 
-- Whether `appendMove` validates server-side (replay through `sim-wasm` in
-  the action) or trusts the client and only the reader replays.
-- How a resumed game handles an engine change that alters a replay — the
-  recipe carries `engine_version`; decide whether a mismatch warns, blocks,
-  or is ignored.
-- Whether `moves.seq` gaps or races need handling beyond the primary-key
-  conflict (last-writer-wins is acceptable per the spec).
+- **`appendMove` trusts the client; the reader validates.** No replay on
+  write. The reader already replays every move through `sim-wasm` to build
+  a view — a corrupt or illegal index just fails that replay, at read time,
+  where it's needed anyway. No duplicate wasm cost on every write.
+- **An `engine_version` mismatch warns, and still replays.** The page shows
+  a banner ("this game was created on an older version of the engine") but
+  attempts the replay regardless. Blocking outright would strand every
+  saved game after any engine change at all, including ones that don't
+  affect replay; a warning is honest without being destructive.
+- **No extra handling for `moves.seq` gaps or write races beyond the
+  primary-key conflict.** Per the spec, last-writer-wins is acceptable — a
+  duplicate `seq` simply fails to insert. No gap-detection or locking
+  logic is added.
+
+All three decisions above are settled, but the two remaining AC items are
+still blocked on the operator: a Neon project must exist and be linked to
+this Vercel project (`vercel env pull` bringing `DATABASE_URL` into
+`web/.env.development.local`) before `@neondatabase/serverless` or any
+Server Action can be written against a real database. Neither exists yet
+(`web/.env*` and `.vercel/project.json` are both absent as of 2026-09-11).
+This is why the status is `ready-for-human`, not `ready-for-agent` — the
+provisioning step needs the operator's own Neon/Vercel dashboards, e.g.
+via `/wizard`. Once `DATABASE_URL` is available, this ticket's remaining
+AC (the schema, the two Server Actions, and the cross-client resume test)
+is agent-workable and the status should move to `ready-for-agent`.
 
 ## Acceptance criteria
 
