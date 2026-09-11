@@ -111,11 +111,11 @@ fn ensure_in_hand(state: &mut GameState, player: PlayerId, def: CardDefId) -> si
     }
     let card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deck holds this card");
-    state.players[player.index()].library.retain(|c| *c != card);
+    state.players[player.index()].deck.retain(|c| *c != card);
     state.players[player.index()].hand.push(card);
     card
 }
@@ -189,7 +189,7 @@ fn lillies_determination_draws_eight_at_six_prizes() {
     let mut state = game(&set, set.lillie, 3);
     let player = state.current;
     state.players[player.index()].prizes = (0..6)
-        .map(|_| state.player(player).library[0])
+        .map(|_| state.player(player).deck[0])
         .collect::<Vec<_>>();
     let card = ensure_in_hand(&mut state, player, set.lillie);
     assert_eq!(state.player(player).prizes.len(), 6);
@@ -277,7 +277,7 @@ fn build2() -> Set2 {
         kind: TrainerKind::Item,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::PokemonWithoutRuleBox,
                 to: Destination::Zone(Zone::Hand),
@@ -314,7 +314,7 @@ fn build2() -> Set2 {
             from: Zone::Discard,
             slots: vec![Slot {
                 filter: CardFilter::AnyPokemon,
-                to: Destination::Zone(Zone::Library),
+                to: Destination::Zone(Zone::Deck),
                 limit: 5,
                 excludes_type_of_previous: false,
                 peek: None,
@@ -400,11 +400,11 @@ fn ensure_in_hand2(state: &mut GameState, player: PlayerId, def: CardDefId) -> s
     }
     let card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deck holds this card");
-    state.players[player.index()].library.retain(|c| *c != card);
+    state.players[player.index()].deck.retain(|c| *c != card);
     state.players[player.index()].hand.push(card);
     card
 }
@@ -489,9 +489,9 @@ fn night_stretcher_recovers_a_pokemon_or_a_basic_energy() {
     let set = build2();
     let mut state = game2(&set, set.night_stretcher, 3);
     let player = state.current;
-    let discarded_mon = state.player(player).library[0];
+    let discarded_mon = state.player(player).deck[0];
     state.players[player.index()]
-        .library
+        .deck
         .retain(|c| *c != discarded_mon);
     state.players[player.index()].discard.push(discarded_mon);
 
@@ -519,12 +519,12 @@ fn sacred_ash_shuffles_up_to_five_pokemon_back_in() {
     let player = state.current;
     let discarded = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).as_pokemon().is_some())
         .expect("the deck holds Pokémon");
     state.players[player.index()]
-        .library
+        .deck
         .retain(|c| *c != discarded);
     state.players[player.index()].discard.push(discarded);
 
@@ -533,7 +533,7 @@ fn sacred_ash_shuffles_up_to_five_pokemon_back_in() {
     apply(&mut state, Action::TakeCard { card: discarded }).unwrap();
     apply(&mut state, Action::FinishDeciding).unwrap();
 
-    assert!(state.player(player).library.contains(&discarded));
+    assert!(state.player(player).deck.contains(&discarded));
     assert!(!state.player(player).discard.contains(&discarded));
 }
 
@@ -544,12 +544,12 @@ fn gwynn_discards_up_to_two_and_draws_three_each() {
     let player = state.current;
     let extra_mon = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == set.mon)
         .expect("another Testmon is in the deck");
     state.players[player.index()]
-        .library
+        .deck
         .retain(|c| *c != extra_mon);
     state.players[player.index()].hand.push(extra_mon);
 
@@ -590,14 +590,14 @@ fn crushing_hammer_discards_opponent_energy_on_heads() {
         .player(player.opponent())
         .hand
         .iter()
-        .chain(state.player(player.opponent()).library.iter())
+        .chain(state.player(player.opponent()).deck.iter())
         .find(|c| state.def_of(**c).is_energy())
         .expect("the opponent's deck holds Energy");
     state.players[player.opponent().index()]
         .hand
         .retain(|c| *c != energy);
     state.players[player.opponent().index()]
-        .library
+        .deck
         .retain(|c| *c != energy);
     state.pokemon[opp_active.index()].attached.push(energy);
 
@@ -685,11 +685,11 @@ fn enhanced_hammer_discards_only_a_special_energy() {
     state.pokemon[opp_active.index()].attached.push(special_card);
     let plain_energy = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .expect("the opponent's deck holds Energy");
-    state.players[opponent.index()].library.retain(|c| *c != plain_energy);
+    state.players[opponent.index()].deck.retain(|c| *c != plain_energy);
     state.pokemon[opp_active.index()].attached.push(plain_energy);
 
     let card = ensure_in_hand2(&mut state, player, enhanced_hammer);

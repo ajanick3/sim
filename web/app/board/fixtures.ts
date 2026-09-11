@@ -86,7 +86,7 @@ export function side(overrides: Partial<WireSide> = {}): WireSide {
   return {
     player: 0,
     hand_count: 5,
-    library_count: 42,
+    deck_count: 42,
     prize_count: 4,
     discard: [card({ name: "Sparkling Crystal" }), card({ name: "Night Stretcher" })],
     active: attacker(),
@@ -102,7 +102,7 @@ export const sampleView: WireView = {
   phase: "Main",
   your_hand: sampleHand,
   stadium: card({ name: "Area Zero Underdepths", category: "stadium" }),
-  library_in_search: null,
+  deck_in_search: null,
   counters_to_place: null,
   sides: [
     side({ player: 0 }),

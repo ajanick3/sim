@@ -110,19 +110,19 @@ fn find_in_hand(state: &GameState, player: PlayerId, def: CardDefId) -> sim::ids
         .player(player)
         .hand
         .iter()
-        .chain(state.player(player).library.iter())
+        .chain(state.player(player).deck.iter())
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deck holds this card")
 }
 
-/// Take a card from wherever it is (hand or library) into the acting
+/// Take a card from wherever it is (hand or deck) into the acting
 /// player's hand, without spending a real draw. Setup already dealt a hand;
 /// this just guarantees the specific card under test is in it.
 fn ensure_in_hand(state: &mut GameState, player: PlayerId, card: sim::ids::CardId) {
     if state.player(player).hand.contains(&card) {
         return;
     }
-    state.players[player.index()].library.retain(|c| *c != card);
+    state.players[player.index()].deck.retain(|c| *c != card);
     state.players[player.index()].hand.push(card);
 }
 

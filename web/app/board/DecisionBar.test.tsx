@@ -5,14 +5,14 @@ import { asDecision } from "./shared";
 import { DecisionBar } from "./DecisionBar";
 import type { WireCard } from "../view";
 
-const library: WireCard[] = [
+const deck: WireCard[] = [
   card({ name: "Ralts", category: "pokemon" }),
   card({ name: "Kirlia", category: "pokemon" }),
   card({ name: "Ultra Ball", category: "item" }),
 ];
 const actions = ["Take Ralts", "Stop searching"];
 const meta = [
-  { kind: "TakeCard", card: library[0].id, target: null },
+  { kind: "TakeCard", card: deck[0].id, target: null },
   { kind: "FinishDeciding", card: null, target: null },
 ];
 
@@ -25,14 +25,14 @@ function bar(overrides = {}) {
       onAct={vi.fn()}
       art={noArt}
       meta={meta}
-      library={library}
+      deck={deck}
       {...overrides}
     />,
   );
 }
 
-describe("DecisionBar with a whole-library search", () => {
-  it("draws every library card, not only the takeable ones", () => {
+describe("DecisionBar with a whole-deck search", () => {
+  it("draws every deck card, not only the takeable ones", () => {
     const { getByText } = bar();
     for (const name of ["Ralts", "Kirlia", "Ultra Ball"]) {
       expect(getByText(name)).toBeTruthy();
@@ -54,8 +54,8 @@ describe("DecisionBar with a whole-library search", () => {
     expect(onAct).toHaveBeenCalledWith(0);
   });
 
-  it("falls back to the plain choice row without a library", () => {
-    const { getByText, queryByText } = bar({ library: null });
+  it("falls back to the plain choice row without a deck", () => {
+    const { getByText, queryByText } = bar({ deck: null });
     expect(getByText("Ralts")).toBeTruthy();
     expect(queryByText("Kirlia")).toBeNull();
   });
@@ -87,7 +87,7 @@ describe("DecisionBar for a slot bound to attach", () => {
         onAct={onAct}
         art={noArt}
         meta={attachMeta}
-        library={[energy]}
+        deck={[energy]}
         selection={null}
         onSelect={onSelect}
       />,

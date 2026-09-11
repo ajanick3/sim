@@ -490,7 +490,7 @@ export function LiveBoard({
             onAct={onAct}
             art={art}
             meta={meta}
-            library={view.library_in_search}
+            deck={view.deck_in_search}
             selection={selection}
             onSelect={onSelect}
           />

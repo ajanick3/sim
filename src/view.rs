@@ -5,12 +5,12 @@
 //! player may see, so the mask is a type, not a rule someone remembers.
 //!
 //! What a view hides: the cards in the opponent's hand, the cards in either
-//! library and their order, and the cards in either Prize pile — a player
+//! deck and their order, and the cards in either Prize pile — a player
 //! cannot see their own Prizes either. Each of those keeps its count, because
 //! a count is public.
 //!
-//! One scoped exception: while a player searches their whole own library,
-//! [`PlayerView::library_in_search`] shows that player every card in it,
+//! One scoped exception: while a player searches their whole own deck,
+//! [`PlayerView::deck_in_search`] shows that player every card in it,
 //! sorted so the order the search saw is gone. This lets the board show the
 //! cards the search cannot reach next to the cards it can. See ADR 0101.
 
@@ -51,7 +51,7 @@ pub struct PokemonView {
 pub struct SideView {
     pub player: PlayerId,
     pub hand_count: usize,
-    pub library_count: usize,
+    pub deck_count: usize,
     pub prize_count: usize,
     pub discard: Vec<CardView>,
     pub active: Option<PokemonView>,
@@ -69,10 +69,10 @@ pub struct PlayerView {
     pub your_hand: Vec<CardView>,
     /// The Stadium in play, or none.
     pub stadium: Option<CardView>,
-    /// Every card in your own library, sorted by kind then name, while you
+    /// Every card in your own deck, sorted by kind then name, while you
     /// search the whole of it — otherwise none. The order the search saw is
     /// dropped by the sort, so this leaks nothing the mask holds back.
-    pub library_in_search: Option<Vec<CardView>>,
+    pub deck_in_search: Option<Vec<CardView>>,
     sides: [SideView; 2],
 }
 
@@ -90,12 +90,12 @@ impl PlayerView {
                 .map(|card| card_view(state, *card))
                 .collect(),
             stadium: state.stadium.map(|(_, card)| card_view(state, card)),
-            library_in_search: state.whole_library_search().filter(|owner| *owner == you).map(
+            deck_in_search: state.whole_deck_search().filter(|owner| *owner == you).map(
                 |_| {
-                    let mut cards = state.player(you).library.clone();
+                    let mut cards = state.player(you).deck.clone();
                     // A Pokémon's place inside its own bucket follows its
                     // evolution line, not its name: the bigger the line
-                    // is in this library, the sooner it shows, and within
+                    // is in this deck, the sooner it shows, and within
                     // a line a Basic leads its Stage 1 and Stage 2.
                     let mut line_counts: std::collections::HashMap<&str, usize> =
                         std::collections::HashMap::new();
@@ -142,7 +142,7 @@ impl PlayerView {
     }
 }
 
-/// A coarse sort bucket for a library listing: Pokémon, then Trainers by
+/// A coarse sort bucket for a deck listing: Pokémon, then Trainers by
 /// kind, then Energy. It only has to be stable, not meaningful.
 fn category_rank(def: &crate::card::CardDef) -> u8 {
     use crate::card::{CardDef, TrainerKind};
@@ -199,7 +199,7 @@ fn side_view(state: &GameState, player: PlayerId) -> SideView {
     SideView {
         player,
         hand_count: side.hand.len(),
-        library_count: side.library.len(),
+        deck_count: side.deck.len(),
         prize_count: side.prizes.len(),
         discard: side
             .discard

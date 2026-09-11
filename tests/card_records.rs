@@ -176,7 +176,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Active Pokemon combined) admit all 8 prints.
     // Dudunsparce's Run Away Draw (a Pokemon that shuffles itself
     // into the deck as part of its own Ability, the "moves together"
-    // rule 22 already keeps but into the library) admits both prints
+    // rule 22 already keeps but into the deck) admits both prints
     // (Land Crush has no printed text).
     // Beyond Milestone 8's own map: Abra's Teleporter (the same
     // shuffle-self shape as Run Away Draw, but no draw and Active-

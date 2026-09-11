@@ -270,13 +270,13 @@ fn action_handles(action: Action) -> (Option<usize>, Option<usize>) {
         | Action::MoveEnergyToActive { card: c }
         | Action::TakeBasicPokemonForCallForFamily { card: c }
         | Action::TakeBasicPokemonOfTypeForEnergyAttach { card: c }
-        | Action::TakeItemFromLibrary { card: c }
-        | Action::TakeAnyCardFromLibrary { card: c }
-        | Action::TakeTrainerCardFromLibrary { card: c }
-        | Action::TakePokemonOfTypeOrStadiumFromLibrary { card: c }
+        | Action::TakeItemFromDeck { card: c }
+        | Action::TakeAnyCardFromDeck { card: c }
+        | Action::TakeTrainerCardFromDeck { card: c }
+        | Action::TakePokemonOfTypeOrStadiumFromDeck { card: c }
         | Action::TakeEvolutionPokemonOfType { card: c }
         | Action::TakeCardForFanCall { card: c }
-        | Action::TakeFromBottomOfLibrary { card: c }
+        | Action::TakeFromBottomOfDeck { card: c }
         | Action::TakeTrainerFromDiscard { card: c }
         | Action::TakePokemonFromDiscard { card: c }
         | Action::TakeNamedFromDiscardToBench { card: c }
@@ -317,7 +317,7 @@ struct WirePokemon {
 struct WireSide {
     player: u8,
     hand_count: usize,
-    library_count: usize,
+    deck_count: usize,
     prize_count: usize,
     discard: Vec<WireCard>,
     active: Option<WirePokemon>,
@@ -333,10 +333,10 @@ struct WireView {
     your_hand: Vec<WireCard>,
     /// The Stadium card in play, or null.
     stadium: Option<WireCard>,
-    /// Every card in your own library, sorted, while you search the whole
+    /// Every card in your own deck, sorted, while you search the whole
     /// of it — null otherwise. The board dims the cards this search cannot
     /// take. See ADR 0101.
-    library_in_search: Option<Vec<WireCard>>,
+    deck_in_search: Option<Vec<WireCard>>,
     /// How many Phantom Dive-style damage counters are still to place,
     /// or null in every other phase. The board shows a "place N more"
     /// hint while this runs.
@@ -394,7 +394,7 @@ fn wire_side(db: &CardDb, side: &sim::view::SideView) -> WireSide {
     WireSide {
         player: side.player.index() as u8,
         hand_count: side.hand_count,
-        library_count: side.library_count,
+        deck_count: side.deck_count,
         prize_count: side.prize_count,
         discard: side.discard.iter().map(|c| wire_card(db, c)).collect(),
         active: side.active.as_ref().map(|p| wire_pokemon(db, p)),
@@ -410,8 +410,8 @@ fn wire_view(db: &CardDb, view: &PlayerView) -> WireView {
         phase: phase_tag(view),
         your_hand: view.your_hand.iter().map(|c| wire_card(db, c)).collect(),
         stadium: view.stadium.as_ref().map(|c| wire_card(db, c)),
-        library_in_search: view
-            .library_in_search
+        deck_in_search: view
+            .deck_in_search
             .as_ref()
             .map(|cards| cards.iter().map(|c| wire_card(db, c)).collect()),
         counters_to_place: counters_to_place(view),

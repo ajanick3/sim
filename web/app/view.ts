@@ -29,7 +29,7 @@ export interface WirePokemon {
 export interface WireSide {
   player: number;
   hand_count: number;
-  library_count: number;
+  deck_count: number;
   prize_count: number;
   discard: WireCard[];
   active: WirePokemon | null;
@@ -61,9 +61,9 @@ export interface WireView {
   your_hand: WireCard[];
   /** The Stadium card in play, or null. */
   stadium: WireCard | null;
-  /** Your whole library, sorted, while you search the whole of it — null
+  /** Your whole deck, sorted, while you search the whole of it — null
    *  otherwise. The picker dims the cards the current search cannot take. */
-  library_in_search: WireCard[] | null;
+  deck_in_search: WireCard[] | null;
   /** How many Phantom Dive-style damage counters are still to place, or
    *  null in every other phase. */
   counters_to_place: number | null;

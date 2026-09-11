@@ -28,8 +28,8 @@ fn fingerprint(state: &GameState) -> String {
     for player in [PlayerId::One, PlayerId::Two] {
         let side = state.player(player);
         out += &format!(
-            "{player:?} library={:?} hand={:?} discard={:?} prizes={:?} active={:?} bench={:?}\n",
-            side.library, side.hand, side.discard, side.prizes, side.active, side.bench
+            "{player:?} deck={:?} hand={:?} discard={:?} prizes={:?} active={:?} bench={:?}\n",
+            side.deck, side.hand, side.discard, side.prizes, side.active, side.bench
         );
     }
     for pokemon in &state.pokemon {

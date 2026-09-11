@@ -3,7 +3,7 @@
 //! [`legal_actions`](crate::action::legal_actions) is the engine's own menu;
 //! a `Strategy` is what picks among it. One per seat, reading only that
 //! seat's own masked [`PlayerView`] — never the opponent's hand, either
-//! library, or either Prize pile — plus the shared [`CardDb`], since a
+//! deck, or either Prize pile — plus the shared [`CardDb`], since a
 //! card's own printed rules are never hidden, only which cards sit where.
 //! See ADR 0095 for why this reads a view rather than the raw `GameState`.
 
@@ -24,7 +24,7 @@ pub trait Strategy {
 /// whatever remains once nothing above matches anything.
 ///
 /// The full order: `PlayBasic → UseAbility → Evolve → Stadium →` a Trainer
-/// ranked first by what it does (draws a card, searches the library, or
+/// ranked first by what it does (draws a card, searches the deck, or
 /// neither) and second by its own kind (Item before Supporter) `→ Tool →
 /// AttachEnergy → Retreat → random`.
 pub struct HeuristicStrategy {
@@ -149,7 +149,7 @@ fn trainer_tier(
 }
 
 /// What a Trainer's own effect does, for ranking purposes — draws a card,
-/// searches the library, or neither. Not every `TrainerEffect` variant is
+/// searches the deck, or neither. Not every `TrainerEffect` variant is
 /// named here: most belong to a Tool or a Stadium, which never reach this
 /// (Tools attach through `Action::PlayTool`, not `PlayTrainer`; Stadiums
 /// are ranked by `is_stadium` before this ever runs), so a new variant
@@ -169,8 +169,8 @@ fn classify(effect: &TrainerEffect) -> EffectCategory {
         | TrainerEffect::DrawPerOpponentBenched
         | TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter
         | TrainerEffect::OpponentHandToBottomThenDraw { .. } => EffectCategory::Draws,
-        TrainerEffect::Decide { from: Zone::Library, .. }
-        | TrainerEffect::LookAtBottomOfLibrary { .. }
+        TrainerEffect::Decide { from: Zone::Deck, .. }
+        | TrainerEffect::LookAtBottomOfDeck { .. }
         | TrainerEffect::JaninesSecretArt => EffectCategory::Searches,
         // `Kieran`'s own dual-mode effect: rank it by whichever of its two
         // branches would rank best, since either might actually run.

@@ -148,14 +148,14 @@ fn ensure_in_hand(state: &mut GameState, player: PlayerId, def: CardDefId) -> Ca
     }
     let side = state.player(player);
     let card = *side
-        .library
+        .deck
         .iter()
         .chain(side.prizes.iter())
         .chain(side.discard.iter())
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deal put this card somewhere face down");
     let side = &mut state.players[player.index()];
-    side.library.retain(|c| *c != card);
+    side.deck.retain(|c| *c != card);
     side.prizes.retain(|c| *c != card);
     side.discard.retain(|c| *c != card);
     side.hand.push(card);
@@ -331,7 +331,7 @@ fn academy_at_night_puts_a_hand_card_on_top_once_a_turn() {
     apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
 
     let to_put = *state.player(player).hand.first().unwrap();
-    let library_before = state.player(player).library.len();
+    let deck_before = state.player(player).deck.len();
     assert!(legal_actions(&state).contains(&Action::PutOnTopOfDeckForAcademyAtNight {
         card: to_put,
     }));
@@ -342,8 +342,8 @@ fn academy_at_night_puts_a_hand_card_on_top_once_a_turn() {
     .unwrap();
 
     assert!(!state.player(player).hand.contains(&to_put));
-    assert_eq!(*state.player(player).library.last().unwrap(), to_put);
-    assert_eq!(state.player(player).library.len(), library_before + 1);
+    assert_eq!(*state.player(player).deck.last().unwrap(), to_put);
+    assert_eq!(state.player(player).deck.len(), deck_before + 1);
 
     // Spent for the turn: no longer offered, even with cards left in hand.
     assert!(
@@ -1542,8 +1542,8 @@ fn full_metal_lab_softens_attacks_against_metal_pokemon_both_sides() {
     state.players[defender_player.index()].active = Some(d);
 
     let attacker = state.player(attacker_player).active.unwrap();
-    let energy = state.player(attacker_player).library.iter().find(|c| state.def_of(**c).is_energy()).copied().unwrap();
-    state.players[attacker_player.index()].library.retain(|c| *c != energy);
+    let energy = state.player(attacker_player).deck.iter().find(|c| state.def_of(**c).is_energy()).copied().unwrap();
+    state.players[attacker_player.index()].deck.retain(|c| *c != energy);
     state.pokemon[attacker.index()].attached.push(energy);
     let attack = legal_actions(&state).into_iter().find(|a| matches!(a, Action::Attack { .. })).unwrap();
     apply(&mut state, attack).unwrap();

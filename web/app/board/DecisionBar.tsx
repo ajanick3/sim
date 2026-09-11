@@ -9,7 +9,7 @@ import type { Art, DecisionKind } from "./shared";
  *  header with the verb and a DONE button, then a row of card tiles for
  *  the legal picks. Sits in the document flow, never over the board.
  *
- *  During a whole-library search `library` holds every card in the deck,
+ *  During a whole-deck search `deck` holds every card in the deck,
  *  sorted. The bar draws all of them and dims the ones this step cannot
  *  take, so the player sees what the search does not reach.
  *
@@ -26,7 +26,7 @@ export function DecisionBar({
   onAct,
   art,
   meta,
-  library,
+  deck,
   selection,
   onSelect,
 }: {
@@ -36,7 +36,7 @@ export function DecisionBar({
   onAct: (index: number) => void;
   art: Art;
   meta: WireActionMeta[];
-  library?: WireCard[] | null;
+  deck?: WireCard[] | null;
   /** Current board selection, so a card mid-target-choice reads as selected. */
   selection?: Selection;
   /** Selects a card instead of acting, when its target is still unsettled. */
@@ -58,7 +58,7 @@ export function DecisionBar({
     if (list) list.push(index);
     else takeIndex.set(id, [index]);
   }
-  const showLibrary = library != null && takeIndex.size > 0;
+  const showDeck = deck != null && takeIndex.size > 0;
   const awaitingTarget = selection?.kind === "hand" ? selection.card : null;
 
   // A single legal target acts outright; more than one hands the card to
@@ -78,7 +78,7 @@ export function DecisionBar({
         <span className="text-[11px] opacity-70">
           {awaitingTarget != null
             ? "tap a highlighted Pokémon on the board"
-            : showLibrary
+            : showDeck
               ? "dimmed cards cannot be taken"
               : "only playable cards are shown"}
         </span>
@@ -93,8 +93,8 @@ export function DecisionBar({
         )}
       </div>
       <div className="flex flex-wrap justify-center gap-3 p-3">
-        {showLibrary
-          ? library.map((card) => {
+        {showDeck
+          ? deck.map((card) => {
               const indices = takeIndex.get(card.id);
               const takeable = indices !== undefined;
               return (

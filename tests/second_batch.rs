@@ -107,7 +107,7 @@ fn build() -> Set {
         kind: TrainerKind::Supporter,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::PokemonEx,
                 to: Destination::Zone(Zone::Hand),
@@ -187,14 +187,14 @@ fn ensure_in_hand(state: &mut GameState, player: PlayerId, def: CardDefId) -> Ca
     // searched, not only the deck.
     let side = state.player(player);
     let card = *side
-        .library
+        .deck
         .iter()
         .chain(side.prizes.iter())
         .chain(side.discard.iter())
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deal put this card somewhere face down");
     let side = &mut state.players[player.index()];
-    side.library.retain(|c| *c != card);
+    side.deck.retain(|c| *c != card);
     side.prizes.retain(|c| *c != card);
     side.discard.retain(|c| *c != card);
     side.hand.push(card);
@@ -269,7 +269,7 @@ fn the_small_basic_filter_reads_both_the_stage_and_the_hp() {
         kind: TrainerKind::Item,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::BasicPokemonWithHpAtMost(70),
                 to: Destination::Zone(Zone::Hand),
@@ -314,7 +314,7 @@ fn with_poffin(set: Set) -> (Set, CardDefId) {
         kind: TrainerKind::Item,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::BasicPokemonWithHpAtMost(70),
                 to: Destination::Bench,
@@ -364,7 +364,7 @@ fn a_search_can_put_a_pokemon_into_play() {
     // The Item itself left the hand; nothing else joined it.
     assert_eq!(state.player(player).hand.len(), hand_before - 1);
     assert!(
-        !state.player(player).library.contains(&take),
+        !state.player(player).deck.contains(&take),
         "the card left the deck"
     );
 }
@@ -380,12 +380,12 @@ fn a_full_bench_offers_nothing_to_take() {
     while state.player(player).bench.len() < sim::state::BENCH_LIMIT {
         let basic = *state
             .player(player)
-            .library
+            .deck
             .iter()
             .find(|c| state.def_of(**c).is_basic_pokemon())
             .expect("the deck holds Basics");
         state.players[player.index()]
-            .library
+            .deck
             .retain(|c| *c != basic);
         let pokemon = state.put_into_play(player, basic);
         state.players[player.index()].bench.push(pokemon);
@@ -415,12 +415,12 @@ fn a_bench_that_fills_part_way_through_ends_the_choice() {
     while state.player(player).bench.len() < sim::state::BENCH_LIMIT - 1 {
         let basic = *state
             .player(player)
-            .library
+            .deck
             .iter()
             .find(|c| state.def_of(**c).is_basic_pokemon())
             .expect("the deck holds Basics");
         state.players[player.index()]
-            .library
+            .deck
             .retain(|c| *c != basic);
         let pokemon = state.put_into_play(player, basic);
         state.players[player.index()].bench.push(pokemon);
@@ -437,7 +437,7 @@ fn a_bench_that_fills_part_way_through_ends_the_choice() {
 }
 
 #[test]
-fn a_search_that_ends_in_the_library_still_shuffles() {
+fn a_search_that_ends_in_the_deck_still_shuffles() {
     // The destination is a value now. The rule that a card put back into the
     // deck shuffles it must still read the value and not a `Zone` field that
     // no longer exists.
@@ -452,7 +452,7 @@ fn a_search_that_ends_in_the_library_still_shuffles() {
             from: Zone::Discard,
             slots: vec![Slot {
                 filter: CardFilter::AnyPokemon,
-                to: Destination::Zone(Zone::Library),
+                to: Destination::Zone(Zone::Deck),
                 limit: 5,
                 excludes_type_of_previous: false,
                 peek: None,
@@ -468,21 +468,21 @@ fn a_search_that_ends_in_the_library_still_shuffles() {
     // Put a Pokémon in the discard for it to find.
     let mon = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).as_pokemon().is_some())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != mon);
+    state.players[player.index()].deck.retain(|c| *c != mon);
     state.players[player.index()].discard.push(mon);
-    let order_before = state.player(player).library.clone();
+    let order_before = state.player(player).deck.clone();
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
     apply(&mut state, Action::TakeCard { card: mon }).unwrap();
     apply(&mut state, Action::FinishDeciding).unwrap();
 
-    assert!(state.player(player).library.contains(&mon));
+    assert!(state.player(player).deck.contains(&mon));
     assert_ne!(
-        state.player(player).library,
+        state.player(player).deck,
         order_before,
         "the deck is shuffled once the choice ends"
     );
@@ -499,7 +499,7 @@ fn with_requirements(set: Set) -> (Set, CardDefId, CardDefId) {
         kind: TrainerKind::Item,
         requirement: Some(Requirement::DiscardOtherCardsFromHand(2)),
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::AnyPokemon,
                 to: Destination::Zone(Zone::Hand),
@@ -544,7 +544,7 @@ fn ultra_ball_cannot_be_played_holding_nothing_else() {
     );
 
     // A second other card, and it may be played.
-    let extra = state.players[player.index()].library.pop().unwrap();
+    let extra = state.players[player.index()].deck.pop().unwrap();
     state.players[player.index()].hand.push(extra);
     assert!(
         legal_actions(&state).contains(&Action::PlayTrainer { card }),
@@ -627,7 +627,7 @@ fn special_red_card_puts_the_hand_under_the_deck_and_deals_three() {
     let their_hand = state.player(opponent).hand.clone();
     let held = their_hand.len();
     assert!(held > 0, "the opponent holds a hand to lose");
-    let library_before = state.player(opponent).library.len();
+    let deck_before = state.player(opponent).deck.len();
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
 
@@ -638,11 +638,11 @@ fn special_red_card_puts_the_hand_under_the_deck_and_deals_three() {
         "they draw three for the hand they gave up"
     );
     assert_eq!(
-        state.player(opponent).library.len(),
-        library_before + held - 3
+        state.player(opponent).deck.len(),
+        deck_before + held - 3
     );
     // The bottom of the deck is where a draw reaches last.
-    let bottom = &state.player(opponent).library[..held];
+    let bottom = &state.player(opponent).deck[..held];
     for card in &their_hand {
         assert!(
             bottom.contains(card),
@@ -684,12 +684,12 @@ fn with_energy_switch(set: Set) -> (Set, CardDefId) {
 fn board_with_an_energy(state: &mut GameState, player: PlayerId) -> (CardId, PokemonId, PokemonId) {
     let basic = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_basic_pokemon())
         .expect("the deck holds Basics");
     state.players[player.index()]
-        .library
+        .deck
         .retain(|c| *c != basic);
     let benched = state.put_into_play(player, basic);
     state.players[player.index()].bench.push(benched);
@@ -697,12 +697,12 @@ fn board_with_an_energy(state: &mut GameState, player: PlayerId) -> (CardId, Pok
     let active = state.player(player).active.expect("setup placed an Active");
     let energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .expect("the deck is mostly Energy");
     state.players[player.index()]
-        .library
+        .deck
         .retain(|c| *c != energy);
     state.pokemon[active.index()].attached.push(energy);
     (energy, active, benched)
@@ -772,12 +772,12 @@ fn only_an_energy_moves_and_only_between_your_own_pokemon() {
         .expect("both players placed an Active");
     let their_energy = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
     state.players[opponent.index()]
-        .library
+        .deck
         .retain(|c| *c != their_energy);
     state.pokemon[theirs.index()].attached.push(their_energy);
 
@@ -878,7 +878,7 @@ fn the_stage_filters_offer_what_they_name() {
             kind: TrainerKind::Item,
             requirement: None,
             effect: TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter,
                     to: Destination::Zone(Zone::Hand),
@@ -938,12 +938,12 @@ fn a_deck_search_shuffles_the_deck_when_it_ends() {
     let mut state = game(&set, set.cyrano, 3);
     let player = state.current;
     let card = ensure_in_hand(&mut state, player, set.cyrano);
-    let before = state.player(player).library.clone();
+    let before = state.player(player).deck.clone();
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
     apply(&mut state, Action::FinishDeciding).unwrap();
 
-    let after = state.player(player).library.clone();
+    let after = state.player(player).deck.clone();
     assert_eq!(before.len(), after.len(), "nothing was taken");
     assert_ne!(before, after, "but the order the player saw is gone");
 }
@@ -968,7 +968,7 @@ fn with_hilda_and_dawn(set: Set) -> (Set, CardDefId, CardDefId) {
         kind: TrainerKind::Supporter,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![
                 slot(CardFilter::EvolutionPokemon),
                 slot(CardFilter::AnyEnergy),
@@ -982,7 +982,7 @@ fn with_hilda_and_dawn(set: Set) -> (Set, CardDefId, CardDefId) {
         kind: TrainerKind::Supporter,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![
                 slot(CardFilter::PokemonOfStage(Stage::Basic)),
                 slot(CardFilter::PokemonOfStage(Stage::Stage1)),
@@ -1062,7 +1062,7 @@ fn hilda_finds_a_special_energy_not_just_basic() {
     }));
     let special = CardId(state.cards.len() as u32);
     state.cards.push(sim::state::Card { def: special_def, owner: player });
-    state.players[player.index()].library.push(special);
+    state.players[player.index()].deck.push(special);
 
     let card = ensure_in_hand(&mut state, player, hilda);
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
@@ -1152,10 +1152,10 @@ fn the_deck_is_shuffled_once_the_whole_search_ends() {
     let card = ensure_in_hand(&mut state, player, dawn);
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
-    let mid = state.player(player).library.clone();
+    let mid = state.player(player).deck.clone();
     apply(&mut state, Action::FinishDeciding).unwrap();
     assert_eq!(
-        state.player(player).library,
+        state.player(player).deck,
         mid,
         "a slot ending is not the search ending"
     );
@@ -1163,7 +1163,7 @@ fn the_deck_is_shuffled_once_the_whole_search_ends() {
     apply(&mut state, Action::FinishDeciding).unwrap();
     apply(&mut state, Action::FinishDeciding).unwrap();
     assert_ne!(
-        state.player(player).library,
+        state.player(player).deck,
         mid,
         "the shuffle comes once, at the end"
     );
@@ -1202,7 +1202,7 @@ fn hilda_and_dawn_are_admitted_from_the_artifact() {
     assert_eq!(
         trainer("Hilda"),
         Some(TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![
                 slot(CardFilter::EvolutionPokemon),
                 // "an Energy card" — a Special Energy counts too.
@@ -1214,7 +1214,7 @@ fn hilda_and_dawn_are_admitted_from_the_artifact() {
     assert_eq!(
         trainer("Dawn"),
         Some(TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![
                 slot(CardFilter::PokemonOfStage(Stage::Basic)),
                 slot(CardFilter::PokemonOfStage(Stage::Stage1)),
@@ -1235,7 +1235,7 @@ fn with_crispin(set: Set) -> (Set, CardDefId) {
         kind: TrainerKind::Supporter,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![
                 Slot {
                     filter: CardFilter::BasicEnergy,
@@ -1332,7 +1332,7 @@ fn crispin_attaches_the_second_card_to_the_chosen_pokemon() {
     assert!(state.player(player).hand.contains(&first));
     assert!(state.pokemon(active).attached.contains(&second));
     assert!(!state.player(player).hand.contains(&second));
-    assert!(!state.player(player).library.contains(&second));
+    assert!(!state.player(player).deck.contains(&second));
 }
 
 #[test]
@@ -1349,7 +1349,7 @@ fn crispin_is_admitted_from_the_artifact() {
     assert_eq!(
         crispin.effect,
         TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![
                 Slot {
                     filter: CardFilter::BasicEnergy,
@@ -1405,11 +1405,11 @@ fn put_in_play_from_an_earlier_turn(
 ) -> PokemonId {
     let card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deck holds this card");
-    state.players[player.index()].library.retain(|c| *c != card);
+    state.players[player.index()].deck.retain(|c| *c != card);
     let pokemon = state.put_into_play(player, card);
     state.players[player.index()].bench.push(pokemon);
     state.pokemon[pokemon.index()].played_on_turn = 0;
@@ -1534,7 +1534,7 @@ fn with_petrel(set: Set) -> (Set, CardDefId) {
         kind: TrainerKind::Supporter,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::AnyTrainer,
                 to: Destination::Zone(Zone::Hand),
@@ -1577,7 +1577,7 @@ fn the_any_trainer_filter_never_offers_a_pokemon_or_an_energy() {
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
     let offered_mons_and_energy = state
         .player(player)
-        .library
+        .deck
         .iter()
         .filter(|c| {
             let def = state.def_of(**c);
@@ -1601,7 +1601,7 @@ fn team_rockets_petrel_is_admitted_from_the_artifact() {
     assert_eq!(
         petrel.effect,
         TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::AnyTrainer,
                 to: Destination::Zone(Zone::Hand),
@@ -1648,7 +1648,7 @@ fn pp_up_offers_only_a_benched_pokemon_whose_name_starts_with_ns() {
 
     // Bench the N's Pokémon, and an ordinary one to prove it is excluded.
     // The N's Pokémon was never part of the decklist, so it is dealt
-    // straight into play rather than pulled from the library.
+    // straight into play rather than pulled from the deck.
     let ns_card = deal_new_card(&mut state, player, ns_mon);
     let benched_ns = state.put_into_play(player, ns_card);
     state.players[player.index()].bench.push(benched_ns);
@@ -1658,12 +1658,12 @@ fn pp_up_offers_only_a_benched_pokemon_whose_name_starts_with_ns() {
     // A Basic Energy sitting in the discard pile, for the search to find.
     let energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
     state.players[player.index()]
-        .library
+        .deck
         .retain(|c| *c != energy);
     state.players[player.index()].discard.push(energy);
 
@@ -1754,12 +1754,12 @@ fn wondrous_patch_offers_only_a_psychic_energy_onto_a_psychic_pokemon() {
     // wrong-typed one can be proven excluded, not merely unmentioned.
     let colorless_energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
     state.players[player.index()]
-        .library
+        .deck
         .retain(|c| *c != colorless_energy);
     state.players[player.index()].discard.push(colorless_energy);
     let psychic_energy_card = deal_new_card(&mut state, player, psychic_energy);
@@ -1871,7 +1871,7 @@ fn with_pokegear(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
         kind: TrainerKind::Item,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::TrainerOfKind(TrainerKind::Supporter),
                 to: Destination::Zone(Zone::Hand),
@@ -1885,19 +1885,19 @@ fn with_pokegear(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
     (Set { db, ..set }, pokegear, supporter_a, supporter_b)
 }
 
-/// Library order, from bottom (index 0) to top (the end — `draw` pops from
+/// Deck order, from bottom (index 0) to top (the end — `draw` pops from
 /// there). `top` lands within the peek window; `bottom` lands well below
 /// it, but is never lost from the deck.
-fn arrange_library_with_one_card_near_the_top(
+fn arrange_deck_with_one_card_near_the_top(
     state: &mut GameState,
     player: PlayerId,
     top: CardId,
     bottom: CardId,
 ) {
-    let mut library = std::mem::take(&mut state.players[player.index()].library);
-    library.insert(0, bottom);
-    library.push(top);
-    state.players[player.index()].library = library;
+    let mut deck = std::mem::take(&mut state.players[player.index()].deck);
+    deck.insert(0, bottom);
+    deck.push(top);
+    state.players[player.index()].deck = deck;
 }
 
 #[test]
@@ -1909,7 +1909,7 @@ fn a_peeked_search_offers_only_the_top_of_the_deck() {
 
     let near_top = deal_new_card(&mut state, player, supporter_a);
     let buried = deal_new_card(&mut state, player, supporter_b);
-    arrange_library_with_one_card_near_the_top(&mut state, player, near_top, buried);
+    arrange_deck_with_one_card_near_the_top(&mut state, player, near_top, buried);
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
     let choices = offered(&state);
@@ -1932,13 +1932,13 @@ fn a_peeked_search_still_shuffles_the_deck_when_it_ends() {
 
     let near_top = deal_new_card(&mut state, player, supporter_a);
     let buried = deal_new_card(&mut state, player, supporter_b);
-    arrange_library_with_one_card_near_the_top(&mut state, player, near_top, buried);
-    let before = state.player(player).library.clone();
+    arrange_deck_with_one_card_near_the_top(&mut state, player, near_top, buried);
+    let before = state.player(player).deck.clone();
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
     apply(&mut state, Action::FinishDeciding).unwrap();
 
-    let after = &state.player(player).library;
+    let after = &state.player(player).deck;
     assert_eq!(before.len(), after.len(), "nothing was taken");
     assert!(after.contains(&buried), "the buried card is not lost");
     assert_ne!(&before, after, "the deck is shuffled once the search ends");
@@ -1952,7 +1952,7 @@ fn with_bug_catching_set(set: Set) -> (Set, CardDefId) {
         kind: TrainerKind::Item,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::PokemonOfTypeOrBasicEnergyOfType(Type::Grass),
                 to: Destination::Zone(Zone::Hand),
@@ -1982,11 +1982,11 @@ fn bug_catching_sets_filter_admits_grass_pokemon_and_grass_energy_alike() {
     let grass_energy_card = deal_new_card(&mut state, player, grass_energy);
     let colorless_card = deal_new_card(&mut state, player, set.mon);
 
-    let mut library = std::mem::take(&mut state.players[player.index()].library);
-    library.push(colorless_card);
-    library.push(grass_mon_card);
-    library.push(grass_energy_card);
-    state.players[player.index()].library = library;
+    let mut deck = std::mem::take(&mut state.players[player.index()].deck);
+    deck.push(colorless_card);
+    deck.push(grass_mon_card);
+    deck.push(grass_energy_card);
+    state.players[player.index()].deck = deck;
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
     let choices = offered(&state);
@@ -2054,7 +2054,7 @@ fn pokegear_is_admitted_from_the_artifact() {
     assert_eq!(
         pokegear.effect,
         TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::TrainerOfKind(TrainerKind::Supporter),
                 to: Destination::Zone(Zone::Hand),
@@ -2081,7 +2081,7 @@ fn bug_catching_set_is_admitted_from_the_artifact() {
     assert_eq!(
         bug_catching_set.effect,
         TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::PokemonOfTypeOrBasicEnergyOfType(Type::Grass),
                 to: Destination::Zone(Zone::Hand),
@@ -2104,10 +2104,10 @@ fn with_codebreaking(set: Set) -> (Set, CardDefId) {
         kind: TrainerKind::Supporter,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::AnyCard,
-                to: Destination::TopOfLibraryInOrder,
+                to: Destination::TopOfDeckInOrder,
                 limit: 2,
                 excludes_type_of_previous: false,
                 peek: None,
@@ -2147,7 +2147,7 @@ fn codebreaking_returns_the_two_taken_to_the_top_in_the_order_taken() {
     let mut state = game(&set, codebreaking, 3);
     let player = state.current;
     let card = ensure_in_hand(&mut state, player, codebreaking);
-    let library_before = state.player(player).library.len();
+    let deck_before = state.player(player).deck.len();
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
     let first = offered(&state)[0];
@@ -2159,16 +2159,16 @@ fn codebreaking_returns_the_two_taken_to_the_top_in_the_order_taken() {
 
     assert_eq!(state.phase, Phase::Main, "two taken, the limit is spent");
     assert_ne!(first, second);
-    let library = &state.player(player).library;
+    let deck = &state.player(player).deck;
     assert_eq!(
-        library.len(),
-        library_before,
+        deck.len(),
+        deck_before,
         "the two return to the deck; nothing leaves it"
     );
     // `draw` pops from the end, so the end is the top: the second card
     // taken sits above the first, the same order the player chose.
     assert_eq!(
-        &library[library.len() - 2..],
+        &deck[deck.len() - 2..],
         &[first, second],
         "the two land on top, in the order they were taken"
     );
@@ -2180,7 +2180,7 @@ fn codebreaking_shuffles_what_is_left_before_placing_the_two_on_top() {
     let mut state = game(&set, codebreaking, 3);
     let player = state.current;
     let card = ensure_in_hand(&mut state, player, codebreaking);
-    let before = state.player(player).library.clone();
+    let before = state.player(player).deck.clone();
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
     let first = offered(&state)[0];
@@ -2188,7 +2188,7 @@ fn codebreaking_shuffles_what_is_left_before_placing_the_two_on_top() {
     let second = offered(&state)[0];
     apply(&mut state, Action::TakeCard { card: second }).unwrap();
 
-    let after = &state.player(player).library;
+    let after = &state.player(player).deck;
     let beneath_the_top_two = &after[..after.len() - 2];
     let original_beneath = before
         .iter()
@@ -2215,10 +2215,10 @@ fn codebreaking_is_admitted_from_the_artifact() {
     assert_eq!(
         codebreaking.effect,
         TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::AnyCard,
-                to: Destination::TopOfLibraryInOrder,
+                to: Destination::TopOfDeckInOrder,
                 limit: 2,
                 excludes_type_of_previous: false,
                 peek: None,
@@ -2533,7 +2533,7 @@ fn with_jumbo_ice_cream(set: Set) -> (Set, CardDefId) {
     (Set { db, ..set }, jumbo_ice_cream)
 }
 
-/// Attach `count` Energy from the library to the player's own Active,
+/// Attach `count` Energy from the deck to the player's own Active,
 /// bypassing the once-a-turn attach action — this ticket's fixtures need
 /// more than one attached at a time, set up directly.
 fn attach_energy_to_active(state: &mut GameState, player: PlayerId, count: usize) {
@@ -2541,11 +2541,11 @@ fn attach_energy_to_active(state: &mut GameState, player: PlayerId, count: usize
     for _ in 0..count {
         let energy = *state
             .player(player)
-            .library
+            .deck
             .iter()
             .find(|c| state.def_of(**c).is_energy())
             .expect("the deck is mostly Energy");
-        state.players[player.index()].library.retain(|c| *c != energy);
+        state.players[player.index()].deck.retain(|c| *c != energy);
         state.pokemon[active.index()].attached.push(energy);
     }
 }
@@ -2632,7 +2632,7 @@ fn buddy_buddy_poffin_is_admitted_from_the_artifact() {
     assert_eq!(
         poffin.effect,
         TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::BasicPokemonWithHpAtMost(70),
                 to: Destination::Bench,
@@ -2659,7 +2659,7 @@ fn cyrano_is_admitted_from_the_artifact() {
     assert_eq!(
         cyrano.effect,
         TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::PokemonEx,
                 to: Destination::Zone(Zone::Hand),

@@ -201,11 +201,11 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             )) = state.def_of(card).as_energy().and_then(|e| e.effect)
                 && state.pokemon_def(target).kind == carrier_kind
             {
-                let any_basic = state.player(player).library.iter().any(|c| {
+                let any_basic = state.player(player).deck.iter().any(|c| {
                     state.matches_filter(*c, crate::card::CardFilter::BasicPokemonOfType(pokemon_kind))
                 });
                 if any_basic {
-                    state.phase = Phase::SearchingLibraryForBasicsOfType {
+                    state.phase = Phase::SearchingDeckForBasicsOfType {
                         player,
                         kind: pokemon_kind,
                         remaining: count,
@@ -412,12 +412,12 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 // `legal_actions` never offers `TakeCard` for a slot bound
                 // to attach: that needs a target, which is `TakeCardOnto`.
                 Destination::Attach(_) => unreachable!("Attach is taken with a target"),
-                Destination::TopOfLibraryInOrder => {
-                    // The library was already shuffled when this slot
+                Destination::TopOfDeckInOrder => {
+                    // The deck was already shuffled when this slot
                     // opened; each card taken lands right back on top,
                     // undisturbed, in the order it was taken.
                     state.zone_mut(chooser, from).retain(|c| *c != card);
-                    state.players[chooser.index()].library.push(card);
+                    state.players[chooser.index()].deck.push(card);
                     state
                         .log
                         .push(format!("{chooser:?} puts {name} on top of the deck."));
@@ -736,28 +736,28 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
-        Action::TakeFromBottomOfLibrary { card } => {
+        Action::TakeFromBottomOfDeck { card } => {
             let player = match state.phase {
-                Phase::LookingAtBottomOfLibrary { player, .. } => player,
+                Phase::LookingAtBottomOfDeck { player, .. } => player,
                 _ => return Err(IllegalAction),
             };
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
-            state.log.push(format!("{player:?} takes {name} from the bottom of the library."));
-            let library = &mut state.players[player.index()].library;
-            shuffle(state.rng.as_mut(), library);
+            state.log.push(format!("{player:?} takes {name} from the bottom of the deck."));
+            let deck = &mut state.players[player.index()].deck;
+            shuffle(state.rng.as_mut(), deck);
             state.phase = Phase::Main;
             settle(state);
         }
 
-        Action::DeclineBottomOfLibrary => {
+        Action::DeclineBottomOfDeck => {
             let player = match state.phase {
-                Phase::LookingAtBottomOfLibrary { player, .. } => player,
+                Phase::LookingAtBottomOfDeck { player, .. } => player,
                 _ => return Err(IllegalAction),
             };
-            let library = &mut state.players[player.index()].library;
-            shuffle(state.rng.as_mut(), library);
+            let deck = &mut state.players[player.index()].deck;
+            shuffle(state.rng.as_mut(), deck);
             state.phase = Phase::Main;
             settle(state);
         }
@@ -865,7 +865,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         Action::PutOnTopOfDeckForAcademyAtNight { card } => {
             let player = state.current;
             state.remove_from_hand(player, card);
-            state.players[player.index()].library.push(card);
+            state.players[player.index()].deck.push(card);
             state.spend(Limit::StadiumEffectUsed(player));
             let name = state.def_of(card).name();
             state.log.push(format!("{player:?} puts {name} on top of the deck."));
@@ -888,7 +888,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 player,
                 stadium_card,
                 0,
-                crate::card::Zone::Library,
+                crate::card::Zone::Deck,
                 Some(crate::card::Then::EndTurnIfMoved),
                 Progress { moved: 0, previous: None },
             );
@@ -937,18 +937,18 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
 
         Action::TakeBasicPokemonForCallForFamily { card } => {
             let (player, remaining) = match state.phase {
-                Phase::SearchingLibraryForBasics { player, remaining } => (player, remaining),
+                Phase::SearchingDeckForBasics { player, remaining } => (player, remaining),
                 _ => return Err(IllegalAction),
             };
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             let pokemon = state.put_into_play(player, card);
             state.players[player.index()].bench.push(pokemon);
             let name = state.def_of(card).name();
             state.log.push(format!("{name} joins the Bench."));
             if remaining <= 1 {
-                finish_searching_library_for_basics(state, player);
+                finish_searching_deck_for_basics(state, player);
             } else {
-                state.phase = Phase::SearchingLibraryForBasics {
+                state.phase = Phase::SearchingDeckForBasics {
                     player,
                     remaining: remaining - 1,
                 };
@@ -957,28 +957,28 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
 
         Action::FinishCallForFamily => {
             let player = match state.phase {
-                Phase::SearchingLibraryForBasics { player, .. } => player,
+                Phase::SearchingDeckForBasics { player, .. } => player,
                 _ => return Err(IllegalAction),
             };
-            finish_searching_library_for_basics(state, player);
+            finish_searching_deck_for_basics(state, player);
         }
 
         Action::TakeBasicPokemonOfTypeForEnergyAttach { card } => {
             let (player, kind, remaining) = match state.phase {
-                Phase::SearchingLibraryForBasicsOfType { player, kind, remaining } => {
+                Phase::SearchingDeckForBasicsOfType { player, kind, remaining } => {
                     (player, kind, remaining)
                 }
                 _ => return Err(IllegalAction),
             };
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             let pokemon = state.put_into_play(player, card);
             state.players[player.index()].bench.push(pokemon);
             let name = state.def_of(card).name();
             state.log.push(format!("{name} joins the Bench."));
             if remaining <= 1 {
-                finish_searching_library_for_basics_of_type(state, player);
+                finish_searching_deck_for_basics_of_type(state, player);
             } else {
-                state.phase = Phase::SearchingLibraryForBasicsOfType {
+                state.phase = Phase::SearchingDeckForBasicsOfType {
                     player,
                     kind,
                     remaining: remaining - 1,
@@ -988,49 +988,49 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
 
         Action::FinishSearchingBasicsOfType => {
             let player = match state.phase {
-                Phase::SearchingLibraryForBasicsOfType { player, .. } => player,
+                Phase::SearchingDeckForBasicsOfType { player, .. } => player,
                 _ => return Err(IllegalAction),
             };
-            finish_searching_library_for_basics_of_type(state, player);
+            finish_searching_deck_for_basics_of_type(state, player);
         }
 
-        Action::TakeItemFromLibrary { card } => {
+        Action::TakeItemFromDeck { card } => {
             let player = match state.phase {
-                Phase::SearchingLibraryForItem { player } => player,
+                Phase::SearchingDeckForItem { player } => player,
                 _ => return Err(IllegalAction),
             };
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
             state.log.push(format!("{name} joins the hand."));
-            let library = &mut state.players[player.index()].library;
-            shuffle(state.rng.as_mut(), library);
+            let deck = &mut state.players[player.index()].deck;
+            shuffle(state.rng.as_mut(), deck);
             state.phase = Phase::Main;
             settle(state);
         }
 
-        Action::TakeAnyCardFromLibrary { card } => {
+        Action::TakeAnyCardFromDeck { card } => {
             let (player, remaining) = match state.phase {
-                Phase::SearchingLibraryForAnyCards { player, remaining } => (player, remaining),
+                Phase::SearchingDeckForAnyCards { player, remaining } => (player, remaining),
                 _ => return Err(IllegalAction),
             };
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
             state.log.push(format!("{name} joins the hand."));
             if remaining <= 1 {
-                finish_searching_library_for_any_cards(state, player);
+                finish_searching_deck_for_any_cards(state, player);
             } else {
-                state.phase = Phase::SearchingLibraryForAnyCards { player, remaining: remaining - 1 };
+                state.phase = Phase::SearchingDeckForAnyCards { player, remaining: remaining - 1 };
             }
         }
 
         Action::FinishSearchingAnyCards => {
             let player = match state.phase {
-                Phase::SearchingLibraryForAnyCards { player, .. } => player,
+                Phase::SearchingDeckForAnyCards { player, .. } => player,
                 _ => return Err(IllegalAction),
             };
-            finish_searching_library_for_any_cards(state, player);
+            finish_searching_deck_for_any_cards(state, player);
         }
 
         Action::MoveOpponentsActiveEnergyToHand { card } => {
@@ -1079,18 +1079,18 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
 
         Action::EvolveWithAscension { card } => {
             let (player, target) = match state.phase {
-                Phase::SearchingLibraryToEvolveSelf { player, target } => (player, target),
+                Phase::SearchingDeckToEvolveSelf { player, target } => (player, target),
                 _ => return Err(IllegalAction),
             };
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.pokemon[target.index()].cards.push(card);
             // Rule 22: evolving clears every Special Condition. Damage and
             // attachments are untouched — nothing here moves them.
             state.clear_conditions(target);
             let name = state.pokemon_def(target).name;
             state.log.push(format!("Ascension evolves into {name}."));
-            let library = &mut state.players[player.index()].library;
-            shuffle(state.rng.as_mut(), library);
+            let deck = &mut state.players[player.index()].deck;
+            shuffle(state.rng.as_mut(), deck);
             state.phase = Phase::Main;
             settle(state);
         }
@@ -1158,9 +1158,9 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             for card in &energy {
                 state.pokemon[attacker.index()].attached.retain(|c| c != card);
             }
-            let library = &mut state.players[player.index()].library;
-            library.extend(energy);
-            shuffle(state.rng.as_mut(), library);
+            let deck = &mut state.players[player.index()].deck;
+            deck.extend(energy);
+            shuffle(state.rng.as_mut(), deck);
             let name = state.pokemon_def(attacker).name;
             state.log.push(format!("{name} shuffles Energy back into the deck."));
             let opponent = player.opponent();
@@ -1241,15 +1241,15 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                             let cards = std::mem::take(&mut state.pokemon[pokemon.index()].cards);
                             let attached = std::mem::take(&mut state.pokemon[pokemon.index()].attached);
                             let side = &mut state.players[player.index()];
-                            side.library.extend(cards);
-                            side.library.extend(attached);
+                            side.deck.extend(cards);
+                            side.deck.extend(attached);
                             side.bench.retain(|p| *p != pokemon);
                             if was_active {
                                 side.active = None;
                             }
                             state.log.push(format!("{name} shuffles itself into the deck."));
-                            let library = &mut state.players[player.index()].library;
-                            shuffle(state.rng.as_mut(), library);
+                            let deck = &mut state.players[player.index()].deck;
+                            shuffle(state.rng.as_mut(), deck);
                             if was_active {
                                 state.phase =
                                     Phase::Promoting { of: player, chooser: player, then: None };
@@ -1265,12 +1265,12 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         let cards = std::mem::take(&mut state.pokemon[pokemon.index()].cards);
                         let attached = std::mem::take(&mut state.pokemon[pokemon.index()].attached);
                         let side = &mut state.players[player.index()];
-                        side.library.extend(cards);
-                        side.library.extend(attached);
+                        side.deck.extend(cards);
+                        side.deck.extend(attached);
                         side.active = None;
                         state.log.push(format!("{name} shuffles itself into the deck."));
-                        let library = &mut state.players[player.index()].library;
-                        shuffle(state.rng.as_mut(), library);
+                        let deck = &mut state.players[player.index()].deck;
+                        shuffle(state.rng.as_mut(), deck);
                         state.phase = Phase::Promoting { of: player, chooser: player, then: None };
                     }
                 }
@@ -1286,7 +1286,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 crate::card::AbilityEffect::OncePerTurnMaySearchEvolutionPokemonOfType(kind, limit) => {
                     // Not spent here: opening the choice is not using it —
                     // only actually taking a card is.
-                    state.phase = Phase::SearchingLibraryForEvolutionPokemonOfType {
+                    state.phase = Phase::SearchingDeckForEvolutionPokemonOfType {
                         player,
                         pokemon,
                         kind,
@@ -1301,7 +1301,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 crate::card::AbilityEffect::OncePerTurnMaySearchAnyCardIfActiveHasNamedAbility(_) => {
                     // Not spent here: opening the choice is not using it —
                     // only actually taking a card is.
-                    state.phase = Phase::SearchingLibraryForAnyCardAbility { player, pokemon };
+                    state.phase = Phase::SearchingDeckForAnyCardAbility { player, pokemon };
                 }
                 crate::card::AbilityEffect::OncePerTurnMayDiscardFromHandThenDrawCards(draw) => {
                     // Spent here, unlike the choices above: the card's own
@@ -1393,7 +1393,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 }
                 crate::card::AbilityEffect::OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(count) => {
                     // Spent immediately: unlike a search that may come up
-                    // empty, looking at the top of the library and putting
+                    // empty, looking at the top of the deck and putting
                     // the rest on the bottom always happens once opened —
                     // there is no "decline" step left to spend it on.
                     let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
@@ -1428,12 +1428,12 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
             state.spend(Limit::for_ability_use(player, pokemon, ability.name));
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
             state.log.push(format!("{name} joins the hand (Last-Ditch Catch)."));
-            let library = &mut state.players[player.index()].library;
-            shuffle(state.rng.as_mut(), library);
+            let deck = &mut state.players[player.index()].deck;
+            shuffle(state.rng.as_mut(), deck);
             state.phase = Phase::Main;
             settle(state);
         }
@@ -1479,7 +1479,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             state.spend(Limit::for_ability_use(player, pokemon, name));
-            state.phase = Phase::SearchingLibraryForTrainerCards { player, remaining: count };
+            state.phase = Phase::SearchingDeckForTrainerCards { player, remaining: count };
         }
 
         Action::DeclineJewelSeeker => {
@@ -1491,45 +1491,45 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             settle(state);
         }
 
-        Action::TakeTrainerCardFromLibrary { card } => {
+        Action::TakeTrainerCardFromDeck { card } => {
             let (player, remaining) = match state.phase {
-                Phase::SearchingLibraryForTrainerCards { player, remaining } => (player, remaining),
+                Phase::SearchingDeckForTrainerCards { player, remaining } => (player, remaining),
                 _ => return Err(IllegalAction),
             };
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
             state.log.push(format!("{name} joins the hand."));
             if remaining <= 1 {
-                finish_searching_library_for_trainer_cards(state, player);
+                finish_searching_deck_for_trainer_cards(state, player);
             } else {
-                state.phase = Phase::SearchingLibraryForTrainerCards { player, remaining: remaining - 1 };
+                state.phase = Phase::SearchingDeckForTrainerCards { player, remaining: remaining - 1 };
             }
         }
 
         Action::FinishSearchingTrainerCards => {
             let player = match state.phase {
-                Phase::SearchingLibraryForTrainerCards { player, .. } => player,
+                Phase::SearchingDeckForTrainerCards { player, .. } => player,
                 _ => return Err(IllegalAction),
             };
-            finish_searching_library_for_trainer_cards(state, player);
+            finish_searching_deck_for_trainer_cards(state, player);
         }
 
-        Action::TakePokemonOfTypeOrStadiumFromLibrary { card } => {
+        Action::TakePokemonOfTypeOrStadiumFromDeck { card } => {
             let (player, kind, remaining) = match state.phase {
-                Phase::SearchingLibraryForPokemonOfTypeOrStadium { player, kind, remaining } => {
+                Phase::SearchingDeckForPokemonOfTypeOrStadium { player, kind, remaining } => {
                     (player, kind, remaining)
                 }
                 _ => return Err(IllegalAction),
             };
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
             state.log.push(format!("{name} joins the hand."));
             if remaining <= 1 {
-                finish_searching_library_for_pokemon_of_type_or_stadium(state, player);
+                finish_searching_deck_for_pokemon_of_type_or_stadium(state, player);
             } else {
-                state.phase = Phase::SearchingLibraryForPokemonOfTypeOrStadium {
+                state.phase = Phase::SearchingDeckForPokemonOfTypeOrStadium {
                     player,
                     kind,
                     remaining: remaining - 1,
@@ -1539,10 +1539,10 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
 
         Action::FinishSearchingPokemonOfTypeOrStadium => {
             let player = match state.phase {
-                Phase::SearchingLibraryForPokemonOfTypeOrStadium { player, .. } => player,
+                Phase::SearchingDeckForPokemonOfTypeOrStadium { player, .. } => player,
                 _ => return Err(IllegalAction),
             };
-            finish_searching_library_for_pokemon_of_type_or_stadium(state, player);
+            finish_searching_deck_for_pokemon_of_type_or_stadium(state, player);
         }
 
         Action::DiscardCardFromOpponentsHand { card } => {
@@ -1634,7 +1634,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 }
                 _ => return Err(IllegalAction),
             };
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.pokemon[target.index()].attached.push(card);
             let name = state.def_of(card).name();
             let target_name = state.pokemon_def(target).name;
@@ -1824,16 +1824,16 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let energy = *state.players[player.index()]
-                .library
+                .deck
                 .iter()
                 .find(|c| state.def_of(**c).is_energy())
-                .expect("legal_actions offers this only with a qualifying Energy in the library");
-            state.players[player.index()].library.retain(|c| *c != energy);
+                .expect("legal_actions offers this only with a qualifying Energy in the deck");
+            state.players[player.index()].deck.retain(|c| *c != energy);
             state.pokemon[target.index()].attached.push(energy);
             let name = state.pokemon_def(target).name;
             state.log.push(format!("{name} takes an Energy (Send Flowers)."));
-            let library = &mut state.players[player.index()].library;
-            shuffle(state.rng.as_mut(), library);
+            let deck = &mut state.players[player.index()].deck;
+            shuffle(state.rng.as_mut(), deck);
             state.phase = Phase::Main;
             settle(state);
         }
@@ -1905,24 +1905,24 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
 
         Action::TakeEvolutionPokemonOfType { card } => {
             let (player, pokemon, kind, remaining) = match state.phase {
-                Phase::SearchingLibraryForEvolutionPokemonOfType { player, pokemon, kind, remaining } => {
+                Phase::SearchingDeckForEvolutionPokemonOfType { player, pokemon, kind, remaining } => {
                     (player, pokemon, kind, remaining)
                 }
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
             state.spend(Limit::for_ability_use(player, pokemon, ability.name));
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
             state.log.push(format!("{name} joins the hand."));
             if remaining <= 1 {
-                let library = &mut state.players[player.index()].library;
-                shuffle(state.rng.as_mut(), library);
+                let deck = &mut state.players[player.index()].deck;
+                shuffle(state.rng.as_mut(), deck);
                 state.phase = Phase::Main;
                 settle(state);
             } else {
-                state.phase = Phase::SearchingLibraryForEvolutionPokemonOfType {
+                state.phase = Phase::SearchingDeckForEvolutionPokemonOfType {
                     player,
                     pokemon,
                     kind,
@@ -1931,26 +1931,26 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             }
         }
 
-        Action::TakeAnyCardFromLibraryForAbility { card } => {
+        Action::TakeAnyCardFromDeckForAbility { card } => {
             let (player, pokemon) = match state.phase {
-                Phase::SearchingLibraryForAnyCardAbility { player, pokemon } => (player, pokemon),
+                Phase::SearchingDeckForAnyCardAbility { player, pokemon } => (player, pokemon),
                 _ => return Err(IllegalAction),
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
             state.spend(Limit::for_ability_use(player, pokemon, ability.name));
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
             state.log.push(format!("{name} joins the hand."));
-            let library = &mut state.players[player.index()].library;
-            shuffle(state.rng.as_mut(), library);
+            let deck = &mut state.players[player.index()].deck;
+            shuffle(state.rng.as_mut(), deck);
             state.phase = Phase::Main;
             settle(state);
         }
 
-        Action::FinishSearchingLibraryForAnyCardAbility => {
+        Action::FinishSearchingDeckForAnyCardAbility => {
             match state.phase {
-                Phase::SearchingLibraryForAnyCardAbility { .. } => {}
+                Phase::SearchingDeckForAnyCardAbility { .. } => {}
                 _ => return Err(IllegalAction),
             };
             state.phase = Phase::Main;
@@ -1959,11 +1959,11 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
 
         Action::FinishSearchingEvolutionPokemonOfType => {
             let player = match state.phase {
-                Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => player,
+                Phase::SearchingDeckForEvolutionPokemonOfType { player, .. } => player,
                 _ => return Err(IllegalAction),
             };
-            let library = &mut state.players[player.index()].library;
-            shuffle(state.rng.as_mut(), library);
+            let deck = &mut state.players[player.index()].deck;
+            shuffle(state.rng.as_mut(), deck);
             state.phase = Phase::Main;
             settle(state);
         }
@@ -2094,15 +2094,15 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 Phase::LookingAtTopCardsToTakeOne { player, count, .. } => (player, count),
                 _ => return Err(IllegalAction),
             };
-            let library = &mut state.players[player.index()].library;
-            let seen = (count as usize).min(library.len());
-            let start = library.len() - seen;
-            let peeked: Vec<CardId> = library.drain(start..).collect();
+            let deck = &mut state.players[player.index()].deck;
+            let seen = (count as usize).min(deck.len());
+            let start = deck.len() - seen;
+            let peeked: Vec<CardId> = deck.drain(start..).collect();
             for c in peeked {
                 if c == card {
                     state.players[player.index()].hand.push(c);
                 } else {
-                    state.players[player.index()].library.insert(0, c);
+                    state.players[player.index()].deck.insert(0, c);
                 }
             }
             let name = state.def_of(card).name();
@@ -2118,7 +2118,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 }
                 _ => return Err(IllegalAction),
             };
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.pokemon[target.index()].attached.push(card);
             let name = state.def_of(card).name();
             let target_name = state.pokemon_def(target).name;
@@ -2139,8 +2139,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 }
                 _ => return Err(IllegalAction),
             };
-            state.players[player.index()].library.retain(|c| *c != card);
-            state.players[player.index()].library.insert(0, card);
+            state.players[player.index()].deck.retain(|c| *c != card);
+            state.players[player.index()].deck.insert(0, card);
             let left = remaining - 1;
             if left == 0 {
                 state.phase = Phase::Main;
@@ -2157,12 +2157,12 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
             state.spend(Limit::for_ability_use(player, pokemon, ability.name));
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
             state.log.push(format!("{name} taken from the top (Attract Customers)."));
-            let library = &mut state.players[player.index()].library;
-            shuffle(state.rng.as_mut(), library);
+            let deck = &mut state.players[player.index()].deck;
+            shuffle(state.rng.as_mut(), deck);
             state.phase = Phase::Main;
             settle(state);
         }
@@ -2262,17 +2262,17 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
             state.spend(Limit::for_ability_use(player, pokemon, ability.name));
             let energy = *state.players[player.index()]
-                .library
+                .deck
                 .iter()
                 .find(|c| state.matches_filter(**c, crate::card::CardFilter::BasicEnergyOfType(kind)))
-                .expect("legal_actions offers this only with a qualifying Energy in the library");
-            state.players[player.index()].library.retain(|c| *c != energy);
+                .expect("legal_actions offers this only with a qualifying Energy in the deck");
+            state.players[player.index()].deck.retain(|c| *c != energy);
             state.pokemon[target.index()].attached.push(energy);
             state.pokemon[target.index()].damage += damage;
             let name = state.pokemon_def(target).name;
             state.log.push(format!("{name} takes an Energy and {damage} (Sinister Surge)."));
-            let library = &mut state.players[player.index()].library;
-            shuffle(state.rng.as_mut(), library);
+            let deck = &mut state.players[player.index()].deck;
+            shuffle(state.rng.as_mut(), deck);
             state.phase = Phase::Main;
             settle(state);
         }
@@ -2286,13 +2286,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             };
             let ability = state.pokemon_def(pokemon).ability.expect("named only when carried");
             state.spend(Limit::for_ability_use(player, pokemon, ability.name));
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.players[player.index()].hand.push(card);
             let name = state.def_of(card).name();
             state.log.push(format!("{name} joins the hand (Fan Call)."));
             if remaining <= 1 {
-                let library = &mut state.players[player.index()].library;
-                shuffle(state.rng.as_mut(), library);
+                let deck = &mut state.players[player.index()].deck;
+                shuffle(state.rng.as_mut(), deck);
                 state.phase = Phase::Main;
                 settle(state);
             } else {
@@ -2311,8 +2311,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 Phase::SearchingForFanCall { player, .. } => player,
                 _ => return Err(IllegalAction),
             };
-            let library = &mut state.players[player.index()].library;
-            shuffle(state.rng.as_mut(), library);
+            let deck = &mut state.players[player.index()].deck;
+            shuffle(state.rng.as_mut(), deck);
             state.phase = Phase::Main;
             settle(state);
         }
@@ -2418,7 +2418,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 _ => return Err(IllegalAction),
             };
             let target = targets[index as usize].expect("this search always names a target");
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.pokemon[target.index()].attached.push(card);
             if state.player(player).active == Some(target) {
                 attached_to_active = true;
@@ -2750,16 +2750,16 @@ fn enter_slot(
             .as_trainer()
             .expect("a search is only ever a Trainer's effect")
             .slots();
-        let puts_back = slots.iter().any(|s| s.to == Destination::Zone(Zone::Library));
+        let puts_back = slots.iter().any(|s| s.to == Destination::Zone(Zone::Deck));
         // A search that places its cards on top in order already shuffled
         // the rest of the deck when that slot opened, and placed its cards
         // afterward. Shuffling again here would scramble them right back in.
         let already_ordered_on_top = slots
             .iter()
-            .any(|s| s.to == Destination::TopOfLibraryInOrder);
-        if (from == Zone::Library || puts_back) && !already_ordered_on_top {
-            let library = &mut state.players[chooser.index()].library;
-            shuffle(state.rng.as_mut(), library);
+            .any(|s| s.to == Destination::TopOfDeckInOrder);
+        if (from == Zone::Deck || puts_back) && !already_ordered_on_top {
+            let deck = &mut state.players[chooser.index()].deck;
+            shuffle(state.rng.as_mut(), deck);
         }
         match then {
             Some(crate::card::Then::DrawPerCardMoved(per_card)) => {
@@ -2780,10 +2780,10 @@ fn enter_slot(
     // "Shuffle your deck, then put those cards on top of it": the shuffle
     // happens before anything is placed, on whatever the search has not
     // yet taken. Cards taken during this slot are pushed onto the end of
-    // the Library one at a time, undisturbed by any shuffle after this one.
-    if slot.to == Destination::TopOfLibraryInOrder {
-        let library = &mut state.players[chooser.index()].library;
-        shuffle(state.rng.as_mut(), library);
+    // the Deck one at a time, undisturbed by any shuffle after this one.
+    if slot.to == Destination::TopOfDeckInOrder {
+        let deck = &mut state.players[chooser.index()].deck;
+        shuffle(state.rng.as_mut(), deck);
     }
 
     state.phase = Phase::Deciding {
@@ -3017,7 +3017,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::DiscardTopOfDeck(count) => {
             for _ in 0..count {
-                let Some(top) = state.players[player.index()].library.pop() else {
+                let Some(top) = state.players[player.index()].deck.pop() else {
                     break;
                 };
                 state.players[player.index()].discard.push(top);
@@ -3056,7 +3056,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         }
 
         TrainerEffect::ShuffleHandThenCoinFlipDraw { heads, tails } => {
-            shuffle_hand_into_library(state, player);
+            shuffle_hand_into_deck(state, player);
             let count = if state.flip_for(player) { heads } else { tails };
             for _ in 0..count {
                 state.draw(player);
@@ -3069,8 +3069,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             you_tails,
             opponent_tails,
         } => {
-            shuffle_hand_into_library(state, player);
-            shuffle_hand_into_library(state, player.opponent());
+            shuffle_hand_into_deck(state, player);
+            shuffle_hand_into_deck(state, player.opponent());
             let heads = state.flip_for(player);
             let (mine, theirs) = if heads {
                 (you_heads, opponent_heads)
@@ -3094,7 +3094,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             } else {
                 normal
             };
-            shuffle_hand_into_library(state, player);
+            shuffle_hand_into_deck(state, player);
             for _ in 0..count {
                 state.draw(player);
             }
@@ -3109,11 +3109,11 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             // The hand is shuffled before it goes under the deck, so neither
             // player knows the order it lands in.
             shuffle(state.rng.as_mut(), &mut hand);
-            let library = &mut state.players[opponent.index()].library;
+            let deck = &mut state.players[opponent.index()].deck;
             // A draw takes from the end, so the bottom of the deck is the
             // front of this list.
             for card in hand.into_iter().rev() {
-                library.insert(0, card);
+                deck.insert(0, card);
             }
             for _ in 0..count {
                 state.draw(opponent);
@@ -3122,7 +3122,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::BothShuffleHandThenDraw { you, opponent } => {
             for (whose, count) in [(player, you), (player.opponent(), opponent)] {
-                shuffle_hand_into_library(state, whose);
+                shuffle_hand_into_deck(state, whose);
                 for _ in 0..count {
                     state.draw(whose);
                 }
@@ -3229,8 +3229,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             state.phase = Phase::HealingMegaEx { player };
         }
 
-        TrainerEffect::LookAtBottomOfLibrary { count } => {
-            state.phase = Phase::LookingAtBottomOfLibrary { player, count };
+        TrainerEffect::LookAtBottomOfDeck { count } => {
+            state.phase = Phase::LookingAtBottomOfDeck { player, count };
         }
 
         TrainerEffect::DevolveChosen => {
@@ -3349,13 +3349,13 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
     }
 }
 
-/// Shuffle a player's hand into their Library. Several Supporters start this
+/// Shuffle a player's hand into their Deck. Several Supporters start this
 /// way before drawing a fresh hand.
-fn shuffle_hand_into_library(state: &mut GameState, player: PlayerId) {
+fn shuffle_hand_into_deck(state: &mut GameState, player: PlayerId) {
     let hand = std::mem::take(&mut state.players[player.index()].hand);
-    state.players[player.index()].library.extend(hand);
-    let library = &mut state.players[player.index()].library;
-    shuffle(state.rng.as_mut(), library);
+    state.players[player.index()].deck.extend(hand);
+    let deck = &mut state.players[player.index()].deck;
+    shuffle(state.rng.as_mut(), deck);
 }
 
 /// Move Janine's Secret Art on to its next step: the second target's search,
@@ -3378,9 +3378,9 @@ fn advance_janines_search(
         };
         return;
     }
-    let library = &mut state.players[player.index()].library;
-    shuffle(state.rng.as_mut(), library);
-    state.log.push(format!("{player:?} shuffles their library."));
+    let deck = &mut state.players[player.index()].deck;
+    shuffle(state.rng.as_mut(), deck);
+    state.log.push(format!("{player:?} shuffles their deck."));
     if attached_to_active
         && let Some(active) = state.player(player).active
     {
@@ -3543,7 +3543,7 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
         }
         return;
     }
-    // `Seek Inspiration` discards the top of the library outright,
+    // `Seek Inspiration` discards the top of the deck outright,
     // then — only if that card turns out to be a Pokémon without a
     // Rule Box — copies one of its own attacks, the same
     // choose-and-run-this-function-again shape `Night Joker` already
@@ -3551,9 +3551,9 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
     // choice among the Bench. `Slowking`.
     if matches!(
         attack.effect,
-        Some(crate::card::AttackEffect::DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox)
+        Some(crate::card::AttackEffect::DiscardsTopOfDeckThenCopiesItsAttackIfNoRuleBox)
     ) {
-        let Some(top) = state.players[player.index()].library.pop() else {
+        let Some(top) = state.players[player.index()].deck.pop() else {
             return;
         };
         state.players[player.index()].discard.push(top);
@@ -3643,9 +3643,9 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
                 attack.base_damage
             }
         }
-        Some(crate::card::AttackEffect::BonusDamageIfOwnLibraryAtMost(threshold, bonus)) => {
+        Some(crate::card::AttackEffect::BonusDamageIfOwnDeckAtMost(threshold, bonus)) => {
             let owner = state.pokemon(attacker).owner;
-            if state.player(owner).library.len() <= threshold {
+            if state.player(owner).deck.len() <= threshold {
                 attack.base_damage + bonus
             } else {
                 attack.base_damage
@@ -4092,7 +4092,7 @@ fn resolve_attack_effect(
         crate::card::AttackEffect::BonusDamageIfDefenderIsStage(..) => {}
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
-        crate::card::AttackEffect::BonusDamageIfOwnLibraryAtMost(..) => {}
+        crate::card::AttackEffect::BonusDamageIfOwnDeckAtMost(..) => {}
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::BonusDamagePerCount(..) => {}
@@ -4114,14 +4114,14 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt_with` ran — see `attack`'s
         // own `base` computation.
         crate::card::AttackEffect::BonusDamageIfExtraEnergyAttached(..) => {}
-        crate::card::AttackEffect::DiscardsTopOfOpponentsLibrary(count) => {
+        crate::card::AttackEffect::DiscardsTopOfOpponentsDeck(count) => {
             let opponent = state.pokemon(attacker).owner.opponent();
-            let taken: Vec<_> = state.player(opponent).library.iter().take(count as usize).copied().collect();
+            let taken: Vec<_> = state.player(opponent).deck.iter().take(count as usize).copied().collect();
             for card in &taken {
-                state.players[opponent.index()].library.retain(|c| c != card);
+                state.players[opponent.index()].deck.retain(|c| c != card);
                 state.players[opponent.index()].discard.push(*card);
             }
-            state.log.push(format!("{} card(s) discarded from the opponent's library.", taken.len()));
+            state.log.push(format!("{} card(s) discarded from the opponent's deck.", taken.len()));
         }
         crate::card::AttackEffect::ShufflesOwnEnergyThenDamagesChosenOpponentPokemonWeaknessIfActive(
             damage,
@@ -4132,8 +4132,8 @@ fn resolve_attack_effect(
             for card in &energy {
                 state.pokemon[attacker.index()].attached.retain(|c| c != card);
             }
-            state.players[owner.index()].library.extend(energy);
-            shuffle(state.rng.as_mut(), &mut state.players[owner.index()].library);
+            state.players[owner.index()].deck.extend(energy);
+            shuffle(state.rng.as_mut(), &mut state.players[owner.index()].deck);
             let name = state.pokemon_def(attacker).name;
             state.log.push(format!("{name} shuffles its Energy into the deck."));
             state.phase = Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive {
@@ -4162,7 +4162,7 @@ fn resolve_attack_effect(
             let owner = state.pokemon(attacker).owner;
             let has_energy = state
                 .player(owner)
-                .library
+                .deck
                 .iter()
                 .any(|c| state.matches_filter(*c, crate::card::CardFilter::BasicEnergyOfType(kind)));
             if !state.player(owner).bench.is_empty() && has_energy {
@@ -4205,16 +4205,16 @@ fn resolve_attack_effect(
                 };
             }
         }
-        crate::card::AttackEffect::SearchLibraryToEvolveSelf => {
+        crate::card::AttackEffect::SearchDeckToEvolveSelf => {
             let owner = state.pokemon(attacker).owner;
             let from = state.pokemon_def(attacker).name;
             let any_evolution = state
                 .player(owner)
-                .library
+                .deck
                 .iter()
                 .any(|c| state.def_of(*c).as_pokemon().is_some_and(|p| p.evolve_from == Some(from)));
             if any_evolution {
-                state.phase = Phase::SearchingLibraryToEvolveSelf {
+                state.phase = Phase::SearchingDeckToEvolveSelf {
                     player: owner,
                     target: attacker,
                 };
@@ -4326,7 +4326,7 @@ fn resolve_attack_effect(
         crate::card::AttackEffect::SearchEnergyAttachToBenchedOfType(kind) => {
             let owner = state.pokemon(attacker).owner;
             let has_energy =
-                state.player(owner).library.iter().any(|c| state.def_of(*c).is_energy());
+                state.player(owner).deck.iter().any(|c| state.def_of(*c).is_energy());
             let has_target =
                 state.player(owner).bench.iter().any(|p| state.pokemon_def(*p).kind == kind);
             if has_energy && has_target {
@@ -4359,7 +4359,7 @@ fn resolve_attack_effect(
         crate::card::AttackEffect::CopiesChosenBenchedPokemonAttackByNamePrefix(_) => {
             unreachable!("attack() opens a choice for this effect and never calls attack_with")
         }
-        crate::card::AttackEffect::DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox => {
+        crate::card::AttackEffect::DiscardsTopOfDeckThenCopiesItsAttackIfNoRuleBox => {
             unreachable!("attack() handles this effect outright and never calls attack_with")
         }
         crate::card::AttackEffect::MoveOwnAttachedEnergyToHand => {
@@ -4407,37 +4407,37 @@ fn resolve_attack_effect(
                 state.phase = Phase::TakingTrainerFromDiscard { player: owner };
             }
         }
-        crate::card::AttackEffect::SearchLibraryForBasicPokemonToBench(count) => {
+        crate::card::AttackEffect::SearchDeckForBasicPokemonToBench(count) => {
             let owner = state.pokemon(attacker).owner;
-            let any_basic = state.player(owner).library.iter().any(|c| {
+            let any_basic = state.player(owner).deck.iter().any(|c| {
                 state.matches_filter(*c, crate::card::CardFilter::PokemonOfStage(crate::card::Stage::Basic))
             });
             if any_basic {
-                state.phase = Phase::SearchingLibraryForBasics {
+                state.phase = Phase::SearchingDeckForBasics {
                     player: owner,
                     remaining: count,
                 };
             }
         }
-        crate::card::AttackEffect::SearchLibraryForItemCardToHand => {
+        crate::card::AttackEffect::SearchDeckForItemCardToHand => {
             let owner = state.pokemon(attacker).owner;
-            let any_item = state.player(owner).library.iter().any(|c| {
+            let any_item = state.player(owner).deck.iter().any(|c| {
                 state.matches_filter(*c, crate::card::CardFilter::TrainerOfKind(TrainerKind::Item))
             });
             if any_item {
-                state.phase = Phase::SearchingLibraryForItem { player: owner };
+                state.phase = Phase::SearchingDeckForItem { player: owner };
             }
         }
-        crate::card::AttackEffect::SearchLibraryForUpToCardsOfAnyKindToHand(count) => {
+        crate::card::AttackEffect::SearchDeckForUpToCardsOfAnyKindToHand(count) => {
             let owner = state.pokemon(attacker).owner;
-            if !state.player(owner).library.is_empty() {
-                state.phase = Phase::SearchingLibraryForAnyCards { player: owner, remaining: count };
+            if !state.player(owner).deck.is_empty() {
+                state.phase = Phase::SearchingDeckForAnyCards { player: owner, remaining: count };
             }
         }
-        crate::card::AttackEffect::SearchLibraryForUpToPokemonOfTypeOrStadiumToHand(kind, count) => {
+        crate::card::AttackEffect::SearchDeckForUpToPokemonOfTypeOrStadiumToHand(kind, count) => {
             let owner = state.pokemon(attacker).owner;
-            if !state.player(owner).library.is_empty() {
-                state.phase = Phase::SearchingLibraryForPokemonOfTypeOrStadium {
+            if !state.player(owner).deck.is_empty() {
+                state.phase = Phase::SearchingDeckForPokemonOfTypeOrStadium {
                     player: owner,
                     kind,
                     remaining: count,
@@ -4463,53 +4463,53 @@ fn resolve_attack_effect(
     }
 }
 
-/// `Phase::SearchingLibraryForBasics` ends either on its own limit or an
-/// early decline — both shuffle the library, the same as any other
+/// `Phase::SearchingDeckForBasics` ends either on its own limit or an
+/// early decline — both shuffle the deck, the same as any other
 /// search that looked through it.
-fn finish_searching_library_for_basics(state: &mut GameState, player: PlayerId) {
-    let library = &mut state.players[player.index()].library;
-    shuffle(state.rng.as_mut(), library);
+fn finish_searching_deck_for_basics(state: &mut GameState, player: PlayerId) {
+    let deck = &mut state.players[player.index()].deck;
+    shuffle(state.rng.as_mut(), deck);
     state.phase = Phase::Main;
     settle(state);
 }
 
-/// `Phase::SearchingLibraryForBasicsOfType` ends either on its own limit or
-/// an early decline — both shuffle the library, the same as
-/// `finish_searching_library_for_basics` does. `Telepathic Psychic Energy`.
-fn finish_searching_library_for_basics_of_type(state: &mut GameState, player: PlayerId) {
-    let library = &mut state.players[player.index()].library;
-    shuffle(state.rng.as_mut(), library);
+/// `Phase::SearchingDeckForBasicsOfType` ends either on its own limit or
+/// an early decline — both shuffle the deck, the same as
+/// `finish_searching_deck_for_basics` does. `Telepathic Psychic Energy`.
+fn finish_searching_deck_for_basics_of_type(state: &mut GameState, player: PlayerId) {
+    let deck = &mut state.players[player.index()].deck;
+    shuffle(state.rng.as_mut(), deck);
     state.phase = Phase::Main;
     settle(state);
 }
 
-/// `Phase::SearchingLibraryForAnyCards` ends either on its own limit or an
-/// early decline — both shuffle the library, the same as any other search
+/// `Phase::SearchingDeckForAnyCards` ends either on its own limit or an
+/// early decline — both shuffle the deck, the same as any other search
 /// that looked through it. `Noctowl`'s `Talon Hunt`.
-fn finish_searching_library_for_any_cards(state: &mut GameState, player: PlayerId) {
-    let library = &mut state.players[player.index()].library;
-    shuffle(state.rng.as_mut(), library);
+fn finish_searching_deck_for_any_cards(state: &mut GameState, player: PlayerId) {
+    let deck = &mut state.players[player.index()].deck;
+    shuffle(state.rng.as_mut(), deck);
     state.phase = Phase::Main;
     settle(state);
 }
 
-fn finish_searching_library_for_trainer_cards(state: &mut GameState, player: PlayerId) {
-    let library = &mut state.players[player.index()].library;
-    shuffle(state.rng.as_mut(), library);
+fn finish_searching_deck_for_trainer_cards(state: &mut GameState, player: PlayerId) {
+    let deck = &mut state.players[player.index()].deck;
+    shuffle(state.rng.as_mut(), deck);
     state.phase = Phase::Main;
     settle(state);
 }
 
 fn finish_searching_energy_of_type_to_attach_to_chosen(state: &mut GameState, player: PlayerId) {
-    let library = &mut state.players[player.index()].library;
-    shuffle(state.rng.as_mut(), library);
+    let deck = &mut state.players[player.index()].deck;
+    shuffle(state.rng.as_mut(), deck);
     state.phase = Phase::Main;
     settle(state);
 }
 
-fn finish_searching_library_for_pokemon_of_type_or_stadium(state: &mut GameState, player: PlayerId) {
-    let library = &mut state.players[player.index()].library;
-    shuffle(state.rng.as_mut(), library);
+fn finish_searching_deck_for_pokemon_of_type_or_stadium(state: &mut GameState, player: PlayerId) {
+    let deck = &mut state.players[player.index()].deck;
+    shuffle(state.rng.as_mut(), deck);
     state.phase = Phase::Main;
     settle(state);
 }
@@ -5028,7 +5028,7 @@ fn trigger_last_ditch_catch(state: &mut GameState, player: PlayerId, pokemon: Po
     }
     let any_supporter = state
         .player(player)
-        .library
+        .deck
         .iter()
         .any(|c| state.matches_filter(*c, crate::card::CardFilter::TrainerOfKind(TrainerKind::Supporter)));
     if any_supporter {

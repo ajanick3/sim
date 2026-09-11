@@ -7,8 +7,8 @@ Status: resolved
 Bench. Then, shuffle your deck."* — `Drilbur` and `Toxel`'s
 `Call for Family`.
 
-- [x] `AttackEffect::SearchLibraryForBasicPokemonToBench(u32)`
-- [x] New `Phase::SearchingLibraryForBasics { player, remaining }`, an
+- [x] `AttackEffect::SearchDeckForBasicPokemonToBench(u32)`
+- [x] New `Phase::SearchingDeckForBasics { player, remaining }`, an
       attack-driven search that names no card to read slots back from
 - [x] `Action::TakeBasicPokemonForCallForFamily` and
       `Action::FinishCallForFamily` (an "up to N" search can stop

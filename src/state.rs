@@ -107,8 +107,8 @@ impl Limit {
 #[derive(Debug, Clone)]
 pub struct PlayerState {
     /// The draw pile. `Deck` is the tournament decklist, so the pile in play
-    /// is the Library.
-    pub library: Vec<CardId>,
+    /// is the Deck.
+    pub deck: Vec<CardId>,
     pub hand: Vec<CardId>,
     pub discard: Vec<CardId>,
     pub prizes: Vec<CardId>,
@@ -119,7 +119,7 @@ pub struct PlayerState {
 impl PlayerState {
     fn empty() -> PlayerState {
         PlayerState {
-            library: Vec::new(),
+            deck: Vec::new(),
             hand: Vec::new(),
             discard: Vec::new(),
             prizes: Vec::new(),
@@ -344,11 +344,11 @@ pub enum Phase {
     /// already reads for a plain ex, one prize lower.
     HealingMegaEx { player: PlayerId },
     /// `player` played `Dusk Ball` and is looking at the bottom of their
-    /// Library. `legal_actions` reads the bottom cards straight off the
+    /// Deck. `legal_actions` reads the bottom cards straight off the
     /// zone, the same way a `peek`ed `Decide` reads the top without
-    /// storing anything here — the Library itself is the source of
+    /// storing anything here — the Deck itself is the source of
     /// truth, not a copy of it a `Copy` `Phase` could not hold anyway.
-    LookingAtBottomOfLibrary { player: PlayerId, count: u32 },
+    LookingAtBottomOfDeck { player: PlayerId, count: u32 },
     /// `player` played `Strange Timepiece` and is devolving one of their
     /// own evolved Pokémon. `target` is `None` until chosen; once fixed,
     /// the player removes evolution cards one at a time — "any number" —
@@ -388,22 +388,22 @@ pub enum Phase {
     /// deals flat damage to one Benched Pokémon of the opponent's
     /// choosing which. `N's Darmanitan`'s `Flamebody Cannon`.
     ChoosingBenchDamageTarget { player: PlayerId, damage: u32 },
-    /// `player` used an attack that searches the library for up to
+    /// `player` used an attack that searches the deck for up to
     /// `remaining` more Basic Pokémon to the Bench — a search read
     /// from an attack, not a Trainer's `Decide`, so it names no card
     /// to read slots back from. `Drilbur`/`Toxel`'s `Call for Family`.
-    SearchingLibraryForBasics { player: PlayerId, remaining: u32 },
-    /// `player` attached a Special Energy that searches the library
+    SearchingDeckForBasics { player: PlayerId, remaining: u32 },
+    /// `player` attached a Special Energy that searches the deck
     /// for up to `remaining` Basic Pokémon of `kind` to the Bench.
     /// `Telepathic Psychic Energy`.
-    SearchingLibraryForBasicsOfType { player: PlayerId, kind: crate::card::Type, remaining: u32 },
-    /// `player` used an attack that searches the entire library for
+    SearchingDeckForBasicsOfType { player: PlayerId, kind: crate::card::Type, remaining: u32 },
+    /// `player` used an attack that searches the entire deck for
     /// an Item card to take into hand. `Patrat`'s `Procurement`.
-    SearchingLibraryForItem { player: PlayerId },
-    /// `player` used an attack that searches the entire library for
+    SearchingDeckForItem { player: PlayerId },
+    /// `player` used an attack that searches the entire deck for
     /// up to `remaining` cards of any kind to take into hand.
     /// `Noctowl`'s `Talon Hunt`.
-    SearchingLibraryForAnyCards { player: PlayerId, remaining: u32 },
+    SearchingDeckForAnyCards { player: PlayerId, remaining: u32 },
     /// `player` used an attack that may move Energy off the opponent's
     /// Active into the opponent's hand, up to `remaining` more.
     /// `Slowking`'s `Wash the Slate Clean`.
@@ -412,14 +412,14 @@ pub enum Phase {
     /// discard pile into their hand. `Dedenne`'s
     /// `Electromagnetic Sonar`.
     TakingTrainerFromDiscard { player: PlayerId },
-    /// `player` used an attack that searches the library for a card to
+    /// `player` used an attack that searches the deck for a card to
     /// evolve the attacker into directly. `Dwebble`'s `Ascension`.
-    SearchingLibraryToEvolveSelf { player: PlayerId, target: PokemonId },
+    SearchingDeckToEvolveSelf { player: PlayerId, target: PokemonId },
     /// `player` used an attack that puts a Pokémon card from their own
     /// discard pile into their hand. `Slowpoke`'s `Dangle Tail`.
     TakingPokemonFromDiscard { player: PlayerId },
     /// `player` used an attack that may shuffle a fixed count of the
-    /// attacker's own Energy into the library for bench damage.
+    /// attacker's own Energy into the deck for bench damage.
     /// `Wellspring Mask Ogerpon ex`'s `Torrential Pump`.
     DecidingToShuffleEnergyForBenchDamage {
         player: PlayerId,
@@ -434,7 +434,7 @@ pub enum Phase {
     /// `Elgyem`'s `Slight Shift`.
     MovingOpponentsEnergy { chooser: PlayerId, of: PlayerId },
     /// `player` just played `pokemon` from hand onto the Bench, and
-    /// its own Ability may search the library for a Supporter card.
+    /// its own Ability may search the deck for a Supporter card.
     /// `Meowth ex`'s `Last-Ditch Catch`.
     DecidingToUseLastDitchCatch { player: PlayerId, pokemon: PokemonId },
     /// `player` just evolved from hand, and the evolution's own
@@ -448,7 +448,7 @@ pub enum Phase {
     },
     /// The same "evolved from hand" moment `DecidingToUsePsychicDraw`
     /// opens from, but accepting moves to
-    /// `SearchingLibraryForTrainerCards` rather than drawing outright.
+    /// `SearchingDeckForTrainerCards` rather than drawing outright.
     /// `Noctowl`'s `Jewel Seeker`.
     DecidingToUseJewelSeeker {
         player: PlayerId,
@@ -457,17 +457,17 @@ pub enum Phase {
         count: u32,
     },
     /// `player` may take up to `remaining` more Trainer cards of any
-    /// kind from their own library, revealing them, then shuffles —
-    /// the narrower mirror of `SearchingLibraryForAnyCards`, offering
+    /// kind from their own deck, revealing them, then shuffles —
+    /// the narrower mirror of `SearchingDeckForAnyCards`, offering
     /// only Trainer cards. `Noctowl`'s `Jewel Seeker`.
-    SearchingLibraryForTrainerCards { player: PlayerId, remaining: u32 },
+    SearchingDeckForTrainerCards { player: PlayerId, remaining: u32 },
     /// `player` may take up to `remaining` more cards, each their own
     /// choice of a Pokémon of `kind` or a Stadium, revealing them,
     /// then shuffles — the narrower mirror of
-    /// `SearchingLibraryForAnyCards`, offering only
+    /// `SearchingDeckForAnyCards`, offering only
     /// `CardFilter::PokemonOfTypeOrStadium(kind)`. `Celebi`'s
     /// `Traverse Time`.
-    SearchingLibraryForPokemonOfTypeOrStadium { player: PlayerId, kind: crate::card::Type, remaining: u32 },
+    SearchingDeckForPokemonOfTypeOrStadium { player: PlayerId, kind: crate::card::Type, remaining: u32 },
     /// `player` picks one card out of the opponent's hand to discard.
     /// `Mega Absol ex`'s `Claw of Darkness`.
     ChoosingCardFromOpponentsHandToDiscard { player: PlayerId },
@@ -498,7 +498,7 @@ pub enum Phase {
     /// Bench opens no phase. `Smoochum`'s `Delightful Kiss`.
     ChoosingBenchedTargetForEnergySearch { player: PlayerId, kind: crate::card::Type, max: u32 },
     /// `player` already picked `target`; now taking up to `remaining`
-    /// Basic Energy of `kind` from the library to attach to it.
+    /// Basic Energy of `kind` from the deck to attach to it.
     SearchingEnergyOfTypeToAttachToChosen {
         player: PlayerId,
         kind: crate::card::Type,
@@ -537,7 +537,7 @@ pub enum Phase {
     /// ex`'s `Night Joker`.
     ChoosingBenchedPokemonAttackToCopy { player: PlayerId, prefix: &'static str },
     /// `player` used an attack that discarded the top of the
-    /// library, which turned out to be a Pokémon without a Rule Box:
+    /// deck, which turned out to be a Pokémon without a Rule Box:
     /// choose 1 of `card`'s own attacks to copy. `Slowking`'s `Seek
     /// Inspiration`.
     ChoosingDiscardedPokemonAttackToCopy { player: PlayerId, card: CardId },
@@ -554,15 +554,15 @@ pub enum Phase {
     /// `Munkidori`'s `Adrena-Brain`.
     MovingDamageCountersFromOwnToOpponent { player: PlayerId, pokemon: PokemonId, limit: u32 },
     /// `player` opened `pokemon`'s own Ability that peeks at the top
-    /// `count` cards of the library — still in place, read fresh by
+    /// `count` cards of the deck — still in place, read fresh by
     /// both `legal_actions` and the taking action, since nothing else
-    /// can change the library while this phase is open. `Drakloak`'s
+    /// can change the deck while this phase is open. `Drakloak`'s
     /// `Recon Directive`.
     LookingAtTopCardsToTakeOne { player: PlayerId, pokemon: PokemonId, count: u32 },
     /// `player` opened `pokemon`'s own Ability that peeks at the top
-    /// of the library and may attach found Energy of `kind` one card
+    /// of the deck and may attach found Energy of `kind` one card
     /// at a time; `remaining` is how many of the original peek are
-    /// still unresolved — read fresh from the library's own top
+    /// still unresolved — read fresh from the deck's own top
     /// slice, the same way `LookingAtTopCardsToTakeOne` is.
     /// `Metang`'s `Metal Maker`.
     ResolvingEnergyFoundInTopPeek {
@@ -572,8 +572,8 @@ pub enum Phase {
         remaining: u32,
     },
     /// `player` opened `pokemon`'s own Ability that peeks at the top
-    /// `count` cards of the library for a Supporter to take, the rest
-    /// shuffling back — read fresh from the library's own top slice,
+    /// `count` cards of the deck for a Supporter to take, the rest
+    /// shuffling back — read fresh from the deck's own top slice,
     /// the same way `LookingAtTopCardsToTakeOne` is. `Tatsugiri`'s
     /// `Attract Customers`.
     LookingAtTopCardsForSupporter { player: PlayerId, pokemon: PokemonId, count: u32 },
@@ -585,10 +585,10 @@ pub enum Phase {
     /// opponent Pokémon and then Knocks itself out. `Dusclops`'s and
     /// `Dusknoir`'s `Cursed Blast`.
     DecidingCursedBlastTarget { player: PlayerId, pokemon: PokemonId, damage: u32 },
-    /// `player` used an Ability that searches the library for up to
+    /// `player` used an Ability that searches the deck for up to
     /// `remaining` more Evolution Pokémon of `kind` to hand.
     /// `Genesect ex`'s `Protect Charge`.
-    SearchingLibraryForEvolutionPokemonOfType {
+    SearchingDeckForEvolutionPokemonOfType {
         player: PlayerId,
         pokemon: PokemonId,
         kind: crate::card::Type,
@@ -599,9 +599,9 @@ pub enum Phase {
     /// choosing. `Blaziken ex`'s `Seething Spirit`.
     DecidingToUseSeethingSpirit { player: PlayerId, pokemon: PokemonId },
     /// `player` used `pokemon`'s own Ability that searches the
-    /// library for any one card into hand. `Thwackey`'s `Boom Boom
+    /// deck for any one card into hand. `Thwackey`'s `Boom Boom
     /// Groove`.
-    SearchingLibraryForAnyCardAbility { player: PlayerId, pokemon: PokemonId },
+    SearchingDeckForAnyCardAbility { player: PlayerId, pokemon: PokemonId },
     /// The same combined card-and-target choice
     /// `DecidingToUseSeethingSpirit` already takes, but from the
     /// hand rather than the discard pile, and healing whichever
@@ -631,7 +631,7 @@ pub enum Phase {
     /// choosing which, then deals `damage` to it. `Toxtricity`'s
     /// `Sinister Surge`.
     SearchingForSinisterSurgeTarget { player: PlayerId, pokemon: PokemonId, kind: crate::card::Type, damage: u32 },
-    /// `player` used an Ability that searches the library for up to
+    /// `player` used an Ability that searches the deck for up to
     /// `remaining` more Pokémon of a type at some HP or less, to
     /// hand. `Fan Rotom`'s `Fan Call`.
     /// `player` may switch a Benched Pokémon of `kind` (except one
@@ -850,7 +850,7 @@ impl GameState {
             for def in decklist {
                 let id = CardId(cards.len() as u32);
                 cards.push(Card { def: *def, owner });
-                players[slot].library.push(id);
+                players[slot].deck.push(id);
             }
         }
 
@@ -913,7 +913,7 @@ impl GameState {
         let mut mulligans = 0;
         loop {
             let slot = player.index();
-            shuffle(self.rng.as_mut(), &mut self.players[slot].library);
+            shuffle(self.rng.as_mut(), &mut self.players[slot].deck);
             for _ in 0..OPENING_HAND {
                 self.draw(player);
             }
@@ -924,7 +924,7 @@ impl GameState {
             }
             // Rule 7: no Basic, so reveal, shuffle back, and draw again.
             let hand = std::mem::take(&mut self.players[slot].hand);
-            self.players[slot].library.extend(hand);
+            self.players[slot].deck.extend(hand);
             mulligans += 1;
             self.log.push(format!("{player:?} mulligans."));
         }
@@ -940,7 +940,7 @@ impl GameState {
     pub fn set_prizes(&mut self, player: PlayerId) {
         let slot = player.index();
         for _ in 0..PRIZE_COUNT {
-            match self.players[slot].library.pop() {
+            match self.players[slot].deck.pop() {
                 Some(card) => self.players[slot].prizes.push(card),
                 None => break,
             }
@@ -969,11 +969,11 @@ impl GameState {
         }
     }
 
-    /// Take the top card. `false` means the library was empty, which loses the
+    /// Take the top card. `false` means the deck was empty, which loses the
     /// game at the start of a turn (rule 12) and nowhere else.
     pub fn draw(&mut self, player: PlayerId) -> bool {
         let slot = player.index();
-        match self.players[slot].library.pop() {
+        match self.players[slot].deck.pop() {
             Some(card) => {
                 self.players[slot].hand.push(card);
                 true
@@ -986,28 +986,28 @@ impl GameState {
         self.db.get(self.cards[card.index()].def)
     }
 
-    /// The player looking through their whole own library right now, if the
+    /// The player looking through their whole own deck right now, if the
     /// phase is such a search. The board shows that player every card in the
-    /// library, not only the cards the search can take, so they see what it
+    /// deck, not only the cards the search can take, so they see what it
     /// cannot reach. A search that reads only the top few cards (a `peek`)
     /// is left out: showing the rest would leak the order the view hides.
-    pub fn whole_library_search(&self) -> Option<PlayerId> {
+    pub fn whole_deck_search(&self) -> Option<PlayerId> {
         match self.phase {
-            Phase::SearchingLibraryForBasics { player, .. }
-            | Phase::SearchingLibraryForBasicsOfType { player, .. }
-            | Phase::SearchingLibraryForItem { player }
-            | Phase::SearchingLibraryForAnyCards { player, .. }
-            | Phase::SearchingLibraryToEvolveSelf { player, .. }
-            | Phase::SearchingLibraryForTrainerCards { player, .. }
-            | Phase::SearchingLibraryForPokemonOfTypeOrStadium { player, .. }
-            | Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. }
-            | Phase::SearchingLibraryForAnyCardAbility { player, .. }
+            Phase::SearchingDeckForBasics { player, .. }
+            | Phase::SearchingDeckForBasicsOfType { player, .. }
+            | Phase::SearchingDeckForItem { player }
+            | Phase::SearchingDeckForAnyCards { player, .. }
+            | Phase::SearchingDeckToEvolveSelf { player, .. }
+            | Phase::SearchingDeckForTrainerCards { player, .. }
+            | Phase::SearchingDeckForPokemonOfTypeOrStadium { player, .. }
+            | Phase::SearchingDeckForEvolutionPokemonOfType { player, .. }
+            | Phase::SearchingDeckForAnyCardAbility { player, .. }
             | Phase::SearchingForFanCall { player, .. }
             | Phase::SearchingForSinisterSurgeTarget { player, .. }
             | Phase::SearchingEnergyOfTypeToAttachToChosen { player, .. } => Some(player),
             Phase::Deciding {
                 chooser,
-                from: crate::card::Zone::Library,
+                from: crate::card::Zone::Deck,
                 peek: None,
                 ..
             } => Some(chooser),
@@ -1440,7 +1440,7 @@ impl GameState {
         match zone {
             crate::card::Zone::Hand => &side.hand,
             crate::card::Zone::Discard => &side.discard,
-            crate::card::Zone::Library => &side.library,
+            crate::card::Zone::Deck => &side.deck,
         }
     }
 
@@ -1449,7 +1449,7 @@ impl GameState {
         match zone {
             crate::card::Zone::Hand => &mut side.hand,
             crate::card::Zone::Discard => &mut side.discard,
-            crate::card::Zone::Library => &mut side.library,
+            crate::card::Zone::Deck => &mut side.deck,
         }
     }
 

@@ -52,18 +52,18 @@ fn a_view_hides_every_prize_card_including_your_own() {
 }
 
 #[test]
-fn a_view_hides_the_library_and_keeps_its_size() {
+fn a_view_hides_the_deck_and_keeps_its_size() {
     let state = game(9);
     let you = PlayerId::One;
     let view = PlayerView::of(&state, you);
     assert_eq!(
-        view.side(you).library_count,
-        state.player(you).library.len(),
+        view.side(you).deck_count,
+        state.player(you).deck.len(),
         "you know how many cards are left, not which"
     );
     assert!(
-        view.library_in_search.is_none(),
-        "the library is shown only during a whole-library search"
+        view.deck_in_search.is_none(),
+        "the deck is shown only during a whole-deck search"
     );
 }
 

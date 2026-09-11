@@ -36,7 +36,7 @@ pub enum Zone {
     Hand,
     Discard,
     /// The draw pile. Moving a card into it shuffles when the choice ends.
-    Library,
+    Deck,
 }
 
 /// Where a Trainer effect sends a card it moved.
@@ -56,11 +56,11 @@ pub enum Destination {
     /// this exists at all: the second Energy it finds goes onto a Pokémon
     /// rather than into a zone. `TargetFilter::AnyInPlay` is what it needed.
     Attach(TargetFilter),
-    /// On top of the Library, in the order the cards were taken — not
+    /// On top of the Deck, in the order the cards were taken — not
     /// shuffled in. `Ciphermaniac's Codebreaking` shuffles what is left of
     /// the deck *before* placing these, so the two land known, on top of an
     /// otherwise-scrambled deck.
-    TopOfLibraryInOrder,
+    TopOfDeckInOrder,
 }
 
 /// What Pokémon `Destination::Attach` may target, beyond "the chooser
@@ -341,7 +341,7 @@ pub enum TrainerEffect {
     RemovesRetreatCostForNamePrefix(&'static str),
     /// A Stadium's own once-a-turn action, offered directly in the acting
     /// player's Main phase rather than dispatched at play time: put a
-    /// card from hand on top of the Library. `Academy at Night`.
+    /// card from hand on top of the Deck. `Academy at Night`.
     MayPutHandCardOnTopOfDeck,
     /// A Stadium's own once-a-turn action, gated on a fact from earlier
     /// this same turn rather than always offered: may draw 2, but only
@@ -466,10 +466,10 @@ pub enum TrainerEffect {
     /// replacement — a gust that hands the choice to them, unlike
     /// `SwitchOpponentActive` where the player chooses. `Repel`.
     SwitchOutOpponentActive,
-    /// Shuffle the player's hand into their Library, flip a coin, then
+    /// Shuffle the player's hand into their Deck, flip a coin, then
     /// draw `heads` or `tails`. `Drasna`.
     ShuffleHandThenCoinFlipDraw { heads: u32, tails: u32 },
-    /// Both players shuffle their hand into their Library, flip one coin,
+    /// Both players shuffle their hand into their Deck, flip one coin,
     /// then draw — the player and the opponent each drawing the amount
     /// their side's `*_heads` / `*_tails` names for that flip. `Harlequin`.
     BothShuffleHandThenCoinFlipDraw {
@@ -478,15 +478,15 @@ pub enum TrainerEffect {
         you_tails: u32,
         opponent_tails: u32,
     },
-    /// Shuffle the player's hand into their Library, then draw. A second
+    /// Shuffle the player's hand into their Deck, then draw. A second
     /// count applies when they hold exactly 6 Prizes.
     ShuffleHandThenDraw { normal: u32, at_six_prizes: u32 },
-    /// Both players shuffle their hand into their Library, then draw — the
+    /// Both players shuffle their hand into their Deck, then draw — the
     /// player who played the card drawing `you`, the opponent drawing
     /// `opponent`. `Judge` prints the same count for both; `Unfair Stamp`
     /// is why the two are named separately rather than shared.
     BothShuffleHandThenDraw { you: u32, opponent: u32 },
-    /// The opponent shuffles their hand and puts it under their Library, then
+    /// The opponent shuffles their hand and puts it under their Deck, then
     /// draws — but only if they held anything. The cards go to the bottom
     /// rather than being shuffled in, so what they gave up is the last thing
     /// they draw again.
@@ -562,11 +562,11 @@ pub enum TrainerEffect {
     /// cards — the opponent first. `Hand Trimmer` is `OpponentDiscardsDownTo`
     /// with a `DiscardFollowUp` chained onto it, not a new shape.
     BothDiscardDownTo(u32),
-    /// Look at the bottom `n` cards of the Library; the player may take a
+    /// Look at the bottom `n` cards of the Deck; the player may take a
     /// Pokémon found there, then the rest shuffle back in. `Dusk Ball`
     /// reads the opposite end from every peeked search built so far,
     /// which all read the top — the end `draw` pops from.
-    LookAtBottomOfLibrary { count: u32 },
+    LookAtBottomOfDeck { count: u32 },
     /// The player discards up to `limit` cards matching `filter` from the
     /// opponent's hand, their own choice of which. `Eri`'s filter is an
     /// Item card; nothing before it read a zone the opponent controls.
@@ -877,22 +877,22 @@ pub enum AttackEffect {
     /// `TrainerEffect::SwitchOwnActive` already opens, read from an
     /// attack instead. `Abra`'s `Teleportation Attack`.
     SwitchOwnActive,
-    /// Search the library for up to this many Basic Pokémon and put them
+    /// Search the deck for up to this many Basic Pokémon and put them
     /// onto the Bench, then shuffle — opens
-    /// `Phase::SearchingLibraryForBasics`, a search read from an attack
+    /// `Phase::SearchingDeckForBasics`, a search read from an attack
     /// rather than a Trainer's `Decide`. `Drilbur` and `Toxel`'s
     /// `Call for Family`.
-    SearchLibraryForBasicPokemonToBench(u32),
-    /// Search the entire library for an Item card and put it into
-    /// hand, then shuffle — opens `Phase::SearchingLibraryForItem`.
-    /// No Item card in the library opens no phase. `Patrat`'s
+    SearchDeckForBasicPokemonToBench(u32),
+    /// Search the entire deck for an Item card and put it into
+    /// hand, then shuffle — opens `Phase::SearchingDeckForItem`.
+    /// No Item card in the deck opens no phase. `Patrat`'s
     /// `Procurement`.
-    SearchLibraryForItemCardToHand,
-    /// Search the entire library for up to this many cards, of any
+    SearchDeckForItemCardToHand,
+    /// Search the entire deck for up to this many cards, of any
     /// kind, and put them into hand, then shuffle — opens
-    /// `Phase::SearchingLibraryForAnyCards`. An empty library opens
+    /// `Phase::SearchingDeckForAnyCards`. An empty deck opens
     /// no phase. `Noctowl`'s `Talon Hunt`.
-    SearchLibraryForUpToCardsOfAnyKindToHand(u32),
+    SearchDeckForUpToCardsOfAnyKindToHand(u32),
     /// The opponent reveals their hand. The engine already tracks every
     /// zone in full (`view::PlayerView` hides a zone only at render
     /// time, and nothing in `legal_actions` ever gates a choice on
@@ -927,12 +927,12 @@ pub enum AttackEffect {
     /// `Phase::TakingTrainerFromDiscard`. No Trainer in the discard
     /// pile opens no phase. `Dedenne`'s `Electromagnetic Sonar`.
     TakeTrainerFromDiscard,
-    /// Search the library for a card that evolves from the attacker
+    /// Search the deck for a card that evolves from the attacker
     /// itself and evolve it directly, then shuffle — the same
     /// hand-skipping evolution `TrainerEffect::EvolveSkippingOneStage`
-    /// (Rare Candy) already runs, but pulled from the library instead
+    /// (Rare Candy) already runs, but pulled from the deck instead
     /// of the hand. `Dwebble`'s `Ascension`.
-    SearchLibraryToEvolveSelf,
+    SearchDeckToEvolveSelf,
     /// This much more damage, but only if the opponent's Active
     /// Pokémon is a Pokémon ex — read once, the same pre-`damage_dealt_with`
     /// slot every other conditional bonus already occupies.
@@ -985,7 +985,7 @@ pub enum AttackEffect {
     /// Stadium was there to discard. `Chi-Yu`'s `Scorching Earth`.
     DiscardsOpponentsStadiumThenOpponentCannotPlayStadiumsNextTurn,
     /// The player may shuffle exactly `count` Energy attached to the
-    /// attacker into their own library; if they do, this attack also
+    /// attacker into their own deck; if they do, this attack also
     /// deals `damage` (flat) to one Benched Pokémon they choose. Opens
     /// `Phase::DecidingToShuffleEnergyForBenchDamage` only when the
     /// attacker carries at least `count` Energy — otherwise the
@@ -1000,9 +1000,9 @@ pub enum AttackEffect {
     /// prize value. `Paldean Tauros`'s `Spirited Tackle`.
     BonusDamageIfDefenderIsStage(Stage, u32),
     /// This much more damage, but only if the attacker's own owner
-    /// has this many cards or fewer left in their library. `Rabsca`'s
+    /// has this many cards or fewer left in their deck. `Rabsca`'s
     /// `Counterturn`.
-    BonusDamageIfOwnLibraryAtMost(usize, u32),
+    BonusDamageIfOwnDeckAtMost(usize, u32),
     /// This attack's own printed base damage, plus this much more for
     /// each unit of `Count` — the additive mirror of `DamagePerCount`,
     /// which replaces the base entirely rather than adding to it.
@@ -1067,9 +1067,9 @@ pub enum AttackEffect {
     /// `Raging Bolt ex`'s `Bellowing Thunder`.
     MayDiscardAnyOwnBasicEnergyForDamagePerCard(u32),
     /// Discard this many cards from the top of the opponent's
-    /// library — fewer if their library holds fewer. `Mega Excadrill
+    /// deck — fewer if their deck holds fewer. `Mega Excadrill
     /// ex`'s `Undermine`.
-    DiscardsTopOfOpponentsLibrary(u32),
+    DiscardsTopOfOpponentsDeck(u32),
     /// Shuffle every Energy attached to the attacker into its
     /// owner's deck, then deal this much flat damage to one of the
     /// opponent's Pokémon, the player's choice of which — Weakness
@@ -1108,9 +1108,9 @@ pub enum AttackEffect {
     /// Search the deck for up to this many cards, each independently
     /// a Pokémon of this type or a Stadium (`CardFilter::PokemonOf-
     /// TypeOrStadium`), reveal them, and put them into hand, then
-    /// shuffle. An empty library opens no phase. `Celebi`'s
+    /// shuffle. An empty deck opens no phase. `Celebi`'s
     /// `Traverse Time`.
-    SearchLibraryForUpToPokemonOfTypeOrStadiumToHand(Type, u32),
+    SearchDeckForUpToPokemonOfTypeOrStadiumToHand(Type, u32),
     /// If the defender carries exactly this many damage counters, it
     /// is Knocked Out outright — modeled the same way `Cursed Blast`'s
     /// own forced Knockout already is, by raising its own damage to
@@ -1233,7 +1233,7 @@ pub enum AttackEffect {
     /// printed one — the same dispatch, reading a different `Attack`.
     /// `N's Zoroark ex`'s `Night Joker`, prefixed on `"N's "`.
     CopiesChosenBenchedPokemonAttackByNamePrefix(&'static str),
-    /// Discard the top card of the library outright; if it turns out
+    /// Discard the top card of the deck outright; if it turns out
     /// to be a Pokémon without a Rule Box (1 Prize), choose 1 of its
     /// own attacks and use it as this attack — the same
     /// choose-a-second-card's-`Attack`-and-run-it shape
@@ -1243,7 +1243,7 @@ pub enum AttackEffect {
     /// `Phase::ChoosingDiscardedPokemonAttackToCopy`; any other kind
     /// of card, or a Pokémon with a Rule Box, discards and does
     /// nothing more. `Slowking`'s `Seek Inspiration`.
-    DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox,
+    DiscardsTopOfDeckThenCopiesItsAttackIfNoRuleBox,
     /// Search the deck for an Energy card and attach it to one of the
     /// player's own Benched Pokémon of this type, then shuffle the
     /// deck. No qualifying Energy or no qualifying Bench target opens
@@ -1459,7 +1459,7 @@ pub enum AbilityEffect {
     OncePerTurnWhileActiveMayDrawCards(u32),
     /// Once during the player's own turn, the moment this Pokémon is
     /// played from hand onto the Bench, the player may search their
-    /// library for a Supporter card and take it to hand — opens
+    /// deck for a Supporter card and take it to hand — opens
     /// `Phase::DecidingToUseLastDitchCatch`. Triggered at the moment
     /// of the play itself, not offered later as a standing choice the
     /// way `OncePerTurnWhileActiveMayDrawCards` is.
@@ -1497,7 +1497,7 @@ pub enum AbilityEffect {
     OncePerTurnMayAttachBasicEnergyOfTypeThenDraw(Type),
     /// Once during the player's own turn, the player may draw this
     /// many cards. If any were actually drawn, this Pokémon and every
-    /// card attached to it shuffle into the player's own library —
+    /// card attached to it shuffle into the player's own deck —
     /// the same "moves together" rule 22 already keeps for a
     /// knockout, but into the deck rather than discard or hand.
     /// Opens `Phase::Promoting` if this Pokémon was the Active and
@@ -1507,7 +1507,7 @@ pub enum AbilityEffect {
     OncePerTurnMayDrawThenShuffleSelfIntoDeck(u32),
     /// Once during the player's own turn, only while this Pokémon is
     /// the Active, the player may shuffle it and every card attached
-    /// to it into the library — the same "moves together" shape
+    /// to it into the deck — the same "moves together" shape
     /// `OncePerTurnMayDrawThenShuffleSelfIntoDeck` takes, but with no
     /// draw and no condition beyond being Active. `Abra`'s `Beam`.
     OncePerTurnWhileActiveMayShuffleSelfIntoDeck,
@@ -1524,10 +1524,10 @@ pub enum AbilityEffect {
     /// Prize. `Dusclops`'s and `Dusknoir`'s `Cursed Blast`.
     OncePerTurnMayDamageOpponentThenKnockOutSelf(u32),
     /// Once during the player's own turn, the player may search the
-    /// library for up to `limit` Evolution Pokémon of this type and
+    /// deck for up to `limit` Evolution Pokémon of this type and
     /// put them into hand — opens
-    /// `Phase::SearchingLibraryForEvolutionPokemonOfType`. No
-    /// qualifying card in the library opens no phase.
+    /// `Phase::SearchingDeckForEvolutionPokemonOfType`. No
+    /// qualifying card in the deck opens no phase.
     /// `Genesect ex`'s `Protect Charge`.
     OncePerTurnMaySearchEvolutionPokemonOfType(Type, u32),
     /// Once during the player's own turn, the player may attach a
@@ -1567,18 +1567,18 @@ pub enum AbilityEffect {
     /// `Rapid Vernier`.
     WhenBenchedFromHandMaySwitchThenMoveAnyEnergy,
     /// Once during the player's own turn, the player may search the
-    /// library for a Basic Energy of this type and attach it to a
+    /// deck for a Basic Energy of this type and attach it to a
     /// Benched Pokémon of the same type, choosing which — opens
     /// `Phase::SearchingForSinisterSurgeTarget`. If they do, that
     /// Pokémon takes this much damage. No qualifying Energy in the
-    /// library, or no Benched Pokémon of the type to attach it to,
+    /// deck, or no Benched Pokémon of the type to attach it to,
     /// opens no phase. Which Energy card is found is not the player's
     /// choice — every Basic Energy of a type is interchangeable, the
     /// same reasoning ADR 0068 already gave for a fixed-count Energy
     /// cost. `Toxtricity`'s `Sinister Surge`.
     OncePerTurnMaySearchBasicEnergyOfTypeAttachToBenchedThenDamage(Type, u32),
     /// Once during the player's own first turn only, the player may
-    /// search the library for up to `limit` Pokémon of this type
+    /// search the deck for up to `limit` Pokémon of this type
     /// printed at this HP or less, and put them into hand. Opens
     /// `Phase::SearchingForFanCall`. `Fan Rotom`'s `Fan Call`.
     OnceDuringFirstTurnMaySearchPokemonOfTypeWithHpAtMost(Type, u32, u32),
@@ -1605,19 +1605,19 @@ pub enum AbilityEffect {
     /// `Adrena-Brain`.
     OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(Type, u32),
     /// Once during the player's own turn, the player may look at the
-    /// top this-many cards of their own library and put one of them
+    /// top this-many cards of their own deck and put one of them
     /// into hand, choosing which — the rest go to the bottom of the
-    /// library, in the order they were seen. Opens
-    /// `Phase::LookingAtTopCardsToTakeOne`. An empty library opens no
+    /// deck, in the order they were seen. Opens
+    /// `Phase::LookingAtTopCardsToTakeOne`. An empty deck opens no
     /// phase. `Drakloak`'s `Recon Directive`.
     OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(u32),
     /// Once during the player's own turn, the player may look at the
-    /// top this-many cards of their own library and attach any number
+    /// top this-many cards of their own deck and attach any number
     /// of Basic Energy of this type found there to their own
     /// Pokémon, in any way they like — resolved one seen card at a
     /// time: attach it to a chosen own Pokémon, or leave it, either
-    /// way it leaves the top of the library. Opens
-    /// `Phase::ResolvingEnergyFoundInTopPeek`. An empty library opens
+    /// way it leaves the top of the deck. Opens
+    /// `Phase::ResolvingEnergyFoundInTopPeek`. An empty deck opens
     /// no phase. `Metang`'s `Metal Maker`.
     OncePerTurnMayLookAtTopCardsAttachFoundBasicEnergyOfType(u32, Type),
     /// A standing effect, not a choice: while this Pokémon is in
@@ -1628,9 +1628,9 @@ pub enum AbilityEffect {
     PassiveImmuneToDamageFromOpponentEx,
     /// Once during the player's own turn, only while this Pokémon is
     /// the Active, the player may look at the top this-many cards of
-    /// their own library and take a Supporter card found there into
+    /// their own deck and take a Supporter card found there into
     /// hand, choosing which if more than one — the rest, and the
-    /// Supporter if none is taken, shuffle back into the library.
+    /// Supporter if none is taken, shuffle back into the deck.
     /// Opens `Phase::LookingAtTopCardsForSupporter`. No Supporter in
     /// the peek opens no phase. `Tatsugiri`'s `Attract Customers`.
     OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(u32),
@@ -1758,9 +1758,9 @@ pub enum AbilityEffect {
     /// allows. `Goldeen`'s and `Seaking`'s `Festival Lead`.
     PassiveFestivalLead,
     /// Once during the player's own turn, if their Active Pokémon
-    /// carries an Ability by this name, search the library for any
+    /// carries an Ability by this name, search the deck for any
     /// one card into hand. Opens
-    /// `Phase::SearchingLibraryForAnyCard`. `Thwackey`'s `Boom Boom
+    /// `Phase::SearchingDeckForAnyCard`. `Thwackey`'s `Boom Boom
     /// Groove`, on `"Festival Lead"`.
     OncePerTurnMaySearchAnyCardIfActiveHasNamedAbility(&'static str),
     /// A standing effect, not a choice: while any of the player's own
@@ -1813,10 +1813,10 @@ pub enum EnergyEffect {
     /// The moment this card is attached from hand to a Pokémon of the
     /// first type — never when it arrives any other way, the same
     /// gate `DrawCardsOnAttachFromHand` already reads by — search the
-    /// library for up to this many Basic Pokémon of the second type
+    /// deck for up to this many Basic Pokémon of the second type
     /// and put them onto the Bench, then shuffle. Opens
-    /// `Phase::SearchingLibraryForBasicsOfType`. No qualifying Basic
-    /// Pokémon in the library still attaches the Energy — only the
+    /// `Phase::SearchingDeckForBasicsOfType`. No qualifying Basic
+    /// Pokémon in the deck still attaches the Energy — only the
     /// search is skipped. `Telepathic Psychic Energy`.
     WhenAttachedToTypeSearchesBasicPokemonOfTypeToBench(Type, Type, u32),
     /// A standing effect, not a choice: while the carrier is Active

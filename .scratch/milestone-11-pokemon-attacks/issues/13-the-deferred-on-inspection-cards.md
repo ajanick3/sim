@@ -15,10 +15,10 @@ admit along the way with shapes already built.
 - **`Dedenne`'s `Tail Generator`: deferred, not refused.** Every piece
   of it is a shape this pool has already built once; it lacks only a
   card to build it against. See ADR 0066.
-- **`Dwebble`'s `Ascension`: built.** `AttackEffect::SearchLibraryToEvolveSelf`
+- **`Dwebble`'s `Ascension`: built.** `AttackEffect::SearchDeckToEvolveSelf`
   — a search straight to evolution, no hand step, the same
   hand-skipping shape Rare Candy already runs but pulled from the
-  library.
+  deck.
 
 ## Also admitted along the way
 

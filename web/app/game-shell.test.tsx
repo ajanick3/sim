@@ -6,7 +6,7 @@ import { encodeRecipe } from "./recipe";
 const side = () => ({
   player: 0,
   hand_count: 0,
-  library_count: 0,
+  deck_count: 0,
   prize_count: 0,
   discard: [],
   active: null,
@@ -32,7 +32,7 @@ const gameStub = {
       phase: "Main",
       your_hand: [],
       stadium: null,
-      library_in_search: null,
+      deck_in_search: null,
       counters_to_place: null,
       sides: [side(), side()],
     }),

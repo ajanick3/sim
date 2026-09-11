@@ -122,12 +122,12 @@ fn pay_and_attack(state: &mut GameState) {
         let card = side
             .hand
             .iter()
-            .chain(side.library.iter())
+            .chain(side.deck.iter())
             .find(|c| state.def_of(**c).is_energy())
             .copied()
             .expect("the deck holds Energy");
         state.remove_from_hand(player, card);
-        state.players[player.index()].library.retain(|c| *c != card);
+        state.players[player.index()].deck.retain(|c| *c != card);
         state.pokemon[active.index()].attached.push(card);
     }
     let attack = legal_actions(state)
@@ -211,11 +211,11 @@ fn damage_per_opponent_basic_energy_in_discard() {
     for _ in 0..2 {
         let card = *state
             .player(opponent)
-            .library
+            .deck
             .iter()
             .find(|c| state.def_of(**c).is_energy())
             .unwrap();
-        state.players[opponent.index()].library.retain(|c| *c != card);
+        state.players[opponent.index()].deck.retain(|c| *c != card);
         state.players[opponent.index()].discard.push(card);
     }
 
@@ -553,11 +553,11 @@ fn cannot_retreat_blocks_retreat_during_the_opponents_next_turn_only() {
     let defender = state.player(opponent).active.unwrap();
     let energy_card = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.players[opponent.index()].deck.retain(|c| *c != energy_card);
     state.pokemon[defender.index()].attached.push(energy_card);
     let bench_card = deal_new_card(&mut state, opponent, defender_ex);
     let bench_mon = state.put_into_play(opponent, bench_card);
@@ -854,30 +854,30 @@ fn abra_is_admitted_from_the_artifact() {
 // --- Ticket 10: a search ---
 
 #[test]
-fn searches_the_library_for_up_to_two_basics_onto_the_bench() {
+fn searches_the_deck_for_up_to_two_basics_onto_the_bench() {
     let attack = Attack {
         name: "Call for Family",
         cost: vec![Type::Colorless],
         base_damage: 0,
         inflicts: None,
-        effect: Some(AttackEffect::SearchLibraryForBasicPokemonToBench(2)),
+        effect: Some(AttackEffect::SearchDeckForBasicPokemonToBench(2)),
     };
     let (mut state, _defender_ex) = game(attack, 3);
     let player = state.current;
 
     pay_and_attack(&mut state);
 
-    assert!(matches!(state.phase, Phase::SearchingLibraryForBasics { .. }));
+    assert!(matches!(state.phase, Phase::SearchingDeckForBasics { .. }));
     let first = legal_actions(&state)
         .into_iter()
         .find(|a| matches!(a, Action::TakeBasicPokemonForCallForFamily { .. }))
-        .expect("the library holds a Basic Pokemon");
+        .expect("the deck holds a Basic Pokemon");
     apply(&mut state, first).unwrap();
-    assert!(matches!(state.phase, Phase::SearchingLibraryForBasics { .. }));
+    assert!(matches!(state.phase, Phase::SearchingDeckForBasics { .. }));
     let second = legal_actions(&state)
         .into_iter()
         .find(|a| matches!(a, Action::TakeBasicPokemonForCallForFamily { .. }))
-        .expect("the library still holds a Basic Pokemon");
+        .expect("the deck still holds a Basic Pokemon");
     apply(&mut state, second).unwrap();
 
     assert_eq!(state.phase, Phase::Main, "the limit of 2 ends the search on its own");
@@ -891,13 +891,13 @@ fn the_search_can_be_declined_early() {
         cost: vec![Type::Colorless],
         base_damage: 0,
         inflicts: None,
-        effect: Some(AttackEffect::SearchLibraryForBasicPokemonToBench(2)),
+        effect: Some(AttackEffect::SearchDeckForBasicPokemonToBench(2)),
     };
     let (mut state, _defender_ex) = game(attack, 3);
 
     pay_and_attack(&mut state);
 
-    assert!(matches!(state.phase, Phase::SearchingLibraryForBasics { .. }));
+    assert!(matches!(state.phase, Phase::SearchingDeckForBasics { .. }));
     apply(&mut state, Action::FinishCallForFamily).unwrap();
     assert_eq!(state.phase, Phase::Main);
 }
@@ -1056,7 +1056,7 @@ fn may_put_up_to_two_of_the_defenders_energy_into_their_hand() {
     // Attach two Energy of the same kind the deck already carries.
     let energy_card = {
         let side = state.player(opponent);
-        side.library
+        side.deck
             .iter()
             .chain(side.hand.iter())
             .find(|c| state.def_of(**c).is_energy())
@@ -1168,13 +1168,13 @@ fn dedenne_is_admitted_from_the_artifact() {
 }
 
 #[test]
-fn searches_the_library_to_evolve_itself() {
+fn searches_the_deck_to_evolve_itself() {
     let attack = Attack {
         name: "Ascension",
         cost: vec![Type::Colorless],
         base_damage: 0,
         inflicts: None,
-        effect: Some(AttackEffect::SearchLibraryToEvolveSelf),
+        effect: Some(AttackEffect::SearchDeckToEvolveSelf),
     };
     let (mut state, _defender_ex) = game(attack, 3);
     let player = state.current;
@@ -1204,26 +1204,26 @@ fn searches_the_library_to_evolve_itself() {
         }],
     }));
     let evolution = deal_new_card(&mut state, player, evolution_def);
-    state.players[player.index()].library.push(evolution);
+    state.players[player.index()].deck.push(evolution);
 
     pay_and_attack(&mut state);
 
-    assert!(matches!(state.phase, Phase::SearchingLibraryToEvolveSelf { .. }));
+    assert!(matches!(state.phase, Phase::SearchingDeckToEvolveSelf { .. }));
     apply(&mut state, Action::EvolveWithAscension { card: evolution }).unwrap();
 
     assert_eq!(state.phase, Phase::Main);
     assert_eq!(state.pokemon_def(attacker).name, "Evolvemon");
-    assert!(!state.player(player).library.contains(&evolution));
+    assert!(!state.player(player).deck.contains(&evolution));
 }
 
 #[test]
-fn no_evolution_in_library_does_nothing() {
+fn no_evolution_in_deck_does_nothing() {
     let attack = Attack {
         name: "Ascension",
         cost: vec![Type::Colorless],
         base_damage: 0,
         inflicts: None,
-        effect: Some(AttackEffect::SearchLibraryToEvolveSelf),
+        effect: Some(AttackEffect::SearchDeckToEvolveSelf),
     };
     let (mut state, _defender_ex) = game(attack, 3);
     let player = state.current;
@@ -1579,11 +1579,11 @@ fn heads_makes_the_attacker_invulnerable_on_the_opponents_next_turn() {
     let opponent_active = state.player(opponent).active.unwrap();
     let energy_card = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.players[opponent.index()].deck.retain(|c| *c != energy_card);
     state.pokemon[opponent_active.index()].attached.push(energy_card);
 
     // Either way, the opponent's own attack resolves without erroring;
@@ -1686,7 +1686,7 @@ fn accepting_shuffles_energy_then_damages_a_chosen_benched_pokemon() {
     // Give the attacker 3 Energy beyond the 1 it pays the cost with.
     let energy_card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
@@ -1726,7 +1726,7 @@ fn declining_leaves_everything_as_is() {
     let attacker = state.player(player).active.unwrap();
     let energy_card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
@@ -1859,11 +1859,11 @@ fn moves_energy_between_two_of_the_opponents_own_pokemon() {
     let defender = state.player(opponent).active.unwrap();
     let energy_card = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.players[opponent.index()].deck.retain(|c| *c != energy_card);
     state.pokemon[defender.index()].attached.push(energy_card);
     let bench_card = deal_new_card(&mut state, opponent, defender_ex);
     let bench_mon = state.put_into_play(opponent, bench_card);
@@ -2059,7 +2059,7 @@ fn damage_per_energy_on_both_actives_combined() {
     // attach 1 more to the attacker and 2 to the defender.
     let energy_card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
@@ -2506,7 +2506,7 @@ fn searches_an_energy_and_attaches_it_to_a_chosen_benched_pokemon_of_type() {
     pay_and_attack(&mut state);
 
     assert!(matches!(state.phase, Phase::SearchingForEnergyToAttachToBenchedOfType { .. }));
-    let library_before = state.player(player).library.len();
+    let deck_before = state.player(player).deck.len();
     let actions = legal_actions(&state);
     assert!(actions.contains(&Action::AttachSearchedEnergyTo { target: bench_mon }));
     assert!(!actions.contains(&Action::AttachSearchedEnergyTo { target: plain_bench }));
@@ -2516,7 +2516,7 @@ fn searches_an_energy_and_attaches_it_to_a_chosen_benched_pokemon_of_type() {
     assert_eq!(state.phase, Phase::Main);
     assert_eq!(state.pokemon(bench_mon).attached.len(), 1);
     assert!(state.def_of(state.pokemon(bench_mon).attached[0]).is_energy());
-    assert_eq!(state.player(player).library.len(), library_before - 1);
+    assert_eq!(state.player(player).deck.len(), deck_before - 1);
 }
 
 #[test]
@@ -2532,7 +2532,7 @@ fn not_offered_with_no_energy_or_no_benched_target_of_type() {
 
     pay_and_attack(&mut state);
 
-    assert_eq!(state.phase, Phase::Main, "no Grass Benched Pokemon and no Energy in library");
+    assert_eq!(state.phase, Phase::Main, "no Grass Benched Pokemon and no Energy in deck");
 }
 
 #[test]
@@ -2608,16 +2608,16 @@ fn shaymin_reflect_energy_print_is_admitted_from_the_artifact() {
     assert!(card.playable.is_some(), "Shaymin's Reflect Energy print should play");
 }
 
-// --- Beyond the spec: search the whole library for an Item card ---
+// --- Beyond the spec: search the whole deck for an Item card ---
 
 #[test]
-fn searches_the_whole_library_for_an_item_and_shuffles_after() {
+fn searches_the_whole_deck_for_an_item_and_shuffles_after() {
     let attack = Attack {
         name: "Procurement",
         cost: vec![Type::Colorless],
         base_damage: 0,
         inflicts: None,
-        effect: Some(AttackEffect::SearchLibraryForItemCardToHand),
+        effect: Some(AttackEffect::SearchDeckForItemCardToHand),
     };
     let (mut state, _defender_ex) = game(attack, 3);
     let player = state.current;
@@ -2630,36 +2630,36 @@ fn searches_the_whole_library_for_an_item_and_shuffles_after() {
         effect: sim::card::TrainerEffect::MoveAttachedEnergy,
     }));
     let item = deal_new_card(&mut state, player, item_def);
-    let library_len_before = state.player(player).library.len();
-    state.players[player.index()].library.push(item);
+    let deck_len_before = state.player(player).deck.len();
+    state.players[player.index()].deck.push(item);
 
     pay_and_attack(&mut state);
 
-    assert!(matches!(state.phase, Phase::SearchingLibraryForItem { .. }));
+    assert!(matches!(state.phase, Phase::SearchingDeckForItem { .. }));
     let actions = legal_actions(&state);
-    assert!(actions.contains(&Action::TakeItemFromLibrary { card: item }));
+    assert!(actions.contains(&Action::TakeItemFromDeck { card: item }));
 
-    apply(&mut state, Action::TakeItemFromLibrary { card: item }).unwrap();
+    apply(&mut state, Action::TakeItemFromDeck { card: item }).unwrap();
 
     assert_eq!(state.phase, Phase::Main);
     assert!(state.player(player).hand.contains(&item));
-    assert_eq!(state.player(player).library.len(), library_len_before);
+    assert_eq!(state.player(player).deck.len(), deck_len_before);
 }
 
 #[test]
-fn no_item_in_the_library_opens_no_phase() {
+fn no_item_in_the_deck_opens_no_phase() {
     let attack = Attack {
         name: "Procurement",
         cost: vec![Type::Colorless],
         base_damage: 0,
         inflicts: None,
-        effect: Some(AttackEffect::SearchLibraryForItemCardToHand),
+        effect: Some(AttackEffect::SearchDeckForItemCardToHand),
     };
     let (mut state, _defender_ex) = game(attack, 3);
 
     pay_and_attack(&mut state);
 
-    assert_eq!(state.phase, Phase::Main, "no Item card anywhere in the library");
+    assert_eq!(state.phase, Phase::Main, "no Item card anywhere in the deck");
 }
 
 #[test]
@@ -2719,29 +2719,29 @@ fn seaking_is_admitted_from_the_artifact() {
     );
 }
 
-// --- Beyond the spec: search the whole library for up to N cards of any kind ---
+// --- Beyond the spec: search the whole deck for up to N cards of any kind ---
 
 #[test]
-fn takes_up_to_the_limit_of_any_cards_from_the_library() {
+fn takes_up_to_the_limit_of_any_cards_from_the_deck() {
     let attack = Attack {
         name: "Talon Hunt",
         cost: vec![Type::Colorless],
         base_damage: 0,
         inflicts: None,
-        effect: Some(AttackEffect::SearchLibraryForUpToCardsOfAnyKindToHand(2)),
+        effect: Some(AttackEffect::SearchDeckForUpToCardsOfAnyKindToHand(2)),
     };
     let (mut state, _defender_ex) = game(attack, 3);
     let player = state.current;
 
     pay_and_attack(&mut state);
 
-    assert!(matches!(state.phase, Phase::SearchingLibraryForAnyCards { .. }));
-    let first = state.player(player).library.last().copied().unwrap();
-    apply(&mut state, Action::TakeAnyCardFromLibrary { card: first }).unwrap();
-    assert!(matches!(state.phase, Phase::SearchingLibraryForAnyCards { .. }), "one more to take");
+    assert!(matches!(state.phase, Phase::SearchingDeckForAnyCards { .. }));
+    let first = state.player(player).deck.last().copied().unwrap();
+    apply(&mut state, Action::TakeAnyCardFromDeck { card: first }).unwrap();
+    assert!(matches!(state.phase, Phase::SearchingDeckForAnyCards { .. }), "one more to take");
 
-    let second = state.player(player).library.last().copied().unwrap();
-    apply(&mut state, Action::TakeAnyCardFromLibrary { card: second }).unwrap();
+    let second = state.player(player).deck.last().copied().unwrap();
+    apply(&mut state, Action::TakeAnyCardFromDeck { card: second }).unwrap();
 
     assert_eq!(state.phase, Phase::Main);
     assert!(state.player(player).hand.contains(&first));
@@ -2755,7 +2755,7 @@ fn can_stop_searching_any_cards_before_the_limit() {
         cost: vec![Type::Colorless],
         base_damage: 0,
         inflicts: None,
-        effect: Some(AttackEffect::SearchLibraryForUpToCardsOfAnyKindToHand(2)),
+        effect: Some(AttackEffect::SearchDeckForUpToCardsOfAnyKindToHand(2)),
     };
     let (mut state, _defender_ex) = game(attack, 3);
 
@@ -2766,21 +2766,21 @@ fn can_stop_searching_any_cards_before_the_limit() {
 }
 
 #[test]
-fn no_library_opens_no_phase_for_talon_hunt() {
+fn no_deck_opens_no_phase_for_talon_hunt() {
     let attack = Attack {
         name: "Talon Hunt",
         cost: vec![Type::Colorless],
         base_damage: 0,
         inflicts: None,
-        effect: Some(AttackEffect::SearchLibraryForUpToCardsOfAnyKindToHand(2)),
+        effect: Some(AttackEffect::SearchDeckForUpToCardsOfAnyKindToHand(2)),
     };
     let (mut state, _defender_ex) = game(attack, 3);
     let player = state.current;
-    state.players[player.index()].library.clear();
+    state.players[player.index()].deck.clear();
 
     pay_and_attack(&mut state);
 
-    assert_eq!(state.phase, Phase::Main, "an empty library has nothing to search");
+    assert_eq!(state.phase, Phase::Main, "an empty deck has nothing to search");
 }
 
 #[test]
@@ -2890,11 +2890,11 @@ fn spherical_shield_blocks_a_move_onto_or_off_a_protected_bench_target() {
     let defender = state.player(opponent).active.unwrap();
     let energy_card = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.players[opponent.index()].deck.retain(|c| *c != energy_card);
     state.pokemon[defender.index()].attached.push(energy_card);
 
     let rabsca_def = state.db.add(CardDef::Pokemon(Pokemon {
@@ -2940,11 +2940,11 @@ fn damage_per_defender_energy_attached() {
     for _ in 0..2 {
         let card = *state
             .player(opponent)
-            .library
+            .deck
             .iter()
             .find(|c| state.def_of(**c).is_energy())
             .unwrap();
-        state.players[opponent.index()].library.retain(|c| *c != card);
+        state.players[opponent.index()].deck.retain(|c| *c != card);
         state.pokemon[defender.index()].attached.push(card);
     }
 
@@ -2963,40 +2963,40 @@ fn rabscas_psychic_is_admitted_from_the_artifact() {
     assert!(card.playable.is_some(), "Rabsca's Psychic print should play");
 }
 
-// --- Beyond the spec: bonus damage only with a near-empty library ---
+// --- Beyond the spec: bonus damage only with a near-empty deck ---
 
 #[test]
-fn bonus_damage_if_own_library_at_most() {
+fn bonus_damage_if_own_deck_at_most() {
     let attack = Attack {
         name: "Counterturn",
         cost: vec![Type::Colorless],
         base_damage: 40,
         inflicts: None,
-        effect: Some(AttackEffect::BonusDamageIfOwnLibraryAtMost(3, 200)),
+        effect: Some(AttackEffect::BonusDamageIfOwnDeckAtMost(3, 200)),
     };
     let (mut state, _defender_ex) = game(attack, 3);
     let player = state.current;
     let opponent = player.opponent();
     let defender = state.player(opponent).active.unwrap();
-    while state.player(player).library.len() > 3 {
-        let card = state.player(player).library[0];
-        state.players[player.index()].library.retain(|c| *c != card);
+    while state.player(player).deck.len() > 3 {
+        let card = state.player(player).deck[0];
+        state.players[player.index()].deck.retain(|c| *c != card);
         state.players[player.index()].discard.push(card);
     }
 
     pay_and_attack(&mut state);
 
-    assert_eq!(state.pokemon(defender).damage, 240, "3 or fewer left in the library, so the bonus applies");
+    assert_eq!(state.pokemon(defender).damage, 240, "3 or fewer left in the deck, so the bonus applies");
 }
 
 #[test]
-fn no_bonus_damage_with_more_than_the_library_threshold() {
+fn no_bonus_damage_with_more_than_the_deck_threshold() {
     let attack = Attack {
         name: "Counterturn",
         cost: vec![Type::Colorless],
         base_damage: 40,
         inflicts: None,
-        effect: Some(AttackEffect::BonusDamageIfOwnLibraryAtMost(3, 200)),
+        effect: Some(AttackEffect::BonusDamageIfOwnDeckAtMost(3, 200)),
     };
     let (mut state, _defender_ex) = game(attack, 3);
     let player = state.current;
@@ -3443,11 +3443,11 @@ fn paralyzing_crackle_offers_a_discard_only_when_it_paralyzes() {
     let defender = state.player(opponent).active.unwrap();
     let energy_card = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.players[opponent.index()].deck.retain(|c| *c != energy_card);
     state.pokemon[defender.index()].attached.push(energy_card);
 
     pay_and_attack(&mut state);
@@ -3509,11 +3509,11 @@ fn pouncing_trap_blocks_retreat_and_adds_bonus_damage_next_turn() {
     let defender = state.player(opponent).active.unwrap();
     let energy_card = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.players[opponent.index()].deck.retain(|c| *c != energy_card);
     state.pokemon[defender.index()].attached.push(energy_card);
     let bench_card = deal_new_card(&mut state, opponent, defender_ex);
     let bench_mon = state.put_into_play(opponent, bench_card);
@@ -3726,7 +3726,7 @@ fn discards_hand_then_draws_cards() {
     let (mut state, _defender_ex) = game(attack, 3);
     let player = state.current;
     // `pay_and_attack` may pull the paying Energy from hand or
-    // library — only what's still in hand right before the attack
+    // deck — only what's still in hand right before the attack
     // itself fires is what Burst Roar discards.
     let hand_before: Vec<_> = {
         let active = state.player(player).active.unwrap();
@@ -3736,12 +3736,12 @@ fn discards_hand_then_draws_cards() {
             let card = side
                 .hand
                 .iter()
-                .chain(side.library.iter())
+                .chain(side.deck.iter())
                 .find(|c| state.def_of(**c).is_energy())
                 .copied()
                 .expect("the deck holds Energy");
             state.remove_from_hand(player, card);
-            state.players[player.index()].library.retain(|c| *c != card);
+            state.players[player.index()].deck.retain(|c| *c != card);
             state.pokemon[active.index()].attached.push(card);
         }
         state.player(player).hand.clone()
@@ -3843,27 +3843,27 @@ fn raging_bolt_exs_bellowing_thunder_is_admitted_from_the_artifact() {
     );
 }
 
-// --- Beyond the spec: discard the top N of the opponent's library ---
+// --- Beyond the spec: discard the top N of the opponent's deck ---
 
 #[test]
-fn discards_top_of_opponents_library() {
+fn discards_top_of_opponents_deck() {
     let attack = Attack {
         name: "Undermine",
         cost: vec![Type::Colorless],
         base_damage: 90,
         inflicts: None,
-        effect: Some(AttackEffect::DiscardsTopOfOpponentsLibrary(2)),
+        effect: Some(AttackEffect::DiscardsTopOfOpponentsDeck(2)),
     };
     let (mut state, _defender_ex) = game(attack, 3);
     let player = state.current;
     let opponent = player.opponent();
-    let top_two: Vec<_> = state.player(opponent).library.iter().take(2).copied().collect();
+    let top_two: Vec<_> = state.player(opponent).deck.iter().take(2).copied().collect();
 
     pay_and_attack(&mut state);
 
     // The attack ends the attacker's own turn, which starts the
     // opponent's — including their own draw — inside this same
-    // `apply` call, so the library also loses that one card beyond
+    // `apply` call, so the deck also loses that one card beyond
     // the two Undermine itself discards; only the discard pile's own
     // count is exact.
     assert_eq!(state.player(opponent).discard.len(), 2, "exactly the top two, discarded");
@@ -3904,11 +3904,11 @@ fn bonus_damage_with_extra_energy_beyond_cost() {
     for _ in 0..2 {
         let card = *state
             .player(player)
-            .library
+            .deck
             .iter()
             .find(|c| state.def_of(**c).is_energy())
             .unwrap();
-        state.players[player.index()].library.retain(|c| *c != card);
+        state.players[player.index()].deck.retain(|c| *c != card);
         state.pokemon[attacker.index()].attached.push(card);
     }
 
@@ -4013,7 +4013,7 @@ fn sonic_ripper_applies_weakness_against_the_opponents_active() {
         Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive { .. }
     ));
     assert_eq!(state.pokemon(attacker).attached.len(), 0, "the attacker's own Energy shuffled away");
-    assert!(state.player(player).library.len() >= attached_before, "the deck grew back");
+    assert!(state.player(player).deck.len() >= attached_before, "the deck grew back");
     apply(&mut state, Action::DamageChosenOpponentPokemonWeaknessIfActive { target: defender }).unwrap();
 
     // 440 Knocks the 200 HP defender out outright; this fixture's deck
@@ -4225,7 +4225,7 @@ fn delightful_kiss_attaches_up_to_two_searched_energy_to_the_chosen_target() {
     state.players[player.index()].bench.push(bench_mon);
     for _ in 0..2 {
         let card = deal_new_card(&mut state, player, psychic_energy);
-        state.players[player.index()].library.push(card);
+        state.players[player.index()].deck.push(card);
     }
 
     pay_and_attack(&mut state);
@@ -4236,7 +4236,7 @@ fn delightful_kiss_attaches_up_to_two_searched_energy_to_the_chosen_target() {
     assert!(matches!(state.phase, Phase::SearchingEnergyOfTypeToAttachToChosen { remaining: 2, .. }));
     let first = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).name() == "Psychic Energy")
         .unwrap();
@@ -4244,7 +4244,7 @@ fn delightful_kiss_attaches_up_to_two_searched_energy_to_the_chosen_target() {
     assert!(matches!(state.phase, Phase::SearchingEnergyOfTypeToAttachToChosen { remaining: 1, .. }));
     let second = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).name() == "Psychic Energy")
         .unwrap();
@@ -4276,7 +4276,7 @@ fn delightful_kiss_may_stop_after_one() {
     let bench_mon = state.put_into_play(player, bench_card);
     state.players[player.index()].bench.push(bench_mon);
     let card = deal_new_card(&mut state, player, psychic_energy);
-    state.players[player.index()].library.push(card);
+    state.players[player.index()].deck.push(card);
 
     pay_and_attack(&mut state);
 
@@ -4324,7 +4324,7 @@ fn traverse_time_takes_any_combination_of_grass_pokemon_and_stadiums() {
         cost: vec![Type::Colorless],
         base_damage: 0,
         inflicts: None,
-        effect: Some(AttackEffect::SearchLibraryForUpToPokemonOfTypeOrStadiumToHand(Type::Grass, 3)),
+        effect: Some(AttackEffect::SearchDeckForUpToPokemonOfTypeOrStadiumToHand(Type::Grass, 3)),
     };
     let (mut state, defender_ex) = game(attack, 3);
     let player = state.current;
@@ -4352,24 +4352,24 @@ fn traverse_time_takes_any_combination_of_grass_pokemon_and_stadiums() {
         effect: sim::card::TrainerEffect::MayDiscardUpToTwoToolsAnywhere,
     }));
     let grass_card = deal_new_card(&mut state, player, grass_mon);
-    state.players[player.index()].library.push(grass_card);
+    state.players[player.index()].deck.push(grass_card);
     let stadium_card = deal_new_card(&mut state, player, stadium_def);
-    state.players[player.index()].library.push(stadium_card);
+    state.players[player.index()].deck.push(stadium_card);
     // A non-matching card (the punching-bag defender_ex, Colorless) to
     // confirm it's never offered.
     let plain_card = deal_new_card(&mut state, player, defender_ex);
-    state.players[player.index()].library.push(plain_card);
+    state.players[player.index()].deck.push(plain_card);
 
     pay_and_attack(&mut state);
 
     assert!(matches!(
         state.phase,
-        Phase::SearchingLibraryForPokemonOfTypeOrStadium { remaining: 3, .. }
+        Phase::SearchingDeckForPokemonOfTypeOrStadium { remaining: 3, .. }
     ));
     let offered: Vec<_> = legal_actions(&state)
         .into_iter()
         .filter_map(|a| match a {
-            Action::TakePokemonOfTypeOrStadiumFromLibrary { card } => Some(card),
+            Action::TakePokemonOfTypeOrStadiumFromDeck { card } => Some(card),
             _ => None,
         })
         .collect();
@@ -4377,8 +4377,8 @@ fn traverse_time_takes_any_combination_of_grass_pokemon_and_stadiums() {
     assert!(offered.contains(&stadium_card));
     assert!(!offered.contains(&plain_card), "not Grass and not a Stadium");
 
-    apply(&mut state, Action::TakePokemonOfTypeOrStadiumFromLibrary { card: grass_card }).unwrap();
-    apply(&mut state, Action::TakePokemonOfTypeOrStadiumFromLibrary { card: stadium_card }).unwrap();
+    apply(&mut state, Action::TakePokemonOfTypeOrStadiumFromDeck { card: grass_card }).unwrap();
+    apply(&mut state, Action::TakePokemonOfTypeOrStadiumFromDeck { card: stadium_card }).unwrap();
     apply(&mut state, Action::FinishSearchingPokemonOfTypeOrStadium).unwrap();
 
     assert_eq!(state.phase, Phase::Main);
@@ -4538,11 +4538,11 @@ fn gale_thrust_bonus_applies_after_retreating_in_this_turn() {
     // Retreat Cost (1 in this fixture), paid from what's attached.
     let retreat_energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != retreat_energy);
+    state.players[player.index()].deck.retain(|c| *c != retreat_energy);
     state.pokemon[old_active.index()].attached.push(retreat_energy);
     let bench_def = state.db.add(CardDef::Pokemon(Pokemon {
         markers: Vec::new(),
@@ -4577,11 +4577,11 @@ fn gale_thrust_bonus_applies_after_retreating_in_this_turn() {
 
     let attack_energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != attack_energy);
+    state.players[player.index()].deck.retain(|c| *c != attack_energy);
     state.pokemon[bench_mon.index()].attached.push(attack_energy);
 
     let attack = legal_actions(&state)
@@ -4786,11 +4786,11 @@ fn night_joker_copies_a_benched_ns_pokemons_chosen_attack() {
     for _ in 0..2 {
         let energy = *state
             .player(player)
-            .library
+            .deck
             .iter()
             .find(|c| state.def_of(**c).is_energy())
             .unwrap();
-        state.players[player.index()].library.retain(|c| *c != energy);
+        state.players[player.index()].deck.retain(|c| *c != energy);
         state.pokemon[attacker.index()].attached.push(energy);
     }
 
@@ -4844,11 +4844,11 @@ fn night_joker_ignores_a_benched_pokemon_outside_the_ns_family() {
     for _ in 0..2 {
         let energy = *state
             .player(player)
-            .library
+            .deck
             .iter()
             .find(|c| state.def_of(**c).is_energy())
             .unwrap();
-        state.players[player.index()].library.retain(|c| *c != energy);
+        state.players[player.index()].deck.retain(|c| *c != energy);
         state.pokemon[attacker.index()].attached.push(energy);
     }
 
@@ -4882,7 +4882,7 @@ fn seek_inspiration_copies_the_discarded_pokemons_attack() {
         cost: vec![Type::Colorless, Type::Colorless],
         base_damage: 0,
         inflicts: None,
-        effect: Some(AttackEffect::DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox),
+        effect: Some(AttackEffect::DiscardsTopOfDeckThenCopiesItsAttackIfNoRuleBox),
     };
     let (mut state, _defender_def) = game(seek_inspiration, 3);
     let player = state.current;
@@ -4913,19 +4913,19 @@ fn seek_inspiration_copies_the_discarded_pokemons_attack() {
         }],
     }));
     let top_card = deal_new_card(&mut state, player, no_rule_box_mon);
-    state.players[player.index()].library.retain(|c| *c != top_card);
-    state.players[player.index()].library.push(top_card);
+    state.players[player.index()].deck.retain(|c| *c != top_card);
+    state.players[player.index()].deck.push(top_card);
 
     // Pay Seek Inspiration's own cost.
     for _ in 0..2 {
         let energy = *state
             .player(player)
-            .library
+            .deck
             .iter()
             .rev()
             .find(|c| state.def_of(**c).is_energy())
             .unwrap();
-        state.players[player.index()].library.retain(|c| *c != energy);
+        state.players[player.index()].deck.retain(|c| *c != energy);
         state.pokemon[attacker.index()].attached.push(energy);
     }
 
@@ -4945,7 +4945,7 @@ fn seek_inspiration_does_nothing_more_when_the_discard_is_not_a_plain_pokemon() 
         cost: vec![Type::Colorless, Type::Colorless],
         base_damage: 0,
         inflicts: None,
-        effect: Some(AttackEffect::DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox),
+        effect: Some(AttackEffect::DiscardsTopOfDeckThenCopiesItsAttackIfNoRuleBox),
     };
     let (mut state, _defender_def) = game(seek_inspiration, 3);
     let player = state.current;
@@ -4974,18 +4974,18 @@ fn seek_inspiration_does_nothing_more_when_the_discard_is_not_a_plain_pokemon() 
         }],
     }));
     let top_card = deal_new_card(&mut state, player, ex_mon);
-    state.players[player.index()].library.retain(|c| *c != top_card);
-    state.players[player.index()].library.push(top_card);
+    state.players[player.index()].deck.retain(|c| *c != top_card);
+    state.players[player.index()].deck.push(top_card);
 
     for _ in 0..2 {
         let energy = *state
             .player(player)
-            .library
+            .deck
             .iter()
             .rev()
             .find(|c| state.def_of(**c).is_energy())
             .unwrap();
-        state.players[player.index()].library.retain(|c| *c != energy);
+        state.players[player.index()].deck.retain(|c| *c != energy);
         state.pokemon[attacker.index()].attached.push(energy);
     }
 
@@ -5469,11 +5469,11 @@ fn whirlpool_discards_defender_energy_on_heads() {
     let defender = state.player(opponent).active.unwrap();
     let energy = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != energy);
+    state.players[opponent.index()].deck.retain(|c| *c != energy);
     state.pokemon[defender.index()].attached.push(energy);
 
     pay_and_attack(&mut state);
@@ -5563,11 +5563,11 @@ fn poison_chain_poisons_and_locks_out_retreat_next_turn() {
     let defender = state.player(opponent).active.unwrap();
     let energy_card = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != energy_card);
+    state.players[opponent.index()].deck.retain(|c| *c != energy_card);
     state.pokemon[defender.index()].attached.push(energy_card);
     let bench_card = deal_new_card(&mut state, opponent, defender_ex);
     let bench_mon = state.put_into_play(opponent, bench_card);
