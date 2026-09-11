@@ -104,11 +104,11 @@ fn ensure_in_hand(state: &mut GameState, player: PlayerId, def: CardDefId) -> si
     }
     let card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deck holds this card");
-    state.players[player.index()].library.retain(|c| *c != card);
+    state.players[player.index()].deck.retain(|c| *c != card);
     state.players[player.index()].hand.push(card);
     card
 }

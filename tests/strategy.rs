@@ -119,7 +119,7 @@ fn game() -> GameState {
         name: "Test Searching Item",
         kind: TrainerKind::Item,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: sim::card::CardFilter::AnyCard,
                 to: sim::card::Destination::Zone(Zone::Hand),
@@ -181,11 +181,11 @@ fn attacks_whenever_legal_no_matter_what_else_is_in_hand() {
     let active = state.player(player).active.unwrap();
     let energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()].deck.retain(|c| *c != energy);
     state.pokemon[active.index()].attached.push(energy);
 
     let legal = legal_actions(&state);

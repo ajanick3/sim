@@ -45,9 +45,9 @@ export const Discard: Story = {
   },
 };
 
-// A whole-library search: six cards in the deck, two of which this step
+// A whole-deck search: six cards in the deck, two of which this step
 // may take. The rest are drawn dimmed.
-const library: WireCard[] = [
+const deck: WireCard[] = [
   card({ name: "Gardevoir ex", category: "pokemon", print_id: "p-gardevoir" }),
   card({ name: "Kirlia", category: "pokemon", print_id: "p-kirlia" }),
   card({ name: "Ralts", category: "pokemon", print_id: "p-ralts" }),
@@ -57,15 +57,15 @@ const library: WireCard[] = [
 ];
 const takeActionsLib = ["Take Ralts", "Take Kirlia", "Stop searching"];
 
-export const WholeLibrary: Story = {
+export const WholeDeck: Story = {
   args: {
     actions: takeActionsLib,
     meta: [
-      { kind: "TakeCard", card: library[2].id, target: null },
-      { kind: "TakeCard", card: library[1].id, target: null },
+      { kind: "TakeCard", card: deck[2].id, target: null },
+      { kind: "TakeCard", card: deck[1].id, target: null },
       { kind: "FinishDeciding", card: null, target: null },
     ],
     decision: asDecision(takeActionsLib)!,
-    library,
+    deck,
   },
 };

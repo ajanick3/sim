@@ -20,7 +20,7 @@ Recorded in [ADR 0075](../../../docs/adr/0075-a-pokemon-returning-to-the-deck-re
 `AbilityEffect::OncePerTurnMayDrawThenShuffleSelfIntoDeck(u32)`, a
 standing Ability. Draws first; only if at least one card actually
 landed does the Pokémon's whole card stack and every attachment move
-into the library together (rule 22's "moves together," the third
+into the deck together (rule 22's "moves together," the third
 zone this milestone has moved a Pokémon's own stack to, after hand
 and discard). Removing the Active opens `Phase::Promoting` only when
 a Bench exists to promote from, the same guard

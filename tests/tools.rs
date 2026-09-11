@@ -147,14 +147,14 @@ fn ensure_in_hand(state: &mut GameState, player: PlayerId, def: CardDefId) -> Ca
     }
     let side = state.player(player);
     let card = *side
-        .library
+        .deck
         .iter()
         .chain(side.prizes.iter())
         .chain(side.discard.iter())
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deal put this card somewhere face down");
     let side = &mut state.players[player.index()];
-    side.library.retain(|c| *c != card);
+    side.deck.retain(|c| *c != card);
     side.prizes.retain(|c| *c != card);
     side.discard.retain(|c| *c != card);
     side.hand.push(card);
@@ -170,15 +170,15 @@ fn deal_new_card(state: &mut GameState, player: PlayerId, def: CardDefId) -> Car
     card
 }
 
-/// Put a copy of `def` into the discard pile, taking it from the library.
+/// Put a copy of `def` into the discard pile, taking it from the deck.
 fn deal_to_discard(state: &mut GameState, player: PlayerId, def: CardDefId) -> CardId {
     let card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deck holds this card");
-    state.players[player.index()].library.retain(|c| *c != card);
+    state.players[player.index()].deck.retain(|c| *c != card);
     state.players[player.index()].discard.push(card);
     card
 }
@@ -441,11 +441,11 @@ fn brave_bangle_adds_damage_only_without_a_rule_box_against_an_ex() {
     // Replace the defender with an ex.
     let ex_card = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == set.mon_ex)
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != ex_card);
+    state.players[opponent.index()].deck.retain(|c| *c != ex_card);
     state.pokemon[defender.index()].cards = vec![ex_card];
     assert_eq!(sim::engine::damage_dealt(&state, attacker, defender, 100), 130);
 }
@@ -462,11 +462,11 @@ fn brave_bangle_adds_nothing_carrying_a_rule_box_itself() {
     // The attacker itself becomes an ex — a Rule Box.
     let ex_card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == set.mon_ex)
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != ex_card);
+    state.players[player.index()].deck.retain(|c| *c != ex_card);
     state.pokemon[attacker.index()].cards = vec![ex_card];
 
     let card = ensure_in_hand(&mut state, player, bangle);
@@ -474,11 +474,11 @@ fn brave_bangle_adds_nothing_carrying_a_rule_box_itself() {
 
     let defender_ex = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == set.mon_ex)
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != defender_ex);
+    state.players[opponent.index()].deck.retain(|c| *c != defender_ex);
     state.pokemon[defender.index()].cards = vec![defender_ex];
 
     assert_eq!(
@@ -593,12 +593,12 @@ fn lillies_pearl_game(with_pearl: bool) -> (GameState, u32) {
     let card = side
         .hand
         .iter()
-        .chain(side.library.iter())
+        .chain(side.deck.iter())
         .find(|c| state.def_of(**c).is_energy())
         .copied()
         .expect("the deck is mostly Energy");
     state.remove_from_hand(attacker_player, card);
-    state.players[attacker_player.index()].library.retain(|c| *c != card);
+    state.players[attacker_player.index()].deck.retain(|c| *c != card);
     state.pokemon[active.index()].attached.push(card);
 
     let before = state.player(attacker_player).prizes.len() as u32;
@@ -670,12 +670,12 @@ fn pay_and_attack(state: &mut GameState, player: sim::ids::PlayerId) {
     let card = side
         .hand
         .iter()
-        .chain(side.library.iter())
+        .chain(side.deck.iter())
         .find(|c| state.def_of(**c).is_energy())
         .copied()
         .expect("the deck holds Energy");
     state.remove_from_hand(player, card);
-    state.players[player.index()].library.retain(|c| *c != card);
+    state.players[player.index()].deck.retain(|c| *c != card);
     state.pokemon[active.index()].attached.push(card);
     let attack = legal_actions(state)
         .into_iter()
@@ -802,12 +802,12 @@ fn handheld_fan_opens_a_choice_of_where_the_energy_goes() {
     let energy = side
         .hand
         .iter()
-        .chain(side.library.iter())
+        .chain(side.deck.iter())
         .find(|c| state.def_of(**c).is_energy())
         .copied()
         .expect("the deck holds Energy");
     state.remove_from_hand(attacker_player, energy);
-    state.players[attacker_player.index()].library.retain(|c| *c != energy);
+    state.players[attacker_player.index()].deck.retain(|c| *c != energy);
     state.pokemon[attacker.index()].attached.push(energy);
 
     let attack = legal_actions(&state)

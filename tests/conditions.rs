@@ -84,12 +84,12 @@ fn force_attach(state: &mut GameState) {
         .player(player)
         .hand
         .iter()
-        .chain(state.player(player).library.iter())
+        .chain(state.player(player).deck.iter())
         .find(|c| state.def_of(**c).is_energy())
         .expect("the deck is mostly Energy");
     state.remove_from_hand(player, energy);
     state.players[player.index()]
-        .library
+        .deck
         .retain(|c| *c != energy);
     state.pokemon[active.index()].attached.push(energy);
 }

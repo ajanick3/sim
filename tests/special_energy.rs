@@ -252,11 +252,11 @@ fn searches_up_to_the_limit_of_basic_pokemon_of_type_to_the_bench() {
     }));
     let first = sim::ids::CardId(state.cards.len() as u32);
     state.cards.push(sim::state::Card { def: psychic_basic_def, owner: player });
-    state.players[player.index()].library.push(first);
+    state.players[player.index()].deck.push(first);
     let second = sim::ids::CardId(state.cards.len() as u32);
     state.cards.push(sim::state::Card { def: psychic_basic_def, owner: player });
-    state.players[player.index()].library.push(second);
-    let library_len_before = state.player(player).library.len();
+    state.players[player.index()].deck.push(second);
+    let deck_len_before = state.player(player).deck.len();
 
     let telepathic_def = state.db.add(CardDef::Energy(Energy {
         print_id: "test-telepathic-psychic-energy",
@@ -273,15 +273,15 @@ fn searches_up_to_the_limit_of_basic_pokemon_of_type_to_the_bench() {
     state.players[player.index()].hand.push(telepathic);
 
     apply(&mut state, Action::AttachEnergy { card: telepathic, target }).unwrap();
-    assert!(matches!(state.phase, Phase::SearchingLibraryForBasicsOfType { .. }));
+    assert!(matches!(state.phase, Phase::SearchingDeckForBasicsOfType { .. }));
 
     apply(&mut state, Action::TakeBasicPokemonOfTypeForEnergyAttach { card: first }).unwrap();
-    assert!(matches!(state.phase, Phase::SearchingLibraryForBasicsOfType { .. }), "one more to take");
+    assert!(matches!(state.phase, Phase::SearchingDeckForBasicsOfType { .. }), "one more to take");
     apply(&mut state, Action::TakeBasicPokemonOfTypeForEnergyAttach { card: second }).unwrap();
 
     assert_eq!(state.phase, Phase::Main);
     assert_eq!(state.player(player).bench.len(), 2);
-    assert_eq!(state.player(player).library.len(), library_len_before - 2);
+    assert_eq!(state.player(player).deck.len(), deck_len_before - 2);
     assert!(state.pokemon(target).attached.contains(&telepathic), "the Energy still attaches");
 }
 
@@ -330,11 +330,11 @@ fn no_qualifying_basic_still_attaches_the_energy() {
     let telepathic = sim::ids::CardId(state.cards.len() as u32);
     state.cards.push(sim::state::Card { def: telepathic_def, owner: player });
     state.players[player.index()].hand.push(telepathic);
-    state.players[player.index()].library.clear();
+    state.players[player.index()].deck.clear();
 
     apply(&mut state, Action::AttachEnergy { card: telepathic, target }).unwrap();
 
-    assert_eq!(state.phase, Phase::Main, "no Basic Psychic Pokemon anywhere in the library");
+    assert_eq!(state.phase, Phase::Main, "no Basic Psychic Pokemon anywhere in the deck");
     assert!(state.pokemon(target).attached.contains(&telepathic));
 }
 
@@ -450,12 +450,12 @@ fn pay_and_attack(state: &mut GameState, attacker: sim::ids::PokemonId) {
         let card = side
             .hand
             .iter()
-            .chain(side.library.iter())
+            .chain(side.deck.iter())
             .find(|c| state.def_of(**c).is_energy())
             .copied()
             .expect("the deck holds Energy");
         state.remove_from_hand(player, card);
-        state.players[player.index()].library.retain(|c| *c != card);
+        state.players[player.index()].deck.retain(|c| *c != card);
         state.pokemon[attacker.index()].attached.push(card);
     }
     let attack = legal_actions(state)

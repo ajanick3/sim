@@ -32,7 +32,7 @@ fn deck(pokemon: CardDefId) -> Vec<CardDefId> {
 }
 
 /// Attach Energy to the Active without spending the turn's attachment. It
-/// takes from hand or library, because a test states what is attached, not
+/// takes from hand or deck, because a test states what is attached, not
 /// where it came from.
 fn force_attach(state: &mut GameState, energy: CardDefId, count: usize) {
     let player = state.current;
@@ -42,12 +42,12 @@ fn force_attach(state: &mut GameState, energy: CardDefId, count: usize) {
         let card = side
             .hand
             .iter()
-            .chain(side.library.iter())
+            .chain(side.deck.iter())
             .find(|c| state.cards[c.index()].def == energy)
             .copied()
             .expect("the deck holds Energy of both types");
         state.remove_from_hand(player, card);
-        state.players[player.index()].library.retain(|c| *c != card);
+        state.players[player.index()].deck.retain(|c| *c != card);
         state.pokemon[active.index()].attached.push(card);
     }
 }

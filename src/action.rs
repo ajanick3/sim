@@ -109,12 +109,12 @@ pub enum Action {
     /// Heal every point of damage from a chosen Mega Evolution ex, and
     /// move its attachments to hand if the heal did anything.
     HealMegaEx { target: PokemonId },
-    /// Take this Pokémon found at the bottom of the Library.
-    /// `Phase::LookingAtBottomOfLibrary` names the search it ends.
-    TakeFromBottomOfLibrary { card: CardId },
-    /// Decline every Pokémon `Phase::LookingAtBottomOfLibrary` found; the
-    /// Library still shuffles.
-    DeclineBottomOfLibrary,
+    /// Take this Pokémon found at the bottom of the Deck.
+    /// `Phase::LookingAtBottomOfDeck` names the search it ends.
+    TakeFromBottomOfDeck { card: CardId },
+    /// Decline every Pokémon `Phase::LookingAtBottomOfDeck` found; the
+    /// Deck still shuffles.
+    DeclineBottomOfDeck,
     /// Choose which of the player's own evolved Pokémon `Phase::Devolving`
     /// devolves.
     ChooseDevolveTarget { target: PokemonId },
@@ -139,7 +139,7 @@ pub enum Action {
     /// Decline `Powerglass`'s attach.
     DeclinePowerglass,
     /// `Academy at Night`'s once-a-turn action: put this card from hand
-    /// on top of the Library.
+    /// on top of the Deck.
     PutOnTopOfDeckForAcademyAtNight { card: CardId },
     /// `Team Rocket's Factory`'s once-a-turn action.
     DrawTwoForTeamRocketsFactory,
@@ -165,25 +165,25 @@ pub enum Action {
     /// Deal `Phase::ChoosingBenchDamageTarget`'s flat damage to this
     /// Benched Pokémon.
     DamageBenchedPokemon { target: PokemonId },
-    /// Take this Basic Pokémon from the library onto the Bench, as part
-    /// of `Phase::SearchingLibraryForBasics`.
+    /// Take this Basic Pokémon from the deck onto the Bench, as part
+    /// of `Phase::SearchingDeckForBasics`.
     TakeBasicPokemonForCallForFamily { card: CardId },
-    /// Take this Item, found by searching the whole library, as part
-    /// of `Phase::SearchingLibraryForItem`.
-    TakeItemFromLibrary { card: CardId },
-    /// Take this card, found by searching the whole library, as part
-    /// of `Phase::SearchingLibraryForAnyCards`.
-    TakeAnyCardFromLibrary { card: CardId },
-    /// Stop `Phase::SearchingLibraryForAnyCards` before its limit is
+    /// Take this Item, found by searching the whole deck, as part
+    /// of `Phase::SearchingDeckForItem`.
+    TakeItemFromDeck { card: CardId },
+    /// Take this card, found by searching the whole deck, as part
+    /// of `Phase::SearchingDeckForAnyCards`.
+    TakeAnyCardFromDeck { card: CardId },
+    /// Stop `Phase::SearchingDeckForAnyCards` before its limit is
     /// reached.
     FinishSearchingAnyCards,
-    /// Stop `Phase::SearchingLibraryForBasics` before its limit is
+    /// Stop `Phase::SearchingDeckForBasics` before its limit is
     /// spent.
     FinishCallForFamily,
     /// Take this card, found searching for a Basic Pokémon of a type,
-    /// as part of `Phase::SearchingLibraryForBasicsOfType`.
+    /// as part of `Phase::SearchingDeckForBasicsOfType`.
     TakeBasicPokemonOfTypeForEnergyAttach { card: CardId },
-    /// Stop `Phase::SearchingLibraryForBasicsOfType` before its limit
+    /// Stop `Phase::SearchingDeckForBasicsOfType` before its limit
     /// is reached.
     FinishSearchingBasicsOfType,
     /// Move this Energy from the opponent's Active into their hand, as
@@ -195,8 +195,8 @@ pub enum Action {
     /// Take this Trainer card from the discard pile into hand, as part
     /// of `Phase::TakingTrainerFromDiscard`.
     TakeTrainerFromDiscard { card: CardId },
-    /// Evolve into this card from the library, as part of
-    /// `Phase::SearchingLibraryToEvolveSelf`.
+    /// Evolve into this card from the deck, as part of
+    /// `Phase::SearchingDeckToEvolveSelf`.
     EvolveWithAscension { card: CardId },
     /// Take this Pokémon card from the discard pile into hand, as part
     /// of `Phase::TakingPokemonFromDiscard`.
@@ -218,7 +218,7 @@ pub enum Action {
     /// when its own gates (whose turn, in the Active Spot, not
     /// already spent) all hold.
     UseAbility { pokemon: PokemonId },
-    /// Take this Supporter card from the library into hand, as part
+    /// Take this Supporter card from the deck into hand, as part
     /// of `Phase::DecidingToUseLastDitchCatch`.
     TakeSupporterForLastDitchCatch { card: CardId },
     /// Decline it — nothing else about this play changes.
@@ -232,17 +232,17 @@ pub enum Action {
     /// Decline it.
     DeclineJewelSeeker,
     /// Take this Trainer card as part of
-    /// `Phase::SearchingLibraryForTrainerCards`.
-    TakeTrainerCardFromLibrary { card: CardId },
+    /// `Phase::SearchingDeckForTrainerCards`.
+    TakeTrainerCardFromDeck { card: CardId },
     /// Take this card as part of
-    /// `Phase::SearchingLibraryForPokemonOfTypeOrStadium`.
-    TakePokemonOfTypeOrStadiumFromLibrary { card: CardId },
+    /// `Phase::SearchingDeckForPokemonOfTypeOrStadium`.
+    TakePokemonOfTypeOrStadiumFromDeck { card: CardId },
     /// Stop that search before its limit is reached.
     FinishSearchingPokemonOfTypeOrStadium,
     /// Discard this card from the opponent's hand, as part of
     /// `Phase::ChoosingCardFromOpponentsHandToDiscard`.
     DiscardCardFromOpponentsHand { card: CardId },
-    /// Stop `Phase::SearchingLibraryForTrainerCards` before its
+    /// Stop `Phase::SearchingDeckForTrainerCards` before its
     /// limit is reached.
     FinishSearchingTrainerCards,
     /// Deal `Phase::ChoosingAnyOpponentPokemonDamageTarget`'s flat
@@ -303,19 +303,19 @@ pub enum Action {
     DamageOpponentForCursedBlast { target: PokemonId },
     /// Decline it.
     DeclineCursedBlast,
-    /// Take this Evolution Pokémon from the library into hand, as
-    /// part of `Phase::SearchingLibraryForEvolutionPokemonOfType`.
+    /// Take this Evolution Pokémon from the deck into hand, as
+    /// part of `Phase::SearchingDeckForEvolutionPokemonOfType`.
     TakeEvolutionPokemonOfType { card: CardId },
     /// Stop that search before its limit is spent.
     FinishSearchingEvolutionPokemonOfType,
     /// Attach this Energy from the discard pile to this Pokémon, as
     /// part of `Phase::DecidingToUseSeethingSpirit`.
     AttachEnergyForSeethingSpirit { card: CardId, target: PokemonId },
-    /// Take this card from the library into hand, as part of
-    /// `Phase::SearchingLibraryForAnyCardAbility`.
-    TakeAnyCardFromLibraryForAbility { card: CardId },
+    /// Take this card from the deck into hand, as part of
+    /// `Phase::SearchingDeckForAnyCardAbility`.
+    TakeAnyCardFromDeckForAbility { card: CardId },
     /// Decline that search.
-    FinishSearchingLibraryForAnyCardAbility,
+    FinishSearchingDeckForAnyCardAbility,
     /// Decline it.
     DeclineSeethingSpirit,
     /// Attach this Basic Energy from the hand to this Pokémon, then
@@ -334,17 +334,17 @@ pub enum Action {
     MoveDamageCountersFromOwnToOpponent { source: PokemonId, target: PokemonId, count: u32 },
     /// Decline to move any.
     DeclineMovingDamageCounters,
-    /// Take this card, seen among the top of the library, as part of
+    /// Take this card, seen among the top of the deck, as part of
     /// `Phase::LookingAtTopCardsToTakeOne`. The rest go to the bottom.
     TakeCardFromTopPeek { card: CardId },
-    /// Attach this card, seen among the top of the library, to this
+    /// Attach this card, seen among the top of the deck, to this
     /// own Pokémon, as part of `Phase::ResolvingEnergyFoundInTopPeek`.
     AttachFoundEnergyTo { card: CardId, target: PokemonId },
-    /// Leave this card, seen among the top of the library, and send
+    /// Leave this card, seen among the top of the deck, and send
     /// it to the bottom instead, as part of
     /// `Phase::ResolvingEnergyFoundInTopPeek`.
     PutFoundCardOnBottom { card: CardId },
-    /// Take this Supporter, seen among the top of the library, as
+    /// Take this Supporter, seen among the top of the deck, as
     /// part of `Phase::LookingAtTopCardsForSupporter`. The rest
     /// shuffle back.
     TakeSupporterFromTopPeek { card: CardId },
@@ -366,7 +366,7 @@ pub enum Action {
     /// Attach `Phase::SearchingForSinisterSurgeTarget`'s Energy to
     /// this Benched Pokémon, and deal it the damage.
     AttachSinisterSurgeEnergyTo { target: PokemonId },
-    /// Take this Pokémon card from the library into hand, as part of
+    /// Take this Pokémon card from the deck into hand, as part of
     /// `Phase::SearchingForFanCall`.
     TakeCardForFanCall { card: CardId },
     /// Stop that search before its limit is spent.
@@ -400,27 +400,27 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingOneOf { player, .. } => Some(player),
         Phase::DiscardingFromHand { chooser, .. } => Some(chooser),
         Phase::HealingMegaEx { player } => Some(player),
-        Phase::LookingAtBottomOfLibrary { player, .. } => Some(player),
+        Phase::LookingAtBottomOfDeck { player, .. } => Some(player),
         Phase::Devolving { player, .. } => Some(player),
         Phase::SwappingIdentity { player, .. } => Some(player),
         Phase::MovingEnergyForHandheldFan { chooser, .. } => Some(chooser),
         Phase::AttachingFromDiscardForPowerglass { player } => Some(player),
         Phase::DistributingDamageCounters { player, .. } => Some(player),
         Phase::ChoosingBenchDamageTarget { player, .. } => Some(player),
-        Phase::SearchingLibraryForBasics { player, .. } => Some(player),
-        Phase::SearchingLibraryForBasicsOfType { player, .. } => Some(player),
-        Phase::SearchingLibraryForItem { player } => Some(player),
-        Phase::SearchingLibraryForAnyCards { player, .. } => Some(player),
+        Phase::SearchingDeckForBasics { player, .. } => Some(player),
+        Phase::SearchingDeckForBasicsOfType { player, .. } => Some(player),
+        Phase::SearchingDeckForItem { player } => Some(player),
+        Phase::SearchingDeckForAnyCards { player, .. } => Some(player),
         Phase::MovingOpponentsActiveEnergyToHand { player, .. } => Some(player),
         Phase::TakingTrainerFromDiscard { player } => Some(player),
-        Phase::SearchingLibraryToEvolveSelf { player, .. } => Some(player),
+        Phase::SearchingDeckToEvolveSelf { player, .. } => Some(player),
         Phase::TakingPokemonFromDiscard { player } => Some(player),
         Phase::DecidingToShuffleEnergyForBenchDamage { player, .. } => Some(player),
         Phase::DecidingToUseLastDitchCatch { player, .. } => Some(player),
         Phase::DecidingToUsePsychicDraw { player, .. } => Some(player),
         Phase::DecidingToUseJewelSeeker { player, .. } => Some(player),
-        Phase::SearchingLibraryForTrainerCards { player, .. } => Some(player),
-        Phase::SearchingLibraryForPokemonOfTypeOrStadium { player, .. } => Some(player),
+        Phase::SearchingDeckForTrainerCards { player, .. } => Some(player),
+        Phase::SearchingDeckForPokemonOfTypeOrStadium { player, .. } => Some(player),
         Phase::ChoosingCardFromOpponentsHandToDiscard { player } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTarget { player, .. } => Some(player),
         Phase::ChoosingAnyOpponentPokemonDamageTargetWeaknessIfActive { player, .. } => Some(player),
@@ -433,7 +433,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingBenchedPokemonAttackToCopy { player, .. } => Some(player),
         Phase::ChoosingDiscardedPokemonAttackToCopy { player, .. } => Some(player),
         Phase::DiscardingHandCardThenDrawing { player, .. } => Some(player),
-        Phase::SearchingLibraryForAnyCardAbility { player, .. } => Some(player),
+        Phase::SearchingDeckForAnyCardAbility { player, .. } => Some(player),
         Phase::ChoosingBenchedExDamageTarget { player, .. } => Some(player),
         Phase::ChoosingAnyBenchedDamageTarget { player, .. } => Some(player),
         Phase::SearchingForEnergyToAttachToBenchedOfType { player, .. } => Some(player),
@@ -443,7 +443,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::LookingAtTopCardsForSupporter { player, .. } => Some(player),
         Phase::DecidingToUseTealDance { player, .. } => Some(player),
         Phase::DecidingCursedBlastTarget { player, .. } => Some(player),
-        Phase::SearchingLibraryForEvolutionPokemonOfType { player, .. } => Some(player),
+        Phase::SearchingDeckForEvolutionPokemonOfType { player, .. } => Some(player),
         Phase::DecidingToUseSeethingSpirit { player, .. } => Some(player),
         Phase::DecidingToUseRipeningCharge { player, .. } => Some(player),
         Phase::ChoosingOwnEnergyToHand { player, .. } => Some(player),
@@ -557,7 +557,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     .in_play()
                     .into_iter()
                     .any(|p| state.matches_target(chooser, p, target_filter)),
-                Destination::Zone(_) | Destination::TopOfLibraryInOrder => true,
+                Destination::Zone(_) | Destination::TopOfDeckInOrder => true,
             };
             if remaining > 0 && room {
                 let slot = crate::card::Slot {
@@ -586,7 +586,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     // Codebreaking` ever asks for, though a limit past two
                     // would need every card taken this slot remembered, not
                     // only the last.
-                    if to == Destination::TopOfLibraryInOrder && Some(*card) == previous {
+                    if to == Destination::TopOfDeckInOrder && Some(*card) == previous {
                         continue;
                     }
                     match to {
@@ -602,7 +602,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                         }
                         Destination::Bench
                         | Destination::Zone(_)
-                        | Destination::TopOfLibraryInOrder => {
+                        | Destination::TopOfDeckInOrder => {
                             actions.push(Action::TakeCard { card: *card });
                         }
                     }
@@ -688,14 +688,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
-        Phase::LookingAtBottomOfLibrary { player: whose, count } => {
-            let library = &state.player(whose).library;
-            for card in library.iter().take(count as usize) {
+        Phase::LookingAtBottomOfDeck { player: whose, count } => {
+            let deck = &state.player(whose).deck;
+            for card in deck.iter().take(count as usize) {
                 if state.matches_filter(*card, crate::card::CardFilter::AnyPokemon) {
-                    actions.push(Action::TakeFromBottomOfLibrary { card: *card });
+                    actions.push(Action::TakeFromBottomOfDeck { card: *card });
                 }
             }
-            actions.push(Action::DeclineBottomOfLibrary);
+            actions.push(Action::DeclineBottomOfDeck);
             return actions;
         }
         Phase::Devolving { player: whose, target: None } => {
@@ -741,8 +741,8 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
-        Phase::SearchingLibraryForBasics { player: whose, .. } => {
-            for card in &state.player(whose).library {
+        Phase::SearchingDeckForBasics { player: whose, .. } => {
+            for card in &state.player(whose).deck {
                 if state.matches_filter(*card, crate::card::CardFilter::PokemonOfStage(crate::card::Stage::Basic)) {
                     actions.push(Action::TakeBasicPokemonForCallForFamily { card: *card });
                 }
@@ -750,8 +750,8 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::FinishCallForFamily);
             return actions;
         }
-        Phase::SearchingLibraryForBasicsOfType { player: whose, kind, .. } => {
-            for card in &state.player(whose).library {
+        Phase::SearchingDeckForBasicsOfType { player: whose, kind, .. } => {
+            for card in &state.player(whose).deck {
                 if state.matches_filter(*card, crate::card::CardFilter::BasicPokemonOfType(kind)) {
                     actions.push(Action::TakeBasicPokemonOfTypeForEnergyAttach { card: *card });
                 }
@@ -759,17 +759,17 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::FinishSearchingBasicsOfType);
             return actions;
         }
-        Phase::SearchingLibraryForItem { player: whose } => {
-            for card in &state.player(whose).library {
+        Phase::SearchingDeckForItem { player: whose } => {
+            for card in &state.player(whose).deck {
                 if state.matches_filter(*card, crate::card::CardFilter::TrainerOfKind(TrainerKind::Item)) {
-                    actions.push(Action::TakeItemFromLibrary { card: *card });
+                    actions.push(Action::TakeItemFromDeck { card: *card });
                 }
             }
             return actions;
         }
-        Phase::SearchingLibraryForAnyCards { player: whose, .. } => {
-            for card in &state.player(whose).library {
-                actions.push(Action::TakeAnyCardFromLibrary { card: *card });
+        Phase::SearchingDeckForAnyCards { player: whose, .. } => {
+            for card in &state.player(whose).deck {
+                actions.push(Action::TakeAnyCardFromDeck { card: *card });
             }
             actions.push(Action::FinishSearchingAnyCards);
             return actions;
@@ -807,7 +807,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             return actions;
         }
         Phase::DecidingToUseLastDitchCatch { player: whose, .. } => {
-            for card in &state.player(whose).library {
+            for card in &state.player(whose).deck {
                 if state.matches_filter(*card, crate::card::CardFilter::TrainerOfKind(TrainerKind::Supporter)) {
                     actions.push(Action::TakeSupporterForLastDitchCatch { card: *card });
                 }
@@ -825,19 +825,19 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::DeclineJewelSeeker);
             return actions;
         }
-        Phase::SearchingLibraryForTrainerCards { player: whose, .. } => {
-            for card in &state.player(whose).library {
+        Phase::SearchingDeckForTrainerCards { player: whose, .. } => {
+            for card in &state.player(whose).deck {
                 if state.matches_filter(*card, crate::card::CardFilter::AnyTrainer) {
-                    actions.push(Action::TakeTrainerCardFromLibrary { card: *card });
+                    actions.push(Action::TakeTrainerCardFromDeck { card: *card });
                 }
             }
             actions.push(Action::FinishSearchingTrainerCards);
             return actions;
         }
-        Phase::SearchingLibraryForPokemonOfTypeOrStadium { player: whose, kind, .. } => {
-            for card in &state.player(whose).library {
+        Phase::SearchingDeckForPokemonOfTypeOrStadium { player: whose, kind, .. } => {
+            for card in &state.player(whose).deck {
                 if state.matches_filter(*card, crate::card::CardFilter::PokemonOfTypeOrStadium(kind)) {
-                    actions.push(Action::TakePokemonOfTypeOrStadiumFromLibrary { card: *card });
+                    actions.push(Action::TakePokemonOfTypeOrStadiumFromDeck { card: *card });
                 }
             }
             actions.push(Action::FinishSearchingPokemonOfTypeOrStadium);
@@ -880,7 +880,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             return actions;
         }
         Phase::SearchingEnergyOfTypeToAttachToChosen { player: whose, kind, .. } => {
-            for card in &state.player(whose).library {
+            for card in &state.player(whose).deck {
                 if state.matches_filter(*card, crate::card::CardFilter::BasicEnergyOfType(kind)) {
                     actions.push(Action::TakeEnergyOfTypeToAttachToChosen { card: *card });
                 }
@@ -921,11 +921,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
-        Phase::SearchingLibraryForAnyCardAbility { player: whose, .. } => {
-            for card in &state.player(whose).library {
-                actions.push(Action::TakeAnyCardFromLibraryForAbility { card: *card });
+        Phase::SearchingDeckForAnyCardAbility { player: whose, .. } => {
+            for card in &state.player(whose).deck {
+                actions.push(Action::TakeAnyCardFromDeckForAbility { card: *card });
             }
-            actions.push(Action::FinishSearchingLibraryForAnyCardAbility);
+            actions.push(Action::FinishSearchingDeckForAnyCardAbility);
             return actions;
         }
         Phase::ChoosingDiscardedPokemonAttackToCopy { card, .. } => {
@@ -951,7 +951,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         }
         Phase::SearchingForEnergyToAttachToBenchedOfType { player: whose, kind } => {
             let has_energy =
-                state.player(whose).library.iter().any(|c| state.def_of(*c).is_energy());
+                state.player(whose).deck.iter().any(|c| state.def_of(*c).is_energy());
             if has_energy {
                 for target in &state.player(whose).bench {
                     if state.pokemon_def(*target).kind == kind {
@@ -982,8 +982,8 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::DeclineCursedBlast);
             return actions;
         }
-        Phase::SearchingLibraryForEvolutionPokemonOfType { player: whose, kind, .. } => {
-            for card in &state.player(whose).library {
+        Phase::SearchingDeckForEvolutionPokemonOfType { player: whose, kind, .. } => {
+            for card in &state.player(whose).deck {
                 if state.matches_filter(*card, crate::card::CardFilter::EvolutionPokemonOfType(kind)) {
                     actions.push(Action::TakeEvolutionPokemonOfType { card: *card });
                 }
@@ -1069,17 +1069,17 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             return actions;
         }
         Phase::LookingAtTopCardsToTakeOne { player: whose, count, .. } => {
-            let library = &state.player(whose).library;
-            let seen = count.min(library.len() as u32) as usize;
-            for card in &library[library.len() - seen..] {
+            let deck = &state.player(whose).deck;
+            let seen = count.min(deck.len() as u32) as usize;
+            for card in &deck[deck.len() - seen..] {
                 actions.push(Action::TakeCardFromTopPeek { card: *card });
             }
             return actions;
         }
         Phase::ResolvingEnergyFoundInTopPeek { player: whose, kind, remaining, .. } => {
-            let library = &state.player(whose).library;
-            let seen = remaining.min(library.len() as u32) as usize;
-            for card in &library[library.len() - seen..] {
+            let deck = &state.player(whose).deck;
+            let seen = remaining.min(deck.len() as u32) as usize;
+            for card in &deck[deck.len() - seen..] {
                 actions.push(Action::PutFoundCardOnBottom { card: *card });
                 if state.matches_filter(*card, crate::card::CardFilter::BasicEnergyOfType(kind)) {
                     for target in state.player(whose).in_play() {
@@ -1090,9 +1090,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             return actions;
         }
         Phase::LookingAtTopCardsForSupporter { player: whose, count, .. } => {
-            let library = &state.player(whose).library;
-            let seen = count.min(library.len() as u32) as usize;
-            for card in &library[library.len() - seen..] {
+            let deck = &state.player(whose).deck;
+            let seen = count.min(deck.len() as u32) as usize;
+            for card in &deck[deck.len() - seen..] {
                 if state.matches_filter(*card, crate::card::CardFilter::TrainerOfKind(TrainerKind::Supporter))
                 {
                     actions.push(Action::TakeSupporterFromTopPeek { card: *card });
@@ -1134,7 +1134,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             return actions;
         }
         Phase::SearchingForFanCall { player: whose, kind, hp, .. } => {
-            for card in &state.player(whose).library {
+            for card in &state.player(whose).deck {
                 if state.matches_filter(*card, crate::card::CardFilter::PokemonOfTypeWithHpAtMost(kind, hp)) {
                     actions.push(Action::TakeCardForFanCall { card: *card });
                 }
@@ -1195,9 +1195,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             actions.push(Action::FinishSearchingDiscardForNamedToBench);
             return actions;
         }
-        Phase::SearchingLibraryToEvolveSelf { player: whose, target } => {
+        Phase::SearchingDeckToEvolveSelf { player: whose, target } => {
             let from = state.pokemon_def(target).name;
-            for card in &state.player(whose).library {
+            for card in &state.player(whose).deck {
                 if state.def_of(*card).as_pokemon().is_some_and(|p| p.evolve_from == Some(from)) {
                     actions.push(Action::EvolveWithAscension { card: *card });
                 }
@@ -1254,7 +1254,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         }
         Phase::JaninesSearch { player: whose, targets, index, .. } => {
             if targets[index as usize].is_some() {
-                for card in state.player(whose).library.iter() {
+                for card in state.player(whose).deck.iter() {
                     if state.matches_filter(
                         *card,
                         crate::card::CardFilter::BasicEnergyOfType(crate::card::Type::Darkness),
@@ -1738,7 +1738,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 !state.self_knockout_abilities_disabled()
             }
             crate::card::AbilityEffect::OncePerTurnMaySearchEvolutionPokemonOfType(kind, _) => {
-                side.library.iter().any(|c| {
+                side.deck.iter().any(|c| {
                     state.matches_filter(*c, crate::card::CardFilter::EvolutionPokemonOfType(kind))
                 })
             }
@@ -1759,7 +1759,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 kind,
                 _,
             ) => {
-                let has_energy = side.library.iter().any(|c| {
+                let has_energy = side.deck.iter().any(|c| {
                     state.matches_filter(*c, crate::card::CardFilter::BasicEnergyOfType(kind))
                 });
                 let has_target = side.bench.iter().any(|p| state.pokemon_def(*p).kind == kind);
@@ -1774,7 +1774,7 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 // for whoever goes second — each player's own first turn,
                 // not only the game's very first.
                 state.turn_number <= 1
-                    && side.library.iter().any(|c| {
+                    && side.deck.iter().any(|c| {
                         state.matches_filter(*c, crate::card::CardFilter::PokemonOfTypeWithHpAtMost(kind, hp))
                     })
             }
@@ -1840,16 +1840,16 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     && side.in_play().iter().any(|p| state.pokemon(*p).damage > 0)
             }
             crate::card::AbilityEffect::OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(_) => {
-                !side.library.is_empty()
+                !side.deck.is_empty()
             }
             crate::card::AbilityEffect::OncePerTurnMayLookAtTopCardsAttachFoundBasicEnergyOfType(
                 _,
                 _,
-            ) => !side.library.is_empty(),
+            ) => !side.deck.is_empty(),
             crate::card::AbilityEffect::OncePerTurnWhileActiveMayLookAtTopCardsTakeASupporter(count) => {
                 side.active == Some(pokemon) && {
-                    let seen = (count as usize).min(side.library.len());
-                    side.library[side.library.len() - seen..].iter().any(|c| {
+                    let seen = (count as usize).min(side.deck.len());
+                    side.deck[side.deck.len() - seen..].iter().any(|c| {
                         state.matches_filter(*c, crate::card::CardFilter::TrainerOfKind(TrainerKind::Supporter))
                     })
                 }
@@ -1966,10 +1966,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
         }
         Action::FinishDiscardingFromHand => "Stop discarding from that hand".to_string(),
         Action::HealMegaEx { target } => format!("Heal {} fully", state.pokemon_def(target).name),
-        Action::TakeFromBottomOfLibrary { card } => {
-            format!("Take {} from the bottom of the library", state.def_of(card).name())
+        Action::TakeFromBottomOfDeck { card } => {
+            format!("Take {} from the bottom of the deck", state.def_of(card).name())
         }
-        Action::DeclineBottomOfLibrary => "Decline the bottom of the library".to_string(),
+        Action::DeclineBottomOfDeck => "Decline the bottom of the deck".to_string(),
         Action::ChooseDevolveTarget { target } => {
             format!("Devolve {}", state.pokemon_def(target).name)
         }
@@ -2009,8 +2009,8 @@ pub fn describe(state: &GameState, action: Action) -> String {
             format!("Bench {}", state.def_of(card).name())
         }
         Action::FinishSearchingBasicsOfType => "Stop searching".to_string(),
-        Action::TakeItemFromLibrary { card } => format!("Take {}", state.def_of(card).name()),
-        Action::TakeAnyCardFromLibrary { card } => format!("Take {}", state.def_of(card).name()),
+        Action::TakeItemFromDeck { card } => format!("Take {}", state.def_of(card).name()),
+        Action::TakeAnyCardFromDeck { card } => format!("Take {}", state.def_of(card).name()),
         Action::FinishSearchingAnyCards => "Stop searching".to_string(),
         Action::MoveOpponentsActiveEnergyToHand { card } => {
             format!("Move {} to their hand", state.def_of(card).name())
@@ -2103,9 +2103,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DeclinePsychicDraw => "Decline Psychic Draw".to_string(),
         Action::AcceptJewelSeeker => "Use Jewel Seeker".to_string(),
         Action::DeclineJewelSeeker => "Decline Jewel Seeker".to_string(),
-        Action::TakeTrainerCardFromLibrary { card } => format!("Take {}", state.def_of(card).name()),
+        Action::TakeTrainerCardFromDeck { card } => format!("Take {}", state.def_of(card).name()),
         Action::FinishSearchingTrainerCards => "Stop searching".to_string(),
-        Action::TakePokemonOfTypeOrStadiumFromLibrary { card } => {
+        Action::TakePokemonOfTypeOrStadiumFromDeck { card } => {
             format!("Take {}", state.def_of(card).name())
         }
         Action::FinishSearchingPokemonOfTypeOrStadium => "Stop searching".to_string(),
@@ -2145,10 +2145,10 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DiscardHandCardThenDraw { card } => {
             format!("Discard {}", state.def_of(card).name())
         }
-        Action::TakeAnyCardFromLibraryForAbility { card } => {
+        Action::TakeAnyCardFromDeckForAbility { card } => {
             format!("Take {}", state.def_of(card).name())
         }
-        Action::FinishSearchingLibraryForAnyCardAbility => "Stop searching".to_string(),
+        Action::FinishSearchingDeckForAnyCardAbility => "Stop searching".to_string(),
         Action::CopyDiscardedPokemonAttack { index } => {
             let card = match state.phase {
                 Phase::ChoosingDiscardedPokemonAttackToCopy { card, .. } => card,

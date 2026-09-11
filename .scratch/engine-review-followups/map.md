@@ -17,7 +17,7 @@ whole engine. The Spec axis found the load-bearing ADRs (0002/0007, 0003,
   your-Pokemon effects. A 0-base attack with `BonusDamageWithoutRuleBoxVsEx`
   yields 0 and never reaches the Tool loop.
 - **The mask.** `view.rs` copies `state.phase` verbatim. Several `Phase`
-  variants carry library `CardId`s. ADR 0086 carved out one card
+  variants carry deck `CardId`s. ADR 0086 carved out one card
   (Claw of Darkness); the general rule that `legal_actions` output and
   `Phase` fields sit outside the mask has no record.
 - **`settle` precedence.** `engine.rs:4564-4640` fixes an order — game

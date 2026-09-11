@@ -47,12 +47,12 @@ fn attach(state: &mut GameState, energy: CardDefId) {
     let card = side
         .hand
         .iter()
-        .chain(side.library.iter())
+        .chain(side.deck.iter())
         .find(|c| state.cards[c.index()].def == energy)
         .copied()
         .expect("the deck holds this Energy");
     state.remove_from_hand(player, card);
-    state.players[player.index()].library.retain(|c| *c != card);
+    state.players[player.index()].deck.retain(|c| *c != card);
     state.pokemon[active.index()].attached.push(card);
 }
 

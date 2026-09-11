@@ -148,14 +148,14 @@ fn ensure_in_hand(state: &mut GameState, player: PlayerId, def: CardDefId) -> Ca
     }
     let side = state.player(player);
     let card = *side
-        .library
+        .deck
         .iter()
         .chain(side.prizes.iter())
         .chain(side.discard.iter())
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deal put this card somewhere face down");
     let side = &mut state.players[player.index()];
-    side.library.retain(|c| *c != card);
+    side.deck.retain(|c| *c != card);
     side.prizes.retain(|c| *c != card);
     side.discard.retain(|c| *c != card);
     side.hand.push(card);
@@ -182,15 +182,15 @@ fn offered(state: &GameState) -> Vec<CardId> {
         .collect()
 }
 
-/// Put a copy of `def` into the discard pile, taking it from the library.
+/// Put a copy of `def` into the discard pile, taking it from the deck.
 fn deal_to_discard(state: &mut GameState, player: PlayerId, def: CardDefId) -> CardId {
     let card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deck holds this card");
-    state.players[player.index()].library.retain(|c| *c != card);
+    state.players[player.index()].deck.retain(|c| *c != card);
     state.players[player.index()].discard.push(card);
     card
 }
@@ -205,7 +205,7 @@ fn with_energy_search(set: Set) -> (Set, CardDefId) {
         kind: TrainerKind::Item,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::BasicEnergy,
                 to: Destination::Zone(Zone::Hand),
@@ -256,7 +256,7 @@ fn energy_search_is_admitted_from_the_artifact() {
 }
 
 #[test]
-fn energy_search_finds_one_basic_energy_from_the_library() {
+fn energy_search_finds_one_basic_energy_from_the_deck() {
     let (set, card) = with_energy_search(build());
     let mut state = game(&set, card, 3);
     let player = state.current;
@@ -327,7 +327,7 @@ fn with_energy_recycler(set: Set) -> (Set, CardDefId) {
             from: Zone::Discard,
             slots: vec![Slot {
                 filter: CardFilter::BasicEnergy,
-                to: Destination::Zone(Zone::Library),
+                to: Destination::Zone(Zone::Deck),
                 limit: 5,
                 excludes_type_of_previous: false,
                 peek: None,
@@ -353,14 +353,14 @@ fn energy_recycler_is_admitted_from_the_artifact() {
 }
 
 #[test]
-fn energy_recycler_shuffles_up_to_five_from_discard_into_the_library() {
+fn energy_recycler_shuffles_up_to_five_from_discard_into_the_deck() {
     let (set, card) = with_energy_recycler(build());
     let mut state = game(&set, card, 3);
     let player = state.current;
     let played = ensure_in_hand(&mut state, player, card);
     let e1 = deal_to_discard(&mut state, player, set.energy);
     let e2 = deal_to_discard(&mut state, player, set.energy);
-    let library_before = state.player(player).library.len();
+    let deck_before = state.player(player).deck.len();
 
     apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
     apply(&mut state, Action::TakeCard { card: e1 }).unwrap();
@@ -372,9 +372,9 @@ fn energy_recycler_shuffles_up_to_five_from_discard_into_the_library() {
     apply(&mut state, Action::FinishDeciding).unwrap();
 
     assert_eq!(state.phase, Phase::Main);
-    assert_eq!(state.player(player).library.len(), library_before + 2);
-    assert!(state.player(player).library.contains(&e1));
-    assert!(state.player(player).library.contains(&e2));
+    assert_eq!(state.player(player).deck.len(), deck_before + 2);
+    assert!(state.player(player).deck.contains(&e1));
+    assert!(state.player(player).deck.contains(&e2));
 }
 
 // --- Ticket 03: Team Rocket's Transceiver ---
@@ -401,7 +401,7 @@ fn with_team_rockets_transceiver(set: Set) -> (Set, CardDefId, CardDefId, CardDe
         kind: TrainerKind::Item,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::SupporterNameContains("Team Rocket"),
                 to: Destination::Zone(Zone::Hand),
@@ -436,9 +436,9 @@ fn team_rockets_transceiver_finds_only_a_team_rocket_supporter() {
     let player = state.current;
     let played = ensure_in_hand(&mut state, player, card);
     let petrel_card = deal_new_card(&mut state, player, petrel);
-    state.players[player.index()].library.push(petrel_card);
+    state.players[player.index()].deck.push(petrel_card);
     let ordinary_card = deal_new_card(&mut state, player, ordinary);
-    state.players[player.index()].library.push(ordinary_card);
+    state.players[player.index()].deck.push(ordinary_card);
 
     apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
     let choices = offered(&state);
@@ -574,7 +574,7 @@ fn with_secret_box(set: Set) -> (Set, CardDefId, CardDefId, CardDefId, CardDefId
         kind: TrainerKind::Item,
         requirement: Some(Requirement::DiscardOtherCardsFromHand(3)),
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![
                 Slot {
                     filter: CardFilter::TrainerOfKind(TrainerKind::Item),
@@ -650,7 +650,7 @@ fn secret_box_pays_its_cost_then_finds_one_of_each_kind() {
     }
     for def in [an_item, a_tool, a_supporter, a_stadium] {
         let placed = deal_new_card(&mut state, player, def);
-        state.players[player.index()].library.push(placed);
+        state.players[player.index()].deck.push(placed);
     }
 
     apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
@@ -692,7 +692,7 @@ fn secret_box_pays_its_cost_then_finds_one_of_each_kind() {
 }
 
 #[test]
-fn a_whole_library_search_shows_the_searcher_every_card_in_it() {
+fn a_whole_deck_search_shows_the_searcher_every_card_in_it() {
     use sim::view::PlayerView;
 
     let (set, card, an_item, a_tool, a_supporter, a_stadium) = with_secret_box(build());
@@ -704,7 +704,7 @@ fn a_whole_library_search_shows_the_searcher_every_card_in_it() {
     }
     for def in [an_item, a_tool, a_supporter, a_stadium] {
         let placed = deal_new_card(&mut state, player, def);
-        state.players[player.index()].library.push(placed);
+        state.players[player.index()].deck.push(placed);
     }
 
     apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
@@ -719,18 +719,18 @@ fn a_whole_library_search_shows_the_searcher_every_card_in_it() {
 
     let mine = PlayerView::of(&state, player);
     let shown = mine
-        .library_in_search
-        .expect("the searcher sees the whole library");
+        .deck_in_search
+        .expect("the searcher sees the whole deck");
     let shown_ids: std::collections::HashSet<_> = shown.iter().map(|c| c.id).collect();
-    let library_ids: std::collections::HashSet<_> =
-        state.player(player).library.iter().copied().collect();
-    assert_eq!(shown_ids, library_ids, "every library card is shown, no more");
+    let deck_ids: std::collections::HashSet<_> =
+        state.player(player).deck.iter().copied().collect();
+    assert_eq!(shown_ids, deck_ids, "every deck card is shown, no more");
 
     assert!(
         PlayerView::of(&state, player.opponent())
-            .library_in_search
+            .deck_in_search
             .is_none(),
-        "the opponent never sees the searcher's library"
+        "the opponent never sees the searcher's deck"
     );
 }
 
@@ -743,7 +743,7 @@ fn with_dusk_ball(set: Set) -> (Set, CardDefId) {
         name: "Dusk Ball",
         kind: TrainerKind::Item,
         requirement: None,
-        effect: TrainerEffect::LookAtBottomOfLibrary { count: 7 },
+        effect: TrainerEffect::LookAtBottomOfDeck { count: 7 },
     }));
     (Set { db, ..set }, card)
 }
@@ -768,19 +768,19 @@ fn dusk_ball_offers_only_a_pokemon_from_the_bottom_seven() {
     let mut state = game(&set, card, 3);
     let player = state.current;
     let played = ensure_in_hand(&mut state, player, card);
-    // Put a known Pokémon at the very bottom (index 0) of the library.
+    // Put a known Pokémon at the very bottom (index 0) of the deck.
     let bottom_mon = deal_new_card(&mut state, player, set.mon);
-    state.players[player.index()].library.insert(0, bottom_mon);
+    state.players[player.index()].deck.insert(0, bottom_mon);
     // And a known Pokémon far from the bottom, outside the 7-card window.
     let deep_mon = deal_new_card(&mut state, player, set.mon);
-    let deep_index = state.player(player).library.len() / 2;
-    state.players[player.index()].library.insert(deep_index, deep_mon);
+    let deep_index = state.player(player).deck.len() / 2;
+    state.players[player.index()].deck.insert(deep_index, deep_mon);
 
     apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
     let choices: Vec<CardId> = legal_actions(&state)
         .into_iter()
         .filter_map(|a| match a {
-            Action::TakeFromBottomOfLibrary { card } => Some(card),
+            Action::TakeFromBottomOfDeck { card } => Some(card),
             _ => None,
         })
         .collect();
@@ -790,7 +790,7 @@ fn dusk_ball_offers_only_a_pokemon_from_the_bottom_seven() {
         "a card outside the bottom 7 is not offered"
     );
     assert!(
-        legal_actions(&state).contains(&Action::DeclineBottomOfLibrary),
+        legal_actions(&state).contains(&Action::DeclineBottomOfDeck),
         "declining is always offered"
     );
 }
@@ -802,15 +802,15 @@ fn dusk_ball_takes_the_pokemon_and_shuffles_the_rest_back() {
     let player = state.current;
     let played = ensure_in_hand(&mut state, player, card);
     let bottom_mon = deal_new_card(&mut state, player, set.mon);
-    state.players[player.index()].library.insert(0, bottom_mon);
-    let library_before = state.player(player).library.len();
+    state.players[player.index()].deck.insert(0, bottom_mon);
+    let deck_before = state.player(player).deck.len();
 
     apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
-    apply(&mut state, Action::TakeFromBottomOfLibrary { card: bottom_mon }).unwrap();
+    apply(&mut state, Action::TakeFromBottomOfDeck { card: bottom_mon }).unwrap();
 
     assert_eq!(state.phase, Phase::Main);
     assert!(state.player(player).hand.contains(&bottom_mon));
-    assert_eq!(state.player(player).library.len(), library_before - 1);
+    assert_eq!(state.player(player).deck.len(), deck_before - 1);
 }
 
 // --- Ticket 09: Prime Catcher ---
@@ -1145,7 +1145,7 @@ fn tool_scrapper_is_admitted_from_the_artifact() {
     );
 }
 
-// --- Beyond the map: search the library for a Tera Pokemon ---
+// --- Beyond the map: search the deck for a Tera Pokemon ---
 
 #[test]
 fn tera_orb_finds_a_tera_pokemon_but_not_a_plain_one() {
@@ -1179,7 +1179,7 @@ fn tera_orb_finds_a_tera_pokemon_but_not_a_plain_one() {
         kind: TrainerKind::Item,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::TeraPokemon,
                 to: Destination::Zone(Zone::Hand),
@@ -1195,7 +1195,7 @@ fn tera_orb_finds_a_tera_pokemon_but_not_a_plain_one() {
     let mut state = game(&set, tera_orb_def, 3);
     let player = state.current;
     let tera_card = deal_new_card(&mut state, player, tera_mon);
-    state.players[player.index()].library.push(tera_card);
+    state.players[player.index()].deck.push(tera_card);
     let card = ensure_in_hand(&mut state, player, tera_orb_def);
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
@@ -1203,7 +1203,7 @@ fn tera_orb_finds_a_tera_pokemon_but_not_a_plain_one() {
 
     let plain_card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == set.mon)
         .expect("the deck holds a plain Testmon");
@@ -1211,7 +1211,7 @@ fn tera_orb_finds_a_tera_pokemon_but_not_a_plain_one() {
     assert!(actions.contains(&Action::TakeCard { card: tera_card }));
     assert!(
         !actions.contains(&Action::TakeCard { card: plain_card }),
-        "a plain (non-Tera) Pokemon in the library is not offered"
+        "a plain (non-Tera) Pokemon in the deck is not offered"
     );
 
     apply(&mut state, Action::TakeCard { card: tera_card }).unwrap();
@@ -1341,7 +1341,7 @@ fn master_ball_pulls_a_pokemon_from_the_deck() {
         &mut set.db,
         "test-master-ball",
         "Master Ball",
-        Zone::Library,
+        Zone::Deck,
         CardFilter::AnyPokemon,
         1,
         None,
@@ -1373,7 +1373,7 @@ fn boxed_order_ends_the_turn_after_the_search() {
         &mut set.db,
         "test-boxed-order",
         "Boxed Order",
-        Zone::Library,
+        Zone::Deck,
         CardFilter::TrainerOfKind(TrainerKind::Item),
         2,
         Some(Then::EndTurnIfMoved),
@@ -1383,7 +1383,7 @@ fn boxed_order_ends_the_turn_after_the_search() {
     let player = state.current;
     for _ in 0..2 {
         let c = deal_new_card(&mut state, player, boxed_order);
-        state.players[player.index()].library.push(c);
+        state.players[player.index()].deck.push(c);
     }
     let card = ensure_in_hand(&mut state, player, boxed_order);
 
@@ -1438,7 +1438,7 @@ fn precious_trolley_puts_basics_from_the_deck_onto_the_bench() {
         kind: TrainerKind::Item,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::PokemonOfStage(Stage::Basic),
                 to: Destination::Bench,
@@ -1482,7 +1482,7 @@ fn energy_search_pro_takes_one_basic_energy_per_type() {
         kind: TrainerKind::Item,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::BasicEnergy,
                 to: Destination::Zone(Zone::Hand),
@@ -1541,7 +1541,7 @@ fn mega_signal_pulls_a_mega_pokemon_from_the_deck() {
         &mut set.db,
         "test-mega-signal",
         "Mega Signal",
-        Zone::Library,
+        Zone::Deck,
         CardFilter::MegaPokemon,
         1,
         None,
@@ -1549,7 +1549,7 @@ fn mega_signal_pulls_a_mega_pokemon_from_the_deck() {
     let mut state = game(&set, signal, 3);
     let player = state.current;
     let in_deck = deal_new_card(&mut state, player, mega);
-    state.players[player.index()].library.push(in_deck);
+    state.players[player.index()].deck.push(in_deck);
     let card = ensure_in_hand(&mut state, player, signal);
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
@@ -1591,7 +1591,7 @@ fn tm_machine_pulls_technical_machine_tools_from_the_deck() {
         &mut set.db,
         "test-tm-machine",
         "TM Machine",
-        Zone::Library,
+        Zone::Deck,
         CardFilter::ToolNameContains("Technical Machine"),
         3,
         None,
@@ -1600,10 +1600,10 @@ fn tm_machine_pulls_technical_machine_tools_from_the_deck() {
     let player = state.current;
     for _ in 0..2 {
         let c = deal_new_card(&mut state, player, tm_tool);
-        state.players[player.index()].library.push(c);
+        state.players[player.index()].deck.push(c);
     }
     let decoy = deal_new_card(&mut state, player, plain_tool);
-    state.players[player.index()].library.push(decoy);
+    state.players[player.index()].deck.push(decoy);
     let card = ensure_in_hand(&mut state, player, machine);
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
@@ -1635,12 +1635,12 @@ fn hole_digging_shovel_discards_the_top_two_of_the_deck() {
     let mut state = game(&set, shovel, 3);
     let player = state.current;
     let card = ensure_in_hand(&mut state, player, shovel);
-    let deck_before = state.player(player).library.len();
+    let deck_before = state.player(player).deck.len();
     let discard_before = state.player(player).discard.len();
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
 
-    assert_eq!(state.player(player).library.len(), deck_before - 2);
+    assert_eq!(state.player(player).deck.len(), deck_before - 2);
     // Two from the deck, plus the Shovel itself.
     assert_eq!(state.player(player).discard.len(), discard_before + 3);
 }
@@ -1803,7 +1803,7 @@ fn team_rockets_proton_pulls_named_basics_to_hand() {
         "test-tr-proton",
         "Team Rocket's Proton",
         TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::BasicPokemonNameContains("Team Rocket's"),
                 to: Destination::Zone(Zone::Hand),
@@ -1818,11 +1818,11 @@ fn team_rockets_proton_pulls_named_basics_to_hand() {
     let player = state.current;
     for _ in 0..2 {
         let c = deal_new_card(&mut state, player, tr_mon);
-        state.players[player.index()].library.push(c);
+        state.players[player.index()].deck.push(c);
     }
     // A non-matching Basic must not be offered.
     let plain = deal_new_card(&mut state, player, set.mon);
-    state.players[player.index()].library.push(plain);
+    state.players[player.index()].deck.push(plain);
     let card = ensure_in_hand(&mut state, player, proton);
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
@@ -1906,7 +1906,7 @@ fn poke_ball_searches_for_a_pokemon_on_heads() {
         "test-poke-ball",
         "Poké Ball",
         TrainerEffect::CoinFlipThen(Box::new(TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::AnyPokemon,
                 to: Destination::Zone(Zone::Hand),

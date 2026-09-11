@@ -71,7 +71,7 @@ export function SideRow({
         </div>
       </div>
       <DeckPile
-        deck={side.library_count}
+        deck={side.deck_count}
         discard={side.discard}
         art={art}
         mine={mine}

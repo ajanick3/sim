@@ -60,7 +60,7 @@ one new thing to it.
   a further choice. Its once-per-turn limit spends on the attach, not
   on opening the choice. See ADR 0074.
 - Ticket 07: a Pokémon returning to the deck reuses rule 22's "moves
-  together" shape, into the library rather than hand or discard; the
+  together" shape, into the deck rather than hand or discard; the
   shuffle only happens once the draw actually landed something. See
   ADR 0075. This closes the map's own planned ticket order.
 

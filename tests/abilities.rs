@@ -225,7 +225,7 @@ fn benching_from_hand_offers_the_search() {
         effect: sim::card::TrainerEffect::MoveAttachedEnergy,
     }));
     let supporter = deal_new_card(&mut state, player, supporter_def);
-    state.players[player.index()].library.push(supporter);
+    state.players[player.index()].deck.push(supporter);
     let second_copy = deal_new_card(&mut state, player, carrier_def);
     state.players[player.index()].hand.push(second_copy);
 
@@ -243,7 +243,7 @@ fn benching_from_hand_offers_the_search() {
 }
 
 #[test]
-fn declining_the_search_leaves_the_library_alone() {
+fn declining_the_search_leaves_the_deck_alone() {
     let ability = Ability {
         name: "Last-Ditch Catch",
         effect: sim::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter,
@@ -258,7 +258,7 @@ fn declining_the_search_leaves_the_library_alone() {
         effect: sim::card::TrainerEffect::MoveAttachedEnergy,
     }));
     let supporter = deal_new_card(&mut state, player, supporter_def);
-    state.players[player.index()].library.push(supporter);
+    state.players[player.index()].deck.push(supporter);
     let second_copy = deal_new_card(&mut state, player, carrier_def);
     state.players[player.index()].hand.push(second_copy);
 
@@ -266,11 +266,11 @@ fn declining_the_search_leaves_the_library_alone() {
     apply(&mut state, Action::DeclineLastDitchCatch).unwrap();
 
     assert_eq!(state.phase, Phase::Main);
-    assert!(state.player(player).library.contains(&supporter));
+    assert!(state.player(player).deck.contains(&supporter));
 }
 
 #[test]
-fn no_supporter_in_library_opens_no_phase() {
+fn no_supporter_in_deck_opens_no_phase() {
     let ability = Ability {
         name: "Last-Ditch Catch",
         effect: sim::card::AbilityEffect::WhenBenchedFromHandMaySearchSupporter,
@@ -282,7 +282,7 @@ fn no_supporter_in_library_opens_no_phase() {
 
     apply(&mut state, Action::PlayBasic { card: second_copy }).unwrap();
 
-    assert_eq!(state.phase, Phase::Main, "no Supporter in the library");
+    assert_eq!(state.phase, Phase::Main, "no Supporter in the deck");
 }
 
 #[test]
@@ -302,8 +302,8 @@ fn does_not_trigger_a_second_time_the_same_turn() {
     }));
     let first_supporter = deal_new_card(&mut state, player, supporter_def);
     let second_supporter = deal_new_card(&mut state, player, supporter_def);
-    state.players[player.index()].library.push(first_supporter);
-    state.players[player.index()].library.push(second_supporter);
+    state.players[player.index()].deck.push(first_supporter);
+    state.players[player.index()].deck.push(second_supporter);
     let second_copy = deal_new_card(&mut state, player, carrier_def);
     let third_copy = deal_new_card(&mut state, player, carrier_def);
     state.players[player.index()].hand.push(second_copy);
@@ -545,16 +545,16 @@ fn jewel_seeker_searches_up_to_two_trainer_cards_with_a_tera_pokemon_in_play() {
         effect: TrainerEffect::MayDiscardUpToTwoToolsAnywhere,
     }));
     let stadium_card = deal_new_card(&mut state, player, stadium_def);
-    state.players[player.index()].library.push(stadium_card);
+    state.players[player.index()].deck.push(stadium_card);
 
     apply(&mut state, Action::Evolve { card: evolution, target: basic }).unwrap();
 
     assert!(matches!(state.phase, Phase::DecidingToUseJewelSeeker { .. }));
     apply(&mut state, Action::AcceptJewelSeeker).unwrap();
 
-    assert!(matches!(state.phase, Phase::SearchingLibraryForTrainerCards { remaining: 2, .. }));
-    apply(&mut state, Action::TakeTrainerCardFromLibrary { card: stadium_card }).unwrap();
-    assert!(matches!(state.phase, Phase::SearchingLibraryForTrainerCards { remaining: 1, .. }));
+    assert!(matches!(state.phase, Phase::SearchingDeckForTrainerCards { remaining: 2, .. }));
+    apply(&mut state, Action::TakeTrainerCardFromDeck { card: stadium_card }).unwrap();
+    assert!(matches!(state.phase, Phase::SearchingDeckForTrainerCards { remaining: 1, .. }));
     apply(&mut state, Action::FinishSearchingTrainerCards).unwrap();
 
     assert_eq!(state.phase, Phase::Main);
@@ -717,15 +717,15 @@ fn draws_then_shuffles_itself_into_the_deck_from_the_bench() {
     let bench_mon = state.put_into_play(player, bench_card);
     state.players[player.index()].bench.push(bench_mon);
     let before = state.player(player).hand.len();
-    let library_before = state.player(player).library.len();
+    let deck_before = state.player(player).deck.len();
 
     apply(&mut state, Action::UseAbility { pokemon: bench_mon }).unwrap();
 
     assert_eq!(state.player(player).hand.len(), before + 3);
     assert!(!state.player(player).bench.contains(&bench_mon), "left the Bench");
     assert_eq!(
-        state.player(player).library.len(),
-        library_before - 3 + 1,
+        state.player(player).deck.len(),
+        deck_before - 3 + 1,
         "3 drawn out, itself shuffled back in"
     );
     assert_eq!(state.phase, Phase::Main);
@@ -801,7 +801,7 @@ fn shuffles_itself_into_the_deck_while_active_no_draw() {
     let bench_card = deal_new_card(&mut state, player, bench_card_def);
     let bench_mon = state.put_into_play(player, bench_card);
     state.players[player.index()].bench.push(bench_mon);
-    let library_before = state.player(player).library.len();
+    let deck_before = state.player(player).deck.len();
 
     apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
 
@@ -810,7 +810,7 @@ fn shuffles_itself_into_the_deck_while_active_no_draw() {
 
     assert_eq!(state.phase, Phase::Main);
     assert_eq!(state.player(player).active, Some(bench_mon));
-    assert_eq!(state.player(player).library.len(), library_before + 1);
+    assert_eq!(state.player(player).deck.len(), deck_before + 1);
 }
 
 #[test]
@@ -978,12 +978,12 @@ fn searches_for_up_to_two_evolution_pokemon_of_a_type() {
         }],
     }));
     let evolution = deal_new_card(&mut state, player, evolution_def);
-    state.players[player.index()].library.push(evolution);
+    state.players[player.index()].deck.push(evolution);
     let before = state.player(player).hand.len();
 
     apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
 
-    assert!(matches!(state.phase, Phase::SearchingLibraryForEvolutionPokemonOfType { .. }));
+    assert!(matches!(state.phase, Phase::SearchingDeckForEvolutionPokemonOfType { .. }));
     apply(
         &mut state,
         Action::TakeEvolutionPokemonOfType { card: evolution },
@@ -1324,7 +1324,7 @@ fn searches_energy_attaches_to_benched_of_type_then_damages_it() {
         effect: None,
     }));
     let energy = deal_new_card(&mut state, player, energy_def);
-    state.players[player.index()].library.push(energy);
+    state.players[player.index()].deck.push(energy);
 
     apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
 
@@ -1408,7 +1408,7 @@ fn searches_on_the_first_turn_for_colorless_low_hp_pokemon() {
         }],
     }));
     let target = deal_new_card(&mut state, player, target_def);
-    state.players[player.index()].library.push(target);
+    state.players[player.index()].deck.push(target);
     let before = state.player(player).hand.len();
 
     apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
@@ -1788,7 +1788,7 @@ fn munkidori_is_admitted_from_the_artifact() {
     );
 }
 
-// --- Beyond the map: peek at the top of the library, take one, bury the rest ---
+// --- Beyond the map: peek at the top of the deck, take one, bury the rest ---
 
 #[test]
 fn takes_one_of_the_top_cards_seen_and_buries_the_rest() {
@@ -1800,10 +1800,10 @@ fn takes_one_of_the_top_cards_seen_and_buries_the_rest() {
     let player = state.current;
     let active = state.player(player).active.unwrap();
 
-    let library_before = state.player(player).library.clone();
-    let top = *library_before.last().unwrap();
-    let second_from_top = library_before[library_before.len() - 2];
-    let bottom_before = library_before[0];
+    let deck_before = state.player(player).deck.clone();
+    let top = *deck_before.last().unwrap();
+    let second_from_top = deck_before[deck_before.len() - 2];
+    let bottom_before = deck_before[0];
 
     apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
     assert!(matches!(state.phase, Phase::LookingAtTopCardsToTakeOne { .. }));
@@ -1816,16 +1816,16 @@ fn takes_one_of_the_top_cards_seen_and_buries_the_rest() {
 
     assert_eq!(state.phase, Phase::Main);
     assert!(state.player(player).hand.contains(&top));
-    assert_eq!(state.player(player).library.len(), library_before.len() - 1);
+    assert_eq!(state.player(player).deck.len(), deck_before.len() - 1);
     assert_eq!(
-        state.player(player).library[0], second_from_top,
+        state.player(player).deck[0], second_from_top,
         "the card not taken goes to the bottom"
     );
-    assert_eq!(state.player(player).library[1], bottom_before, "the old bottom shifts up");
+    assert_eq!(state.player(player).deck[1], bottom_before, "the old bottom shifts up");
 }
 
 #[test]
-fn recon_directive_not_offered_with_an_empty_library() {
+fn recon_directive_not_offered_with_an_empty_deck() {
     let ability = Ability {
         name: "Recon Directive",
         effect: sim::card::AbilityEffect::OncePerTurnMayLookAtTopCardsTakeOneRestToBottom(2),
@@ -1833,10 +1833,10 @@ fn recon_directive_not_offered_with_an_empty_library() {
     let (mut state, _carrier_def) = game(ability, 3);
     let player = state.current;
     let active = state.player(player).active.unwrap();
-    state.players[player.index()].library.clear();
+    state.players[player.index()].deck.clear();
 
     let result = apply(&mut state, Action::UseAbility { pokemon: active });
-    assert!(result.is_err(), "an empty library has nothing to peek at");
+    assert!(result.is_err(), "an empty deck has nothing to peek at");
 }
 
 #[test]
@@ -1851,7 +1851,7 @@ fn drakloak_is_admitted_from_the_artifact() {
     );
 }
 
-// --- Beyond the map: peek at the top of the library, attach found Energy one card at a time ---
+// --- Beyond the map: peek at the top of the deck, attach found Energy one card at a time ---
 
 #[test]
 fn attaches_found_energy_and_buries_everything_else() {
@@ -1873,9 +1873,9 @@ fn attaches_found_energy_and_buries_everything_else() {
         effect: None,
     }));
     let metal_energy = deal_new_card(&mut state, player, metal_energy_def);
-    let library_len_before = state.player(player).library.len();
-    let other_top_card = *state.player(player).library.last().unwrap();
-    state.players[player.index()].library.push(metal_energy);
+    let deck_len_before = state.player(player).deck.len();
+    let other_top_card = *state.player(player).deck.last().unwrap();
+    state.players[player.index()].deck.push(metal_energy);
 
     apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
     assert!(matches!(state.phase, Phase::ResolvingEnergyFoundInTopPeek { .. }));
@@ -1893,12 +1893,12 @@ fn attaches_found_energy_and_buries_everything_else() {
 
     assert_eq!(state.phase, Phase::Main);
     assert!(state.pokemon(active).attached.contains(&metal_energy));
-    assert_eq!(state.player(player).library[0], other_top_card, "buried at the bottom");
-    assert_eq!(state.player(player).library.len(), library_len_before);
+    assert_eq!(state.player(player).deck[0], other_top_card, "buried at the bottom");
+    assert_eq!(state.player(player).deck.len(), deck_len_before);
 }
 
 #[test]
-fn metal_maker_not_offered_with_an_empty_library() {
+fn metal_maker_not_offered_with_an_empty_deck() {
     let ability = Ability {
         name: "Metal Maker",
         effect: sim::card::AbilityEffect::OncePerTurnMayLookAtTopCardsAttachFoundBasicEnergyOfType(
@@ -1909,10 +1909,10 @@ fn metal_maker_not_offered_with_an_empty_library() {
     let (mut state, _carrier_def) = game(ability, 3);
     let player = state.current;
     let active = state.player(player).active.unwrap();
-    state.players[player.index()].library.clear();
+    state.players[player.index()].deck.clear();
 
     let result = apply(&mut state, Action::UseAbility { pokemon: active });
-    assert!(result.is_err(), "an empty library has nothing to peek at");
+    assert!(result.is_err(), "an empty deck has nothing to peek at");
 }
 
 #[test]
@@ -2036,7 +2036,7 @@ fn crustle_is_admitted_from_the_artifact() {
     );
 }
 
-// --- Beyond the map: peek at the top of the library for a Supporter, shuffle back ---
+// --- Beyond the map: peek at the top of the deck for a Supporter, shuffle back ---
 
 #[test]
 fn takes_a_supporter_seen_at_the_top_and_shuffles_the_rest_back() {
@@ -2056,8 +2056,8 @@ fn takes_a_supporter_seen_at_the_top_and_shuffles_the_rest_back() {
         effect: sim::card::TrainerEffect::MoveAttachedEnergy,
     }));
     let supporter = deal_new_card(&mut state, player, supporter_def);
-    let library_len_before = state.player(player).library.len();
-    state.players[player.index()].library.push(supporter);
+    let deck_len_before = state.player(player).deck.len();
+    state.players[player.index()].deck.push(supporter);
 
     apply(&mut state, Action::UseAbility { pokemon: active }).unwrap();
     assert!(matches!(state.phase, Phase::LookingAtTopCardsForSupporter { .. }));
@@ -2070,7 +2070,7 @@ fn takes_a_supporter_seen_at_the_top_and_shuffles_the_rest_back() {
 
     assert_eq!(state.phase, Phase::Main);
     assert!(state.player(player).hand.contains(&supporter));
-    assert_eq!(state.player(player).library.len(), library_len_before);
+    assert_eq!(state.player(player).deck.len(), deck_len_before);
 }
 
 #[test]
@@ -2099,7 +2099,7 @@ fn attract_customers_not_offered_with_no_supporter_in_the_peek() {
     let (mut state, _carrier_def) = game(ability, 3);
     let player = state.current;
     let active = state.player(player).active.unwrap();
-    state.players[player.index()].library.clear();
+    state.players[player.index()].deck.clear();
 
     let result = apply(&mut state, Action::UseAbility { pokemon: active });
     assert!(result.is_err(), "no Supporter in the deck at all, let alone the peek");
@@ -2339,12 +2339,12 @@ fn pay_and_attack_fairy_zone(state: &mut GameState) {
         let card = side
             .hand
             .iter()
-            .chain(side.library.iter())
+            .chain(side.deck.iter())
             .find(|c| state.def_of(**c).is_energy())
             .copied()
             .expect("the deck holds Energy");
         state.remove_from_hand(player, card);
-        state.players[player.index()].library.retain(|c| *c != card);
+        state.players[player.index()].deck.retain(|c| *c != card);
         state.pokemon[active.index()].attached.push(card);
     }
     let attack = legal_actions(state)
@@ -2603,12 +2603,12 @@ fn pay_and_attack_flower_curtain(state: &mut GameState) {
         let card = side
             .hand
             .iter()
-            .chain(side.library.iter())
+            .chain(side.deck.iter())
             .find(|c| state.def_of(**c).is_energy())
             .copied()
             .expect("the deck holds Energy");
         state.remove_from_hand(player, card);
-        state.players[player.index()].library.retain(|c| *c != card);
+        state.players[player.index()].deck.retain(|c| *c != card);
         state.pokemon[active.index()].attached.push(card);
     }
     let attack = legal_actions(state)
@@ -2808,12 +2808,12 @@ fn pay_and_attack_spherical_shield(state: &mut GameState) {
         let card = side
             .hand
             .iter()
-            .chain(side.library.iter())
+            .chain(side.deck.iter())
             .find(|c| state.def_of(**c).is_energy())
             .copied()
             .expect("the deck holds Energy");
         state.remove_from_hand(player, card);
-        state.players[player.index()].library.retain(|c| *c != card);
+        state.players[player.index()].deck.retain(|c| *c != card);
         state.pokemon[active.index()].attached.push(card);
     }
     let attack = legal_actions(state)
@@ -3048,12 +3048,12 @@ fn pay_and_attack_cobalt_command(state: &mut GameState) {
         let card = side
             .hand
             .iter()
-            .chain(side.library.iter())
+            .chain(side.deck.iter())
             .find(|c| state.def_of(**c).is_energy())
             .copied()
             .expect("the deck holds Energy");
         state.remove_from_hand(player, card);
-        state.players[player.index()].library.retain(|c| *c != card);
+        state.players[player.index()].deck.retain(|c| *c != card);
         state.pokemon[active.index()].attached.push(card);
     }
     let attack = legal_actions(state)
@@ -3180,12 +3180,12 @@ fn lose_cool_boosts_the_carriers_own_attack_once_it_carries_damage() {
             .player(player)
             .hand
             .iter()
-            .chain(state.player(player).library.iter())
+            .chain(state.player(player).deck.iter())
             .find(|c| state.def_of(**c).is_energy())
             .copied()
             .expect("the deck holds Energy");
         state.remove_from_hand(player, energy_card);
-        state.players[player.index()].library.retain(|c| *c != energy_card);
+        state.players[player.index()].deck.retain(|c| *c != energy_card);
         state.pokemon[active.index()].attached.push(energy_card);
     }
     let attack = legal_actions(&state)
@@ -3425,11 +3425,11 @@ fn seasoned_skill_reduces_blood_moons_cost_per_opponent_prize_taken() {
     let mut state = state;
     let energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()].deck.retain(|c| *c != energy);
     state.pokemon[active.index()].attached.push(energy);
 
     assert!(
@@ -3445,11 +3445,11 @@ fn seasoned_skill_grants_no_discount_with_no_prizes_taken() {
     let mut state = state;
     let energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()].deck.retain(|c| *c != energy);
     state.pokemon[active.index()].attached.push(energy);
 
     assert!(
@@ -3572,11 +3572,11 @@ fn plasma_bane_lets_trifrost_cost_just_one_colorless_when_the_opponent_discarded
     let active = state.player(player).active.unwrap();
     let energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()].deck.retain(|c| *c != energy);
     state.pokemon[active.index()].attached.push(energy);
 
     assert!(
@@ -3593,11 +3593,11 @@ fn plasma_bane_does_nothing_without_a_colress_in_the_opponents_discard() {
     let active = state.player(player).active.unwrap();
     let energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()].deck.retain(|c| *c != energy);
     state.pokemon[active.index()].attached.push(energy);
 
     assert!(
@@ -3629,7 +3629,7 @@ fn trade_discards_a_hand_card_then_draws_two() {
     let carrier = state.player(player).active.unwrap();
     let to_discard = state.player(player).hand[0];
     let hand_before = state.player(player).hand.len();
-    let library_before = state.player(player).library.len();
+    let deck_before = state.player(player).deck.len();
 
     apply(&mut state, Action::UseAbility { pokemon: carrier }).unwrap();
     assert!(matches!(state.phase, Phase::DiscardingHandCardThenDrawing { .. }));
@@ -3640,7 +3640,7 @@ fn trade_discards_a_hand_card_then_draws_two() {
     assert!(state.player(player).discard.contains(&to_discard));
     // -1 discarded, +2 drawn.
     assert_eq!(state.player(player).hand.len(), hand_before + 1);
-    assert_eq!(state.player(player).library.len(), library_before - 2);
+    assert_eq!(state.player(player).deck.len(), deck_before - 2);
 }
 
 #[test]
@@ -3883,11 +3883,11 @@ fn pay_and_attack_current(state: &mut GameState) {
     for _ in 0..cost_len {
         let energy = *state
             .player(player)
-            .library
+            .deck
             .iter()
             .find(|c| state.def_of(**c).is_energy())
             .unwrap();
-        state.players[player.index()].library.retain(|c| *c != energy);
+        state.players[player.index()].deck.retain(|c| *c != energy);
         state.pokemon[active.index()].attached.push(energy);
     }
     let attack = legal_actions(state)
@@ -3956,11 +3956,11 @@ fn festival_lead_grants_a_second_attack_with_its_own_stadium_in_play() {
     for _ in 0..2 {
         let energy = *state
             .player(player)
-            .library
+            .deck
             .iter()
             .find(|c| state.def_of(**c).is_energy())
             .unwrap();
-        state.players[player.index()].library.retain(|c| *c != energy);
+        state.players[player.index()].deck.retain(|c| *c != energy);
         state.pokemon[attacker.index()].attached.push(energy);
     }
 
@@ -3989,11 +3989,11 @@ fn festival_lead_does_nothing_without_its_own_stadium_in_play() {
 
     let energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()].deck.retain(|c| *c != energy);
     state.pokemon[attacker.index()].attached.push(energy);
 
     let attack = legal_actions(&state).into_iter().find(|a| matches!(a, Action::Attack { .. })).unwrap();
@@ -4003,7 +4003,7 @@ fn festival_lead_does_nothing_without_its_own_stadium_in_play() {
 }
 
 #[test]
-fn boom_boom_groove_searches_the_library_while_the_active_carries_festival_lead() {
+fn boom_boom_groove_searches_the_deck_while_the_active_carries_festival_lead() {
     let mut db = CardDb::new();
     let festival_lead_ability =
         Ability { name: "Festival Lead", effect: sim::card::AbilityEffect::PassiveFestivalLead };
@@ -4119,10 +4119,10 @@ fn boom_boom_groove_searches_the_library_while_the_active_carries_festival_lead(
     let hand_before = state.player(player).hand.len();
 
     apply(&mut state, Action::UseAbility { pokemon: thwackey_bench }).unwrap();
-    assert!(matches!(state.phase, Phase::SearchingLibraryForAnyCardAbility { .. }));
+    assert!(matches!(state.phase, Phase::SearchingDeckForAnyCardAbility { .. }));
 
-    let card = state.player(player).library[0];
-    apply(&mut state, Action::TakeAnyCardFromLibraryForAbility { card }).unwrap();
+    let card = state.player(player).deck[0];
+    apply(&mut state, Action::TakeAnyCardFromDeckForAbility { card }).unwrap();
 
     assert_eq!(state.phase, Phase::Main);
     assert_eq!(state.player(player).hand.len(), hand_before + 1);
@@ -4234,11 +4234,11 @@ fn wild_growth_pays_a_four_grass_cost_with_only_two_grass_energy() {
     for _ in 0..2 {
         let energy = *state
             .player(player)
-            .library
+            .deck
             .iter()
             .find(|c| state.def_of(**c).is_energy())
             .unwrap();
-        state.players[player.index()].library.retain(|c| *c != energy);
+        state.players[player.index()].deck.retain(|c| *c != energy);
         state.pokemon[active.index()].attached.push(energy);
     }
 
@@ -4334,11 +4334,11 @@ fn without_wild_growth_two_grass_energy_falls_short_of_a_four_cost() {
     for _ in 0..2 {
         let energy = *state
             .player(player)
-            .library
+            .deck
             .iter()
             .find(|c| state.def_of(**c).is_energy())
             .unwrap();
-        state.players[player.index()].library.retain(|c| *c != energy);
+        state.players[player.index()].deck.retain(|c| *c != energy);
         state.pokemon[active.index()].attached.push(energy);
     }
 
@@ -4466,11 +4466,11 @@ fn toxic_subjugation_adds_five_more_damage_counters_at_the_checkup() {
 
     let energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()].deck.retain(|c| *c != energy);
     state.pokemon[carrier.index()].attached.push(energy);
     let attack = legal_actions(&state).into_iter().find(|a| matches!(a, Action::Attack { .. })).unwrap();
     apply(&mut state, attack).unwrap();
@@ -4492,11 +4492,11 @@ fn toxic_subjugation_does_nothing_once_benched() {
 
     let energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()].deck.retain(|c| *c != energy);
     state.pokemon[carrier.index()].attached.push(energy);
     let attack = legal_actions(&state).into_iter().find(|a| matches!(a, Action::Attack { .. })).unwrap();
     apply(&mut state, attack).unwrap();

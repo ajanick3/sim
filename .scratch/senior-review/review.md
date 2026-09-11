@@ -86,8 +86,8 @@ Code — judgement call, highest-value lesson).**
 
 ```rust
 // action.rs:738
-Phase::SearchingLibraryForBasics { player: whose, .. } => {
-    for card in &state.player(whose).library {
+Phase::SearchingDeckForBasics { player: whose, .. } => {
+    for card in &state.player(whose).deck {
         if state.matches_filter(*card, CardFilter::PokemonOfStage(Stage::Basic)) {
             actions.push(Action::TakeBasicPokemonForCallForFamily { card: *card });
         }
@@ -96,8 +96,8 @@ Phase::SearchingLibraryForBasics { player: whose, .. } => {
     return actions;
 }
 // action.rs:747 — the next arm, same shape
-Phase::SearchingLibraryForBasicsOfType { player: whose, kind, .. } => {
-    for card in &state.player(whose).library {
+Phase::SearchingDeckForBasicsOfType { player: whose, kind, .. } => {
+    for card in &state.player(whose).deck {
         if state.matches_filter(*card, CardFilter::BasicPokemonOfType(kind)) {
             actions.push(Action::TakeBasicPokemonOfTypeForEnergyAttach { card: *card });
         }
@@ -301,10 +301,10 @@ See "fix first" #1.
 copies `phase: state.phase` verbatim. `Phase` is `Copy` and several variants
 carry raw `CardId`s into hidden zones: `Phase::Deciding { card, previous, .. }`
 (`state.rs:189`), `ChoosingOneOf { card }` (`state.rs:235`),
-`LookingAtBottomOfLibrary`, the library-search phases. For the acting player
+`LookingAtBottomOfDeck`, the deck-search phases. For the acting player
 that is correct — they search their own deck. But `PlayerView::of(state,
 opponent)` copies the same `phase`, so an opponent view built mid-search would
-carry the searcher's library card identities. Latent, not live: `play.rs:88`
+carry the searcher's deck card identities. Latent, not live: `play.rs:88`
 and `selfplay.rs:44` build the view only for `player_to_act`. Nothing in
 `view.rs` sanitizes `phase`, so ADR 0006's "hidden" claim is only partly
 upheld.
@@ -362,7 +362,7 @@ one-line repoint of both to 0007 — raised here, not edited silently.
    reaches the Tool loop. Defensible as a reading, but it contradicts the
    documented order and the decision is unrecorded. Raise per the register; do
    not adjudicate against the real rulebook here.
-3. **`PlayerView` exposes `state.phase` verbatim, leaking library `CardId`s.**
+3. **`PlayerView` exposes `state.phase` verbatim, leaking deck `CardId`s.**
    Latent because callers only view for `player_to_act`. Either sanitize
    `phase` in `PlayerView::of`, or write the ADR that says the action list and
    phase payload are unmasked by design.

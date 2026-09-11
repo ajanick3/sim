@@ -64,12 +64,12 @@ fn game(prizes: u32) -> (GameState, u32) {
     let card = side
         .hand
         .iter()
-        .chain(side.library.iter())
+        .chain(side.deck.iter())
         .find(|c| state.def_of(**c).is_energy())
         .copied()
         .expect("the deck is mostly Energy");
     state.remove_from_hand(player, card);
-    state.players[player.index()].library.retain(|c| *c != card);
+    state.players[player.index()].deck.retain(|c| *c != card);
     state.pokemon[active.index()].attached.push(card);
 
     let before = state.player(player).prizes.len() as u32;

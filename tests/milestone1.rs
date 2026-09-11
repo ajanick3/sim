@@ -48,7 +48,7 @@ fn setup_deals_a_legal_opening_board() {
         assert!(side.active.is_some(), "each player starts with an Active");
         assert_eq!(side.prizes.len(), 6, "each player sets 6 Prizes aside");
         assert!(side.bench.len() <= 5, "the Bench holds 5");
-        let total = side.library.len() + side.hand.len() + side.prizes.len() + side.in_play().len();
+        let total = side.deck.len() + side.hand.len() + side.prizes.len() + side.in_play().len();
         assert_eq!(total, 60, "every card is somewhere");
     }
 }
@@ -130,12 +130,12 @@ fn a_knockout_takes_a_prize() {
             .hand
             .iter()
             .find(|c| matches(&state, c))
-            .or_else(|| side.library.iter().find(|c| matches(&state, c)))
+            .or_else(|| side.deck.iter().find(|c| matches(&state, c)))
             .copied()
             .expect("the deck holds Energy of both types");
         state.remove_from_hand(PlayerId::One, energy);
         state.players[PlayerId::One.index()]
-            .library
+            .deck
             .retain(|c| *c != energy);
         state.pokemon[attacker.index()].attached.push(energy);
     }
@@ -180,10 +180,10 @@ fn a_game_of_attacks_reaches_a_winner() {
 }
 
 #[test]
-fn an_empty_library_loses_the_game() {
+fn an_empty_deck_loses_the_game() {
     let (_, mut state) = game(2);
     let loser = state.current.opponent();
-    state.players[loser.index()].library.clear();
+    state.players[loser.index()].deck.clear();
     apply(&mut state, Action::EndTurn).unwrap();
     let outcome = state.outcome.expect("a player who cannot draw loses");
     assert_eq!(outcome.winner, loser.opponent());

@@ -150,14 +150,14 @@ fn ensure_in_hand(state: &mut GameState, player: PlayerId, def: CardDefId) -> Ca
     }
     let side = state.player(player);
     let card = *side
-        .library
+        .deck
         .iter()
         .chain(side.prizes.iter())
         .chain(side.discard.iter())
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deal put this card somewhere face down");
     let side = &mut state.players[player.index()];
-    side.library.retain(|c| *c != card);
+    side.deck.retain(|c| *c != card);
     side.prizes.retain(|c| *c != card);
     side.discard.retain(|c| *c != card);
     side.hand.push(card);
@@ -208,15 +208,15 @@ fn with_lanas_aid(set: Set) -> (Set, CardDefId) {
     (Set { db, ..set }, lanas_aid)
 }
 
-/// Put a copy of `def` into the discard pile, taking it from the library.
+/// Put a copy of `def` into the discard pile, taking it from the deck.
 fn deal_to_discard(state: &mut GameState, player: PlayerId, def: CardDefId) -> CardId {
     let card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == def)
         .expect("the deck holds this card");
-    state.players[player.index()].library.retain(|c| *c != card);
+    state.players[player.index()].deck.retain(|c| *c != card);
     state.players[player.index()].discard.push(card);
     card
 }
@@ -349,11 +349,11 @@ fn rust_syndicate_grunt_discards_an_energy_with_no_coin_flip() {
     let their_active = state.player(opponent).active.unwrap();
     let energy = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != energy);
+    state.players[opponent.index()].deck.retain(|c| *c != energy);
     state.pokemon[their_active.index()].attached.push(energy);
 
     assert!(legal_actions(&state).contains(&Action::PlayTrainer { card }));
@@ -402,11 +402,11 @@ fn with_ns_plan(set: Set) -> (Set, CardDefId) {
 fn attach_energy_to(state: &mut GameState, player: PlayerId, pokemon: PokemonId) -> CardId {
     let energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .expect("the deck is mostly Energy");
-    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()].deck.retain(|c| *c != energy);
     state.pokemon[pokemon.index()].attached.push(energy);
     energy
 }
@@ -605,20 +605,20 @@ fn rosas_encouragement_targets_only_a_stage_2_active_or_benched() {
     let active = state.player(player).active.unwrap();
     let stage2_card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == set.stage2)
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != stage2_card);
+    state.players[player.index()].deck.retain(|c| *c != stage2_card);
     state.pokemon[active.index()].cards.push(stage2_card);
 
     let energy = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.def_of(**c).is_energy())
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != energy);
+    state.players[player.index()].deck.retain(|c| *c != energy);
     state.players[player.index()].discard.push(energy);
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
@@ -728,11 +728,11 @@ fn az_tranquility_heals_an_ex_that_gets_displaced() {
     let active = state.player(player).active.unwrap();
     let ex_card = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == set.mon_ex)
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != ex_card);
+    state.players[player.index()].deck.retain(|c| *c != ex_card);
     state.pokemon[active.index()].cards = vec![ex_card];
     state.pokemon[active.index()].damage = 50;
     let bench = state.player(player).bench[0];
@@ -835,11 +835,11 @@ fn black_belts_training_adds_forty_only_against_an_ex() {
     // whatever Basic came up first, not necessarily this one.
     let ex_card = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == set.mon_ex)
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != ex_card);
+    state.players[opponent.index()].deck.retain(|c| *c != ex_card);
     state.pokemon[ex_defender.index()].cards = vec![ex_card];
 
     let played = ensure_in_hand(&mut state, player, card);
@@ -867,11 +867,11 @@ fn the_bonus_expires_once_the_turn_ends() {
     let defender = state.player(opponent).active.unwrap();
     let ex_card = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == set.mon_ex)
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != ex_card);
+    state.players[opponent.index()].deck.retain(|c| *c != ex_card);
     state.pokemon[defender.index()].cards = vec![ex_card];
 
     let played = ensure_in_hand(&mut state, player, card);
@@ -914,20 +914,20 @@ fn gladions_final_battle_adds_eighty_only_without_a_rule_box() {
     // Give the opponent's Active a Rule Box (an ex) directly.
     let ex_card = *state
         .player(opponent)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == set.mon_ex)
         .unwrap();
-    state.players[opponent.index()].library.retain(|c| *c != ex_card);
+    state.players[opponent.index()].deck.retain(|c| *c != ex_card);
     state.pokemon[ordinary_defender.index()].cards = vec![ex_card];
 
     let played = *state
         .player(player)
-        .library
+        .deck
         .iter()
         .find(|c| state.cards[c.index()].def == card)
         .unwrap();
-    state.players[player.index()].library.retain(|c| *c != played);
+    state.players[player.index()].deck.retain(|c| *c != played);
     state.players[player.index()].hand = vec![played];
 
     apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
@@ -1271,7 +1271,7 @@ fn with_brocks_scouting(set: Set) -> (Set, CardDefId) {
         kind: TrainerKind::Supporter,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![
                 Slot {
                     filter: CardFilter::PokemonOfStage(Stage::Basic),
@@ -1342,7 +1342,7 @@ fn brocks_scouting_is_admitted_from_the_artifact() {
     assert_eq!(
         card.effect,
         TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![
                 Slot {
                     filter: CardFilter::PokemonOfStage(Stage::Basic),
@@ -1570,8 +1570,8 @@ fn janines_secret_art_attaches_to_each_chosen_target_and_poisons_the_active() {
     // Two Darkness Energy sit in the deck for the two searches.
     let e1 = deal_new_card(&mut state, player, dark_energy);
     let e2 = deal_new_card(&mut state, player, dark_energy);
-    state.players[player.index()].library.push(e1);
-    state.players[player.index()].library.push(e2);
+    state.players[player.index()].deck.push(e1);
+    state.players[player.index()].deck.push(e2);
 
     apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
     let targets: Vec<PokemonId> = legal_actions(&state)
@@ -2058,7 +2058,7 @@ fn iris_draws_up_to_six_after_the_discard_cost() {
             .unwrap();
         let side = &mut state.players[player.index()];
         side.hand.retain(|c| *c != spare);
-        side.library.push(spare);
+        side.deck.push(spare);
     }
     // Hand is now [iris, one spare, one spare] — enough to pay the cost.
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
@@ -2110,7 +2110,7 @@ fn with_hand_refresh(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
         kind: TrainerKind::Supporter,
         requirement: Some(Requirement::HandSizeIs(1)),
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::AnyCard,
                 to: Destination::Zone(Zone::Hand),
@@ -2173,7 +2173,7 @@ fn cassiopeia_searches_two_cards_when_it_is_the_last_in_hand() {
         .collect();
     let side = &mut state.players[player.index()];
     side.hand.retain(|c| *c == card);
-    side.library.extend(others);
+    side.deck.extend(others);
 
     apply(&mut state, Action::PlayTrainer { card }).unwrap();
     for _ in 0..2 {
@@ -2210,7 +2210,7 @@ fn with_deck_search(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
         kind: TrainerKind::Supporter,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::BasicEnergyOfType(Type::Fire),
                 to: Destination::Zone(Zone::Hand),
@@ -2227,7 +2227,7 @@ fn with_deck_search(set: Set) -> (Set, CardDefId, CardDefId, CardDefId) {
         kind: TrainerKind::Supporter,
         requirement: Some(Requirement::DiscardOtherCardsFromHand(1)),
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::PokemonOfType(Type::Lightning),
                 to: Destination::Zone(Zone::Hand),
@@ -2254,7 +2254,7 @@ fn firebreather_takes_up_to_seven_basic_fire_energy() {
     let player = state.current;
     for _ in 0..3 {
         let c = deal_new_card(&mut state, player, fire_energy);
-        state.players[player.index()].library.push(c);
+        state.players[player.index()].deck.push(c);
     }
     let card = ensure_in_hand(&mut state, player, firebreather);
     let before = state.player(player).hand.len();
@@ -2301,7 +2301,7 @@ fn canari_takes_lightning_pokemon_of_any_stage() {
     }));
     for _ in 0..2 {
         let c = deal_new_card(&mut state, player, spark);
-        state.players[player.index()].library.push(c);
+        state.players[player.index()].deck.push(c);
     }
     let card = ensure_in_hand(&mut state, player, canari);
 
@@ -2566,8 +2566,8 @@ fn billy_and_onare_draws_two_more_only_at_ten_in_hand() {
     side.hand.retain(|c| *c == card);
     for _ in 0..8 {
         let c = deal_new_card(&mut state, player, set.energy);
-        state.players[player.index()].library.push(c);
-        let c = state.players[player.index()].library.pop().unwrap();
+        state.players[player.index()].deck.push(c);
+        let c = state.players[player.index()].deck.pop().unwrap();
         state.players[player.index()].hand.push(c);
     }
 
@@ -2584,7 +2584,7 @@ fn emma_draws_one_per_pokemon_in_the_opponents_hand() {
     let opp = player.opponent();
     // Clear the opponent's hand, then give them exactly three Pokemon.
     let hand = std::mem::take(&mut state.players[opp.index()].hand);
-    state.players[opp.index()].library.extend(hand);
+    state.players[opp.index()].deck.extend(hand);
     for _ in 0..3 {
         let c = deal_new_card(&mut state, opp, set.mon);
         state.players[opp.index()].hand.push(c);
@@ -2720,7 +2720,7 @@ fn with_peek_search(set: Set) -> (Set, CardDefId, CardDefId) {
         kind: TrainerKind::Supporter,
         requirement: Some(Requirement::KnockedOutDuringOpponentsLastTurn),
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![Slot {
                 filter: CardFilter::AnyCard,
                 to: Destination::Zone(Zone::Hand),
@@ -2737,7 +2737,7 @@ fn with_peek_search(set: Set) -> (Set, CardDefId, CardDefId) {
         kind: TrainerKind::Supporter,
         requirement: None,
         effect: TrainerEffect::Decide {
-            from: Zone::Library,
+            from: Zone::Deck,
             slots: vec![
                 Slot {
                     filter: CardFilter::AnyPokemon,
@@ -2853,8 +2853,8 @@ fn jasmines_gaze_softens_the_opponents_attacks_next_turn_only() {
     assert_eq!(state.current, opp);
 
     // Pay for and use the opponent's attack.
-    let energy = *state.player(opp).library.iter().find(|c| state.def_of(**c).is_energy()).unwrap();
-    state.players[opp.index()].library.retain(|c| *c != energy);
+    let energy = *state.player(opp).deck.iter().find(|c| state.def_of(**c).is_energy()).unwrap();
+    state.players[opp.index()].deck.retain(|c| *c != energy);
     state.pokemon[hitter.index()].attached.push(energy);
     let attack = legal_actions(&state).into_iter().find(|a| matches!(a, Action::Attack { .. })).unwrap();
     apply(&mut state, attack).unwrap();

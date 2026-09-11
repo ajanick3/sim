@@ -95,10 +95,10 @@ fn print_board(state: &GameState) {
             })
             .collect();
         println!(
-            "{player:?}: Active {active} | Bench [{}] | hand {} | library {} | prizes {}",
+            "{player:?}: Active {active} | Bench [{}] | hand {} | deck {} | prizes {}",
             bench.join(", "),
             side.hand.len(),
-            side.library.len(),
+            side.deck.len(),
             side.prizes.len()
         );
     }

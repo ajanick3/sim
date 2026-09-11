@@ -94,7 +94,7 @@ touches it so far only adds damage, through an attack. A real primitive,
 deferred until a second card asks for it.
 
 **`Recon Directive` (Drakloak, 60 slots) and `Metal Maker` (Metang,
-16 slots)** each look at the top few cards of the Library, not the whole
+16 slots)** each look at the top few cards of the Deck, not the whole
 deck. `Phase::Deciding` always offers every match in the whole zone it
 searches; a bounded peek at the top is a different shape, and
 `Metal Maker`'s "attach any number you find, in any way you like" adds a

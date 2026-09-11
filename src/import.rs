@@ -412,7 +412,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Poké Ball" => (
             free,
             TrainerEffect::CoinFlipThen(Box::new(TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::AnyPokemon,
                     to: Destination::Zone(Zone::Hand),
@@ -426,7 +426,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Team Rocket's Proton" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::BasicPokemonNameContains("Team Rocket's"),
                     to: Destination::Zone(Zone::Hand),
@@ -440,7 +440,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Hop's Bag" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::BasicPokemonNameContains("Hop's"),
                     to: Destination::Bench,
@@ -502,7 +502,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Brilliant Blender" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::AnyCard,
                     to: Destination::Zone(Zone::Discard),
@@ -516,7 +516,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Master Ball" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::AnyPokemon,
                     to: Destination::Zone(Zone::Hand),
@@ -530,7 +530,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Hyper Aroma" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::PokemonOfStage(Stage::Stage1),
                     to: Destination::Zone(Zone::Hand),
@@ -544,7 +544,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Treasure Tracker" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::TrainerOfKind(TrainerKind::Tool),
                     to: Destination::Zone(Zone::Hand),
@@ -558,7 +558,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Boxed Order" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::TrainerOfKind(TrainerKind::Item),
                     to: Destination::Zone(Zone::Hand),
@@ -650,7 +650,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Firebreather" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::BasicEnergyOfType(Type::Fire),
                     to: Destination::Zone(Zone::Hand),
@@ -664,7 +664,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Canari" => (
             Some(Requirement::DiscardOtherCardsFromHand(1)),
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::PokemonOfType(Type::Lightning),
                     to: Destination::Zone(Zone::Hand),
@@ -682,7 +682,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Cassiopeia" => (
             Some(Requirement::HandSizeIs(1)),
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::AnyCard,
                     to: Destination::Zone(Zone::Hand),
@@ -718,7 +718,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Hassel" => (
             Some(Requirement::KnockedOutDuringOpponentsLastTurn),
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::AnyCard,
                     to: Destination::Zone(Zone::Hand),
@@ -732,7 +732,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Drayton" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![
                     Slot {
                         filter: CardFilter::AnyPokemon,
@@ -828,7 +828,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Poké Pad" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::PokemonWithoutRuleBox,
                     to: Destination::Zone(Zone::Hand),
@@ -843,7 +843,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Precious Trolley" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::PokemonOfStage(Stage::Basic),
                     to: Destination::Bench,
@@ -857,7 +857,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Energy Search Pro" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::BasicEnergy,
                     to: Destination::Zone(Zone::Hand),
@@ -871,7 +871,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Mega Signal" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::MegaPokemon,
                     to: Destination::Zone(Zone::Hand),
@@ -885,7 +885,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "TM Machine" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::ToolNameContains("Technical Machine"),
                     to: Destination::Zone(Zone::Hand),
@@ -899,7 +899,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Buddy-Buddy Poffin" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::BasicPokemonWithHpAtMost(70),
                     to: Destination::Bench,
@@ -913,7 +913,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Cyrano" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::PokemonEx,
                     to: Destination::Zone(Zone::Hand),
@@ -944,7 +944,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 from: Zone::Discard,
                 slots: vec![Slot {
                     filter: CardFilter::AnyPokemon,
-                    to: Destination::Zone(Zone::Library),
+                    to: Destination::Zone(Zone::Deck),
                     limit: 5,
                     excludes_type_of_previous: false,
                     peek: None,
@@ -955,7 +955,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Ultra Ball" => (
             Some(Requirement::DiscardOtherCardsFromHand(2)),
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::AnyPokemon,
                     to: Destination::Zone(Zone::Hand),
@@ -970,7 +970,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Tera Orb" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::TeraPokemon,
                     to: Destination::Zone(Zone::Hand),
@@ -984,7 +984,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Hilda" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![
                     Slot {
                         filter: CardFilter::EvolutionPokemon,
@@ -1008,7 +1008,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Colress's Tenacity" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![
                     Slot {
                         filter: CardFilter::TrainerOfKind(TrainerKind::Stadium),
@@ -1031,7 +1031,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Dawn" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![
                     Slot {
                         filter: CardFilter::PokemonOfStage(Stage::Basic),
@@ -1065,7 +1065,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Crispin" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![
                     Slot {
                         filter: CardFilter::BasicEnergy,
@@ -1089,7 +1089,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Team Rocket's Petrel" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::AnyTrainer,
                     to: Destination::Zone(Zone::Hand),
@@ -1131,7 +1131,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Pokégear 3.0" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::TrainerOfKind(TrainerKind::Supporter),
                     to: Destination::Zone(Zone::Hand),
@@ -1145,7 +1145,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Bug Catching Set" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::PokemonOfTypeOrBasicEnergyOfType(Type::Grass),
                     to: Destination::Zone(Zone::Hand),
@@ -1159,10 +1159,10 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Ciphermaniac's Codebreaking" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::AnyCard,
-                    to: Destination::TopOfLibraryInOrder,
+                    to: Destination::TopOfDeckInOrder,
                     limit: 2,
                     excludes_type_of_previous: false,
                     peek: None,
@@ -1257,7 +1257,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Brock's Scouting" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![
                     Slot {
                         filter: CardFilter::PokemonOfStage(Stage::Basic),
@@ -1282,7 +1282,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Energy Search" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::BasicEnergy,
                     to: Destination::Zone(Zone::Hand),
@@ -1308,7 +1308,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             },
         ),
         "Hand Trimmer" => (free, TrainerEffect::BothDiscardDownTo(5)),
-        "Dusk Ball" => (free, TrainerEffect::LookAtBottomOfLibrary { count: 7 }),
+        "Dusk Ball" => (free, TrainerEffect::LookAtBottomOfDeck { count: 7 }),
         "Prime Catcher" => (free, TrainerEffect::SwitchOpponentActiveThenOwn),
         "Strange Timepiece" => (free, TrainerEffect::DevolveChosen),
         "Air Balloon" => (free, TrainerEffect::ReducesRetreatCost(2)),
@@ -1342,7 +1342,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Secret Box" => (
             Some(Requirement::DiscardOtherCardsFromHand(3)),
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![
                     Slot {
                         filter: CardFilter::TrainerOfKind(TrainerKind::Item),
@@ -1379,7 +1379,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Team Rocket's Transceiver" => (
             free,
             TrainerEffect::Decide {
-                from: Zone::Library,
+                from: Zone::Deck,
                 slots: vec![Slot {
                     filter: CardFilter::SupporterNameContains("Team Rocket"),
                     to: Destination::Zone(Zone::Hand),
@@ -1396,7 +1396,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 from: Zone::Discard,
                 slots: vec![Slot {
                     filter: CardFilter::BasicEnergy,
-                    to: Destination::Zone(Zone::Library),
+                    to: Destination::Zone(Zone::Deck),
                     limit: 5,
                     excludes_type_of_previous: false,
                     peek: None,
@@ -1977,8 +1977,8 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::DiscardsOwnEnergyThenDamagesChosenBenched(90)
         }
         ("Abra", "Teleportation Attack") => AttackEffect::SwitchOwnActive,
-        ("Drilbur", "Call for Family") => AttackEffect::SearchLibraryForBasicPokemonToBench(2),
-        ("Toxel", "Call for Family") => AttackEffect::SearchLibraryForBasicPokemonToBench(2),
+        ("Drilbur", "Call for Family") => AttackEffect::SearchDeckForBasicPokemonToBench(2),
+        ("Toxel", "Call for Family") => AttackEffect::SearchDeckForBasicPokemonToBench(2),
         ("Hoothoot", "Silent Wing") => AttackEffect::RevealOpponentsHand,
         ("Mega Sharpedo ex", "Greedy Fang") => AttackEffect::DrawCards(2),
         ("Mega Sharpedo ex", "Hungry Jaws") => AttackEffect::BonusDamageIfOwnDamaged(150),
@@ -1987,7 +1987,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::MayReturnOpponentsActiveEnergyToHand(2)
         }
         ("Dedenne", "Electromagnetic Sonar") => AttackEffect::TakeTrainerFromDiscard,
-        ("Dwebble", "Ascension") => AttackEffect::SearchLibraryToEvolveSelf,
+        ("Dwebble", "Ascension") => AttackEffect::SearchDeckToEvolveSelf,
         ("Beldum", "Iron Tackle") => AttackEffect::Recoil(10),
         ("Dunsparce", "Trading Places") => AttackEffect::SwitchOwnActive,
         ("Moltres", "Fighting Wings") => AttackEffect::BonusDamageIfDefenderIsEx(90),
@@ -1996,7 +1996,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Torchic", "Collect") => AttackEffect::DrawCards(1),
         ("Rabsca", "Triple Draw") => AttackEffect::DrawCards(3),
         ("Rabsca", "Psychic") => AttackEffect::DamagePerCount(Count::DefenderEnergyAttachedCount, 30),
-        ("Rabsca", "Counterturn") => AttackEffect::BonusDamageIfOwnLibraryAtMost(3, 200),
+        ("Rabsca", "Counterturn") => AttackEffect::BonusDamageIfOwnDeckAtMost(3, 200),
         ("Iron Crown ex", "Twin Shotels") => AttackEffect::DamageTwoChosenOpponentPokemon(50),
         ("Koraidon ex", "Retribution Strike") => {
             AttackEffect::BonusDamagePerCount(Count::OwnDamageCounters, 10)
@@ -2040,7 +2040,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Hydrapple ex", "Syrup Storm") => {
             AttackEffect::BonusDamagePerCount(Count::OwnEnergyOfTypeAttachedAcrossSideCount(Type::Grass), 30)
         }
-        ("Mega Excadrill ex", "Undermine") => AttackEffect::DiscardsTopOfOpponentsLibrary(2),
+        ("Mega Excadrill ex", "Undermine") => AttackEffect::DiscardsTopOfOpponentsDeck(2),
         ("Mega Lopunny ex", "Gale Thrust") => {
             AttackEffect::BonusDamageIfSelfPromotedThisTurn(170)
         }
@@ -2049,7 +2049,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         }
         ("Mega Absol ex", "Claw of Darkness") => AttackEffect::DiscardsChosenFromOpponentsHand,
         ("Celebi", "Traverse Time") => {
-            AttackEffect::SearchLibraryForUpToPokemonOfTypeOrStadiumToHand(Type::Grass, 3)
+            AttackEffect::SearchDeckForUpToPokemonOfTypeOrStadiumToHand(Type::Grass, 3)
         }
         ("Smoochum", "Delightful Kiss") => {
             AttackEffect::SearchesBasicEnergyOfTypeAttachToChosenBenched(Type::Psychic, 2)
@@ -2115,7 +2115,7 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
             AttackEffect::BonusDamageIfStadiumInPlayThenDiscardsIt(60)
         }
         ("Slowking", "Seek Inspiration") => {
-            AttackEffect::DiscardsTopOfLibraryThenCopiesItsAttackIfNoRuleBox
+            AttackEffect::DiscardsTopOfDeckThenCopiesItsAttackIfNoRuleBox
         }
         ("N's Zoroark ex", "Night Joker") => {
             AttackEffect::CopiesChosenBenchedPokemonAttackByNamePrefix("N's ")
@@ -2139,8 +2139,8 @@ fn known_attack(pokemon_name: &str, attack_name: &str) -> Option<AttackEffect> {
         ("Shaymin", "Reflect Energy") => AttackEffect::MoveOwnAttachedEnergyToChosenBenched,
         ("Latias ex", "Eon Blade") => AttackEffect::AttackerCannotAttackNextTurn,
         ("Metang", "Guard Press") => AttackEffect::SelfDamageReductionNextTurn(30),
-        ("Patrat", "Procurement") => AttackEffect::SearchLibraryForItemCardToHand,
-        ("Noctowl", "Talon Hunt") => AttackEffect::SearchLibraryForUpToCardsOfAnyKindToHand(2),
+        ("Patrat", "Procurement") => AttackEffect::SearchDeckForItemCardToHand,
+        ("Noctowl", "Talon Hunt") => AttackEffect::SearchDeckForUpToCardsOfAnyKindToHand(2),
         ("Dipplin", "Energy Loop") => AttackEffect::MoveOwnAttachedEnergyToHand,
         ("Seaking", "Peck Off") => AttackEffect::DiscardsDefendersTools,
         ("Crustle", "Superb Scissors") => AttackEffect::IgnoresDefendersEffects,
