@@ -1,5 +1,7 @@
 # 01 — Settings shows the catalog as a grouped, searchable grid
 
+Status: claimed
+
 **What to build:** The Settings page grows a new section: every distinct
 card name from `public/cards.json` as a tile, grouped by category
 (pokémon, supporter, item, tool, stadium, special-energy, energy) via a
