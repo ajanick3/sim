@@ -21,12 +21,12 @@ const CHIP = "rounded-full bg-panel/70 px-2 py-0.5 backdrop-blur";
 /** One player's row: prize stack, the Bench (five columns wide at
  *  least; a raised Bench limit squishes the row narrower rather than
  *  wrapping it), and the deck / discard pile. The seat label and hand
- *  count used to sit inside the bordered panel as a header line,
- *  costing it a whole row of height the Bench could use instead — they
- *  now sit below the panel as two small chips. `mine` tints the panel,
- *  scales the Bench to its full near-side width, and lets empty slots
- *  be placed onto — the opponent's Bench renders the same grid capped
- *  to `FAR_SCALE` of that width. */
+ *  count sit below the row as two small chips, not a header line, so
+ *  the Bench keeps that height; the row itself carries no border of
+ *  its own any more either, so the felt shows through on either side.
+ *  `mine` scales the Bench to its full near-side width and lets empty
+ *  slots be placed onto — the opponent's Bench renders the same grid
+ *  capped to `FAR_SCALE` of that width. */
 export function SideRow({
   side,
   label,
@@ -61,11 +61,7 @@ export function SideRow({
     <div className="flex flex-col gap-1">
       <div className={`flex items-start gap-2 ${mine ? "" : "flex-row-reverse"}`}>
         <PrizeStack count={side.prize_count} />
-        <div
-          className={`min-w-0 flex-1 rounded-lg border-2 p-1.5 ${
-            mine ? "border-accent/60" : "border-warn/50"
-          }`}
-        >
+        <div className="min-w-0 flex-1 p-1.5">
           <div
             className="mx-auto grid gap-1.5"
             style={{
