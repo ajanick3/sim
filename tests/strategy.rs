@@ -301,6 +301,37 @@ fn falls_back_to_random_once_nothing_above_matches() {
     assert!(legal.contains(&choice), "the fallback still only ever picks a legal action");
 }
 
+/// `Psychic Draw` and `Jewel Seeker` (`ADR 0072`) never cost the player
+/// anything to accept — the "Decline" half of the pair exists only for
+/// the rare "not now" edge, never a real trade-off. Without a tier for
+/// this pair, `choose` fell through every tier to the random fallback
+/// and declined the free draw roughly half the time.
+#[test]
+fn accepts_psychic_draw_instead_of_the_random_fallback() {
+    let state = game();
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let legal = [
+        Action::AcceptPsychicDraw,
+        Action::DeclinePsychicDraw,
+    ];
+    let mut view_state = state;
+    view_state.phase = Phase::DecidingToUsePsychicDraw {
+        player,
+        pokemon: active,
+        name: "Psychic Draw",
+        count: 3,
+    };
+    let view = PlayerView::of(&view_state, player);
+
+    // Every seed must agree — this is never a coin flip.
+    for seed in 0..8 {
+        let mut strategy = HeuristicStrategy::new(Box::new(SeededRng::new(seed)));
+        let choice = strategy.choose(&view, &view_state.db, &legal);
+        assert_eq!(choice, Action::AcceptPsychicDraw, "seed {seed} declined a free draw");
+    }
+}
+
 #[test]
 fn strategys_own_rng_is_independent_of_the_games() {
     // Two Strategy instances seeded differently from the same legal list
