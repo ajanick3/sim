@@ -4,7 +4,7 @@
 // drawn card when an id is missing or its image 404s.
 //
 // Run by hand — it hits the network — and commit the result:
-//   npm run art-index
+//   pnpm run art-index
 
 import { readFile, writeFile } from "node:fs/promises";
 

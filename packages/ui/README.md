@@ -12,8 +12,8 @@ the live board is a separate, later decision.
 ## Run it
 
 ```sh
-npm install
-npm run storybook   # http://localhost:6007
+pnpm install
+pnpm run storybook   # http://localhost:6007
 ```
 
 ## Shape

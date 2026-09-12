@@ -5,9 +5,9 @@
   "scripts": {
     "assets": "node scripts/build-assets.mjs",
     "wasm": "wasm-pack build ../crates/sim-wasm --target web --out-dir ../../web/public/pkg --out-name sim_wasm && rm -f public/pkg/.gitignore",
-    "predev": "npm run assets",
+    "predev": "pnpm run assets",
     "dev": "next dev",
-    "prebuild": "npm run assets && npm run storybook:static && npm run sb:static",
+    "prebuild": "pnpm run assets && pnpm run storybook:static && pnpm run sb:static",
     "storybook:static": "storybook build --output-dir public/storybook --quiet",
     "sb:static": "sh scripts/build-sb.sh",
     "build": "next build",
@@ -18,7 +18,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run lint && npm run fmt:check && npm run typecheck && npm run test",
+    "check": "pnpm run lint && pnpm run fmt:check && pnpm run typecheck && pnpm run test",
     "art-index": "node scripts/build-art-index.mjs",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
@@ -44,5 +44,6 @@
     "tailwindcss": "^4.3.3",
     "typescript": "^5.7.0",
     "vitest": "^2.1.9"
-  }
+  },
+  "packageManager": "pnpm@9.0.0"
 }

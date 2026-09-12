@@ -1,5 +1,5 @@
 // Copy the card artifact and every 2026 Worlds decklist into public/, and
-// write an index the deck selector reads. Run by `npm run assets` before
+// write an index the deck selector reads. Run by `pnpm run assets` before
 // dev and build.
 
 import { mkdirSync, readdirSync, readFileSync, writeFileSync, copyFileSync } from "node:fs";
