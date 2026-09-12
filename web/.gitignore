@@ -15,3 +15,4 @@ public/decks/
 # Storybook build output
 storybook-static/
 public/storybook/
+public/storybook-ui/
