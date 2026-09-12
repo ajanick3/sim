@@ -31,3 +31,15 @@ card), `DamageCounter`, `EnergyChip`, `ToolBadge`, `ActiveIndicator`
 A Region prop, not a Card prop: the opponent's side of the board reads
 at a smaller scale than the player's own. Lives on `ActiveRegion` and
 `BenchRegion`, since a Bench card's own size is fluid, not fixed.
+
+**ActionKind**:
+One of the five things a player does over the board — attach, retreat,
+attack, ability, evolve — each its own fixed icon on an `ActionFab`.
+Deliberately reimagined away from a labeled button list: the board
+reads by icon, not by a paragraph of button text. Attach is the
+Energy-attach action specifically; a Tool has no action of its own, it
+rides along with playing the Trainer card.
+
+**ActionFab**:
+One action, as a small round icon-only button — the atom `ActionBar`
+is built from.
