@@ -3,14 +3,15 @@ import type { ReactNode } from "react";
 import { CardImage } from "./CardImage";
 
 /** Every size a `Card` renders at, named rather than spelled out in
- *  pixels at each call site. `active`/`benchFar` are the top-of-print
- *  sliver a Pokémon in play has always shown; the rest are the whole
- *  card, roughly 5:7 portrait. */
+ *  pixels at each call site — every one the whole card, roughly 5:7
+ *  portrait. Active used to show only the top-of-print sliver; it
+ *  reads full now, the same treatment Bench and Hand already carry,
+ *  just larger — the dominant card the reference layout gives it. */
 export type CardSize = "active" | "activeFar" | "bench" | "hand" | "pile" | "picker" | "stadium";
 
 const SIZE_PX: Record<CardSize, { width: number; height: number; crop: "top" | "full" }> = {
-  active: { width: 168, height: 99, crop: "top" },
-  activeFar: { width: 126, height: 74, crop: "top" },
+  active: { width: 150, height: 210, crop: "full" },
+  activeFar: { width: 112, height: 157, crop: "full" },
   bench: { width: 64, height: 90, crop: "full" },
   hand: { width: 110, height: 154, crop: "full" },
   pile: { width: 46, height: 64, crop: "full" },

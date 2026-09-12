@@ -15,11 +15,12 @@ Regions. Also not "Slot": the engine already uses `Slot` for a
 search-effect's own per-card offer.
 
 **Card**:
-The one card frame this library draws, at a named `CardSize`, showing
-either the top-of-print sliver (Active) or the whole illustration
-(everything else). `fluid` lets a `Card` fill its parent's width at
-its size's own aspect ratio instead of a fixed pixel box — how a
-squished Bench row keeps working past five columns.
+The one card frame this library draws, at a named `CardSize`, always
+showing the whole illustration — Active included, reimagined away
+from the top-of-print sliver every other Pokémon TCG app shows there.
+`fluid` lets a `Card` fill its parent's width at its size's own aspect
+ratio instead of a fixed pixel box — how a squished Bench row keeps
+working past five columns.
 
 **Atom**:
 A small overlay a `Card` carries but doesn't draw itself: `HealthBar`
