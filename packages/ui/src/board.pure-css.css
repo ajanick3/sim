@@ -6,6 +6,13 @@
  * The Card/atom *content* inside each slot still comes from this
  * library's own components (they're built on MUI internally); only
  * the board's own scaffolding is plain CSS here.
+ *
+ * No grid-template-areas: each section is a plain 3-column grid, and
+ * every child gets only a grid-column (plus a row span for the two
+ * side columns) — never a named area. Two children sharing a column
+ * with no span between them stack in the order they appear in the
+ * JSX, so reordering the elements in board.pure-css.stories.tsx
+ * reorders them on the board directly, without touching this file.
  */
 
 .boardViewport {
@@ -30,16 +37,15 @@
  *
  * Opponent = 1
  * Player   = 1.618
+ *
+ * Stacked top to bottom in source order — swap the two <section>s in
+ * the story and the sides swap on the board.
  */
 .board {
   width: 100%;
   height: 100%;
 
   display: grid;
-  grid-template-areas:
-    "opponent"
-    "center"
-    "player";
   grid-template-rows: minmax(0, 1fr) 1px minmax(0, 1.618fr);
 
   transform: rotateX(4deg);
@@ -48,124 +54,88 @@
   background: #2d2a2e;
 }
 
-/* -------------------------
-   OPPONENT
-   ------------------------- */
-
-.opponent {
-  grid-area: opponent;
-  min-height: 0;
-
-  display: grid;
-  grid-template-areas:
-    "opponent-aside opponent-bench  opponent-prizes"
-    "opponent-aside opponent-active opponent-prizes";
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-rows: auto minmax(0, 1fr);
-
-  column-gap: var(--gap);
-  padding-inline: var(--gap);
-}
-
-.opponentAside {
-  grid-area: opponent-aside;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.opponentBench {
-  grid-area: opponent-bench;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: var(--gap);
-  padding-block: var(--gap);
-}
-
-.opponentActive {
-  grid-area: opponent-active;
-  display: grid;
-  /* Pull the Active toward the centre line. */
-  place-items: end center;
-  padding-bottom: calc(var(--gap) * 1.5);
-}
-
-.opponentPrizes {
-  grid-area: opponent-prizes;
-  display: flex;
-  align-items: center;
-}
-
-/* -------------------------
-   CENTER
-   ------------------------- */
-
 .centerLine {
-  grid-area: center;
   background: rgb(252 252 250 / 25%);
 }
 
 /* -------------------------
-   PLAYER
+   ONE SIDE (opponent or player)
    ------------------------- */
 
-.player {
-  grid-area: player;
+/* Three columns: a side column for Deck/Discard, the middle column
+   for Bench + Active, a side column for Prizes. Which side column is
+   which is just which class the JSX gives it — .sideLeft / .sideRight
+   — not a fixed "opponent" or "player" meaning, so the two sides can
+   mirror or match freely. */
+.side {
   min-height: 0;
-
   display: grid;
-  grid-template-areas:
-    "player-prizes player-active player-aside"
-    "player-prizes player-bench  player-aside"
-    "player-hand   player-hand   player-hand";
   grid-template-columns: auto minmax(0, 1fr) auto;
-  /* Active gets remaining flexible space; Bench and Hand size from
-     their own cards. */
-  grid-template-rows: minmax(0, 1fr) auto auto;
-
   column-gap: var(--gap);
   padding-inline: var(--gap);
 }
 
-.playerPrizes {
-  grid-area: player-prizes;
+.sideLeft {
+  grid-column: 1;
+  grid-row: span 2;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-self: center;
+}
+
+.sideRight {
+  grid-column: 3;
+  grid-row: span 2;
   display: flex;
   align-items: center;
 }
 
-.playerActive {
-  grid-area: player-active;
-  display: grid;
-  /* Symmetrical with the opponent's Active — both sit close to the
-     centre line. */
-  place-items: start center;
-  padding-top: calc(var(--gap) * 1.5);
-}
-
-.playerAside {
-  grid-area: player-aside;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.playerBench {
-  grid-area: player-bench;
+.bench {
+  grid-column: 2;
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--gap);
   padding-block: var(--gap);
 }
 
-.playerHand {
-  grid-area: player-hand;
+/* Whichever of .bench / .active the JSX lists first renders on top —
+   that's the whole reordering story for this middle column. */
+.active {
+  grid-column: 2;
+  display: grid;
+  place-items: center;
+}
+
+/* Pull the far side's Active down toward the centre line, and the
+   near side's Active up toward it, so both sit close to the divider
+   the way two hands would meet across a real table. */
+.activePullDown {
+  align-items: end;
+  padding-bottom: calc(var(--gap) * 1.5);
+}
+
+.activePullUp {
+  align-items: start;
+  padding-top: calc(var(--gap) * 1.5);
+}
+
+/* -------------------------
+   HAND (player only)
+   ------------------------- */
+
+/* Full width, its own row inside the player's .side grid — the same
+   auto-placement that gives Bench/Active their rows gives this a
+   third one, since nothing else claims all three columns at once. */
+.hand {
+  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   gap: var(--gap);
-  padding-block: var(--gap);
+  padding: 0 var(--gap) var(--gap);
 }
 
-.playerHandRow {
+.handRow {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--gap);
@@ -184,8 +154,7 @@
 
 /* Active cards need a width constraint, since their parent isn't a
    five-column grid. Both Active cards get IDENTICAL dimensions. */
-.opponentActive .cardSlot,
-.playerActive .cardSlot {
+.active .cardSlot {
   width: min(calc((100% - (var(--gap) * 4)) / 5), 100%);
 }
 
