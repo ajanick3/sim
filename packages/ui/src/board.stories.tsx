@@ -104,11 +104,13 @@ export const FullGame: Story = {
       <Box sx={{ gridArea: "stadium" }}>
         <StadiumRegion card={{ id: 30, name: "Pikachu ex", src: pikachuEx }} />
       </Box>
-      <Box sx={{ gridArea: "actives", position: "relative", width: 150, height: 260 }}>
-        <Box sx={{ position: "absolute", top: 0, left: 19 }}>
+      {/* The two Actives overlap by a negative margin on the second
+          one, not by absolute coordinates on either. */}
+      <Box sx={{ gridArea: "actives", width: 150, display: "flex", flexDirection: "column" }}>
+        <Box sx={{ ml: "19px" }}>
           <ActiveRegion mon={oppActive} far />
         </Box>
-        <Box sx={{ position: "absolute", bottom: 0, left: 0 }}>
+        <Box sx={{ mt: "-40px" }}>
           <ActiveRegion mon={yourActive} />
         </Box>
       </Box>

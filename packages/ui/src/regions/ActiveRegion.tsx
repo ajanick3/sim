@@ -1,4 +1,5 @@
 import { Card } from "../primitives/Card";
+import { CardOverlay } from "../atoms/CardOverlay";
 import { HealthBar } from "../atoms/HealthBar";
 import { DamageCounter } from "../atoms/DamageCounter";
 import { EnergyChip } from "../atoms/EnergyChip";
@@ -25,19 +26,19 @@ export function ActiveRegion({
   const card = (
     <Card size={far ? "activeFar" : "active"} src={mon?.src} name={mon?.name ?? "empty"} onClick={onClick}>
       {mon && (
-        <>
-          <HealthBar hp={mon.hp} tiny={far} />
-          {mon.damage > 0 && <DamageCounter damage={mon.damage} top="35%" left="60%" large={!far} />}
-          {tool && <ToolBadge name={tool.name} />}
-          {energies.length > 0 && (
-            <div style={{ position: "absolute", bottom: 2, right: 2, display: "flex", gap: 2 }}>
-              {energies.map((e) => (
-                <EnergyChip key={e.id} kind={e.energyType!} />
-              ))}
-            </div>
-          )}
-          {mon.conditions && <SpecialConditions conditions={mon.conditions} />}
-        </>
+        <CardOverlay
+          top={<HealthBar hp={mon.hp} tiny={far} />}
+          middle={
+            <>
+              {mon.damage > 0 && <DamageCounter damage={mon.damage} large={!far} />}
+              {mon.conditions && <SpecialConditions conditions={mon.conditions} />}
+            </>
+          }
+          bottomStart={tool && <ToolBadge name={tool.name} />}
+          bottomEnd={energies.map((e) => (
+            <EnergyChip key={e.id} kind={e.energyType!} />
+          ))}
+        />
       )}
     </Card>
   );

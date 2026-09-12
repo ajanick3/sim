@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
+import type { ReactNode } from "react";
 import Box from "@mui/material/Box";
 import { Card } from "./primitives/Card";
+import { CardOverlay } from "./atoms/CardOverlay";
 import { HealthBar } from "./atoms/HealthBar";
 import { DamageCounter } from "./atoms/DamageCounter";
 import { PokeBall } from "./atoms/PokeBall";
@@ -15,8 +17,12 @@ type Story = StoryObj<typeof meta>;
 
 const cardSlot = (i: number, opts?: { hp?: number; damage?: number }) => (
   <Card key={i} size="bench" fluid name="Pikachu ex" src={pikachuEx}>
-    {opts?.hp && <HealthBar hp={opts.hp} tiny />}
-    {opts?.damage ? <DamageCounter damage={opts.damage} top="40%" left="50%" /> : null}
+    {opts?.hp && (
+      <CardOverlay
+        top={<HealthBar hp={opts.hp} tiny />}
+        middle={opts.damage ? <DamageCounter damage={opts.damage} /> : null}
+      />
+    )}
   </Card>
 );
 
@@ -67,7 +73,7 @@ const prizeGrid = (remaining: number) => (
  * "one grid, named areas" spirit, to answer what the rest of a real
  * board's Regions want from this layout.
  */
-function ChatGPTLayoutBoard() {
+function ChatGPTLayoutBoard({ stadium }: { stadium?: ReactNode }) {
   return (
     <Box
       sx={{
@@ -120,7 +126,22 @@ function ChatGPTLayoutBoard() {
         </Box>
 
         {/* Centre line */}
-        <Box sx={{ gridArea: "center", bgcolor: "rgba(252,252,250,0.25)" }} />
+        <Box
+          sx={{
+            gridArea: "center",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            bgcolor: stadium ? "transparent" : "rgba(252,252,250,0.25)",
+          }}
+        >
+          {/* The Stadium sits in the centre-line's own flex flow, not
+              layered over the board from outside it — a taller box in
+              a 1px-tall grid row just overflows that row in normal
+              flow, the same way any block content taller than its
+              container does without needing to be positioned at all. */}
+          {stadium}
+        </Box>
 
         {/* Player half */}
         <Box
@@ -165,12 +186,5 @@ export const ChatGPTLayout: Story = { render: () => <ChatGPTLayoutBoard /> };
  *  own call: it belongs neither to the opponent's half nor the
  *  player's, so it sits on the line that separates them. */
 export const ChatGPTLayoutWithStadium: Story = {
-  render: () => (
-    <Box sx={{ position: "relative", width: 380, mx: "auto" }}>
-      <ChatGPTLayoutBoard />
-      <Box sx={{ position: "absolute", top: "38%", left: "50%", transform: "translate(-50%, -50%)" }}>
-        <StadiumRegion card={{ id: 30, name: "Pikachu ex", src: pikachuEx }} />
-      </Box>
-    </Box>
-  ),
+  render: () => <ChatGPTLayoutBoard stadium={<StadiumRegion card={{ id: 30, name: "Pikachu ex", src: pikachuEx }} />} />,
 };

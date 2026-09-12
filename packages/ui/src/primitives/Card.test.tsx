@@ -8,13 +8,15 @@ describe("Card", () => {
     expect(screen.getByText("Ultra Ball")).toBeInTheDocument();
   });
 
-  it("draws the art instead of the name fallback when src is given", () => {
+  it("draws the art as a background instead of the name fallback when src is given", () => {
     render(<Card size="hand" name="Munkidori" src="https://example.com/munkidori.png" />);
     expect(screen.queryByText("Munkidori")).not.toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Munkidori" })).toHaveAttribute(
-      "src",
-      "https://example.com/munkidori.png",
-    );
+    const card = screen.getByRole("img", { name: "Munkidori" });
+    // A CSS background, not an <img> — so children (a CardOverlay) can
+    // sit on top of it via plain flexbox, no position: absolute
+    // anywhere in the stack.
+    expect(card.tagName).not.toBe("IMG");
+    expect(card).toHaveStyle({ backgroundImage: 'url(https://example.com/munkidori.png)' });
   });
 
   it("fires onClick when tapped", () => {
