@@ -1,14 +1,14 @@
 #!/bin/sh
 # packages/ui is its own, separately-evolving package — not always
 # merged to whatever commit web/ itself is built from. Build its
-# Storybook into public/storybook-ui when it's there; skip quietly,
-# not fail the whole site's build, when it isn't.
+# Storybook into public/sb when it's there; skip quietly, not fail the
+# whole site's build, when it isn't.
 set -e
 
 DIR="../packages/ui"
 
 if [ ! -d "$DIR" ]; then
-  echo "packages/ui not present — skipping the /storybook-ui build."
+  echo "packages/ui not present — skipping the /sb build."
   exit 0
 fi
 
@@ -22,4 +22,4 @@ npm install --no-audit --no-fund --include=dev
 # `npm run` here picks up web/'s own `storybook` off PATH (a different
 # major version) instead of this package's own, since npm prepends
 # the *outer* script's bin dir too. This binary is unambiguous.
-./node_modules/.bin/storybook build --output-dir ../../web/public/storybook-ui --quiet
+./node_modules/.bin/storybook build --output-dir ../../web/public/sb --quiet

@@ -13,9 +13,10 @@ const nextConfig = {
       // index uses relative asset paths, so land on the file itself.
       { source: "/storybook", destination: "/storybook/index.html", permanent: false },
       // packages/ui's own, separate Storybook — a different component
-      // library (MUI, not this app's Tailwind), built into
-      // `public/storybook-ui` by the same `prebuild` step.
-      { source: "/storybook-ui", destination: "/storybook-ui/index.html", permanent: false },
+      // library (MUI, not this app's Tailwind), built into `public/sb`
+      // by the same `prebuild` step. Short name is deliberate — this
+      // one's typed often enough to earn it.
+      { source: "/sb", destination: "/sb/index.html", permanent: false },
     ];
   },
 };
