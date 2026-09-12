@@ -1,0 +1,196 @@
+/* board.pure-css.css
+ *
+ * The operator's pasted GameBoard.tsx/CSS, extended with the Regions
+ * that pasted code didn't cover (Prizes, Deck/Discard, Stadium), kept
+ * as a real .css file with real class names — no MUI Box, no sx prop.
+ * The Card/atom *content* inside each slot still comes from this
+ * library's own components (they're built on MUI internally); only
+ * the board's own scaffolding is plain CSS here.
+ */
+
+.boardViewport {
+  --gap: clamp(4px, 1.5vw, 8px);
+  --card-radius: 6px;
+
+  width: 380px;
+  height: 620px;
+  margin-inline: auto;
+
+  overflow: hidden;
+
+  perspective: 1200px;
+  perspective-origin: 50% 100%;
+
+  background: #221f22;
+  border-radius: 12px;
+}
+
+/*
+ * Golden ratio:
+ *
+ * Opponent = 1
+ * Player   = 1.618
+ */
+.board {
+  width: 100%;
+  height: 100%;
+
+  display: grid;
+  grid-template-areas:
+    "opponent"
+    "center"
+    "player";
+  grid-template-rows: minmax(0, 1fr) 1px minmax(0, 1.618fr);
+
+  transform: rotateX(4deg);
+  transform-origin: 50% 100%;
+
+  background: #2d2a2e;
+}
+
+/* -------------------------
+   OPPONENT
+   ------------------------- */
+
+.opponent {
+  grid-area: opponent;
+  min-height: 0;
+
+  display: grid;
+  grid-template-areas:
+    "opponent-aside opponent-bench  opponent-prizes"
+    "opponent-aside opponent-active opponent-prizes";
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
+
+  column-gap: var(--gap);
+  padding-inline: var(--gap);
+}
+
+.opponentAside {
+  grid-area: opponent-aside;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.opponentBench {
+  grid-area: opponent-bench;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--gap);
+  padding-block: var(--gap);
+}
+
+.opponentActive {
+  grid-area: opponent-active;
+  display: grid;
+  /* Pull the Active toward the centre line. */
+  place-items: end center;
+  padding-bottom: calc(var(--gap) * 1.5);
+}
+
+.opponentPrizes {
+  grid-area: opponent-prizes;
+  display: flex;
+  align-items: center;
+}
+
+/* -------------------------
+   CENTER
+   ------------------------- */
+
+.centerLine {
+  grid-area: center;
+  background: rgb(252 252 250 / 25%);
+}
+
+/* -------------------------
+   PLAYER
+   ------------------------- */
+
+.player {
+  grid-area: player;
+  min-height: 0;
+
+  display: grid;
+  grid-template-areas:
+    "player-prizes player-active player-aside"
+    "player-prizes player-bench  player-aside"
+    "player-hand   player-hand   player-hand";
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  /* Active gets remaining flexible space; Bench and Hand size from
+     their own cards. */
+  grid-template-rows: minmax(0, 1fr) auto auto;
+
+  column-gap: var(--gap);
+  padding-inline: var(--gap);
+}
+
+.playerPrizes {
+  grid-area: player-prizes;
+  display: flex;
+  align-items: center;
+}
+
+.playerActive {
+  grid-area: player-active;
+  display: grid;
+  /* Symmetrical with the opponent's Active — both sit close to the
+     centre line. */
+  place-items: start center;
+  padding-top: calc(var(--gap) * 1.5);
+}
+
+.playerAside {
+  grid-area: player-aside;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.playerBench {
+  grid-area: player-bench;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--gap);
+  padding-block: var(--gap);
+}
+
+.playerHand {
+  grid-area: player-hand;
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  padding-block: var(--gap);
+}
+
+.playerHandRow {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--gap);
+}
+
+/* -------------------------
+   CARDS
+   ------------------------- */
+
+.cardSlot {
+  /* Every physical card has exactly the same intrinsic aspect ratio.
+     Do NOT scale opponent cards separately. */
+  width: 100%;
+  min-width: 0;
+}
+
+/* Active cards need a width constraint, since their parent isn't a
+   five-column grid. Both Active cards get IDENTICAL dimensions. */
+.opponentActive .cardSlot,
+.playerActive .cardSlot {
+  width: min(calc((100% - (var(--gap) * 4)) / 5), 100%);
+}
+
+.prizeGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+}
