@@ -1,6 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import Stack from "@mui/material/Stack";
 import { Card } from "../primitives/Card";
+import { CardOverlay } from "./CardOverlay";
 import { HealthBar } from "./HealthBar";
 import { DamageCounter } from "./DamageCounter";
 import { EnergyChip } from "./EnergyChip";
@@ -13,23 +14,23 @@ const meta = { title: "atoms/overview" } satisfies Meta;
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-/** Every overlay atom, on a real Card, so they're seen the way a
- *  player actually sees them — laid over art, not floating alone. */
+/** Every overlay atom, on a real Card via `CardOverlay`, so they're
+ *  seen the way a player actually sees them — laid over art with
+ *  plain flexbox, not floating alone or positioned by coordinates. */
 export const OnACard: Story = {
   render: () => (
     <Stack direction="row" spacing={4} alignItems="flex-start">
       <Card size="bench" name="Pikachu ex" src={pikachuEx}>
-        <HealthBar hp={200} tiny />
-        <DamageCounter damage={60} top="40%" left="50%" />
-        <div style={{ position: "absolute", bottom: 2, right: 2, display: "flex", gap: 2 }}>
-          <EnergyChip kind="Lightning" size={10} />
-        </div>
-        <ToolBadge name="Rescue Board" />
+        <CardOverlay
+          top={<HealthBar hp={200} tiny />}
+          middle={<DamageCounter damage={60} />}
+          bottomStart={<ToolBadge name="Rescue Board" />}
+          bottomEnd={<EnergyChip kind="Lightning" size={10} />}
+        />
       </Card>
       <ActiveIndicator>
         <Card size="active" name="Pikachu ex" src={pikachuEx}>
-          <HealthBar hp={200} />
-          <DamageCounter damage={120} top="35%" left="60%" large />
+          <CardOverlay top={<HealthBar hp={200} />} middle={<DamageCounter damage={120} large />} />
         </Card>
       </ActiveIndicator>
     </Stack>

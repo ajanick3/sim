@@ -1,5 +1,6 @@
 import Box from "@mui/material/Box";
 import { Card } from "../primitives/Card";
+import { CardOverlay } from "../atoms/CardOverlay";
 import { HealthBar } from "../atoms/HealthBar";
 import { DamageCounter } from "../atoms/DamageCounter";
 import { EnergyChip } from "../atoms/EnergyChip";
@@ -51,18 +52,14 @@ export function BenchRegion({
             onClick={mon && onSelect ? () => onSelect(mon.id) : undefined}
           >
             {mon && (
-              <>
-                <HealthBar hp={mon.hp} tiny />
-                {mon.damage > 0 && <DamageCounter damage={mon.damage} top="40%" left="50%" />}
-                {tool && <ToolBadge name={tool.name} />}
-                {energies.length > 0 && (
-                  <div style={{ position: "absolute", bottom: 2, right: 2, display: "flex", gap: 1 }}>
-                    {energies.map((e) => (
-                      <EnergyChip key={e.id} kind={e.energyType!} size={10} />
-                    ))}
-                  </div>
-                )}
-              </>
+              <CardOverlay
+                top={<HealthBar hp={mon.hp} tiny />}
+                middle={mon.damage > 0 && <DamageCounter damage={mon.damage} />}
+                bottomStart={tool && <ToolBadge name={tool.name} />}
+                bottomEnd={energies.map((e) => (
+                  <EnergyChip key={e.id} kind={e.energyType!} size={10} />
+                ))}
+              />
             )}
           </Card>
         );

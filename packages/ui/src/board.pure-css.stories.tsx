@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { Card } from "./primitives/Card";
+import { CardOverlay } from "./atoms/CardOverlay";
 import { HealthBar } from "./atoms/HealthBar";
 import { DamageCounter } from "./atoms/DamageCounter";
 import { PokeBall } from "./atoms/PokeBall";
@@ -16,8 +17,9 @@ function CardSlot({ hp, damage }: { hp?: number; damage?: number }) {
   return (
     <div className="cardSlot">
       <Card size="bench" fluid name="Pikachu ex" src={pikachuEx}>
-        {hp && <HealthBar hp={hp} tiny />}
-        {damage ? <DamageCounter damage={damage} top="40%" left="50%" /> : null}
+        {hp && (
+          <CardOverlay top={<HealthBar hp={hp} tiny />} middle={damage ? <DamageCounter damage={damage} /> : null} />
+        )}
       </Card>
     </div>
   );

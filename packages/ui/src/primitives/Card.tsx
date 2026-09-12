@@ -1,6 +1,5 @@
 import Paper from "@mui/material/Paper";
 import type { ReactNode } from "react";
-import { CardImage } from "./CardImage";
 
 /** Every size a `Card` renders at, named rather than spelled out in
  *  pixels at each call site — every one the whole card, roughly 5:7
@@ -42,8 +41,12 @@ export type CardProps = {
   /** Lift and ring a card that's the current selection. */
   selected?: boolean;
   onClick?: () => void;
-  /** HP pill, damage counter, Energy chips, Tool badge — anything laid
-   *  over the art, positioned absolutely by the caller. */
+  /** HP pill, damage counter, Energy chips, Tool badge — usually a
+   *  `CardOverlay`, laid out by flexbox rather than positioned by its
+   *  own coordinates. When there's no art, this renders below the
+   *  plain-name fallback instead of over it — flexbox stacks, it
+   *  doesn't layer, so the rare no-art path reads as two rows rather
+   *  than one overlaid on the other. */
   children?: ReactNode;
 };
 
@@ -51,7 +54,13 @@ export type CardProps = {
  *  deck/discard pile, a search picker, the Stadium. `size` picks the
  *  box and whether the art shows cropped from the top or in full;
  *  `tilt` is the only "physics" a card carries for now — a fixed 3D
- *  lean, not a spring or a drag simulation. */
+ *  lean, not a spring or a drag simulation.
+ *
+ *  The art is a CSS background, not a layered `<img>`: a background
+ *  doesn't take part in flex layout, so `children` (a `CardOverlay`,
+ *  usually) can arrange itself on top of it with plain flexbox —
+ *  nothing in this component, or in what it draws over the art, uses
+ *  `position: absolute`. */
 export function Card({
   size,
   src = null,
@@ -63,27 +72,21 @@ export function Card({
   children,
 }: CardProps) {
   const { width, height, crop } = SIZE_PX[size];
+  const hasArt = !!src;
   return (
     <Paper
       component={onClick ? "button" : "div"}
       onClick={onClick}
       elevation={selected ? 8 : 2}
+      role={hasArt ? "img" : undefined}
+      aria-label={hasArt ? name : undefined}
       sx={{
-        position: "relative",
         width: fluid ? "100%" : width,
         height: fluid ? "auto" : height,
         aspectRatio: fluid ? `${width} / ${height}` : undefined,
         flex: "none",
         overflow: "hidden",
-        // A percentage, not a fixed spacing unit: a fixed radius reads
-        // chunky on a 46px pile and barely-there on a 150px Active —
-        // scaling with the box's own rendered size (CSS computes a
-        // percentage border-radius from each dimension) keeps every
-        // size, fixed or fluid, looking like the same card.
         borderRadius: `${CARD_RADIUS_PCT}%`,
-        // A perspective lean, not a flat spin: the top edge recedes as
-        // if the card were lying on a table and the viewer were seated
-        // in front of it, not looking straight down at it.
         transform: tilt ? `perspective(600px) rotateX(${tilt}deg)` : undefined,
         transformStyle: "preserve-3d",
         transformOrigin: "center bottom",
@@ -93,12 +96,17 @@ export function Card({
         border: "none",
         p: 0,
         bgcolor: "background.paper",
+        backgroundImage: hasArt ? `url(${src})` : undefined,
+        backgroundSize: "cover",
+        backgroundPosition: crop === "top" ? "top" : "center",
+        display: "flex",
+        flexDirection: "column",
         textAlign: "left",
         font: "inherit",
         color: "inherit",
       }}
     >
-      {src ? <CardImage src={src} alt={name} crop={crop} /> : <CardFallback name={name} />}
+      {!hasArt && <CardFallback name={name} />}
       {children}
     </Paper>
   );
@@ -110,8 +118,7 @@ function CardFallback({ name }: { name: string }) {
   return (
     <div
       style={{
-        position: "absolute",
-        inset: 0,
+        flex: 1,
         display: "flex",
         alignItems: "center",
         padding: 4,
