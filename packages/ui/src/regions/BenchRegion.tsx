@@ -32,8 +32,7 @@ export function BenchRegion({
   return (
     <Box
       sx={{
-        display: "grid",
-        gridTemplateColumns: `repeat(${cols}, 1fr)`,
+        display: "flex",
         gap: 0.75,
         width: "100%",
         maxWidth: maxWidth ?? (far ? FAR_WIDTH : NEAR_WIDTH),
@@ -43,25 +42,26 @@ export function BenchRegion({
       {slots.map((mon, i) => {
         const { energies, tool } = mon ? attachedParts(mon) : { energies: [], tool: null };
         return (
-          <Card
-            key={mon?.id ?? `empty-${i}`}
-            size="bench"
-            fluid
-            src={mon?.src}
-            name={mon?.name ?? "empty"}
-            onClick={mon && onSelect ? () => onSelect(mon.id) : undefined}
-          >
-            {mon && (
-              <CardOverlay
-                top={<HealthBar hp={mon.hp} tiny />}
-                middle={mon.damage > 0 && <DamageCounter damage={mon.damage} />}
-                bottomStart={tool && <ToolBadge name={tool.name} />}
-                bottomEnd={energies.map((e) => (
-                  <EnergyChip key={e.id} kind={e.energyType!} size={10} />
-                ))}
-              />
-            )}
-          </Card>
+          <Box key={mon?.id ?? `empty-${i}`} sx={{ flex: 1, minWidth: 0 }}>
+            <Card
+              size="bench"
+              fluid
+              src={mon?.src}
+              name={mon?.name ?? "empty"}
+              onClick={mon && onSelect ? () => onSelect(mon.id) : undefined}
+            >
+              {mon && (
+                <CardOverlay
+                  top={<HealthBar hp={mon.hp} tiny />}
+                  middle={mon.damage > 0 && <DamageCounter damage={mon.damage} />}
+                  bottomStart={tool && <ToolBadge name={tool.name} />}
+                  bottomEnd={energies.map((e) => (
+                    <EnergyChip key={e.id} kind={e.energyType!} size={10} />
+                  ))}
+                />
+              )}
+            </Card>
+          </Box>
         );
       })}
     </Box>
