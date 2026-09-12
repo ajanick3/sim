@@ -17,12 +17,12 @@ build of the engine.
 
 | script | does |
 | --- | --- |
-| `npm run dev` | dev server |
-| `npm run check` | lint, format check, typecheck, unit tests |
-| `npm run build` | production build |
-| `npm run storybook` | Storybook dev server on :6006 |
-| `npm run build-storybook` | static Storybook build |
-| `npm run wasm` | rebuild `public/pkg` from `crates/sim-wasm` |
+| `pnpm run dev` | dev server |
+| `pnpm run check` | lint, format check, typecheck, unit tests |
+| `pnpm run build` | production build |
+| `pnpm run storybook` | Storybook dev server on :6006 |
+| `pnpm run build-storybook` | static Storybook build |
+| `pnpm run wasm` | rebuild `public/pkg` from `crates/sim-wasm` |
 
 ## The stories rule
 

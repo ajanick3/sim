@@ -14,12 +14,12 @@ fi
 
 cd "$DIR"
 # Vercel's build runs with NODE_ENV=production, under which plain
-# `npm install` silently skips devDependencies — Storybook, Vite, and
+# `pnpm install` silently skips devDependencies — Storybook, Vite, and
 # everything this build actually needs live there, not in
-# `dependencies`. --include=dev overrides that regardless of NODE_ENV.
-npm install --no-audit --no-fund --include=dev
-# The local binary directly, not `npm run build-storybook` — a nested
-# `npm run` here picks up web/'s own `storybook` off PATH (a different
-# major version) instead of this package's own, since npm prepends
-# the *outer* script's bin dir too. This binary is unambiguous.
+# `dependencies`. --prod=false overrides that regardless of NODE_ENV.
+pnpm install --prod=false
+# The local binary directly, not `pnpm run build-storybook` — a nested
+# run here would pick up web/'s own `storybook` off PATH (a different
+# major version) instead of this package's own, since the outer
+# script's bin dir is already on it. This binary is unambiguous.
 ./node_modules/.bin/storybook build --output-dir ../../web/public/sb --quiet
