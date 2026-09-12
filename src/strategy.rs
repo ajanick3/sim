@@ -19,14 +19,23 @@ pub trait Strategy {
 }
 
 /// A first pass at sequencing, expected to be revisited: attack whenever
-/// legal; otherwise take the highest-priority legal action kind, first
+/// legal; then accept a "may" Ability prompt that never costs anything to
+/// take; otherwise take the highest-priority legal action kind, first
 /// legal option within a tier, falling back to a uniform-random pick among
 /// whatever remains once nothing above matches anything.
 ///
-/// The full order: `PlayBasic → UseAbility → Evolve → Stadium →` a Trainer
-/// ranked first by what it does (draws a card, searches the deck, or
-/// neither) and second by its own kind (Item before Supporter) `→ Tool →
-/// AttachEnergy → Retreat → random`.
+/// The full order: `Attack → AcceptPsychicDraw/AcceptJewelSeeker →
+/// PlayBasic → UseAbility → Evolve → Stadium →` a Trainer ranked first by
+/// what it does (draws a card, searches the deck, or neither) and second
+/// by its own kind (Item before Supporter) `→ Tool → AttachEnergy →
+/// Retreat → random`.
+///
+/// Every other `Accept*`/`Decline*` pair (attaching Energy, discarding,
+/// switching) trades something away for its benefit, so choosing between
+/// them needs real evaluation this first pass doesn't attempt yet — those
+/// still fall through to the random tier. `Psychic Draw` and `Jewel
+/// Seeker` (ADR 0072) are the two exceptions: drawing or searching for
+/// free never has a downside, so there is nothing to weigh.
 pub struct HeuristicStrategy {
     rng: Box<dyn Rng>,
 }
@@ -41,6 +50,12 @@ impl Strategy for HeuristicStrategy {
     fn choose(&mut self, view: &PlayerView, db: &CardDb, legal: &[Action]) -> Action {
         if let Some(attack) = legal.iter().find(|a| matches!(a, Action::Attack { .. })) {
             return *attack;
+        }
+        if let Some(free) = legal
+            .iter()
+            .find(|a| matches!(a, Action::AcceptPsychicDraw | Action::AcceptJewelSeeker))
+        {
+            return *free;
         }
 
         let tiers: [fn(&Action, &PlayerView, &CardDb) -> bool; 12] = [
