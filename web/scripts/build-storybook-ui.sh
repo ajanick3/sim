@@ -12,4 +12,10 @@ if [ ! -d "$DIR" ]; then
   exit 0
 fi
 
-(cd "$DIR" && npm install --no-audit --no-fund && npm run build-storybook -- --output-dir ../../web/public/storybook-ui --quiet)
+cd "$DIR"
+npm install --no-audit --no-fund
+# The local binary directly, not `npm run build-storybook` — a nested
+# `npm run` here picks up web/'s own `storybook` off PATH (a different
+# major version) instead of this package's own, since npm prepends
+# the *outer* script's bin dir too. This binary is unambiguous.
+./node_modules/.bin/storybook build --output-dir ../../web/public/storybook-ui --quiet
