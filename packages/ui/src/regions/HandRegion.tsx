@@ -2,10 +2,15 @@ import Box from "@mui/material/Box";
 import { Card } from "../primitives/Card";
 import type { PocketCard } from "./types";
 
-/** The Hand — fanned and tilted, the reference screenshot's look, laid
- *  out as an overlapping row rather than the live app's five-column
- *  grid. `count` alone (no cards) draws the opponent's Hand: a face-down
- *  pile with a number, never the cards themselves. */
+// Every held card leans back by the same amount — a hand of cards
+// held toward the viewer, not fanned open across a table, so a single
+// shared angle is right where the old per-card alternating spin
+// wasn't. See `Card`'s own `tilt` doc for what the angle now means.
+const HAND_TILT_DEG = 10;
+
+/** The Hand — a tilted, overlapping row rather than the live app's
+ *  five-column grid. `count` alone (no cards) draws the opponent's
+ *  Hand: a face-down pile with a number, never the cards themselves. */
 export function HandRegion({
   cards,
   count,
@@ -22,7 +27,6 @@ export function HandRegion({
       </Box>
     );
   }
-  const mid = (cards.length - 1) / 2;
   return (
     <Box sx={{ display: "flex", pl: 3 }}>
       {cards.map((c, i) => (
@@ -31,7 +35,7 @@ export function HandRegion({
             size="hand"
             src={c.src}
             name={c.name}
-            tilt={(i - mid) * 4}
+            tilt={HAND_TILT_DEG}
             onClick={onSelect ? () => onSelect(c.id) : undefined}
           />
         </Box>
