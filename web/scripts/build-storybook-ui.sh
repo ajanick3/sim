@@ -13,7 +13,11 @@ if [ ! -d "$DIR" ]; then
 fi
 
 cd "$DIR"
-npm install --no-audit --no-fund
+# Vercel's build runs with NODE_ENV=production, under which plain
+# `npm install` silently skips devDependencies — Storybook, Vite, and
+# everything this build actually needs live there, not in
+# `dependencies`. --include=dev overrides that regardless of NODE_ENV.
+npm install --no-audit --no-fund --include=dev
 # The local binary directly, not `npm run build-storybook` — a nested
 # `npm run` here picks up web/'s own `storybook` off PATH (a different
 # major version) instead of this package's own, since npm prepends
