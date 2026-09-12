@@ -10,7 +10,8 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "noEmit": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["@testing-library/jest-dom", "vitest/globals"]
   },
-  "include": ["src", ".storybook"]
+  "include": ["src", ".storybook", "vitest.config.ts", "vitest.setup.ts"]
 }
