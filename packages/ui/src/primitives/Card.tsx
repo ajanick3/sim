@@ -22,7 +22,9 @@ const SIZE_PX: Record<CardSize, { width: number; height: number; crop: "top" | "
 // A real card's corner curvature is proportional to its size, not a
 // fixed radius — matched here as one percentage every Card size (and
 // every fluid, squished-to-fit width) scales against consistently.
-const CARD_RADIUS_PCT = 5;
+// 5% read rounder than the card art's own printed corner; 3% is
+// closer to how tight a real card's curve actually is.
+const CARD_RADIUS_PCT = 3;
 
 export type CardProps = {
   size: CardSize;
