@@ -1,0 +1,55 @@
+import type { Meta, StoryObj } from "@storybook/react";
+import Stack from "@mui/material/Stack";
+import { Card, type CardSize } from "./Card";
+
+const meta = {
+  title: "primitives/Card",
+  component: Card,
+  args: {
+    name: "Munkidori",
+    src: null,
+  },
+} satisfies Meta<typeof Card>;
+
+export default meta;
+type Story = StoryObj<typeof meta>;
+
+export const Active: Story = { args: { size: "active" } };
+export const ActiveFar: Story = { args: { size: "activeFar" } };
+export const Bench: Story = { args: { size: "bench" } };
+export const Hand: Story = { args: { size: "hand" } };
+export const Pile: Story = { args: { size: "pile" } };
+export const Picker: Story = { args: { size: "picker" } };
+export const Stadium: Story = { args: { size: "stadium" } };
+export const Selected: Story = { args: { size: "hand", selected: true } };
+export const Tilted: Story = { args: { size: "hand", tilt: -8 } };
+
+/** Every size side by side, at a glance. */
+export const AllSizes: Story = {
+  args: { size: "active" },
+  render: () => (
+    <Stack direction="row" spacing={2} alignItems="flex-end">
+      {(["pile", "stadium", "activeFar", "active", "bench", "hand", "picker"] as CardSize[]).map(
+        (size) => (
+          <Stack key={size} spacing={0.5} alignItems="center">
+            <Card size={size} name={size} />
+            <code style={{ fontSize: 11 }}>{size}</code>
+          </Stack>
+        ),
+      )}
+    </Stack>
+  ),
+};
+
+/** A fanned hand — the "physics" this library carries for now: a fixed
+ *  alternating rotation per card, no drag simulation. */
+export const FannedHand: Story = {
+  args: { size: "hand" },
+  render: () => (
+    <Stack direction="row" spacing={-2}>
+      {[-10, -5, 0, 5, 10].map((tilt, i) => (
+        <Card key={i} size="hand" name={`Card ${i + 1}`} tilt={tilt} />
+      ))}
+    </Stack>
+  ),
+};
