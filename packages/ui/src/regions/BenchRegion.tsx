@@ -7,18 +7,23 @@ import { ToolBadge } from "../atoms/ToolBadge";
 import { attachedParts, type PlayCard } from "./types";
 
 const BENCH_LIMIT = 5;
+const NEAR_WIDTH = 320;
+const FAR_WIDTH = 240;
 
 /** The Bench — at least five slots; more than five (a raised limit)
  *  squishes the row narrower instead of wrapping it. `far` scales the
  *  whole row down, the way the opponent's side of the board always
- *  reads farther away. */
+ *  reads farther away. `maxWidth` overrides the near/far default —
+ *  the caller's own court may be narrower than either. */
 export function BenchRegion({
   mons,
   far = false,
+  maxWidth,
   onSelect,
 }: {
   mons: (PlayCard | null)[];
   far?: boolean;
+  maxWidth?: number;
   onSelect?: (id: number) => void;
 }) {
   const cols = Math.max(BENCH_LIMIT, mons.length);
@@ -29,7 +34,8 @@ export function BenchRegion({
         display: "grid",
         gridTemplateColumns: `repeat(${cols}, 1fr)`,
         gap: 0.75,
-        width: far ? 240 : 320,
+        width: "100%",
+        maxWidth: maxWidth ?? (far ? FAR_WIDTH : NEAR_WIDTH),
         mx: "auto",
       }}
     >

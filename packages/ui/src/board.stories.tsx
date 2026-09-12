@@ -28,10 +28,7 @@ const yourActive: PlayCard = {
   ...mon(1, "Pikachu ex", 200, 60),
   attached: [{ id: 201, name: "Lightning Energy", energyType: "Lightning", category: "special-energy" }],
 };
-const oppActive: PlayCard = {
-  ...mon(2, "Pikachu ex", 200, 30),
-  conditions: ["Poisoned"],
-};
+const oppActive: PlayCard = { ...mon(2, "Pikachu ex", 200, 30), conditions: ["Poisoned"] };
 const yourBench: (PlayCard | null)[] = [mon(3, "Pikachu ex", 200, 0), mon(4, "Pikachu ex", 200, 0), null, null, null];
 const oppBench: (PlayCard | null)[] = [mon(5, "Pikachu ex", 200, 0), null, null, null, null];
 const yourHand: PocketCard[] = [
@@ -42,56 +39,80 @@ const yourHand: PocketCard[] = [
 ];
 const discard: PocketCard[] = [{ id: 20, name: "Pikachu ex", src: pikachuEx }];
 
-/** Every Region assembled into the shape a real game takes — the felt
- *  court from the reference layout, both sides mirrored around a
- *  curved centre divider, the Stadium and the reimagined icon-only
- *  ActionBar sharing the lane between the two Actives. A composite,
- *  not yet its own component: proves the Regions actually fit
- *  together before a real `Board` gets extracted from this shape. */
+const divider = (area: string) => (
+  <Box
+    sx={{
+      gridArea: area,
+      height: 1,
+      my: 0.5,
+      borderRadius: 1,
+      background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent)",
+    }}
+  />
+);
+
+/** Every Region assembled into the shape a real game takes, laid out
+ *  as a real CSS Grid — named areas, not nested flex Stacks guessing
+ *  at each other's widths. The first attempt at this used flexbox
+ *  throughout; Bench's own hardcoded width didn't fit the row it sat
+ *  in, and the whole composite collapsed into an unreadable column.
+ *  A fixed 380px court (a phone's rough width), so the grid has to
+ *  actually fit, not just fill whatever space it's given. Both sides
+ *  mirror around a curved divider; the Stadium and the reimagined
+ *  icon-only ActionBar share the lane with the two overlapping
+ *  Actives. A composite story, not yet its own component. */
 export const FullGame: Story = {
   render: () => (
     <Box
       sx={{
-        maxWidth: 420,
+        width: 380,
         mx: "auto",
-        p: 2,
-        borderRadius: 6,
+        p: 1.5,
+        borderRadius: 5,
         bgcolor: "#173d2b",
-        border: "1px solid",
-        borderColor: "rgba(255,255,255,0.12)",
+        border: "1px solid rgba(255,255,255,0.12)",
+        display: "grid",
+        gridTemplateAreas: `
+          "opp-deck   opp-bench  opp-bench  opp-prizes"
+          "divider1   divider1   divider1   divider1"
+          "stadium    actives    actives    action-bar"
+          "divider2   divider2   divider2   divider2"
+          "you-prizes you-bench  you-bench  you-deck"
+          "hand       hand       hand       hand"
+        `,
+        gridTemplateColumns: "auto 1fr 1fr auto",
+        gridTemplateRows: "auto auto auto auto auto auto",
+        rowGap: 8,
+        columnGap: 8,
+        alignItems: "center",
+        justifyItems: "center",
       }}
     >
-      {/* Opponent — reversed reading order, farther away, smaller. */}
-      <Stack direction="row" spacing={1.5} alignItems="flex-start" justifyContent="space-between">
-        <Stack direction="row" spacing={1}>
-          <DeckRegion count={46} />
-          <DiscardRegion cards={[]} />
-        </Stack>
-        <BenchRegion mons={oppBench} far />
-        <PrizesRegion remaining={5} />
+      <Stack sx={{ gridArea: "opp-deck" }} direction="row" spacing={0.5}>
+        <DeckRegion count={46} />
+        <DiscardRegion cards={[]} />
       </Stack>
-      <Box sx={{ display: "flex", justifyContent: "center", my: 1 }}>
-        <HandRegion count={6} />
+      <Box sx={{ gridArea: "opp-bench" }}>
+        <BenchRegion mons={oppBench} far maxWidth={180} />
+      </Box>
+      <Box sx={{ gridArea: "opp-prizes" }}>
+        <PrizesRegion remaining={5} />
       </Box>
 
-      {/* The curved divider the reference layout draws between the two
-          halves of the court. */}
-      <Box
-        sx={{
-          height: 2,
-          my: 1.5,
-          borderRadius: 1,
-          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)",
-        }}
-      />
+      {divider("divider1")}
 
-      {/* Centre lane: Stadium, both Actives stacked, the ActionBar. */}
-      <Stack direction="row" spacing={2} alignItems="center" justifyContent="center">
+      <Box sx={{ gridArea: "stadium" }}>
         <StadiumRegion card={{ id: 30, name: "Pikachu ex", src: pikachuEx }} />
-        <Stack alignItems="center" spacing={1}>
+      </Box>
+      <Box sx={{ gridArea: "actives", position: "relative", width: 150, height: 260 }}>
+        <Box sx={{ position: "absolute", top: 0, left: 19 }}>
           <ActiveRegion mon={oppActive} far />
+        </Box>
+        <Box sx={{ position: "absolute", bottom: 0, left: 0 }}>
           <ActiveRegion mon={yourActive} />
-        </Stack>
+        </Box>
+      </Box>
+      <Box sx={{ gridArea: "action-bar" }}>
         <ActionBar
           actions={[
             { id: 1, kind: "attack", label: "Thunderbolt" },
@@ -100,27 +121,22 @@ export const FullGame: Story = {
           ]}
           onAct={() => {}}
         />
-      </Stack>
+      </Box>
 
-      <Box
-        sx={{
-          height: 2,
-          my: 1.5,
-          borderRadius: 1,
-          background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent)",
-        }}
-      />
+      {divider("divider2")}
 
-      {/* You — closest, largest, reads first. */}
-      <Stack direction="row" spacing={1.5} alignItems="flex-start" justifyContent="space-between">
+      <Box sx={{ gridArea: "you-prizes" }}>
         <PrizesRegion remaining={4} />
-        <BenchRegion mons={yourBench} />
-        <Stack direction="row" spacing={1}>
-          <DeckRegion count={44} />
-          <DiscardRegion cards={discard} />
-        </Stack>
+      </Box>
+      <Box sx={{ gridArea: "you-bench" }}>
+        <BenchRegion mons={yourBench} maxWidth={220} />
+      </Box>
+      <Stack sx={{ gridArea: "you-deck" }} direction="row" spacing={0.5}>
+        <DeckRegion count={44} />
+        <DiscardRegion cards={discard} />
       </Stack>
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 1.5 }}>
+
+      <Box sx={{ gridArea: "hand" }}>
         <HandRegion cards={yourHand} />
       </Box>
     </Box>
