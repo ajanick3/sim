@@ -19,6 +19,11 @@ const SIZE_PX: Record<CardSize, { width: number; height: number; crop: "top" | "
   stadium: { width: 72, height: 100, crop: "full" },
 };
 
+// A real card's corner curvature is proportional to its size, not a
+// fixed radius — matched here as one percentage every Card size (and
+// every fluid, squished-to-fit width) scales against consistently.
+const CARD_RADIUS_PCT = 5;
+
 export type CardProps = {
   size: CardSize;
   /** TCGdex art, or null to show the plain-name fallback. */
@@ -67,7 +72,12 @@ export function Card({
         aspectRatio: fluid ? `${width} / ${height}` : undefined,
         flex: "none",
         overflow: "hidden",
-        borderRadius: 1.5,
+        // A percentage, not a fixed spacing unit: a fixed radius reads
+        // chunky on a 46px pile and barely-there on a 150px Active —
+        // scaling with the box's own rendered size (CSS computes a
+        // percentage border-radius from each dimension) keeps every
+        // size, fixed or fluid, looking like the same card.
+        borderRadius: `${CARD_RADIUS_PCT}%`,
         transform: tilt ? `rotate(${tilt}deg)` : undefined,
         transformOrigin: "center bottom",
         outline: selected ? "2px solid" : "none",
