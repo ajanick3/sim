@@ -23,7 +23,7 @@ export const Pile: Story = { args: { size: "pile" } };
 export const Picker: Story = { args: { size: "picker" } };
 export const Stadium: Story = { args: { size: "stadium" } };
 export const Selected: Story = { args: { size: "hand", selected: true } };
-export const Tilted: Story = { args: { size: "hand", tilt: -8 } };
+export const Tilted: Story = { args: { size: "hand", tilt: 18 } };
 export const NoArt: Story = { args: { size: "hand", src: null, name: "Ultra Ball" } };
 
 /** Every size side by side, at a glance. */
@@ -43,14 +43,16 @@ export const AllSizes: Story = {
   ),
 };
 
-/** A fanned hand — the "physics" this library carries for now: a fixed
- *  alternating rotation per card, no drag simulation. */
-export const FannedHand: Story = {
+/** A held hand — every card leaning back by the same angle, the read
+ *  of looking across a table from a seated chair, not a flat fan spin.
+ *  The "physics" this library carries for now: a fixed 3D lean, no
+ *  drag simulation. */
+export const HeldHand: Story = {
   args: { size: "hand" },
   render: () => (
     <Stack direction="row" spacing={-2}>
-      {[-10, -5, 0, 5, 10].map((tilt, i) => (
-        <Card key={i} size="hand" name="Pikachu ex" src={pikachuEx} tilt={tilt} />
+      {[0, 1, 2, 3, 4].map((i) => (
+        <Card key={i} size="hand" name="Pikachu ex" src={pikachuEx} tilt={10} />
       ))}
     </Stack>
   ),

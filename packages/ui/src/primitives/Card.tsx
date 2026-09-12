@@ -29,8 +29,9 @@ export type CardProps = {
   /** TCGdex art, or null to show the plain-name fallback. */
   src?: string | null;
   name: string;
-  /** Degrees of static rotation — the fanned-hand look. 0 for anything
-   *  in play; a small alternating value per card for a held hand. */
+  /** Degrees the card leans back, away from the viewer, top edge
+   *  receding — the read of a card lying on a table seen from a
+   *  seated chair, not a flat spin. 0 for a card viewed straight on. */
   tilt?: number;
   /** Fill the parent's width instead of `size`'s fixed pixels, at
    *  `size`'s own aspect ratio — how the Bench squishes to fit more
@@ -47,8 +48,8 @@ export type CardProps = {
 /** The one card frame this library draws — Active, Bench, Hand, a
  *  deck/discard pile, a search picker, the Stadium. `size` picks the
  *  box and whether the art shows cropped from the top or in full;
- *  `tilt` is the only "physics" a card carries for now — a fixed
- *  rotation, not a spring or a drag simulation. */
+ *  `tilt` is the only "physics" a card carries for now — a fixed 3D
+ *  lean, not a spring or a drag simulation. */
 export function Card({
   size,
   src = null,
@@ -78,7 +79,11 @@ export function Card({
         // percentage border-radius from each dimension) keeps every
         // size, fixed or fluid, looking like the same card.
         borderRadius: `${CARD_RADIUS_PCT}%`,
-        transform: tilt ? `rotate(${tilt}deg)` : undefined,
+        // A perspective lean, not a flat spin: the top edge recedes as
+        // if the card were lying on a table and the viewer were seated
+        // in front of it, not looking straight down at it.
+        transform: tilt ? `perspective(600px) rotateX(${tilt}deg)` : undefined,
+        transformStyle: "preserve-3d",
         transformOrigin: "center bottom",
         outline: selected ? "2px solid" : "none",
         outlineColor: "primary.main",
