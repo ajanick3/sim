@@ -1,10 +1,11 @@
 import { Card } from "../primitives/Card";
 import { HealthBar } from "../atoms/HealthBar";
 import { DamageCounter } from "../atoms/DamageCounter";
-import { EnergyChip, type EnergyKind } from "../atoms/EnergyChip";
+import { EnergyChip } from "../atoms/EnergyChip";
 import { ToolBadge } from "../atoms/ToolBadge";
+import { SpecialConditions } from "../atoms/SpecialConditions";
 import { ActiveIndicator } from "../atoms/ActiveIndicator";
-import type { PlayCard } from "./types";
+import { attachedParts, type PlayCard } from "./types";
 
 /** The Active spot — one Pokémon, ringed to mark it as the Active, or
  *  an empty dashed slot. `far` renders the opponent's Active: smaller,
@@ -20,22 +21,22 @@ export function ActiveRegion({
   far?: boolean;
   onClick?: () => void;
 }) {
+  const { energies, tool } = mon ? attachedParts(mon) : { energies: [], tool: null };
   const card = (
     <Card size={far ? "activeFar" : "active"} src={mon?.src} name={mon?.name ?? "empty"} onClick={onClick}>
       {mon && (
         <>
           <HealthBar hp={mon.hp} tiny={far} />
           {mon.damage > 0 && <DamageCounter damage={mon.damage} top="35%" left="60%" large={!far} />}
-          {mon.tool && <ToolBadge name={mon.tool} />}
-          {mon.energies && mon.energies.length > 0 && (
-            <div
-              style={{ position: "absolute", bottom: 2, right: 2, display: "flex", gap: 2 }}
-            >
-              {mon.energies.map((e) => (
-                <EnergyChip key={e.id} kind={e.kind as EnergyKind} />
+          {tool && <ToolBadge name={tool.name} />}
+          {energies.length > 0 && (
+            <div style={{ position: "absolute", bottom: 2, right: 2, display: "flex", gap: 2 }}>
+              {energies.map((e) => (
+                <EnergyChip key={e.id} kind={e.energyType!} />
               ))}
             </div>
           )}
+          {mon.conditions && <SpecialConditions conditions={mon.conditions} />}
         </>
       )}
     </Card>

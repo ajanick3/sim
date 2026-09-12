@@ -18,8 +18,20 @@ const meta = { title: "regions/overview" } satisfies Meta;
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-const munkidori: PlayCard = { id: 1, name: "Munkidori", hp: 110, damage: 30, energies: [{ id: 1, kind: "Psychic" }] };
-const dragapult: PlayCard = { id: 2, name: "Dragapult ex", hp: 330, damage: 90, tool: "Rescue Board" };
+const munkidori: PlayCard = {
+  id: 1,
+  name: "Munkidori",
+  hp: 110,
+  damage: 30,
+  attached: [{ id: 101, name: "Psychic Energy", energyType: "Psychic", category: "special-energy" }],
+};
+const dragapult: PlayCard = {
+  id: 2,
+  name: "Dragapult ex",
+  hp: 330,
+  damage: 90,
+  attached: [{ id: 102, name: "Rescue Board", category: "tool" }],
+};
 const bench: (PlayCard | null)[] = [
   { id: 3, name: "Dreepy", hp: 70, damage: 0 },
   { id: 4, name: "Toxel", hp: 70, damage: 0 },
