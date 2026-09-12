@@ -35,6 +35,14 @@ self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
 
+  // Both Storybooks (/storybook, /storybook-ui) are dev exhibits, not
+  // part of the offline game — and Storybook's own index.json isn't
+  // content-hashed the way a Next.js chunk is, so cache-first below
+  // would serve a stale story list forever after the first visit,
+  // invisible to a rebuild. Skip this worker for them entirely; the
+  // browser's own HTTP cache handles the rest.
+  if (new URL(request.url).pathname.startsWith("/storybook")) return;
+
   // A page navigation: try the network first, so a deploy is seen right
   // away, but fall back to whatever shell was last cached when offline.
   if (request.mode === "navigate") {
