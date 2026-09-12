@@ -6,6 +6,7 @@ import { DamageCounter } from "./DamageCounter";
 import { EnergyChip } from "./EnergyChip";
 import { ToolBadge } from "./ToolBadge";
 import { ActiveIndicator } from "./ActiveIndicator";
+import { PokeBall } from "./PokeBall";
 import pikachuEx from "../assets/pikachu-ex.png";
 
 const meta = { title: "atoms/overview" } satisfies Meta;
@@ -32,5 +33,17 @@ export const OnACard: Story = {
         </Card>
       </ActiveIndicator>
     </Stack>
+  ),
+};
+
+/** Six Prizes, one taken with each — the dimmed, desaturated one is
+ *  already paid out. */
+export const PrizeStack: Story = {
+  render: () => (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 6, width: 44 }}>
+      {[0, 1, 2, 3, 4, 5].map((i) => (
+        <PokeBall key={i} taken={i >= 4} />
+      ))}
+    </div>
   ),
 };

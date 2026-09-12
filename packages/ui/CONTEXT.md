@@ -26,7 +26,9 @@ working past five columns.
 A small overlay a `Card` carries but doesn't draw itself: `HealthBar`
 (the HP pill — a number, never a depleting bar, per the physical
 card), `DamageCounter`, `EnergyChip`, `ToolBadge`, `ActiveIndicator`
-(the ring marking a spot as the Active).
+(the ring marking a spot as the Active). `PokeBall` is the exception —
+it draws a Prize, not something overlaid on a Card, an original SVG
+rather than a traced image so it stays crisp at any size.
 
 **Far**:
 A Region prop, not a Card prop: the opponent's side of the board reads
