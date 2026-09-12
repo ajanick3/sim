@@ -1,13 +1,14 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import Stack from "@mui/material/Stack";
 import { Card, type CardSize } from "./Card";
+import pikachuEx from "../assets/pikachu-ex.png";
 
 const meta = {
   title: "primitives/Card",
   component: Card,
   args: {
-    name: "Munkidori",
-    src: null,
+    name: "Pikachu ex",
+    src: pikachuEx,
   },
 } satisfies Meta<typeof Card>;
 
@@ -23,6 +24,7 @@ export const Picker: Story = { args: { size: "picker" } };
 export const Stadium: Story = { args: { size: "stadium" } };
 export const Selected: Story = { args: { size: "hand", selected: true } };
 export const Tilted: Story = { args: { size: "hand", tilt: -8 } };
+export const NoArt: Story = { args: { size: "hand", src: null, name: "Ultra Ball" } };
 
 /** Every size side by side, at a glance. */
 export const AllSizes: Story = {
@@ -32,7 +34,7 @@ export const AllSizes: Story = {
       {(["pile", "stadium", "activeFar", "active", "bench", "hand", "picker"] as CardSize[]).map(
         (size) => (
           <Stack key={size} spacing={0.5} alignItems="center">
-            <Card size={size} name={size} />
+            <Card size={size} name="Pikachu ex" src={pikachuEx} />
             <code style={{ fontSize: 11 }}>{size}</code>
           </Stack>
         ),
@@ -48,7 +50,7 @@ export const FannedHand: Story = {
   render: () => (
     <Stack direction="row" spacing={-2}>
       {[-10, -5, 0, 5, 10].map((tilt, i) => (
-        <Card key={i} size="hand" name={`Card ${i + 1}`} tilt={tilt} />
+        <Card key={i} size="hand" name="Pikachu ex" src={pikachuEx} tilt={tilt} />
       ))}
     </Stack>
   ),

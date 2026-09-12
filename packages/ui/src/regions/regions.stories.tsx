@@ -13,6 +13,7 @@ import { DiscardViewDialog } from "./DiscardViewDialog";
 import { StadiumRegion } from "./StadiumRegion";
 import { SearchRegion } from "./SearchRegion";
 import type { PlayCard, PocketCard } from "./types";
+import pikachuEx from "../assets/pikachu-ex.png";
 
 const meta = { title: "regions/overview" } satisfies Meta;
 export default meta;
@@ -20,33 +21,38 @@ type Story = StoryObj<typeof meta>;
 
 const munkidori: PlayCard = {
   id: 1,
-  name: "Munkidori",
-  hp: 110,
-  damage: 30,
-  attached: [{ id: 101, name: "Psychic Energy", energyType: "Psychic", category: "special-energy" }],
+  name: "Pikachu ex",
+  src: pikachuEx,
+  hp: 200,
+  damage: 60,
+  attached: [
+    { id: 101, name: "Lightning Energy", energyType: "Lightning", category: "special-energy" },
+    { id: 102, name: "Lightning Energy", energyType: "Lightning", category: "special-energy" },
+  ],
 };
 const dragapult: PlayCard = {
   id: 2,
-  name: "Dragapult ex",
-  hp: 330,
+  name: "Pikachu ex",
+  src: pikachuEx,
+  hp: 200,
   damage: 90,
-  attached: [{ id: 102, name: "Rescue Board", category: "tool" }],
+  attached: [{ id: 103, name: "Rescue Board", category: "tool" }],
 };
 const bench: (PlayCard | null)[] = [
-  { id: 3, name: "Dreepy", hp: 70, damage: 0 },
-  { id: 4, name: "Toxel", hp: 70, damage: 0 },
+  { id: 3, name: "Pikachu ex", src: pikachuEx, hp: 200, damage: 0 },
+  { id: 4, name: "Pikachu ex", src: pikachuEx, hp: 200, damage: 0 },
   null,
   null,
   null,
 ];
 const hand: PocketCard[] = [
-  { id: 10, name: "Boss's Orders" },
-  { id: 11, name: "Ultra Ball" },
-  { id: 12, name: "Rare Candy" },
-  { id: 13, name: "Night Stretcher" },
-  { id: 14, name: "Basic Fire Energy" },
+  { id: 10, name: "Pikachu ex", src: pikachuEx, category: "pokemon" },
+  { id: 11, name: "Pikachu ex", src: pikachuEx, category: "pokemon" },
+  { id: 12, name: "Pikachu ex", src: pikachuEx, category: "pokemon" },
+  { id: 13, name: "Pikachu ex", src: pikachuEx, category: "pokemon" },
+  { id: 14, name: "Pikachu ex", src: pikachuEx, category: "pokemon" },
 ];
-const discardCards: PocketCard[] = [{ id: 20, name: "Poke Pad" }];
+const discardCards: PocketCard[] = [{ id: 20, name: "Pikachu ex", src: pikachuEx }];
 
 export const Active: Story = { render: () => <ActiveRegion mon={munkidori} /> };
 export const ActiveFarSide: Story = { render: () => <ActiveRegion mon={dragapult} far /> };
@@ -65,7 +71,7 @@ export const DiscardEmpty: Story = { render: () => <DiscardRegion cards={[]} /> 
 export const DiscardWithCards: Story = { render: () => <DiscardRegion cards={discardCards} /> };
 export const StadiumEmpty: Story = { render: () => <StadiumRegion card={null} /> };
 export const StadiumFilled: Story = {
-  render: () => <StadiumRegion card={{ id: 30, name: "Risky Ruins" }} />,
+  render: () => <StadiumRegion card={{ id: 30, name: "Pikachu ex", src: pikachuEx }} />,
 };
 export const Search: Story = {
   render: () => (

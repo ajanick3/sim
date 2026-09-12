@@ -6,6 +6,7 @@ import { DamageCounter } from "./DamageCounter";
 import { EnergyChip } from "./EnergyChip";
 import { ToolBadge } from "./ToolBadge";
 import { ActiveIndicator } from "./ActiveIndicator";
+import pikachuEx from "../assets/pikachu-ex.png";
 
 const meta = { title: "atoms/overview" } satisfies Meta;
 export default meta;
@@ -16,18 +17,18 @@ type Story = StoryObj<typeof meta>;
 export const OnACard: Story = {
   render: () => (
     <Stack direction="row" spacing={4} alignItems="flex-start">
-      <Card size="bench" name="Munkidori">
-        <HealthBar hp={110} tiny />
-        <DamageCounter damage={30} top="40%" left="50%" />
+      <Card size="bench" name="Pikachu ex" src={pikachuEx}>
+        <HealthBar hp={200} tiny />
+        <DamageCounter damage={60} top="40%" left="50%" />
         <div style={{ position: "absolute", bottom: 2, right: 2, display: "flex", gap: 2 }}>
-          <EnergyChip kind="Psychic" size={10} />
+          <EnergyChip kind="Lightning" size={10} />
         </div>
         <ToolBadge name="Rescue Board" />
       </Card>
       <ActiveIndicator>
-        <Card size="active" name="Dragapult ex">
-          <HealthBar hp={330} />
-          <DamageCounter damage={90} top="35%" left="60%" large />
+        <Card size="active" name="Pikachu ex" src={pikachuEx}>
+          <HealthBar hp={200} />
+          <DamageCounter damage={120} top="35%" left="60%" large />
         </Card>
       </ActiveIndicator>
     </Stack>
