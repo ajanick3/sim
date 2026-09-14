@@ -1314,6 +1314,24 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Hand Trimmer" => (free, TrainerEffect::BothDiscardDownTo(5)),
         "Dusk Ball" => (free, TrainerEffect::LookAtBottomOfDeck { count: 7 }),
         "Prime Catcher" => (free, TrainerEffect::SwitchOpponentActiveThenOwn),
+        "Pokémon Catcher" => (
+            free,
+            TrainerEffect::CoinFlipThen(Box::new(TrainerEffect::SwitchOpponentActive)),
+        ),
+        "Fighting Gong" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Deck,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicPokemonOfTypeOrBasicEnergyOfType(Type::Fighting),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            },
+        ),
         "Strange Timepiece" => (free, TrainerEffect::DevolveChosen),
         "Air Balloon" => (free, TrainerEffect::ReducesRetreatCost(2)),
         "Hero's Cape" => (free, TrainerEffect::IncreasesHp(100)),

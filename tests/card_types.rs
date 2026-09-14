@@ -24,9 +24,9 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
         "a Supporter is refused as a Supporter"
     );
     assert_eq!(
-        reason_for("me01-116"),
+        reason_for("sv06-162"),
         Some(Refusal::IsATrainer(TrainerKind::Item)),
-        "Fighting Gong is an Item"
+        "Scoop Up Cyclone is an Item"
     );
     assert_eq!(
         reason_for("me01-122"),
@@ -121,7 +121,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Precious Trolley and Energy Search Pro take it to 144.
     // Mega Signal and TM Machine take it to 140.
     // Premium Power Pro takes it to 137.
-    assert_eq!(trainers, 137, "the Trainers still refused, by kind");
+    // Pokémon Catcher and Fighting Gong take it to 133.
+    assert_eq!(trainers, 133, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

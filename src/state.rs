@@ -1539,6 +1539,11 @@ impl GameState {
                 .def_of(card)
                 .as_pokemon()
                 .is_some_and(|p| p.stage == crate::card::Stage::Basic && p.kind == kind),
+            CardFilter::BasicPokemonOfTypeOrBasicEnergyOfType(kind) => match self.def_of(card) {
+                CardDef::Pokemon(p) => p.stage == crate::card::Stage::Basic && p.kind == kind,
+                CardDef::Energy(e) => e.kind == kind && e.effect.is_none(),
+                CardDef::Trainer(_) => false,
+            },
             CardFilter::PokemonOfType(kind) => self
                 .def_of(card)
                 .as_pokemon()
