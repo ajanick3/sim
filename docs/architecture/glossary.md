@@ -41,3 +41,12 @@ The decision a seat's own player makes each turn: which legal Action to take, re
 **Sequencing**:
 The order in which a Strategy takes the actions a turn allows, before or instead of attacking. A hand of legal plays says nothing about which to take first; sequencing is that choice, made new every decision.
 
+**Entrant**:
+One player registered for a tournament. Every entrant plays the Swiss rounds; only some reach a standing.
+
+**Top cut**:
+The entrants a tournament ranks by a unique final standing, once Swiss rounds end. Not every entrant reaches it.
+
+**Deck field**:
+The Decklists a tournament contributes to `decks/`, one file per entrant actually kept. It need not match the top cut: an entrant outside it can still be worth keeping, and one inside it can still be dropped for a card gap.
+
