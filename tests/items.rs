@@ -1952,6 +1952,73 @@ fn poke_ball_searches_for_a_pokemon_on_heads() {
 }
 
 #[test]
+fn pokemon_catcher_switches_the_opponents_active_on_heads() {
+    use sim::rng::ScriptedRng;
+    let mut set = build();
+    let catcher = plain_item(
+        &mut set.db,
+        "test-pokemon-catcher",
+        "Pokémon Catcher",
+        TrainerEffect::CoinFlipThen(Box::new(TrainerEffect::SwitchOpponentActive)),
+    );
+    let decklist = deck(&set, catcher);
+    let mut state = GameState::new(
+        set.db.clone(),
+        [decklist.clone(), decklist],
+        Box::new(ScriptedRng::new(vec![1u32])), // heads
+    );
+    for _ in 0..2 {
+        while state.phase != Phase::Main && !state.is_over() {
+            let a = legal_actions(&state)[0];
+            apply(&mut state, a).unwrap();
+        }
+        if state.turn_number > 1 {
+            break;
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
+    }
+    let player = state.current;
+    let opponent = player.opponent();
+    let benched_card = deal_new_card(&mut state, opponent, set.mon);
+    let benched = state.put_into_play(opponent, benched_card);
+    state.players[opponent.index()].bench.push(benched);
+    let old_active = state.player(opponent).active.unwrap();
+    let card = ensure_in_hand(&mut state, player, catcher);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let promote = legal_actions(&state)
+        .into_iter()
+        .find_map(|a| match a {
+            Action::Promote { pokemon } => Some(pokemon),
+            _ => None,
+        })
+        .expect("heads opens the opponent's promotion");
+    apply(&mut state, Action::Promote { pokemon: promote }).unwrap();
+
+    assert_eq!(state.player(opponent).active, Some(benched));
+    assert_ne!(state.player(opponent).active, Some(old_active));
+}
+
+#[test]
+fn pokemon_catcher_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Pokémon Catcher")
+        .expect("Pokémon Catcher should play");
+    assert_eq!(
+        card.effect,
+        TrainerEffect::CoinFlipThen(Box::new(TrainerEffect::SwitchOpponentActive))
+    );
+}
+
+#[test]
 fn gravity_gemstone_raises_both_actives_retreat_cost() {
     let mut set = build();
     let gemstone = set.db.add(CardDef::Trainer(Trainer {
@@ -2200,5 +2267,94 @@ fn premium_power_pro_is_admitted_from_the_artifact() {
     assert_eq!(
         card.effect,
         TrainerEffect::BonusDamageThisTurn(30, TurnBonusTarget::AttackerIsType(Type::Fighting))
+    );
+}
+
+
+// --- Beyond the field: a type-restricted Basic-or-Energy search ---
+
+#[test]
+fn fighting_gong_finds_a_basic_fighting_pokemon_or_energy() {
+    let mut set = build();
+    let fighter = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-fighting-gong-mon",
+        name: "Testfighter",
+        hp: 100,
+        kind: Type::Fighting,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let fighting_energy = set.db.add(CardDef::Energy(Energy {
+        print_id: "test-fighting-energy",
+        name: "Fighting Energy",
+        kind: Type::Fighting,
+        effect: None,
+    }));
+    let gong = plain_item(
+        &mut set.db,
+        "test-fighting-gong",
+        "Fighting Gong",
+        TrainerEffect::Decide {
+            from: Zone::Deck,
+            slots: vec![Slot {
+                filter: CardFilter::BasicPokemonOfTypeOrBasicEnergyOfType(Type::Fighting),
+                to: Destination::Zone(Zone::Hand),
+                limit: 1,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    );
+    let mut state = game(&set, gong, 3);
+    let player = state.current;
+    // Neither card is in the default deck; deal both into it directly.
+    let mon_card = deal_new_card(&mut state, player, fighter);
+    state.players[player.index()].deck.push(mon_card);
+    let energy_card = deal_new_card(&mut state, player, fighting_energy);
+    state.players[player.index()].deck.push(energy_card);
+    let card = ensure_in_hand(&mut state, player, gong);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let offered: Vec<_> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::TakeCard { card } => Some(card),
+            _ => None,
+        })
+        .collect();
+    assert!(offered.contains(&mon_card), "{offered:?}");
+    assert!(offered.contains(&energy_card), "{offered:?}");
+    apply(&mut state, Action::TakeCard { card: mon_card }).unwrap();
+
+    assert!(state.player(player).hand.contains(&mon_card));
+}
+
+#[test]
+fn fighting_gong_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import
+            .cards
+            .iter()
+            .any(|c| c.name == "Fighting Gong" && c.playable.is_some()),
+        "Fighting Gong should play",
     );
 }

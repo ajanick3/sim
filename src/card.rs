@@ -163,6 +163,10 @@ pub enum CardFilter {
     PokemonOfTypeWithHpAtMost(Type, u32),
     /// A Basic Pokémon of this type. `Telepathic Psychic Energy`.
     BasicPokemonOfType(Type),
+    /// A Basic Pokémon of this type, or a Basic Energy of it — the same
+    /// pairing `PokemonOfTypeOrBasicEnergyOfType` reads, narrowed to
+    /// Basic on the Pokémon side too. `Fighting Gong`.
+    BasicPokemonOfTypeOrBasicEnergyOfType(Type),
     /// A Pokémon of this type, any stage. `Canari`.
     PokemonOfType(Type),
     /// A Basic Pokémon whose printed name contains this word.
