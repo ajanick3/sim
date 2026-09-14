@@ -248,7 +248,8 @@ pub enum DiscardFollowUp {
 
 /// What a this-turn damage bonus restricts itself to — always the
 /// opponent's Active, since nothing in the pool bonuses an attack against
-/// a Benched Pokémon.
+/// a Benched Pokémon. The first two variants read the defender; the third
+/// reads the attacker instead, the opposite half of the same attack.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TurnBonusTarget {
     /// A Pokémon ex. `Black Belt's Training`.
@@ -256,6 +257,9 @@ pub enum TurnBonusTarget {
     /// A Pokémon without a Rule Box. `Gladion's Final Battle` — the
     /// opposite restriction `OpponentActiveEx` reads.
     OpponentActiveWithoutRuleBox,
+    /// Restricted by the attacking Pokémon's own Type, not by anything
+    /// about the defender. `Premium Power Pro`.
+    AttackerIsType(Type),
 }
 
 /// A Trainer's effect: a value the engine executes, never text read at run

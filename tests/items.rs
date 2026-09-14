@@ -4,7 +4,7 @@
 use sim::action::{Action, legal_actions};
 use sim::card::{
     Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
-    Marker, Then, Trainer, TrainerEffect, TrainerKind, Type, Zone,
+    Marker, Then, Trainer, TrainerEffect, TrainerKind, TurnBonusTarget, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId};
@@ -2103,4 +2103,102 @@ fn the_more_heal_items_are_admitted_from_the_artifact() {
             "{name} should play",
         );
     }
+}
+
+// --- Beyond the field: a bonus restricted to the attacker's own Type ---
+
+#[test]
+fn premium_power_pro_adds_thirty_only_from_a_fighting_type_attacker() {
+    let mut set = build();
+    let fighter = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-fighter",
+        name: "Testfighter",
+        hp: 100,
+        kind: Type::Fighting,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Tackle",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let card = plain_item(
+        &mut set.db,
+        "test-premium-power-pro",
+        "Premium Power Pro",
+        TrainerEffect::BonusDamageThisTurn(30, TurnBonusTarget::AttackerIsType(Type::Fighting)),
+    );
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let defender = state.player(opponent).active.unwrap();
+
+    // Give the current player's Active the Fighting type directly, rather
+    // than reshaping the whole deck for one attacker.
+    let colorless_attacker = state.player(player).active.unwrap();
+    let fighting_card = deal_new_card(&mut state, player, fighter);
+    state.pokemon[colorless_attacker.index()].cards = vec![fighting_card];
+
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert_eq!(
+        sim::engine::damage_dealt(&state, colorless_attacker, defender, 100),
+        130,
+        "a Fighting-type attacker gets the bonus"
+    );
+}
+
+#[test]
+fn premium_power_pro_adds_nothing_from_any_other_type() {
+    let mut set = build();
+    let card = plain_item(
+        &mut set.db,
+        "test-premium-power-pro-2",
+        "Premium Power Pro",
+        TrainerEffect::BonusDamageThisTurn(30, TurnBonusTarget::AttackerIsType(Type::Fighting)),
+    );
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let attacker = state.player(player).active.unwrap();
+    let defender = state.player(opponent).active.unwrap();
+
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert_eq!(
+        sim::engine::damage_dealt(&state, attacker, defender, 100),
+        100,
+        "the Colorless attacker built by default gets no bonus"
+    );
+}
+
+#[test]
+fn premium_power_pro_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Premium Power Pro")
+        .expect("Premium Power Pro should play");
+    assert_eq!(
+        card.effect,
+        TrainerEffect::BonusDamageThisTurn(30, TurnBonusTarget::AttackerIsType(Type::Fighting))
+    );
 }

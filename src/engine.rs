@@ -4684,15 +4684,21 @@ fn damage_dealt_with(
         && state.pokemon(attacker).owner == state.current
         && state.player(state.pokemon(attacker).owner).active == Some(attacker)
     {
-        let defender_def = state.pokemon_def(defender);
-        let restricted_to_defender = match target {
-            crate::card::TurnBonusTarget::OpponentActiveEx => defender_def.prizes > 1,
-            crate::card::TurnBonusTarget::OpponentActiveWithoutRuleBox => defender_def.prizes == 1,
+        let condition_met = match target {
+            crate::card::TurnBonusTarget::OpponentActiveEx => {
+                state.pokemon_def(defender).prizes > 1
+            }
+            crate::card::TurnBonusTarget::OpponentActiveWithoutRuleBox => {
+                state.pokemon_def(defender).prizes == 1
+            }
+            crate::card::TurnBonusTarget::AttackerIsType(kind) => {
+                state.pokemon_def(attacker).kind == kind
+            }
         };
         let opponent_active = state
             .player(state.pokemon(attacker).owner.opponent())
             .active;
-        if restricted_to_defender && opponent_active == Some(defender) {
+        if condition_met && opponent_active == Some(defender) {
             damage += bonus;
         }
     }
