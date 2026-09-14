@@ -72,6 +72,15 @@ fn main() {
             }
         }
 
+        for missing in &report.missing {
+            *slots.entry("Missing from the artifact").or_default() += missing.count;
+            *by_name
+                .entry("Missing from the artifact")
+                .or_default()
+                .entry(missing.name.clone())
+                .or_default() += missing.count;
+        }
+
         for matched in &report.matched {
             let count = matched.line.count;
             let label = if matched.card.playable.is_some() {
@@ -105,7 +114,13 @@ fn main() {
         );
     }
 
-    for label in ["Ability", "Trainer, not yet built", "Attack text", "Special Energy"] {
+    for label in [
+        "Missing from the artifact",
+        "Ability",
+        "Trainer, not yet built",
+        "Attack text",
+        "Special Energy",
+    ] {
         let Some(names) = by_name.get(label) else {
             continue;
         };
