@@ -119,6 +119,11 @@ pub struct Report {
     /// Rules the data cannot answer. Named, so a reader is not misled by a
     /// clean report.
     pub uncheckable: Vec<String>,
+    /// Every line whose card the artifact does not hold, whether its whole
+    /// set is missing or only this number within a set it does hold. Not a
+    /// [`Problem`]: the deck itself may be legal, but each line here is a
+    /// card `blockers` should count toward what to import next.
+    pub missing: Vec<Line>,
 }
 
 impl Report {
@@ -239,6 +244,7 @@ pub fn check(list: &Decklist, import: &Import) -> Report {
                 "{} {}: this artifact holds no set {}, so the card is unresolved.",
                 line.count, line.name, line.set_code
             ));
+            report.missing.push(line.clone());
             continue;
         }
 
@@ -264,9 +270,12 @@ pub fn check(list: &Decklist, import: &Import) -> Report {
                     card: card.clone(),
                 });
             }
-            None => report
-                .problems
-                .push(Problem::NoSuchCard { line: line.clone() }),
+            None => {
+                report.missing.push(line.clone());
+                report
+                    .problems
+                    .push(Problem::NoSuchCard { line: line.clone() });
+            }
         }
     }
 

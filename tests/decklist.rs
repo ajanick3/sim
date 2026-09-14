@@ -245,6 +245,27 @@ fn an_unknown_set_code_is_uncheckable_rather_than_a_problem() {
 }
 
 #[test]
+fn an_unknown_set_code_is_a_missing_line() {
+    let import = load(&artifact()).unwrap();
+    let list = parse("3 Slowking SV7 039\n");
+    let report = check(&list, &import);
+
+    assert_eq!(report.missing.len(), 1, "{:?}", report.missing);
+    assert_eq!(report.missing[0].name, "Slowking");
+    assert_eq!(report.missing[0].count, 3);
+}
+
+#[test]
+fn a_wrong_number_in_a_set_we_do_hold_is_also_a_missing_line() {
+    let import = load(&artifact()).unwrap();
+    let list = parse("1 Chikorita MEG 9999\n");
+    let report = check(&list, &import);
+
+    assert_eq!(report.missing.len(), 1, "{:?}", report.missing);
+    assert_eq!(report.missing[0].name, "Chikorita");
+}
+
+#[test]
 fn a_wrong_number_in_a_set_we_do_hold_is_still_a_problem() {
     let import = load(&artifact()).unwrap();
     let list = parse("1 Chikorita MEG 9999\n");
