@@ -71,11 +71,10 @@ reads every one of them and checks that it parses, matches, and is legal, so a
 change to the parser or the card data fails loudly rather than quietly.
 
 `decks/2026-worlds/` holds the field of the 2026 World Championships, one file
-per player, named `<placement>-<player-slug>.txt`.
-`tools/fetch_worlds_decks.py` fetches them from the operator's own tournament
-site. Sixty-one of the sixty-four are kept: three named their cards by
-Japanese-region set codes this artifact does not hold, and were dropped rather
-than guessed at, so the placement numbers have three gaps.
+per player, named `<placement>-<player-slug>.txt`, zero-padded to three
+digits. `tools/fetch_worlds_decklists.py` fetches all 143 from limitlesstcg's
+Decklists tab, the tournament's Day 2 standings — the site holds no decklist
+for an entrant who did not reach one. All 143 are kept and check clean.
 
 ### Standard coverage
 

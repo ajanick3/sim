@@ -1,0 +1,30 @@
+Pokémon: 20
+4 Dreepy TWM 128
+4 Drakloak TWM 129
+3 Dragapult ex TWM 130
+2 Rellor TEF 023
+2 Rabsca TEF 024
+1 Meowth ex POR 062
+1 Budew ASC 016
+1 Fezandipiti ex ASC 142
+1 Patrat CRI 070
+1 Moltres PFL 014
+
+Trainer: 32
+4 Lillie's Determination MEG 119
+3 Boss's Orders MEG 114
+2 Dawn PFL 087
+2 Crispin SCR 133
+1 Rosa's Encouragement POR 084
+1 Xerosic's Machinations SFA 064
+1 Acerola's Mischief MEG 113
+4 Buddy-Buddy Poffin TEF 144
+4 Poke Pad POR 081
+4 Ultra Ball MEG 131
+3 Night Stretcher ASC 196
+1 Unfair Stamp TWM 165
+2 Forest of Vitality MEG 117
+
+Energy: 8
+4 Psychic Energy MEE 005
+4 Fire Energy MEE 002

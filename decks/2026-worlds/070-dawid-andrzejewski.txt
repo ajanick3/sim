@@ -1,0 +1,33 @@
+Pokémon: 22
+4 Grookey TWM 014
+3 Thwackey TWM 015
+3 Applin TWM 126
+1 Applin TWM 017
+3 Dipplin TWM 018
+2 Goldeen TWM 044
+1 Seaking PRE 021
+2 Rellor TEF 023
+1 Rabsca TEF 024
+1 Psyduck ASC 039
+1 Shaymin DRI 010
+
+Trainer: 33
+4 Lillie's Determination MEG 119
+2 Gladion's Final Battle PBL 077
+2 Boss's Orders MEG 114
+1 Kieran TWM 154
+4 Poke Pad POR 081
+4 Buddy-Buddy Poffin TEF 144
+3 Ultra Ball MEG 131
+1 Sacred Ash DRI 168
+1 Night Stretcher ASC 196
+1 Tool Scrapper ASC 212
+1 Secret Box TWM 163
+1 Switch MEG 130
+2 Air Balloon ASC 181
+2 Brave Bangle WHT 080
+4 Festival Grounds TWM 149
+
+Energy: 5
+4 Growing Grass Energy POR 086
+1 Grass Energy MEE 001
