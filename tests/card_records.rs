@@ -330,5 +330,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Mega Signal (a `Decide` reading a new `CardFilter::MegaPokemon`)
     // and TM Machine (a new `CardFilter::ToolNameContains`) take it to
     // 921.
-    assert_eq!(admitted, 921, "coverage moves only on purpose");
+    // Premium Power Pro (a new `TurnBonusTarget::AttackerIsType`, the
+    // first this-turn damage bonus read from the attacker rather than
+    // the defender) takes it to 924.
+    assert_eq!(admitted, 924, "coverage moves only on purpose");
 }

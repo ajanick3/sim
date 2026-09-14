@@ -1228,6 +1228,10 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::BonusDamageThisTurn(40, TurnBonusTarget::OpponentActiveEx),
         ),
+        "Premium Power Pro" => (
+            free,
+            TrainerEffect::BonusDamageThisTurn(30, TurnBonusTarget::AttackerIsType(Type::Fighting)),
+        ),
         "Gladion's Final Battle" => (
             Some(Requirement::HandSizeIs(1)),
             TrainerEffect::BonusDamageThisTurn(80, TurnBonusTarget::OpponentActiveWithoutRuleBox),
