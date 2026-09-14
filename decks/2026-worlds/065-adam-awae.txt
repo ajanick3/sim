@@ -1,0 +1,32 @@
+Pokémon: 21
+4 Dreepy TWM 128
+4 Drakloak TWM 129
+2 Dragapult ex TWM 130
+2 Bronzor PRE 066
+2 Bronzong TEF 069
+1 Budew ASC 016
+1 Shaymin DRI 010
+1 Patrat CRI 070
+1 Fezandipiti ex ASC 142
+1 Latias ex SSP 076
+1 Bloodmoon Ursaluna ex TWM 141
+1 Meowth ex POR 062
+
+Trainer: 31
+4 Lillie's Determination MEG 119
+3 Boss's Orders MEG 114
+2 Team Rocket's Petrel DRI 176
+2 Hilda WHT 084
+1 Crispin SCR 133
+4 Buddy-Buddy Poffin TEF 144
+4 Poke Pad POR 081
+4 Ultra Ball MEG 131
+2 Night Stretcher ASC 196
+2 Switch MEG 130
+1 Unfair Stamp TWM 165
+2 Festival Grounds TWM 149
+
+Energy: 8
+3 Fire Energy MEE 002
+3 Psychic Energy MEE 005
+2 Telepathic Psychic Energy POR 088

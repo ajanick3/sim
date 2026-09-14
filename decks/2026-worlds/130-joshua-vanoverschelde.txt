@@ -1,0 +1,31 @@
+Pokémon: 20
+3 Dunsparce JTG 120
+1 Dunsparce TEF 128
+3 Dudunsparce TEF 129
+1 Dudunsparce ex JTG 121
+2 Snorunt ASC 046
+2 Mega Froslass ex ASC 047
+2 Buneary PFL 083
+2 Mega Lopunny ex PFL 084
+1 Shaymin DRI 010
+1 Chien-Pao SSP 056
+1 Meowth ex POR 062
+1 Fan Rotom SCR 118
+
+Trainer: 33
+4 Wally's Compassion MEG 132
+3 Lillie's Determination MEG 119
+3 Hilda WHT 084
+3 Boss's Orders MEG 114
+4 Poke Pad POR 081
+4 Buddy-Buddy Poffin TEF 144
+3 Ultra Ball MEG 131
+2 Pokegear 3.0 SVI 186
+1 Night Stretcher ASC 196
+2 Air Balloon ASC 181
+1 Hero's Cape TEF 152
+3 Battle Cage PFL 085
+
+Energy: 7
+4 Mist Energy TEF 161
+3 Water Energy MEE 003

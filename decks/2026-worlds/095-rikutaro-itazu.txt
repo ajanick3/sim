@@ -1,0 +1,31 @@
+Pokémon: 20
+4 Beldum TEF 113
+4 Metang TEF 114
+1 Metagross CRI 061
+2 Drilbur PBL 046
+2 Mega Excadrill ex PBL 065
+2 Genesect ex BLK 067
+1 Mega Skarmory ex POR 055
+1 Regigigas PRE 086
+1 Fezandipiti ex ASC 142
+1 Meowth ex POR 062
+1 Shaymin DRI 010
+
+Trainer: 23
+4 Team Rocket's Petrel DRI 176
+1 Boss's Orders MEG 114
+1 Philippe CRI 079
+4 Team Rocket's Transceiver DRI 178
+3 Ultra Ball MEG 131
+2 Jumbo Ice Cream PFL 091
+1 Precious Trolley SSP 185
+1 Buddy-Buddy Poffin TEF 144
+1 Iron Defender MEG 118
+1 Switch MEG 130
+1 Tool Scrapper ASC 212
+1 Special Red Card CRI 082
+1 Energy Recycler DRI 164
+1 Brave Bangle WHT 080
+
+Energy: 17
+17 Metal Energy MEE 008

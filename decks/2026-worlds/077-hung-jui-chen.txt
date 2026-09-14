@@ -1,0 +1,30 @@
+Pokémon: 23
+4 Abra MEG 054
+4 Kadabra MEG 055
+3 Alakazam MEG 056
+3 Dunsparce JTG 120
+2 Dudunsparce TEF 129
+2 Rellor TEF 023
+2 Rabsca TEF 024
+1 Genesect SFA 040
+1 Fezandipiti ex ASC 142
+1 Psyduck ASC 039
+
+Trainer: 31
+4 Dawn PFL 087
+3 Hilda WHT 084
+3 Boss's Orders MEG 114
+1 Eri TEF 146
+1 Lana's Aid TWM 155
+4 Buddy-Buddy Poffin TEF 144
+4 Poke Pad POR 081
+3 Rare Candy MEG 125
+1 Sacred Ash DRI 168
+1 Night Stretcher ASC 196
+3 Handheld Fan TWM 150
+3 Forest of Vitality MEG 117
+
+Energy: 6
+4 Telepathic Psychic Energy POR 088
+1 Psychic Energy MEE 005
+1 Enriching Energy SSP 191

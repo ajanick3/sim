@@ -1,0 +1,31 @@
+Pokémon: 20
+4 Abra MEG 054
+4 Kadabra MEG 055
+3 Alakazam MEG 056
+3 Dunsparce JTG 120
+2 Dudunsparce TEF 129
+1 Shaymin DRI 010
+1 Fezandipiti ex ASC 142
+1 Lillie's Clefairy ex JTG 056
+1 Genesect SFA 040
+
+Trainer: 33
+4 Dawn PFL 087
+3 Hilda WHT 084
+2 Eri TEF 146
+2 Boss's Orders MEG 114
+1 Lana's Aid TWM 155
+4 Buddy-Buddy Poffin TEF 144
+4 Poke Pad POR 081
+3 Rare Candy MEG 125
+2 Wondrous Patch PFL 094
+1 Night Stretcher ASC 196
+1 Sacred Ash DRI 168
+2 Lillie's Pearl JTG 151
+1 Air Balloon ASC 181
+3 Battle Cage PFL 085
+
+Energy: 7
+4 Telepathic Psychic Energy POR 088
+2 Psychic Energy MEE 005
+1 Enriching Energy SSP 191

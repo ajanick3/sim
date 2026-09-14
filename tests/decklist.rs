@@ -197,7 +197,7 @@ fn every_committed_deck_is_legal_and_every_line_matches() {
         checked += 1;
     }
 
-    assert!(checked >= 61, "every deck is read: {checked} found");
+    assert!(checked >= 143, "every deck is read: {checked} found");
 }
 
 #[test]
@@ -308,7 +308,7 @@ fn basic_energy_counts_toward_playable_not_only_the_rest_of_the_deck() {
 #[test]
 fn a_fully_playable_real_deck_reports_is_playable() {
     let import = load(&artifact()).unwrap();
-    let text = std::fs::read_to_string("decks/2026-worlds/09-ojvind-svinhufvud.txt")
+    let text = std::fs::read_to_string("decks/2026-worlds/009-ojvind-svinhufvud.txt")
         .expect("a committed deck");
     let list = parse(&text);
     let report = check(&list, &import);
@@ -324,7 +324,7 @@ fn a_fully_playable_real_deck_reports_is_playable() {
 #[test]
 fn to_deck_builds_sixty_cards_including_basic_energy() {
     let mut import = load(&artifact()).unwrap();
-    let text = std::fs::read_to_string("decks/2026-worlds/09-ojvind-svinhufvud.txt")
+    let text = std::fs::read_to_string("decks/2026-worlds/009-ojvind-svinhufvud.txt")
         .expect("a committed deck");
     let list = parse(&text);
     let report = check(&list, &import);
