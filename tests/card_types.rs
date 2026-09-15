@@ -124,7 +124,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Pokémon Catcher and Fighting Gong take it to 133.
     // Bianca's Devotion takes it to 130.
     // Explorer's Guidance takes it to 127.
-    assert_eq!(trainers, 127, "the Trainers still refused, by kind");
+    // Team Rocket's Ariana takes it to 123.
+    assert_eq!(trainers, 123, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

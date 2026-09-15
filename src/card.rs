@@ -400,6 +400,14 @@ pub enum TrainerEffect {
     /// Draw until the player holds this many cards, stopping early if the
     /// deck runs out. `Iris's Fighting Spirit`.
     DrawUpToHandSize(u32),
+    /// Draw up to `base` cards in hand, or up to `bonus` instead if every
+    /// one of the player's own Pokémon in play carries this name prefix.
+    /// `Team Rocket's Ariana`.
+    DrawUpToHandSizeOrMoreIfAllOwnNamePrefix {
+        base: u32,
+        bonus: u32,
+        prefix: &'static str,
+    },
     /// Flip a coin, then draw `heads` on heads or `tails` on tails.
     /// `Picnicker`.
     CoinFlipDraw { heads: u32, tails: u32 },
