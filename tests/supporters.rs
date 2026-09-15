@@ -2881,3 +2881,61 @@ fn the_side_shield_supporters_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: a heal restricted by remaining HP ---
+
+#[test]
+fn biancas_devotion_only_offers_a_pokemon_near_a_knockout() {
+    let mut db = build().db;
+    let bianca = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-biancas-devotion",
+        name: "Bianca's Devotion",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::HealFullyIfRemainingHpAtMost(30),
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, bianca, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let bench = state.player(player).bench[0];
+    // The Active is near a Knockout (30 remaining); the Benched Pokémon
+    // is only lightly hurt (90 remaining) and should not be offered.
+    let active_hp = state.effective_hp(active);
+    state.pokemon[active.index()].damage = active_hp - 30;
+    let bench_hp = state.effective_hp(bench);
+    state.pokemon[bench.index()].damage = bench_hp - 90;
+
+    let card = ensure_in_hand(&mut state, player, bianca);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let targets: Vec<PokemonId> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::HealTarget { target } => Some(target),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(targets, vec![active], "only the near-knockout Pokémon is offered");
+
+    apply(&mut state, Action::HealTarget { target: active }).unwrap();
+    assert_eq!(state.pokemon(active).damage, 0, "healed fully, not by a fixed amount");
+}
+
+#[test]
+fn biancas_devotion_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    let card = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Bianca's Devotion")
+        .expect("Bianca's Devotion should play");
+    assert_eq!(
+        card.effect,
+        TrainerEffect::HealFullyIfRemainingHpAtMost(30)
+    );
+}

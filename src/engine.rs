@@ -624,6 +624,7 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     clear_conditions,
                     ..
                 } => (amount, clear_conditions),
+                Phase::HealingChosenIfRemainingHpAtMost { .. } => (u32::MAX, false),
                 _ => return Err(IllegalAction),
             };
             state.pokemon[target.index()].damage =
@@ -3152,6 +3153,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                 clear_conditions: true,
                 of_type: None,
             };
+        }
+
+        TrainerEffect::HealFullyIfRemainingHpAtMost(at_most) => {
+            state.phase = Phase::HealingChosenIfRemainingHpAtMost { player, at_most };
         }
 
         TrainerEffect::HealActiveAndClearConditions(amount) => {

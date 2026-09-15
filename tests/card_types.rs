@@ -122,7 +122,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Mega Signal and TM Machine take it to 140.
     // Premium Power Pro takes it to 137.
     // Pokémon Catcher and Fighting Gong take it to 133.
-    assert_eq!(trainers, 133, "the Trainers still refused, by kind");
+    // Bianca's Devotion takes it to 130.
+    assert_eq!(trainers, 130, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

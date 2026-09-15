@@ -246,6 +246,12 @@ pub enum Phase {
         /// Only a Pokémon of this type may be chosen, when set. `Jacinthe`.
         of_type: Option<crate::card::Type>,
     },
+    /// `player` played `Bianca's Devotion`: choose one of their own
+    /// Pokémon with `at_most` remaining HP or less, and heal it fully.
+    /// Its own phase rather than a new field on `HealingChosen`, since
+    /// "heal all" and "restricted by remaining HP" are both unlike
+    /// anything that phase already reads.
+    HealingChosenIfRemainingHpAtMost { player: PlayerId, at_most: u32 },
     /// `player` played `Rare Candy` and chooses both the Stage 2 from hand
     /// and the Basic in play it evolves, skipping the Stage 1 between them.
     /// A card and a target are chosen together, the same reason
