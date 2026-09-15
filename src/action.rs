@@ -392,6 +392,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::Main => Some(state.current),
         Phase::Promoting { chooser, .. } => Some(chooser),
         Phase::PromotingOwnNamePrefixThenOpponent { player, .. } => Some(player),
+        Phase::PromotingOpponentBasicThenConfuse { player } => Some(player),
         Phase::ChoosingWhoGoesFirst { winner } => Some(winner),
         Phase::TakingBonusDraws { player, .. } => Some(player),
         Phase::PlacingActive { player } => Some(player),
@@ -1379,6 +1380,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         return actions;
     }
 
+    if let Phase::PromotingOpponentBasicThenConfuse { player } = state.phase {
+        for pokemon in &state.player(player.opponent()).bench {
+            if state.pokemon_def(*pokemon).stage == crate::card::Stage::Basic {
+                actions.push(Action::Promote { pokemon: *pokemon });
+            }
+        }
+        return actions;
+    }
+
     // A Stadium's own once-a-turn action — not dispatched through
     // PlayTrainer, since the Stadium is already in play; offered
     // directly, the way AttachEnergy and PlayTool are.
@@ -1507,6 +1517,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 TrainerEffect::SwitchOpponentActiveThenOwn => {
                     !state.player(player.opponent()).bench.is_empty()
                 }
+                TrainerEffect::SwitchOpponentActiveBasicThenConfuse => state
+                    .player(player.opponent())
+                    .bench
+                    .iter()
+                    .any(|p| state.pokemon_def(*p).stage == crate::card::Stage::Basic),
                 // A Pokémon that has actually evolved, to devolve.
                 TrainerEffect::DevolveChosen => side
                     .in_play()

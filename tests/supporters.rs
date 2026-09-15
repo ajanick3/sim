@@ -3226,3 +3226,60 @@ fn salvatore_is_admitted_from_the_artifact() {
         "Salvatore should play",
     );
 }
+
+// --- Beyond the field: a switch restricted to a Basic, then Confused ---
+
+#[test]
+fn lisias_appeal_switches_in_only_a_basic_and_confuses_it() {
+    let mut set = build();
+    let lisia = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-lisias-appeal",
+        name: "Lisia's Appeal",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::SwitchOpponentActiveBasicThenConfuse,
+    }));
+    let mut state = game(&set, lisia, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+
+    let evolved_card = deal_new_card(&mut state, opponent, set.stage1);
+    let evolved = state.put_into_play(opponent, evolved_card);
+    state.players[opponent.index()].bench.push(evolved);
+    let basic_card = deal_new_card(&mut state, opponent, set.mon);
+    let basic = state.put_into_play(opponent, basic_card);
+    state.players[opponent.index()].bench.push(basic);
+
+    let card = ensure_in_hand(&mut state, player, lisia);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    let offered: Vec<PokemonId> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::Promote { pokemon } => Some(pokemon),
+            _ => None,
+        })
+        .collect();
+    assert!(offered.contains(&basic), "{offered:?}");
+    assert!(!offered.contains(&evolved), "the evolved Pokemon is not offered: {offered:?}");
+
+    apply(&mut state, Action::Promote { pokemon: basic }).unwrap();
+    assert_eq!(state.player(opponent).active, Some(basic));
+    assert!(state.pokemon(basic).conditions.contains(&sim::card::Condition::Confused));
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn lisias_appeal_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import
+            .cards
+            .iter()
+            .any(|c| c.name == "Lisia's Appeal" && c.playable.is_some()),
+        "Lisia's Appeal should play",
+    );
+}

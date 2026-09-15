@@ -1372,6 +1372,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             TrainerEffect::SwitchOwnNamePrefixThenOpponent("Team Rocket's"),
         ),
         "Salvatore" => (free, TrainerEffect::SearchDeckToEvolveNoAbility),
+        "Lisia's Appeal" => (free, TrainerEffect::SwitchOpponentActiveBasicThenConfuse),
         "Academy at Night" => (free, TrainerEffect::MayPutHandCardOnTopOfDeck),
         "Team Rocket's Factory" => (
             free,

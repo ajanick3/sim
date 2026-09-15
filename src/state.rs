@@ -261,6 +261,10 @@ pub enum Phase {
         player: PlayerId,
         prefix: &'static str,
     },
+    /// `player` played `Lisia's Appeal`: switch in a Basic from the
+    /// opponent's Bench, restricted the way `Promoting` has no field for,
+    /// then Confuse it.
+    PromotingOpponentBasicThenConfuse { player: PlayerId },
     /// `player` played `Rare Candy` and chooses both the Stage 2 from hand
     /// and the Basic in play it evolves, skipping the Stage 1 between them.
     /// A card and a target are chosen together, the same reason

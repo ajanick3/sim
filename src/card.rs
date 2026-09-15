@@ -308,6 +308,9 @@ pub enum TrainerEffect {
     /// `SwitchOpponentActiveThenOwn` already reads, and restricted on
     /// its own side where that switch is not.
     SwitchOwnNamePrefixThenOpponent(&'static str),
+    /// Switch in a Basic from the opponent's Bench, chosen by the
+    /// player, then Confuse it. `Lisia's Appeal`.
+    SwitchOpponentActiveBasicThenConfuse,
     /// Devolve one of the player's own evolved Pokémon, any number of
     /// evolution cards, into their hand; the Pokémon cannot evolve again
     /// this turn. `Strange Timepiece`.

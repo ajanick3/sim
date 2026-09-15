@@ -344,5 +344,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Team Rocket's Giovanni (a new `ActiveNamePrefix` Requirement and
     // `SwitchOwnNamePrefixThenOpponent`) takes it to 942.
     // Salvatore (a new `SearchDeckToEvolveNoAbility`) takes it to 945.
-    assert_eq!(admitted, 945, "coverage moves only on purpose");
+    // Lisia's Appeal (a new `SwitchOpponentActiveBasicThenConfuse`)
+    // takes it to 948.
+    assert_eq!(admitted, 948, "coverage moves only on purpose");
 }
