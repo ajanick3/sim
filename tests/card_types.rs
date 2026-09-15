@@ -130,7 +130,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Lisia's Appeal takes it to 113.
     // Acerola's Mischief takes it to 109.
     // Scoop Up Cyclone takes it to 107.
-    assert_eq!(trainers, 107, "the Trainers still refused, by kind");
+    // Team Rocket's Venture Bomb takes it to 106.
+    assert_eq!(trainers, 106, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

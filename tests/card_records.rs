@@ -349,5 +349,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Acerola's Mischief (a new `protected_from_ex_next_turn`) takes it
     // to 952. Every Supporter in the field is now built.
     // Scoop Up Cyclone (a new `ReturnChosenToHand`) takes it to 954.
-    assert_eq!(admitted, 954, "coverage moves only on purpose");
+    // Team Rocket's Venture Bomb (a new
+    // `CoinFlipDamageCountersOnChosenOpponentElseOwnActive`) takes it
+    // to 955. Every Item in the field is now built.
+    assert_eq!(admitted, 955, "coverage moves only on purpose");
 }

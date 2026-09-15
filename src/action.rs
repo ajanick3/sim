@@ -169,6 +169,9 @@ pub enum Action {
     /// Return this Pokémon in play, with everything attached, to hand.
     /// `Scoop Up Cyclone`.
     ReturnToHand { target: PokemonId },
+    /// Place `Phase::ChoosingDamageCounterTarget`'s damage counters on
+    /// this chosen opponent's Pokémon. `Team Rocket's Venture Bomb`.
+    PlaceDamageCountersOn { target: PokemonId },
     /// Put one damage counter on this Benched Pokémon, as part of
     /// `Phase::DistributingDamageCounters`.
     PlaceDamageCounter { target: PokemonId },
@@ -401,6 +404,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::PromotingOpponentBasicThenConfuse { player } => Some(player),
         Phase::ChoosingProtectedFromEx { player } => Some(player),
         Phase::ChoosingToReturnToHand { player } => Some(player),
+        Phase::ChoosingDamageCounterTarget { player, .. } => Some(player),
         Phase::ChoosingWhoGoesFirst { winner } => Some(winner),
         Phase::TakingBonusDraws { player, .. } => Some(player),
         Phase::PlacingActive { player } => Some(player),
@@ -1388,6 +1392,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         return actions;
     }
 
+    if let Phase::ChoosingDamageCounterTarget { player, .. } = state.phase {
+        for target in state.player(player.opponent()).in_play() {
+            actions.push(Action::PlaceDamageCountersOn { target });
+        }
+        return actions;
+    }
+
     if let Phase::ChoosingToReturnToHand { player } = state.phase {
         for target in state.player(player).in_play() {
             actions.push(Action::ReturnToHand { target });
@@ -2152,6 +2163,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
             state.pokemon_def(target).name,
             state.def_of(card).name()
         ),
+        Action::PlaceDamageCountersOn { target } => {
+            format!("Place damage counters on {}", state.pokemon_def(target).name)
+        }
         Action::ReturnToHand { target } => {
             format!("Return {} to hand", state.pokemon_def(target).name)
         }

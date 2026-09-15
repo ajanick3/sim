@@ -319,6 +319,11 @@ pub enum TrainerEffect {
     /// Benched, and return it with everything attached to hand.
     /// `Scoop Up Cyclone`.
     ReturnChosenToHand,
+    /// Flip a coin: on heads, place this many damage counters on a
+    /// chosen Pokémon of the opponent's; on tails, on the player's own
+    /// Active instead — no choice on that side, it names itself.
+    /// `Team Rocket's Venture Bomb`.
+    CoinFlipDamageCountersOnChosenOpponentElseOwnActive(u32),
     /// Devolve one of the player's own evolved Pokémon, any number of
     /// evolution cards, into their hand; the Pokémon cannot evolve again
     /// this turn. `Strange Timepiece`.

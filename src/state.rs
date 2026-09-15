@@ -272,6 +272,9 @@ pub enum Phase {
     /// Pokémon in play — Active or Benched — to return, with everything
     /// attached, to hand.
     ChoosingToReturnToHand { player: PlayerId },
+    /// `player` played `Team Rocket's Venture Bomb` and flipped heads:
+    /// choose which of the opponent's Pokémon takes the damage counters.
+    ChoosingDamageCounterTarget { player: PlayerId, amount: u32 },
     /// `player` played `Rare Candy` and chooses both the Stage 2 from hand
     /// and the Basic in play it evolves, skipping the Stage 1 between them.
     /// A card and a target are chosen together, the same reason
