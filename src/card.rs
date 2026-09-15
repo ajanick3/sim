@@ -253,6 +253,11 @@ pub enum PromoteFollowUp {
 pub enum DiscardFollowUp {
     /// The acting player discards from their own hand down to this size.
     AlsoDiscardOwnHandDownTo(u32),
+    /// Draw this many, but only if every forced discard actually
+    /// happened — declining partway through pays nothing and draws
+    /// nothing. `Prism Tower`'s "discard 2 to draw a card" is a trade,
+    /// not two separate optional discards.
+    DrawIfFullyDiscarded(u32),
 }
 
 /// What a this-turn damage bonus restricts itself to — always the
@@ -324,6 +329,17 @@ pub enum TrainerEffect {
     /// Active instead — no choice on that side, it names itself.
     /// `Team Rocket's Venture Bomb`.
     CoinFlipDamageCountersOnChosenOpponentElseOwnActive(u32),
+    /// A Stadium's own standing action: once during each player's turn,
+    /// that player may discard 2 cards from hand to draw 1 — an
+    /// all-or-nothing trade, not two separate discards. `Prism Tower`,
+    /// read the same way `MaySearchBasicToBenchThenMaybeEndTurn` already
+    /// is: compared against `stadium_effect()`, not resolved directly.
+    StadiumMayDiscardTwoToDrawOne,
+    /// A Stadium's own standing action: once during each player's turn,
+    /// if they played a Supporter from hand this turn, they may heal
+    /// this much from every one of their own Pokémon. `Community
+    /// Center`.
+    StadiumMayHealAllIfPlayedSupporter(u32),
     /// Devolve one of the player's own evolved Pokémon, any number of
     /// evolution cards, into their hand; the Pokémon cannot evolve again
     /// this turn. `Strange Timepiece`.
