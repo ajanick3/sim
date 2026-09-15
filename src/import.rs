@@ -729,6 +729,20 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             },
         ),
+        "Explorer's Guidance" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Deck,
+                slots: vec![Slot {
+                    filter: CardFilter::AnyCard,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 2,
+                    excludes_type_of_previous: false,
+                    peek: Some(6),
+                }],
+                then: Some(Then::DiscardRestOfPeek),
+            },
+        ),
         "Drayton" => (
             free,
             TrainerEffect::Decide {

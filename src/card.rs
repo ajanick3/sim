@@ -200,6 +200,11 @@ pub enum Then {
     /// once-a-turn search, not a played card's effect, but the same
     /// `Decide` machinery either way.
     EndTurnIfMoved,
+    /// Whatever the search's own peeked window did not take is
+    /// discarded, rather than left in the deck to be shuffled back in —
+    /// the one slot's `peek` size names the window. `Explorer's
+    /// Guidance`.
+    DiscardRestOfPeek,
 }
 
 /// One step of a search: what to look for, where it goes, and how many. A
