@@ -151,7 +151,8 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     | Requirement::MorePrizesThanOpponent
                     | Requirement::HandSizeIs(_)
                     | Requirement::OpponentPrizesExactly(_)
-                    | Requirement::OwnTeraPokemonInPlay,
+                    | Requirement::OwnTeraPokemonInPlay
+                    | Requirement::ActiveNamePrefix(_),
                 ) => {
                     resolve_trainer(state, player, card, trainer.effect);
                 }
@@ -298,6 +299,32 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         Action::ResolveCheckup { pokemon, condition } => {
             resolve_checkup(state, pokemon, condition);
             settle(state);
+        }
+
+        Action::Promote { pokemon } if matches!(state.phase, Phase::PromotingOwnNamePrefixThenOpponent { .. }) => {
+            let player = match state.phase {
+                Phase::PromotingOwnNamePrefixThenOpponent { player, .. } => player,
+                _ => unreachable!(),
+            };
+            let side = &mut state.players[player.index()];
+            side.bench.retain(|p| *p != pokemon);
+            let displaced = side.active.replace(pokemon);
+            if let Some(displaced) = displaced {
+                side.bench.push(displaced);
+            }
+            state.promoted_from_bench_this_turn[player.index()] = Some(pokemon);
+            let name = state.pokemon_def(pokemon).name;
+            state.log.push(format!("{player:?} promotes {name}."));
+            if state.player(player.opponent()).bench.is_empty() {
+                state.phase = Phase::Main;
+                settle(state);
+            } else {
+                state.phase = Phase::Promoting {
+                    of: player.opponent(),
+                    chooser: player,
+                    then: None,
+                };
+            }
         }
 
         Action::Promote { pokemon } => {
@@ -2899,6 +2926,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                 chooser: player,
                 then: Some(crate::card::PromoteFollowUp::AlsoSwitchOwnActive),
             };
+        }
+
+        TrainerEffect::SwitchOwnNamePrefixThenOpponent(prefix) => {
+            state.phase = Phase::PromotingOwnNamePrefixThenOpponent { player, prefix };
         }
 
         TrainerEffect::Draw(count) => {

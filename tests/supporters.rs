@@ -3068,3 +3068,102 @@ fn team_rockets_ariana_is_admitted_from_the_artifact() {
         "Team Rocket's Ariana should play",
     );
 }
+
+// --- Beyond the field: a switch restricted on the player's own side too ---
+
+#[test]
+fn team_rockets_giovanni_switches_both_sides_by_name_prefix() {
+    let mut set = build();
+    let tr_active = basic(&mut set.db, "test-tr-active", "Team Rocket's Meowth", 60, 1, None);
+    let tr_bench = basic(&mut set.db, "test-tr-bench", "Team Rocket's Persian", 90, 1, None);
+    let giovanni = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-giovanni",
+        name: "Team Rocket's Giovanni",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::ActiveNamePrefix("Team Rocket's")),
+        effect: TrainerEffect::SwitchOwnNamePrefixThenOpponent("Team Rocket's"),
+    }));
+    let mut state = game(&set, giovanni, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+
+    let active_card = deal_new_card(&mut state, player, tr_active);
+    let active = state.player(player).active.unwrap();
+    state.pokemon[active.index()].cards = vec![active_card];
+    let bench_card = deal_new_card(&mut state, player, tr_bench);
+    let tr_benched = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(tr_benched);
+    let ordinary_benched = state.player(player).bench[0];
+    let opp_benched_card = deal_new_card(&mut state, opponent, set.mon);
+    let opp_benched = state.put_into_play(opponent, opp_benched_card);
+    state.players[opponent.index()].bench.push(opp_benched);
+    let old_opp_active = state.player(opponent).active.unwrap();
+
+    let card = ensure_in_hand(&mut state, player, giovanni);
+    assert!(
+        legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "the Active and a Benched Team Rocket's Pokemon make this legal"
+    );
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    // Only the Team Rocket's-prefixed Benched Pokémon is offered.
+    let offered: Vec<PokemonId> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::Promote { pokemon } => Some(pokemon),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(offered, vec![tr_benched], "{offered:?}");
+    assert!(!offered.contains(&ordinary_benched));
+
+    apply(&mut state, Action::Promote { pokemon: tr_benched }).unwrap();
+    assert_eq!(state.player(player).active, Some(tr_benched));
+    assert!(state.player(player).bench.contains(&active));
+
+    let opponent_promote = legal_actions(&state)
+        .into_iter()
+        .find_map(|a| match a {
+            Action::Promote { pokemon } => Some(pokemon),
+            _ => None,
+        })
+        .expect("the opponent's own switch follows");
+    apply(&mut state, Action::Promote { pokemon: opponent_promote }).unwrap();
+    assert_ne!(state.player(opponent).active, Some(old_opp_active));
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn team_rockets_giovanni_needs_a_team_rockets_pokemon_on_both_the_active_and_bench() {
+    let mut set = build();
+    let giovanni = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-giovanni-2",
+        name: "Team Rocket's Giovanni",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::ActiveNamePrefix("Team Rocket's")),
+        effect: TrainerEffect::SwitchOwnNamePrefixThenOpponent("Team Rocket's"),
+    }));
+    let mut state = game(&set, giovanni, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, giovanni);
+
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "no Team Rocket's Pokemon are in play at all"
+    );
+}
+
+#[test]
+fn team_rockets_giovanni_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import
+            .cards
+            .iter()
+            .any(|c| c.name == "Team Rocket's Giovanni" && c.playable.is_some()),
+        "Team Rocket's Giovanni should play",
+    );
+}

@@ -302,6 +302,12 @@ pub enum TrainerEffect {
     /// `SwitchOpponentActive` with `PromoteFollowUp::AlsoSwitchOwnActive`
     /// chained onto it, not a new shape of switch.
     SwitchOpponentActiveThenOwn,
+    /// Switch the player's own Active with a Benched Pokémon carrying
+    /// this name prefix, then switch in one of the opponent's Benched
+    /// Pokémon too. `Team Rocket's Giovanni` — the reverse order
+    /// `SwitchOpponentActiveThenOwn` already reads, and restricted on
+    /// its own side where that switch is not.
+    SwitchOwnNamePrefixThenOpponent(&'static str),
     /// Devolve one of the player's own evolved Pokémon, any number of
     /// evolution cards, into their hand; the Pokémon cannot evolve again
     /// this turn. `Strange Timepiece`.
@@ -725,6 +731,12 @@ pub enum Requirement {
     /// The player has a Pokémon carrying `Marker::Tera` in play — read
     /// from the board, and costs nothing. `Glass Trumpet`.
     OwnTeraPokemonInPlay,
+    /// The player's own Active carries this name prefix. `Team Rocket's
+    /// Giovanni`, which also needs a Benched Pokémon of the same prefix
+    /// to switch into — read at `legal_actions` time, not here, the same
+    /// way every other Requirement costs nothing to check but does not
+    /// itself guarantee the effect resolves to completion.
+    ActiveNamePrefix(&'static str),
 }
 
 /// A Trainer as printed.
