@@ -265,6 +265,9 @@ pub enum Phase {
     /// opponent's Bench, restricted the way `Promoting` has no field for,
     /// then Confuse it.
     PromotingOpponentBasicThenConfuse { player: PlayerId },
+    /// `player` played `Acerola's Mischief`: choose one of their own
+    /// Pokémon in play to protect from an ex next turn.
+    ChoosingProtectedFromEx { player: PlayerId },
     /// `player` played `Rare Candy` and chooses both the Stage 2 from hand
     /// and the Basic in play it evolves, skipping the Stage 1 between them.
     /// A card and a target are chosen together, the same reason
@@ -788,6 +791,13 @@ pub struct GameState {
     /// turn: the player who granted it, and what it does. Same lifetime
     /// as `opponent_next_turn_restriction`. See ADR 0098.
     pub side_shield_next_turn: Option<(PlayerId, crate::card::SideShield)>,
+    /// A single Pokémon `Acerola's Mischief` protected, from every
+    /// attack a Pokémon ex of the granting player's opponent makes
+    /// during the opponent's next turn — no damage, no effect. Narrower
+    /// than `side_shield_next_turn`, which guards the whole side rather
+    /// than one chosen Pokémon, and unconditioned on the attacker's own
+    /// type the way that field's variants are.
+    pub protected_from_ex_next_turn: Option<(PlayerId, PokemonId)>,
     /// The mirror of `opponent_next_turn_restriction`: a restriction on
     /// the *attacker's own* very next turn, granted mid-turn (so it must
     /// not apply to the turn granting it). `armed` becomes `true` the
@@ -899,6 +909,7 @@ impl GameState {
             played_a_team_rocket_supporter_this_turn: [false, false],
             opponent_next_turn_restriction: None,
             side_shield_next_turn: None,
+            protected_from_ex_next_turn: None,
             own_next_turn_restriction: None,
             locked_attack_next_turn: None,
             bonus_damage_to_pokemon_on_granting_players_next_turn: None,
@@ -1361,12 +1372,22 @@ impl GameState {
     /// Whether `id` carries `EnergyEffect::PreventsAttackEffectsOnCarrier`
     /// — every site that would apply an opponent's attack effect
     /// directly to a Pokémon checks this first. `Mist Energy`.
-    pub fn attack_effects_on_it_prevented(&self, id: PokemonId) -> bool {
-        self.pokemon(id).attached.iter().any(|c| {
+    pub fn attack_effects_on_it_prevented(&self, attacker: PokemonId, id: PokemonId) -> bool {
+        let carried_energy = self.pokemon(id).attached.iter().any(|c| {
             self.def_of(*c)
                 .as_energy()
                 .is_some_and(|e| e.effect == Some(crate::card::EnergyEffect::PreventsAttackEffectsOnCarrier))
-        })
+        });
+        // `Acerola's Mischief`: this Pokémon takes no effect at all from
+        // an ex the granting player's opponent attacks with, during
+        // that opponent's next turn — the same condition `damage_dealt`
+        // already reads for the damage half of the same protection.
+        let mischief = self
+            .protected_from_ex_next_turn
+            .is_some_and(|(granted_by, protected)| {
+                protected == id && self.current != granted_by && self.pokemon_def(attacker).prizes > 1
+            });
+        carried_energy || mischief
     }
 
     /// Whether `player` has a Pokémon carrying `Marker::Tera` in play,
@@ -1737,6 +1758,11 @@ impl GameState {
             && self.current == granted_by
         {
             self.side_shield_next_turn = None;
+        }
+        if let Some((granted_by, _)) = self.protected_from_ex_next_turn
+            && self.current == granted_by
+        {
+            self.protected_from_ex_next_turn = None;
         }
         if let Some((_, _, granted_by)) = self.opponent_next_turn_restriction
             && self.current == granted_by

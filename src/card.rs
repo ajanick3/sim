@@ -311,6 +311,10 @@ pub enum TrainerEffect {
     /// Switch in a Basic from the opponent's Bench, chosen by the
     /// player, then Confuse it. `Lisia's Appeal`.
     SwitchOpponentActiveBasicThenConfuse,
+    /// Choose one of the player's own Pokémon in play, and protect it
+    /// from an ex the opponent attacks with next turn: no damage, no
+    /// effect. `Acerola's Mischief`.
+    ProtectChosenFromExNextTurn,
     /// Devolve one of the player's own evolved Pokémon, any number of
     /// evolution cards, into their hand; the Pokémon cannot evolve again
     /// this turn. `Strange Timepiece`.

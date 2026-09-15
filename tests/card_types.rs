@@ -19,7 +19,7 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
     };
 
     assert_eq!(
-        reason_for("me01-113"),
+        reason_for("me01-120"),
         Some(Refusal::IsATrainer(TrainerKind::Supporter)),
         "a Supporter is refused as a Supporter"
     );
@@ -128,7 +128,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Team Rocket's Giovanni takes it to 119.
     // Salvatore takes it to 116.
     // Lisia's Appeal takes it to 113.
-    assert_eq!(trainers, 113, "the Trainers still refused, by kind");
+    // Acerola's Mischief takes it to 109.
+    assert_eq!(trainers, 109, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and
