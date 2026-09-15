@@ -339,5 +339,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // to 931.
     // Explorer's Guidance (a new `Then::DiscardRestOfPeek`) takes it to
     // 934.
-    assert_eq!(admitted, 934, "coverage moves only on purpose");
+    // Team Rocket's Ariana (a new
+    // `DrawUpToHandSizeOrMoreIfAllOwnNamePrefix`) takes it to 938.
+    assert_eq!(admitted, 938, "coverage moves only on purpose");
 }

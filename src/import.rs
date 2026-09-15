@@ -1359,6 +1359,14 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Powerglass" => (free, TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd),
         "Gravity Mountain" => (free, TrainerEffect::ReducesHpForStage(Stage::Stage2, 30)),
         "N's Castle" => (free, TrainerEffect::RemovesRetreatCostForNamePrefix("N's")),
+        "Team Rocket's Ariana" => (
+            free,
+            TrainerEffect::DrawUpToHandSizeOrMoreIfAllOwnNamePrefix {
+                base: 5,
+                bonus: 8,
+                prefix: "Team Rocket's",
+            },
+        ),
         "Academy at Night" => (free, TrainerEffect::MayPutHandCardOnTopOfDeck),
         "Team Rocket's Factory" => (
             free,

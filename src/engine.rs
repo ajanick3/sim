@@ -2915,6 +2915,20 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::DrawUpToHandSizeOrMoreIfAllOwnNamePrefix { base, bonus, prefix } => {
+            let all_match = state
+                .player(player)
+                .in_play()
+                .iter()
+                .all(|id| state.pokemon_def(*id).name.starts_with(prefix));
+            let target = if all_match { bonus } else { base };
+            while state.player(player).hand.len() < target as usize {
+                if !state.draw(player) {
+                    break;
+                }
+            }
+        }
+
         TrainerEffect::CoinFlipDraw { heads, tails } => {
             let count = if state.flip_for(player) { heads } else { tails };
             for _ in 0..count {

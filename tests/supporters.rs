@@ -3005,3 +3005,66 @@ fn explorers_guidance_is_admitted_from_the_artifact() {
         "Explorer's Guidance should play",
     );
 }
+
+// --- Beyond the field: a conditional draw target by name prefix ---
+
+#[test]
+fn team_rockets_ariana_draws_to_eight_only_if_every_pokemon_is_team_rockets() {
+    let mut set = build();
+    let tr_mon = basic(&mut set.db, "test-tr-mon", "Team Rocket's Meowth", 60, 1, None);
+    let ariana = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-team-rockets-ariana",
+        name: "Team Rocket's Ariana",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::DrawUpToHandSizeOrMoreIfAllOwnNamePrefix {
+            base: 5,
+            bonus: 8,
+            prefix: "Team Rocket's",
+        },
+    }));
+
+    // Case 1: an ordinary Basic is on the board too, so only the base.
+    let mut state = game(&set, ariana, 3);
+    let player = state.current;
+    while state.player(player).hand.len() > 2 {
+        let c = state.player(player).hand[0];
+        state.players[player.index()].deck.push(c);
+        state.players[player.index()].hand.remove(0);
+    }
+    let card = ensure_in_hand(&mut state, player, ariana);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert_eq!(state.player(player).hand.len(), 5, "the ordinary Active caps it at 5");
+
+    // Case 2: every Pokémon in play is Team Rocket's, so the bonus applies.
+    let mut state = game(&set, ariana, 5);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let tr_card = deal_new_card(&mut state, player, tr_mon);
+    state.pokemon[active.index()].cards = vec![tr_card];
+    // Every Pokémon in play must be Team Rocket's, not only the Active.
+    state.players[player.index()].bench.clear();
+    while state.player(player).hand.len() > 2 {
+        let c = state.player(player).hand[0];
+        state.players[player.index()].deck.push(c);
+        state.players[player.index()].hand.remove(0);
+    }
+    let card = ensure_in_hand(&mut state, player, ariana);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert_eq!(state.player(player).hand.len(), 8, "an all-Team-Rocket board draws to 8");
+}
+
+#[test]
+fn team_rockets_ariana_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import
+            .cards
+            .iter()
+            .any(|c| c.name == "Team Rocket's Ariana" && c.playable.is_some()),
+        "Team Rocket's Ariana should play",
+    );
+}
