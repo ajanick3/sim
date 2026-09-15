@@ -10,12 +10,12 @@ fn artifact() -> String {
 fn a_refused_card_can_be_read_back_in_full() {
     let import = load(&artifact()).unwrap();
 
-    // sv06-162 is a Trainer, refused outright: its rules text has nowhere
+    // me02-086 is a Trainer, refused outright: its rules text has nowhere
     // to go in a CardDef. The raw record still holds it.
     let card = import
         .cards
         .iter()
-        .find(|c| c.id == "sv06-162")
+        .find(|c| c.id == "me02-086")
         .expect("the artifact holds this card");
     assert!(card.playable.is_none(), "a Trainer is never admitted");
     let effect = card.raw["effect"]
@@ -348,5 +348,6 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // takes it to 948.
     // Acerola's Mischief (a new `protected_from_ex_next_turn`) takes it
     // to 952. Every Supporter in the field is now built.
-    assert_eq!(admitted, 952, "coverage moves only on purpose");
+    // Scoop Up Cyclone (a new `ReturnChosenToHand`) takes it to 954.
+    assert_eq!(admitted, 954, "coverage moves only on purpose");
 }

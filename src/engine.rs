@@ -2512,6 +2512,32 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             }
         }
 
+        Action::ReturnToHand { target } => {
+            let player = match state.phase {
+                Phase::ChoosingToReturnToHand { player } => player,
+                _ => return Err(IllegalAction),
+            };
+            let name = state.pokemon_def(target).name;
+            let cards = std::mem::take(&mut state.pokemon[target.index()].cards);
+            let attached = std::mem::take(&mut state.pokemon[target.index()].attached);
+            let side = &mut state.players[player.index()];
+            side.hand.extend(cards);
+            side.hand.extend(attached);
+            let was_active = side.active == Some(target);
+            if was_active {
+                side.active = None;
+            } else {
+                side.bench.retain(|p| *p != target);
+            }
+            state.log.push(format!("{name} returns to hand."));
+            if was_active && !state.player(player).bench.is_empty() {
+                state.phase = Phase::Promoting { of: player, chooser: player, then: None };
+            } else {
+                state.phase = Phase::Main;
+                settle(state);
+            }
+        }
+
         Action::ProtectFromEx { target } => {
             let player = match state.phase {
                 Phase::ChoosingProtectedFromEx { player } => player,
@@ -2994,6 +3020,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::ProtectChosenFromExNextTurn => {
             state.phase = Phase::ChoosingProtectedFromEx { player };
+        }
+
+        TrainerEffect::ReturnChosenToHand => {
+            state.phase = Phase::ChoosingToReturnToHand { player };
         }
 
         TrainerEffect::Draw(count) => {
