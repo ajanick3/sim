@@ -335,5 +335,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // the defender) takes it to 924.
     // Pokémon Catcher and Fighting Gong (a new
     // `BasicPokemonOfTypeOrBasicEnergyOfType`) take it to 928.
-    assert_eq!(admitted, 928, "coverage moves only on purpose");
+    // Bianca's Devotion (a new `HealFullyIfRemainingHpAtMost`) takes it
+    // to 931.
+    assert_eq!(admitted, 931, "coverage moves only on purpose");
 }

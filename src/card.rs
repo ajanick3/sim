@@ -538,6 +538,9 @@ pub enum TrainerEffect {
     /// `Pokémon Center Lady` is the first card to heal a target rather
     /// than the fixed Active `Jumbo Ice Cream` reads.
     HealChosen(u32),
+    /// Heal all damage from one of the player's own Pokémon, restricted to
+    /// one with this much remaining HP or less. `Bianca's Devotion`.
+    HealFullyIfRemainingHpAtMost(u32),
     /// Heal this many points from every Pokémon the player has in play,
     /// or every one of a type when `of_type` is set. No choice, no
     /// condition clear. `Fennel`, `Clemont's Quick Wit`.

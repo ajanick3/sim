@@ -1202,6 +1202,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         ),
         "N's Plan" => (free, TrainerEffect::MoveEnergyFromBenchToActive { limit: 2 }),
         "Pokémon Center Lady" => (free, TrainerEffect::HealChosen(60)),
+        "Bianca's Devotion" => (free, TrainerEffect::HealFullyIfRemainingHpAtMost(30)),
         "Rosa's Encouragement" => (
             Some(Requirement::MorePrizesThanOpponent),
             TrainerEffect::Decide {

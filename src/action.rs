@@ -397,6 +397,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::MovingEnergy { player } => Some(player),
         Phase::MovingEnergyFromBenchToActive { player, .. } => Some(player),
         Phase::HealingChosen { player, .. } => Some(player),
+        Phase::HealingChosenIfRemainingHpAtMost { player, .. } => Some(player),
         Phase::ChoosingOneOf { player, .. } => Some(player),
         Phase::DiscardingFromHand { chooser, .. } => Some(chooser),
         Phase::HealingMegaEx { player } => Some(player),
@@ -659,6 +660,14 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         } => {
             for target in state.player(whose).in_play() {
                 if of_type.is_none_or(|t| state.pokemon_def(target).kind == t) {
+                    actions.push(Action::HealTarget { target });
+                }
+            }
+            return actions;
+        }
+        Phase::HealingChosenIfRemainingHpAtMost { player: whose, at_most } => {
+            for target in state.player(whose).in_play() {
+                if state.remaining_hp(target) <= at_most {
                     actions.push(Action::HealTarget { target });
                 }
             }
