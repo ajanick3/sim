@@ -2512,6 +2512,18 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             }
         }
 
+        Action::ProtectFromEx { target } => {
+            let player = match state.phase {
+                Phase::ChoosingProtectedFromEx { player } => player,
+                _ => return Err(IllegalAction),
+            };
+            state.protected_from_ex_next_turn = Some((player, target));
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} is protected from an ex next turn."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::EvolveFromDeck { card, target } => {
             let player = match state.phase {
                 Phase::EvolvingFromDeckNoAbility { player } => player,
@@ -2978,6 +2990,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::SwitchOpponentActiveBasicThenConfuse => {
             state.phase = Phase::PromotingOpponentBasicThenConfuse { player };
+        }
+
+        TrainerEffect::ProtectChosenFromExNextTurn => {
+            state.phase = Phase::ChoosingProtectedFromEx { player };
         }
 
         TrainerEffect::Draw(count) => {
@@ -3894,7 +3910,7 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
         }
     }
     if let Some(condition) = attack.inflicts
-        && !state.attack_effects_on_it_prevented(defender)
+        && !state.attack_effects_on_it_prevented(attacker, defender)
     {
         state.inflict(defender, condition);
         let name = state.pokemon_def(defender).name;
@@ -3946,14 +3962,14 @@ fn resolve_attack_effect(
         // Already spent, before `damage_dealt_with` ran.
         crate::card::AttackEffect::IgnoresDefendersEffects => {}
         crate::card::AttackEffect::InflictsCondition(condition) => {
-            if !state.attack_effects_on_it_prevented(defender) {
+            if !state.attack_effects_on_it_prevented(attacker, defender) {
                 state.inflict(defender, condition);
                 let name = state.pokemon_def(defender).name;
                 state.log.push(format!("{name} is now {condition:?}."));
             }
         }
         crate::card::AttackEffect::InflictsConditionAndDefenderCannotRetreatNextTurn(condition) => {
-            if !state.attack_effects_on_it_prevented(defender) {
+            if !state.attack_effects_on_it_prevented(attacker, defender) {
                 state.inflict(defender, condition);
                 let name = state.pokemon_def(defender).name;
                 state.log.push(format!("{name} is now {condition:?} and cannot retreat next turn."));
@@ -3973,14 +3989,14 @@ fn resolve_attack_effect(
             state.attacking_defender = Some(defender);
         }
         crate::card::AttackEffect::CoinFlipInflicts(condition) => {
-            if state.flip_for(flipper) && !state.attack_effects_on_it_prevented(defender) {
+            if state.flip_for(flipper) && !state.attack_effects_on_it_prevented(attacker, defender) {
                 state.inflict(defender, condition);
                 let name = state.pokemon_def(defender).name;
                 state.log.push(format!("{name} is now {condition:?}."));
             }
         }
         crate::card::AttackEffect::CoinFlipInflictsAndDiscardsDefenderEnergy(condition) => {
-            if state.flip_for(flipper) && !state.attack_effects_on_it_prevented(defender) {
+            if state.flip_for(flipper) && !state.attack_effects_on_it_prevented(attacker, defender) {
                 state.inflict(defender, condition);
                 let name = state.pokemon_def(defender).name;
                 state.log.push(format!("{name} is now {condition:?}."));
@@ -4033,14 +4049,14 @@ fn resolve_attack_effect(
         // own `base` computation.
         crate::card::AttackEffect::CoinFlipBonusDamage(_) => {}
         crate::card::AttackEffect::DefenderCannotRetreatNextTurn => {
-            if !state.attack_effects_on_it_prevented(defender) {
+            if !state.attack_effects_on_it_prevented(attacker, defender) {
                 state.opponent_next_turn_restriction = Some((defender, effect, state.current));
                 let name = state.pokemon_def(defender).name;
                 state.log.push(format!("{name} cannot retreat next turn."));
             }
         }
         crate::card::AttackEffect::DefenderCannotRetreatAndTakesMoreDamageNextTurn(amount) => {
-            if !state.attack_effects_on_it_prevented(defender) {
+            if !state.attack_effects_on_it_prevented(attacker, defender) {
                 state.opponent_next_turn_restriction = Some((defender, effect, state.current));
                 let granting_player = state.pokemon(attacker).owner;
                 state.bonus_damage_to_pokemon_on_granting_players_next_turn =
@@ -4117,7 +4133,7 @@ fn resolve_attack_effect(
             }
         }
         crate::card::AttackEffect::DefenderDealsLessDamageNextTurn(amount) => {
-            if !state.attack_effects_on_it_prevented(defender) {
+            if !state.attack_effects_on_it_prevented(attacker, defender) {
                 state.opponent_next_turn_restriction = Some((defender, effect, state.current));
                 let name = state.pokemon_def(defender).name;
                 state
@@ -4941,6 +4957,17 @@ fn damage_dealt_with(
         && state.pokemon_def(defender).name.contains(word)
     {
         damage = damage.saturating_sub(amount);
+    }
+
+    // `Acerola's Mischief`: one chosen Pokémon takes no damage at all
+    // from an ex the granting player's opponent attacks with, during
+    // that opponent's next turn.
+    if let Some((granted_by, protected)) = state.protected_from_ex_next_turn
+        && protected == defender
+        && state.current != granted_by
+        && state.pokemon_def(attacker).prizes > 1
+    {
+        return 0;
     }
 
     // A side shield a Supporter granted last turn: read for a defender

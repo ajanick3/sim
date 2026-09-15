@@ -3283,3 +3283,86 @@ fn lisias_appeal_is_admitted_from_the_artifact() {
         "Lisia's Appeal should play",
     );
 }
+
+// --- Beyond the field: single-target protection from an ex attacker ---
+
+#[test]
+fn acerolas_mischief_blocks_all_damage_and_effects_from_an_ex_next_turn() {
+    let mut set = build();
+    let acerola = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-acerolas-mischief",
+        name: "Acerola's Mischief",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::OpponentPrizesAtMost(2)),
+        effect: TrainerEffect::ProtectChosenFromExNextTurn,
+    }));
+    let mut state = game(&set, acerola, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    // Rule out the requirement: the opponent is down to 2 Prizes.
+    while state.player(opponent).prizes.len() > 2 {
+        let p = state.players[opponent.index()].prizes.pop().unwrap();
+        state.players[opponent.index()].hand.push(p);
+    }
+
+    let card = ensure_in_hand(&mut state, player, acerola);
+    assert!(legal_actions(&state).contains(&Action::PlayTrainer { card }));
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let mine = state.player(player).active.unwrap();
+    apply(&mut state, Action::ProtectFromEx { target: mine }).unwrap();
+    assert_eq!(state.phase, Phase::Main);
+
+    // Their ex Active attacks mine, on their very next turn.
+    end_turn_and_advance(&mut state);
+    let ex_card = *state
+        .player(opponent)
+        .deck
+        .iter()
+        .find(|c| state.cards[c.index()].def == set.mon_ex)
+        .unwrap();
+    state.players[opponent.index()].deck.retain(|c| *c != ex_card);
+    let their_active = state.player(opponent).active.unwrap();
+    state.pokemon[their_active.index()].cards = vec![ex_card];
+
+    assert_eq!(sim::engine::damage_dealt(&state, their_active, mine, 100), 0);
+    assert!(state.attack_effects_on_it_prevented(their_active, mine));
+
+    // An ordinary (non-ex) attacker is not blocked.
+    let ordinary = state.player(opponent).bench[0];
+    assert_eq!(sim::engine::damage_dealt(&state, ordinary, mine, 100), 100);
+}
+
+#[test]
+fn acerolas_mischief_needs_the_opponent_at_two_prizes_or_fewer() {
+    let mut set = build();
+    let acerola = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-acerolas-mischief-2",
+        name: "Acerola's Mischief",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::OpponentPrizesAtMost(2)),
+        effect: TrainerEffect::ProtectChosenFromExNextTurn,
+    }));
+    let mut state = game(&set, acerola, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, acerola);
+
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "the opponent still holds all six Prizes"
+    );
+}
+
+#[test]
+fn acerolas_mischief_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import
+            .cards
+            .iter()
+            .any(|c| c.name == "Acerola's Mischief" && c.playable.is_some()),
+        "Acerola's Mischief should play",
+    );
+}

@@ -163,6 +163,9 @@ pub enum Action {
     /// hand — and, unlike every other evolution, with no restriction on
     /// the turn it or its target came into play. `Salvatore`.
     EvolveFromDeck { card: CardId, target: PokemonId },
+    /// Choose the Pokémon `Acerola's Mischief` protects from an ex next
+    /// turn.
+    ProtectFromEx { target: PokemonId },
     /// Put one damage counter on this Benched Pokémon, as part of
     /// `Phase::DistributingDamageCounters`.
     PlaceDamageCounter { target: PokemonId },
@@ -393,6 +396,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::Promoting { chooser, .. } => Some(chooser),
         Phase::PromotingOwnNamePrefixThenOpponent { player, .. } => Some(player),
         Phase::PromotingOpponentBasicThenConfuse { player } => Some(player),
+        Phase::ChoosingProtectedFromEx { player } => Some(player),
         Phase::ChoosingWhoGoesFirst { winner } => Some(winner),
         Phase::TakingBonusDraws { player, .. } => Some(player),
         Phase::PlacingActive { player } => Some(player),
@@ -1380,6 +1384,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         return actions;
     }
 
+    if let Phase::ChoosingProtectedFromEx { player } = state.phase {
+        for target in state.player(player).in_play() {
+            actions.push(Action::ProtectFromEx { target });
+        }
+        return actions;
+    }
+
     if let Phase::PromotingOpponentBasicThenConfuse { player } = state.phase {
         for pokemon in &state.player(player.opponent()).bench {
             if state.pokemon_def(*pokemon).stage == crate::card::Stage::Basic {
@@ -2130,6 +2141,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
             state.pokemon_def(target).name,
             state.def_of(card).name()
         ),
+        Action::ProtectFromEx { target } => {
+            format!("Protect {} from an ex next turn", state.pokemon_def(target).name)
+        }
         Action::EvolveFromDeck { card, target } => format!(
             "Use Salvatore: evolve {} into {}",
             state.pokemon_def(target).name,

@@ -1373,6 +1373,10 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         ),
         "Salvatore" => (free, TrainerEffect::SearchDeckToEvolveNoAbility),
         "Lisia's Appeal" => (free, TrainerEffect::SwitchOpponentActiveBasicThenConfuse),
+        "Acerola's Mischief" => (
+            Some(Requirement::OpponentPrizesAtMost(2)),
+            TrainerEffect::ProtectChosenFromExNextTurn,
+        ),
         "Academy at Night" => (free, TrainerEffect::MayPutHandCardOnTopOfDeck),
         "Team Rocket's Factory" => (
             free,

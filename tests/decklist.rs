@@ -317,12 +317,15 @@ fn basic_energy_counts_toward_playable_not_only_the_rest_of_the_deck() {
     let import = load(&artifact()).unwrap();
     let list = parse(LIST);
     let report = check(&list, &import);
-    // LIST holds 48 Basic Grass Energy; Mega Venusaur ex has an Ability and
-    // is refused, Chikorita and Professor's Research both play.
+    // LIST holds 48 Basic Grass Energy; Mega Venusaur ex has an Ability
+    // and is refused. Chikorita plays, and so does whatever card MEG 113
+    // actually prints (Acerola's Mischief, not the "Professor's
+    // Research" this fixture's own line names — a stale label, not a
+    // fault `playable` reads).
     assert_eq!(
         report.playable,
-        4 + 48,
-        "Chikorita, Professor's Research, and every Basic Energy — not Mega Venusaur ex"
+        4 + 4 + 48,
+        "Chikorita, MEG 113's real card, and every Basic Energy — not Mega Venusaur ex"
     );
 }
 
