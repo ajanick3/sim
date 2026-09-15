@@ -737,12 +737,23 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::FinishDiscardingFromHand => {
-            let (chooser, then) = match state.phase {
-                Phase::DiscardingFromHand { chooser, then, .. } => (chooser, then),
+            let (chooser, remaining, then) = match state.phase {
+                Phase::DiscardingFromHand { chooser, remaining, then, .. } => {
+                    (chooser, remaining, then)
+                }
                 _ => return Err(IllegalAction),
             };
             match then {
                 None => {
+                    state.phase = Phase::Main;
+                    settle(state);
+                }
+                Some(crate::card::DiscardFollowUp::DrawIfFullyDiscarded(count)) => {
+                    if remaining == 0 {
+                        for _ in 0..count {
+                            state.draw(chooser);
+                        }
+                    }
                     state.phase = Phase::Main;
                     settle(state);
                 }
@@ -942,6 +953,33 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 Some(crate::card::Then::EndTurnIfMoved),
                 Progress { moved: 0, previous: None },
             );
+        }
+
+        Action::UsePrismTower => {
+            let player = state.current;
+            state.spend(Limit::StadiumEffectUsed(player));
+            state.phase = Phase::DiscardingFromHand {
+                chooser: player,
+                of: player,
+                filter: crate::card::CardFilter::AnyCard,
+                remaining: 2,
+                then: Some(crate::card::DiscardFollowUp::DrawIfFullyDiscarded(1)),
+            };
+        }
+
+        Action::UseCommunityCenter => {
+            let player = state.current;
+            let amount = match state.stadium_effect() {
+                Some(crate::card::TrainerEffect::StadiumMayHealAllIfPlayedSupporter(amount)) => {
+                    amount
+                }
+                _ => panic!("Community Center is in play to offer this"),
+            };
+            state.spend(Limit::StadiumEffectUsed(player));
+            for id in state.player(player).in_play() {
+                state.pokemon[id.index()].damage = state.pokemon[id.index()].damage.saturating_sub(amount);
+            }
+            state.log.push(format!("{player:?} heals the team (Community Center)."));
         }
 
         Action::PlaceDamageCounter { target } => {
@@ -3474,6 +3512,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::StadiumExtraPoisonDamage(_)
         | TrainerEffect::StadiumReducesDamageToType { .. }
         | TrainerEffect::StadiumReducesDamageForNamePrefix { .. }
+        | TrainerEffect::StadiumMayDiscardTwoToDrawOne
+        | TrainerEffect::StadiumMayHealAllIfPlayedSupporter(_)
         | TrainerEffect::AbilitiesDisabled => {}
 
         // "Recovers from all Special Conditions" reads as an immediate

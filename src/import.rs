@@ -1388,6 +1388,11 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter,
         ),
         "Lumiose City" => (free, TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn),
+        "Prism Tower" => (free, TrainerEffect::StadiumMayDiscardTwoToDrawOne),
+        "Community Center" => (
+            free,
+            TrainerEffect::StadiumMayHealAllIfPlayedSupporter(10),
+        ),
         "Jamming Tower" => (free, TrainerEffect::ToolsHaveNoEffect),
         "Risky Ruins" => (free, TrainerEffect::DamagesNonDarknessBasicBenched(20)),
         "Forest of Vitality" => (free, TrainerEffect::GrassCanEvolveTheTurnItIsPlayed),

@@ -352,5 +352,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Team Rocket's Venture Bomb (a new
     // `CoinFlipDamageCountersOnChosenOpponentElseOwnActive`) takes it
     // to 955. Every Item in the field is now built.
-    assert_eq!(admitted, 955, "coverage moves only on purpose");
+    // Prism Tower and Community Center (two new Stadium standing
+    // actions) take it to 958.
+    assert_eq!(admitted, 958, "coverage moves only on purpose");
 }

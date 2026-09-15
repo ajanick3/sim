@@ -172,6 +172,13 @@ pub enum Action {
     /// Place `Phase::ChoosingDamageCounterTarget`'s damage counters on
     /// this chosen opponent's Pokémon. `Team Rocket's Venture Bomb`.
     PlaceDamageCountersOn { target: PokemonId },
+    /// Discard 2 from hand to draw 1, `Prism Tower`'s own standing
+    /// action — opens the discard, same shape as every other forced
+    /// discard.
+    UsePrismTower,
+    /// Heal `amount` from every one of the player's own Pokémon,
+    /// `Community Center`'s own standing action.
+    UseCommunityCenter,
     /// Put one damage counter on this Benched Pokémon, as part of
     /// `Phase::DistributingDamageCounters`.
     PlaceDamageCounter { target: PokemonId },
@@ -1444,6 +1451,19 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
     {
         actions.push(Action::UseLumioseCity);
     }
+    if state.stadium_effect() == Some(crate::card::TrainerEffect::StadiumMayDiscardTwoToDrawOne)
+        && !state.is_spent(Limit::StadiumEffectUsed(player))
+        && side.hand.len() >= 2
+    {
+        actions.push(Action::UsePrismTower);
+    }
+    if let Some(crate::card::TrainerEffect::StadiumMayHealAllIfPlayedSupporter(_)) =
+        state.stadium_effect()
+        && !state.is_spent(Limit::StadiumEffectUsed(player))
+        && state.is_spent(Limit::SupporterPlayed(player))
+    {
+        actions.push(Action::UseCommunityCenter);
+    }
 
     for card in &side.hand {
         let def = state.def_of(*card);
@@ -2163,6 +2183,8 @@ pub fn describe(state: &GameState, action: Action) -> String {
             state.pokemon_def(target).name,
             state.def_of(card).name()
         ),
+        Action::UsePrismTower => "Discard 2 to draw 1 (Prism Tower)".to_string(),
+        Action::UseCommunityCenter => "Heal every Pokemon (Community Center)".to_string(),
         Action::PlaceDamageCountersOn { target } => {
             format!("Place damage counters on {}", state.pokemon_def(target).name)
         }

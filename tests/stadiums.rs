@@ -1565,3 +1565,120 @@ fn the_static_stadiums_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: two more standing Stadium actions ---
+
+#[test]
+fn prism_tower_trades_two_discards_for_one_draw() {
+    let mut db = build().db;
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-prism-tower",
+        name: "Prism Tower",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::StadiumMayDiscardTwoToDrawOne,
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert!(legal_actions(&state).contains(&Action::UsePrismTower));
+    apply(&mut state, Action::UsePrismTower).unwrap();
+    let hand_before_draw = state.player(player).hand.len();
+    let discards: Vec<_> = state.player(player).hand[..2].to_vec();
+    for c in discards {
+        apply(&mut state, Action::DiscardFromHand { card: c }).unwrap();
+    }
+    apply(&mut state, Action::FinishDiscardingFromHand).unwrap();
+
+    assert_eq!(state.player(player).hand.len(), hand_before_draw - 2 + 1);
+    assert_eq!(state.phase, Phase::Main);
+    assert!(!legal_actions(&state).contains(&Action::UsePrismTower), "once a turn");
+}
+
+#[test]
+fn prism_tower_declining_draws_nothing() {
+    let mut db = build().db;
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-prism-tower-2",
+        name: "Prism Tower",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::StadiumMayDiscardTwoToDrawOne,
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    apply(&mut state, Action::UsePrismTower).unwrap();
+    let hand_before = state.player(player).hand.len();
+    let one = state.player(player).hand[0];
+    apply(&mut state, Action::DiscardFromHand { card: one }).unwrap();
+    apply(&mut state, Action::FinishDiscardingFromHand).unwrap();
+
+    assert_eq!(
+        state.player(player).hand.len(),
+        hand_before - 1,
+        "only one discard happened, so no draw"
+    );
+}
+
+#[test]
+fn community_center_heals_everyone_only_after_a_supporter() {
+    let mut db = build().db;
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-community-center",
+        name: "Community Center",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::StadiumMayHealAllIfPlayedSupporter(10),
+    }));
+    let supporter = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-a-plain-supporter",
+        name: "A Plain Supporter",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Draw(1),
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let bench = state.player(player).bench[0];
+    state.pokemon[active.index()].damage = 30;
+    state.pokemon[bench.index()].damage = 30;
+
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    assert!(
+        !legal_actions(&state).contains(&Action::UseCommunityCenter),
+        "no Supporter played yet this turn"
+    );
+
+    let supporter_card = deal_new_card(&mut state, player, supporter);
+    state.players[player.index()].hand.push(supporter_card);
+    apply(&mut state, Action::PlayTrainer { card: supporter_card }).unwrap();
+
+    assert!(legal_actions(&state).contains(&Action::UseCommunityCenter));
+    apply(&mut state, Action::UseCommunityCenter).unwrap();
+
+    assert_eq!(state.pokemon(active).damage, 20);
+    assert_eq!(state.pokemon(bench).damage, 20);
+}
+
+#[test]
+fn the_two_more_standing_stadiums_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Prism Tower", "Community Center"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play",
+        );
+    }
+}
