@@ -82,13 +82,13 @@ Every card in the artifact, by name; the tables below track the field.
 
 | Kind | Built | Total |
 | --- | --- | --- |
-| Supporters | 61 | 78 |
+| Supporters | 62 | 78 |
 | Items | 57 | 85 |
 | Tools | 20 | 35 |
 | Stadiums | 17 | 31 |
 | Special Energy | 13 | 17 |
 
-### Supporters (34/36 built)
+### Supporters (35/36 built)
 
 | Card | Status |
 | --- | --- |
@@ -114,7 +114,7 @@ Every card in the artifact, by name; the tables below track the field.
 | [Kieran](src/import.rs#L1254) | ✅ |
 | [Lana's Aid](src/import.rs#L1199) | ✅ |
 | [Lillie's Determination](src/import.rs#L821) | ✅ |
-| Lisia's Appeal | ❌ |
+| [Lisia's Appeal](src/import.rs#L1375) | ✅ |
 | [Morty's Conviction](src/import.rs#L1264) | ✅ |
 | [N's Plan](src/import.rs#L1217) | ✅ |
 | [Philippe](src/import.rs#L636) | ✅ |
@@ -139,7 +139,7 @@ Every card in the artifact, by name; the tables below track the field.
 | [Crushing Hammer](src/import.rs#L856) | ✅ |
 | [Dark Bell](src/import.rs#L497) | ✅ |
 | [Dusk Ball](src/import.rs#L1330) | ✅ |
-| [Energy Recycler](src/import.rs#L1443) | ✅ |
+| [Energy Recycler](src/import.rs#L1444) | ✅ |
 | [Energy Retrieval](src/import.rs#L1315) | ✅ |
 | [Energy Search](src/import.rs#L1301) | ✅ |
 | [Energy Switch](src/import.rs#L983) | ✅ |
@@ -158,15 +158,15 @@ Every card in the artifact, by name; the tables below track the field.
 | [Rare Candy](src/import.rs#L1102) | ✅ |
 | [Sacred Ash](src/import.rs#L955) | ✅ |
 | Scoop Up Cyclone | ❌ |
-| [Secret Box](src/import.rs#L1392) | ✅ |
+| [Secret Box](src/import.rs#L1393) | ✅ |
 | [Special Red Card](src/import.rs#L1075) | ✅ |
 | [Strange Timepiece](src/import.rs#L1350) | ✅ |
 | [Switch](src/import.rs#L1194) | ✅ |
-| [Team Rocket's Transceiver](src/import.rs#L1429) | ✅ |
+| [Team Rocket's Transceiver](src/import.rs#L1430) | ✅ |
 | Team Rocket's Venture Bomb | ❌ |
 | [Tera Orb](src/import.rs#L984) | ✅ |
 | [Tool Scrapper](src/import.rs#L796) | ✅ |
-| [Transformation Tome](src/import.rs#L1388) | ✅ |
+| [Transformation Tome](src/import.rs#L1389) | ✅ |
 | [Ultra Ball](src/import.rs#L969) | ✅ |
 | [Unfair Stamp](src/import.rs#L1187) | ✅ |
 | [Wondrous Patch](src/import.rs#L1131) | ✅ |
@@ -190,172 +190,172 @@ Every card in the artifact, by name; the tables below track the field.
 
 | Card | Status |
 | --- | --- |
-| [Academy at Night](src/import.rs#L1375) | ✅ |
+| [Academy at Night](src/import.rs#L1376) | ✅ |
 | [Area Zero Underdepths](src/import.rs#L817) | ✅ |
 | [Battle Cage](src/import.rs#L818) | ✅ |
 | Community Center | ❌ |
-| [Festival Grounds](src/import.rs#L1384) | ✅ |
-| [Forest of Vitality](src/import.rs#L1383) | ✅ |
+| [Festival Grounds](src/import.rs#L1385) | ✅ |
+| [Forest of Vitality](src/import.rs#L1384) | ✅ |
 | [Gravity Mountain](src/import.rs#L1360) | ✅ |
-| [Jamming Tower](src/import.rs#L1381) | ✅ |
-| [Lumiose City](src/import.rs#L1380) | ✅ |
+| [Jamming Tower](src/import.rs#L1382) | ✅ |
+| [Lumiose City](src/import.rs#L1381) | ✅ |
 | [N's Castle](src/import.rs#L1361) | ✅ |
 | [Nighttime Mine](src/import.rs#L816) | ✅ |
 | Prism Tower | ❌ |
-| [Risky Ruins](src/import.rs#L1382) | ✅ |
-| [Team Rocket's Factory](src/import.rs#L1376) | ✅ |
+| [Risky Ruins](src/import.rs#L1383) | ✅ |
+| [Team Rocket's Factory](src/import.rs#L1377) | ✅ |
 | [Team Rocket's Watchtower](src/import.rs#L819) | ✅ |
 
 ### Special Energy (8/11 built)
 
 | Card | Status |
 | --- | --- |
-| [Boomerang Energy](src/import.rs#L1822) | ✅ |
-| [Enriching Energy](src/import.rs#L1805) | ✅ |
-| [Growing Grass Energy](src/import.rs#L1804) | ✅ |
+| [Boomerang Energy](src/import.rs#L1823) | ✅ |
+| [Enriching Energy](src/import.rs#L1806) | ✅ |
+| [Growing Grass Energy](src/import.rs#L1805) | ✅ |
 | Legacy Energy | ❌ |
-| [Mist Energy](src/import.rs#L1819) | ✅ |
+| [Mist Energy](src/import.rs#L1820) | ✅ |
 | Neo Upper Energy | ❌ |
-| [Prism Energy](src/import.rs#L1825) | ✅ |
-| [Rocky Fighting Energy](src/import.rs#L1828) | ✅ |
-| [Spiky Energy](src/import.rs#L1816) | ✅ |
+| [Prism Energy](src/import.rs#L1826) | ✅ |
+| [Rocky Fighting Energy](src/import.rs#L1829) | ✅ |
+| [Spiky Energy](src/import.rs#L1817) | ✅ |
 | Team Rocket's Energy | ❌ |
-| [Telepathic Psychic Energy](src/import.rs#L1808) | ✅ |
+| [Telepathic Psychic Energy](src/import.rs#L1809) | ✅ |
 
 ### Pokémon (102/131 built)
 
 | Card | Attacks | Ability |
 | --- | --- | --- |
-| [Abra](src/import.rs#L2029) | [✅](src/import.rs#L2029) | [✅](src/import.rs#L1911) |
-| [Alakazam](src/import.rs#L2184) | [✅](src/import.rs#L2184) | [✅](src/import.rs#L1901) |
-| [Annihilape](src/import.rs#L2058) | [✅](src/import.rs#L2058) | [✅](src/import.rs#L1867) |
-| [Applin](src/import.rs#L2019) | [✅](src/import.rs#L2019) | — |
+| [Abra](src/import.rs#L2030) | [✅](src/import.rs#L2030) | [✅](src/import.rs#L1912) |
+| [Alakazam](src/import.rs#L2185) | [✅](src/import.rs#L2185) | [✅](src/import.rs#L1902) |
+| [Annihilape](src/import.rs#L2059) | [✅](src/import.rs#L2059) | [✅](src/import.rs#L1868) |
+| [Applin](src/import.rs#L2020) | [✅](src/import.rs#L2020) | — |
 | Banette | ❌ | ❌ |
-| [Bayleef](src/import.rs#L2061) | [✅](src/import.rs#L2061) | — |
-| [Beldum](src/import.rs#L2041) | [✅](src/import.rs#L2041) | — |
-| [Blaziken ex](src/import.rs#L2125) | [✅](src/import.rs#L2125) | [✅](src/import.rs#L1941) |
-| [Bloodmoon Ursaluna ex](src/import.rs#L2089) | [✅](src/import.rs#L2089) | [✅](src/import.rs#L1875) |
+| [Bayleef](src/import.rs#L2062) | [✅](src/import.rs#L2062) | — |
+| [Beldum](src/import.rs#L2042) | [✅](src/import.rs#L2042) | — |
+| [Blaziken ex](src/import.rs#L2126) | [✅](src/import.rs#L2126) | [✅](src/import.rs#L1942) |
+| [Bloodmoon Ursaluna ex](src/import.rs#L2090) | [✅](src/import.rs#L2090) | [✅](src/import.rs#L1876) |
 | Bouffalant | ❌ | ❌ |
 | Bronzong | [✅](src/import.rs#L234) | ❌ |
 | [Bronzor](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
-| [Brute Bonnet](src/import.rs#L2000) | [✅](src/import.rs#L2000) | — |
-| [Budew](src/import.rs#L2066) | [✅](src/import.rs#L2066) | — |
+| [Brute Bonnet](src/import.rs#L2001) | [✅](src/import.rs#L2001) | — |
+| [Budew](src/import.rs#L2067) | [✅](src/import.rs#L2067) | — |
 | Bulbasaur | ❌ | — |
-| [Buneary](src/import.rs#L2060) | [✅](src/import.rs#L2060) | — |
-| [Carvanha](src/import.rs#L1978) | [✅](src/import.rs#L1978) | — |
-| [Celebi](src/import.rs#L2059) | [✅](src/import.rs#L2059) | — |
+| [Buneary](src/import.rs#L2061) | [✅](src/import.rs#L2061) | — |
+| [Carvanha](src/import.rs#L1979) | [✅](src/import.rs#L1979) | — |
+| [Celebi](src/import.rs#L2060) | [✅](src/import.rs#L2060) | — |
 | Chandelure | ❌ | ❌ |
-| [Chi-Yu](src/import.rs#L2157) | [✅](src/import.rs#L2157) | — |
-| [Chien-Pao](src/import.rs#L2126) | [✅](src/import.rs#L2126) | [✅](src/import.rs#L1944) |
-| [Chikorita](src/import.rs#L2062) | [✅](src/import.rs#L2062) | — |
+| [Chi-Yu](src/import.rs#L2158) | [✅](src/import.rs#L2158) | — |
+| [Chien-Pao](src/import.rs#L2127) | [✅](src/import.rs#L2127) | [✅](src/import.rs#L1945) |
+| [Chikorita](src/import.rs#L2063) | [✅](src/import.rs#L2063) | — |
 | Cinderace | ❌ | ❌ |
-| [Cofagrigus](src/import.rs#L2107) | [✅](src/import.rs#L2107) | — |
-| [Combusken](src/import.rs#L2076) | [✅](src/import.rs#L2076) | — |
+| [Cofagrigus](src/import.rs#L2108) | [✅](src/import.rs#L2108) | — |
+| [Combusken](src/import.rs#L2077) | [✅](src/import.rs#L2077) | — |
 | Comfey | ❌ | — |
 | Cornerstone Mask Ogerpon ex | ❌ | ❌ |
-| [Crustle](src/import.rs#L2196) | [✅](src/import.rs#L2196) | [✅](src/import.rs#L1856) |
-| [Dedenne](src/import.rs#L2016) | [✅](src/import.rs#L2016) | — |
+| [Crustle](src/import.rs#L2197) | [✅](src/import.rs#L2197) | [✅](src/import.rs#L1857) |
+| [Dedenne](src/import.rs#L2017) | [✅](src/import.rs#L2017) | — |
 | Dhelmise | ❌ | — |
-| [Dipplin](src/import.rs#L2141) | [✅](src/import.rs#L2141) | [✅](src/import.rs#L1929) |
-| [Dragapult ex](src/import.rs#L2023) | [✅](src/import.rs#L2023) | — |
-| [Drakloak](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1884) |
+| [Dipplin](src/import.rs#L2142) | [✅](src/import.rs#L2142) | [✅](src/import.rs#L1930) |
+| [Dragapult ex](src/import.rs#L2024) | [✅](src/import.rs#L2024) | — |
+| [Drakloak](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1885) |
 | Drapion | ❌ | — |
 | [Dreepy](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
-| [Drilbur](src/import.rs#L2030) | [✅](src/import.rs#L2030) | ❌ |
-| [Dudunsparce](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1908) |
-| [Dudunsparce ex](src/import.rs#L1991) | [✅](src/import.rs#L1991) | — |
-| [Dunsparce](src/import.rs#L2042) | [✅](src/import.rs#L2042) | — |
-| [Dusclops](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1912) |
-| [Dusknoir](src/import.rs#L2123) | [✅](src/import.rs#L2123) | [✅](src/import.rs#L1913) |
-| [Duskull](src/import.rs#L2045) | [✅](src/import.rs#L2045) | — |
-| [Dwebble](src/import.rs#L2035) | [✅](src/import.rs#L2035) | — |
-| [Elgyem](src/import.rs#L2065) | [✅](src/import.rs#L2065) | — |
-| [Enamorus](src/import.rs#L2085) | [✅](src/import.rs#L2085) | — |
-| [Fan Rotom](src/import.rs#L2130) | [✅](src/import.rs#L2130) | [✅](src/import.rs#L1954) |
-| [Fezandipiti ex](src/import.rs#L2204) | [✅](src/import.rs#L2204) | [✅](src/import.rs#L1902) |
-| [Flutter Mane](src/import.rs#L2121) | [✅](src/import.rs#L2121) | [✅](src/import.rs#L1878) |
-| [Genesect](src/import.rs#L2176) | [✅](src/import.rs#L2176) | [✅](src/import.rs#L1917) |
-| [Genesect ex](src/import.rs#L2124) | [✅](src/import.rs#L2124) | [✅](src/import.rs#L1914) |
-| [Goldeen](src/import.rs#L2139) | [✅](src/import.rs#L2139) | [✅](src/import.rs#L1927) |
+| [Drilbur](src/import.rs#L2031) | [✅](src/import.rs#L2031) | ❌ |
+| [Dudunsparce](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1909) |
+| [Dudunsparce ex](src/import.rs#L1992) | [✅](src/import.rs#L1992) | — |
+| [Dunsparce](src/import.rs#L2043) | [✅](src/import.rs#L2043) | — |
+| [Dusclops](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1913) |
+| [Dusknoir](src/import.rs#L2124) | [✅](src/import.rs#L2124) | [✅](src/import.rs#L1914) |
+| [Duskull](src/import.rs#L2046) | [✅](src/import.rs#L2046) | — |
+| [Dwebble](src/import.rs#L2036) | [✅](src/import.rs#L2036) | — |
+| [Elgyem](src/import.rs#L2066) | [✅](src/import.rs#L2066) | — |
+| [Enamorus](src/import.rs#L2086) | [✅](src/import.rs#L2086) | — |
+| [Fan Rotom](src/import.rs#L2131) | [✅](src/import.rs#L2131) | [✅](src/import.rs#L1955) |
+| [Fezandipiti ex](src/import.rs#L2205) | [✅](src/import.rs#L2205) | [✅](src/import.rs#L1903) |
+| [Flutter Mane](src/import.rs#L2122) | [✅](src/import.rs#L2122) | [✅](src/import.rs#L1879) |
+| [Genesect](src/import.rs#L2177) | [✅](src/import.rs#L2177) | [✅](src/import.rs#L1918) |
+| [Genesect ex](src/import.rs#L2125) | [✅](src/import.rs#L2125) | [✅](src/import.rs#L1915) |
+| [Goldeen](src/import.rs#L2140) | [✅](src/import.rs#L2140) | [✅](src/import.rs#L1928) |
 | [Grookey](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | Hariyama | ❌ | ❌ |
-| [Hoothoot](src/import.rs#L2032) | [✅](src/import.rs#L2032) | [✅](src/import.rs#L1868) |
-| [Hydrapple ex](src/import.rs#L2090) | [✅](src/import.rs#L2090) | [✅](src/import.rs#L1869) |
-| [Iron Crown ex](src/import.rs#L2050) | [✅](src/import.rs#L2050) | [✅](src/import.rs#L1864) |
-| [Iron Leaves ex](src/import.rs#L2129) | [✅](src/import.rs#L2129) | [✅](src/import.rs#L1945) |
+| [Hoothoot](src/import.rs#L2033) | [✅](src/import.rs#L2033) | [✅](src/import.rs#L1869) |
+| [Hydrapple ex](src/import.rs#L2091) | [✅](src/import.rs#L2091) | [✅](src/import.rs#L1870) |
+| [Iron Crown ex](src/import.rs#L2051) | [✅](src/import.rs#L2051) | [✅](src/import.rs#L1865) |
+| [Iron Leaves ex](src/import.rs#L2130) | [✅](src/import.rs#L2130) | [✅](src/import.rs#L1946) |
 | [Ivysaur](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
-| [Kadabra](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1897) |
-| [Koraidon ex](src/import.rs#L2051) | [✅](src/import.rs#L2051) | — |
-| [Kyurem](src/import.rs#L2173) | [✅](src/import.rs#L2173) | [✅](src/import.rs#L1936) |
+| [Kadabra](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1898) |
+| [Koraidon ex](src/import.rs#L2052) | [✅](src/import.rs#L2052) | — |
+| [Kyurem](src/import.rs#L2174) | [✅](src/import.rs#L2174) | [✅](src/import.rs#L1937) |
 | Lampent | ❌ | — |
-| [Latias ex](src/import.rs#L2190) | [✅](src/import.rs#L2190) | [✅](src/import.rs#L1855) |
-| [Lillie's Clefairy ex](src/import.rs#L2214) | [✅](src/import.rs#L2214) | [✅](src/import.rs#L1859) |
+| [Latias ex](src/import.rs#L2191) | [✅](src/import.rs#L2191) | [✅](src/import.rs#L1856) |
+| [Lillie's Clefairy ex](src/import.rs#L2215) | [✅](src/import.rs#L2215) | [✅](src/import.rs#L1860) |
 | [Litwick](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | Lunatone | [✅](src/import.rs#L234) | ❌ |
 | [Makuhita](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
-| [Mega Absol ex](src/import.rs#L2097) | [✅](src/import.rs#L2097) | — |
+| [Mega Absol ex](src/import.rs#L2098) | [✅](src/import.rs#L2098) | — |
 | Mega Chandelure ex | ❌ | ❌ |
-| [Mega Excadrill ex](src/import.rs#L2093) | [✅](src/import.rs#L2093) | — |
+| [Mega Excadrill ex](src/import.rs#L2094) | [✅](src/import.rs#L2094) | — |
 | Mega Froslass ex | ❌ | — |
-| [Mega Kangaskhan ex](src/import.rs#L2200) | [✅](src/import.rs#L2200) | [✅](src/import.rs#L1852) |
-| [Mega Lopunny ex](src/import.rs#L1998) | [✅](src/import.rs#L1998) | — |
+| [Mega Kangaskhan ex](src/import.rs#L2201) | [✅](src/import.rs#L2201) | [✅](src/import.rs#L1853) |
+| [Mega Lopunny ex](src/import.rs#L1999) | [✅](src/import.rs#L1999) | — |
 | Mega Lucario ex | ❌ | — |
 | Mega Meganium ex | ❌ | — |
-| [Mega Sharpedo ex](src/import.rs#L2033) | [✅](src/import.rs#L2033) | — |
-| [Mega Skarmory ex](src/import.rs#L2111) | [✅](src/import.rs#L2111) | — |
-| [Mega Slowbro ex](src/import.rs#L2151) | [✅](src/import.rs#L2151) | — |
+| [Mega Sharpedo ex](src/import.rs#L2034) | [✅](src/import.rs#L2034) | — |
+| [Mega Skarmory ex](src/import.rs#L2112) | [✅](src/import.rs#L2112) | — |
+| [Mega Slowbro ex](src/import.rs#L2152) | [✅](src/import.rs#L2152) | — |
 | Mega Venusaur ex | ❌ | ❌ |
-| [Meganium](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1923) |
-| [Meowth ex](src/import.rs#L2203) | [✅](src/import.rs#L2203) | [✅](src/import.rs#L1896) |
-| [Metagross](src/import.rs#L2007) | [✅](src/import.rs#L2007) | — |
-| [Metang](src/import.rs#L2191) | [✅](src/import.rs#L2191) | [✅](src/import.rs#L1887) |
-| [Moltres](src/import.rs#L2043) | [✅](src/import.rs#L2043) | — |
-| [Munkidori](src/import.rs#L2197) | [✅](src/import.rs#L2197) | [✅](src/import.rs#L1890) |
-| [N's Darmanitan](src/import.rs#L1988) | [✅](src/import.rs#L1988) | — |
+| [Meganium](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1924) |
+| [Meowth ex](src/import.rs#L2204) | [✅](src/import.rs#L2204) | [✅](src/import.rs#L1897) |
+| [Metagross](src/import.rs#L2008) | [✅](src/import.rs#L2008) | — |
+| [Metang](src/import.rs#L2192) | [✅](src/import.rs#L2192) | [✅](src/import.rs#L1888) |
+| [Moltres](src/import.rs#L2044) | [✅](src/import.rs#L2044) | — |
+| [Munkidori](src/import.rs#L2198) | [✅](src/import.rs#L2198) | [✅](src/import.rs#L1891) |
+| [N's Darmanitan](src/import.rs#L1989) | [✅](src/import.rs#L1989) | — |
 | [N's Darumaka](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
-| [N's Reshiram](src/import.rs#L1985) | [✅](src/import.rs#L1985) | — |
-| [N's Zekrom](src/import.rs#L1997) | [✅](src/import.rs#L1997) | — |
-| [N's Zoroark ex](src/import.rs#L2170) | [✅](src/import.rs#L2170) | [✅](src/import.rs#L1920) |
+| [N's Reshiram](src/import.rs#L1986) | [✅](src/import.rs#L1986) | — |
+| [N's Zekrom](src/import.rs#L1998) | [✅](src/import.rs#L1998) | — |
+| [N's Zoroark ex](src/import.rs#L2171) | [✅](src/import.rs#L2171) | [✅](src/import.rs#L1921) |
 | [N's Zorua](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
-| [Noctowl](src/import.rs#L2193) | [✅](src/import.rs#L2193) | [✅](src/import.rs#L1898) |
-| [Paldean Tauros](src/import.rs#L1981) | [✅](src/import.rs#L1981) | — |
-| [Passimian](src/import.rs#L1994) | [✅](src/import.rs#L1994) | — |
-| [Patrat](src/import.rs#L2192) | [✅](src/import.rs#L2192) | [✅](src/import.rs#L1857) |
-| [Pecharunt](src/import.rs#L2134) | [✅](src/import.rs#L2134) | [✅](src/import.rs#L1924) |
-| [Pecharunt ex](src/import.rs#L2131) | [✅](src/import.rs#L2131) | [✅](src/import.rs#L1961) |
+| [Noctowl](src/import.rs#L2194) | [✅](src/import.rs#L2194) | [✅](src/import.rs#L1899) |
+| [Paldean Tauros](src/import.rs#L1982) | [✅](src/import.rs#L1982) | — |
+| [Passimian](src/import.rs#L1995) | [✅](src/import.rs#L1995) | — |
+| [Patrat](src/import.rs#L2193) | [✅](src/import.rs#L2193) | [✅](src/import.rs#L1858) |
+| [Pecharunt](src/import.rs#L2135) | [✅](src/import.rs#L2135) | [✅](src/import.rs#L1925) |
+| [Pecharunt ex](src/import.rs#L2132) | [✅](src/import.rs#L2132) | [✅](src/import.rs#L1962) |
 | Poltchageist | [✅](src/import.rs#L234) | ❌ |
-| [Psyduck](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1858) |
-| [Rabsca](src/import.rs#L2047) | [✅](src/import.rs#L2047) | [✅](src/import.rs#L1863) |
-| [Raging Bolt ex](src/import.rs#L2012) | [✅](src/import.rs#L2012) | — |
+| [Psyduck](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1859) |
+| [Rabsca](src/import.rs#L2048) | [✅](src/import.rs#L2048) | [✅](src/import.rs#L1864) |
+| [Raging Bolt ex](src/import.rs#L2013) | [✅](src/import.rs#L2013) | — |
 | Regigigas | ❌ | — |
-| [Rellor](src/import.rs#L1979) | [✅](src/import.rs#L1979) | — |
+| [Rellor](src/import.rs#L1980) | [✅](src/import.rs#L1980) | — |
 | [Riolu](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
-| [Seaking](src/import.rs#L2140) | [✅](src/import.rs#L2140) | [✅](src/import.rs#L1928) |
-| [Shaymin](src/import.rs#L2187) | [✅](src/import.rs#L2187) | [✅](src/import.rs#L1862) |
+| [Seaking](src/import.rs#L2141) | [✅](src/import.rs#L2141) | [✅](src/import.rs#L1929) |
+| [Shaymin](src/import.rs#L2188) | [✅](src/import.rs#L2188) | [✅](src/import.rs#L1863) |
 | [Shuppet](src/import.rs#L234) | [✅](src/import.rs#L234) | ❌ |
 | Sinistcha | ❌ | ❌ |
-| [Slowking](src/import.rs#L2036) | [✅](src/import.rs#L2036) | — |
-| [Slowpoke](src/import.rs#L2044) | [✅](src/import.rs#L2044) | ❌ |
-| [Smoochum](src/import.rs#L2104) | [✅](src/import.rs#L2104) | — |
+| [Slowking](src/import.rs#L2037) | [✅](src/import.rs#L2037) | — |
+| [Slowpoke](src/import.rs#L2045) | [✅](src/import.rs#L2045) | ❌ |
+| [Smoochum](src/import.rs#L2105) | [✅](src/import.rs#L2105) | — |
 | [Snorunt](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | Solrock | ❌ | — |
 | Spiritomb | ❌ | ❌ |
-| [Stunfisk](src/import.rs#L2086) | [✅](src/import.rs#L2086) | — |
-| [Tapu Bulu](src/import.rs#L1980) | [✅](src/import.rs#L1980) | — |
-| [Tatsugiri](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1881) |
-| [Teal Mask Ogerpon ex](src/import.rs#L2205) | [✅](src/import.rs#L2205) | [✅](src/import.rs#L1905) |
+| [Stunfisk](src/import.rs#L2087) | [✅](src/import.rs#L2087) | — |
+| [Tapu Bulu](src/import.rs#L1981) | [✅](src/import.rs#L1981) | — |
+| [Tatsugiri](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1882) |
+| [Teal Mask Ogerpon ex](src/import.rs#L2206) | [✅](src/import.rs#L2206) | [✅](src/import.rs#L1906) |
 | Team Rocket's Articuno | ❌ | ❌ |
 | Team Rocket's Mewtwo ex | ❌ | ❌ |
 | Team Rocket's Mimikyu | ❌ | — |
 | Team Rocket's Spidops | ❌ | ❌ |
 | Team Rocket's Tarountula | ❌ | — |
-| [Thwackey](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1930) |
-| [Torchic](src/import.rs#L2046) | [✅](src/import.rs#L2046) | — |
-| [Toxel](src/import.rs#L2031) | [✅](src/import.rs#L2031) | — |
-| [Toxtricity](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1948) |
-| [Wellspring Mask Ogerpon ex](src/import.rs#L2021) | [✅](src/import.rs#L2021) | — |
-| [Yveltal](src/import.rs#L2020) | [✅](src/import.rs#L2020) | — |
-| [Zeraora](src/import.rs#L2003) | [✅](src/import.rs#L2003) | — |
+| [Thwackey](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1931) |
+| [Torchic](src/import.rs#L2047) | [✅](src/import.rs#L2047) | — |
+| [Toxel](src/import.rs#L2032) | [✅](src/import.rs#L2032) | — |
+| [Toxtricity](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L1949) |
+| [Wellspring Mask Ogerpon ex](src/import.rs#L2022) | [✅](src/import.rs#L2022) | — |
+| [Yveltal](src/import.rs#L2021) | [✅](src/import.rs#L2021) | — |
+| [Zeraora](src/import.rs#L2004) | [✅](src/import.rs#L2004) | — |
 | Zoroark | ❌ | — |
 
 

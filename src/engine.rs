@@ -327,6 +327,28 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             }
         }
 
+        Action::Promote { pokemon } if matches!(state.phase, Phase::PromotingOpponentBasicThenConfuse { .. }) => {
+            let player = match state.phase {
+                Phase::PromotingOpponentBasicThenConfuse { player } => player,
+                _ => unreachable!(),
+            };
+            let opponent = player.opponent();
+            let side = &mut state.players[opponent.index()];
+            side.bench.retain(|p| *p != pokemon);
+            let displaced = side.active.replace(pokemon);
+            if let Some(displaced) = displaced {
+                side.bench.push(displaced);
+            }
+            state.promoted_from_bench_this_turn[opponent.index()] = Some(pokemon);
+            let name = state.pokemon_def(pokemon).name;
+            state
+                .log
+                .push(format!("{player:?} sends up {name} for {opponent:?}."));
+            state.inflict(pokemon, crate::card::Condition::Confused);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::Promote { pokemon } => {
             let (of, chooser, then) = match state.phase {
                 Phase::Promoting { of, chooser, then } => (of, chooser, then),
@@ -2952,6 +2974,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::SwitchOwnNamePrefixThenOpponent(prefix) => {
             state.phase = Phase::PromotingOwnNamePrefixThenOpponent { player, prefix };
+        }
+
+        TrainerEffect::SwitchOpponentActiveBasicThenConfuse => {
+            state.phase = Phase::PromotingOpponentBasicThenConfuse { player };
         }
 
         TrainerEffect::Draw(count) => {

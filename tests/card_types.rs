@@ -127,7 +127,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Team Rocket's Ariana takes it to 123.
     // Team Rocket's Giovanni takes it to 119.
     // Salvatore takes it to 116.
-    assert_eq!(trainers, 116, "the Trainers still refused, by kind");
+    // Lisia's Appeal takes it to 113.
+    assert_eq!(trainers, 113, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and
