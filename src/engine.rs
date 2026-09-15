@@ -2512,6 +2512,18 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             }
         }
 
+        Action::PlaceDamageCountersOn { target } => {
+            let amount = match state.phase {
+                Phase::ChoosingDamageCounterTarget { amount, .. } => amount,
+                _ => return Err(IllegalAction),
+            };
+            state.pokemon[target.index()].damage += amount;
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{name} takes {amount} damage counters."));
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::ReturnToHand { target } => {
             let player = match state.phase {
                 Phase::ChoosingToReturnToHand { player } => player,
@@ -3024,6 +3036,16 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::ReturnChosenToHand => {
             state.phase = Phase::ChoosingToReturnToHand { player };
+        }
+
+        TrainerEffect::CoinFlipDamageCountersOnChosenOpponentElseOwnActive(amount) => {
+            if state.flip_for(player) {
+                state.phase = Phase::ChoosingDamageCounterTarget { player, amount };
+            } else if let Some(active) = state.player(player).active {
+                state.pokemon[active.index()].damage += amount;
+                let name = state.pokemon_def(active).name;
+                state.log.push(format!("{name} takes {amount} damage counters."));
+            }
         }
 
         TrainerEffect::Draw(count) => {

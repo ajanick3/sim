@@ -2436,3 +2436,102 @@ fn scoop_up_cyclone_is_admitted_from_the_artifact() {
         "Scoop Up Cyclone should play",
     );
 }
+
+// --- Beyond the field: a coin flip choosing which side takes counters ---
+
+#[test]
+fn team_rockets_venture_bomb_targets_a_chosen_opponent_on_heads() {
+    use sim::rng::ScriptedRng;
+    let mut set = build();
+    let bomb = plain_item(
+        &mut set.db,
+        "test-venture-bomb",
+        "Team Rocket's Venture Bomb",
+        TrainerEffect::CoinFlipDamageCountersOnChosenOpponentElseOwnActive(20),
+    );
+    let decklist = deck(&set, bomb);
+    let mut state = GameState::new(
+        set.db.clone(),
+        [decklist.clone(), decklist],
+        Box::new(ScriptedRng::new(vec![1u32])), // heads
+    );
+    for _ in 0..2 {
+        while state.phase != Phase::Main && !state.is_over() {
+            let a = legal_actions(&state)[0];
+            apply(&mut state, a).unwrap();
+        }
+        if state.turn_number > 1 {
+            break;
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
+    }
+    let player = state.current;
+    let opponent = player.opponent();
+    let opp_active = state.player(opponent).active.unwrap();
+    let my_active = state.player(player).active.unwrap();
+    let card = ensure_in_hand(&mut state, player, bomb);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let target = legal_actions(&state)
+        .into_iter()
+        .find_map(|a| match a {
+            Action::PlaceDamageCountersOn { target } => Some(target),
+            _ => None,
+        })
+        .expect("heads opens a choice among the opponent's Pokemon");
+    apply(&mut state, Action::PlaceDamageCountersOn { target }).unwrap();
+
+    assert_eq!(state.pokemon(opp_active).damage, 20);
+    assert_eq!(state.pokemon(my_active).damage, 0, "tails alone would hit my own Active");
+}
+
+#[test]
+fn team_rockets_venture_bomb_hits_the_players_own_active_on_tails() {
+    use sim::rng::ScriptedRng;
+    let mut set = build();
+    let bomb = plain_item(
+        &mut set.db,
+        "test-venture-bomb-2",
+        "Team Rocket's Venture Bomb",
+        TrainerEffect::CoinFlipDamageCountersOnChosenOpponentElseOwnActive(20),
+    );
+    let decklist = deck(&set, bomb);
+    let mut state = GameState::new(
+        set.db.clone(),
+        [decklist.clone(), decklist],
+        Box::new(ScriptedRng::new(vec![0u32])), // tails
+    );
+    for _ in 0..2 {
+        while state.phase != Phase::Main && !state.is_over() {
+            let a = legal_actions(&state)[0];
+            apply(&mut state, a).unwrap();
+        }
+        if state.turn_number > 1 {
+            break;
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
+    }
+    let player = state.current;
+    let my_active = state.player(player).active.unwrap();
+    let card = ensure_in_hand(&mut state, player, bomb);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(state.pokemon(my_active).damage, 20);
+    assert_eq!(state.phase, Phase::Main, "tails resolves at once, no choice to make");
+}
+
+#[test]
+fn team_rockets_venture_bomb_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import
+            .cards
+            .iter()
+            .any(|c| c.name == "Team Rocket's Venture Bomb" && c.playable.is_some()),
+        "Team Rocket's Venture Bomb should play",
+    );
+}
