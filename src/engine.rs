@@ -2762,6 +2762,26 @@ fn enter_slot(
         let already_ordered_on_top = slots
             .iter()
             .any(|s| s.to == Destination::TopOfDeckInOrder);
+        // A search that discards its own peeked leftovers does so before
+        // the deck below the window shuffles — after, the leftovers are
+        // no longer findable at the top to discard.
+        if matches!(then, Some(crate::card::Then::DiscardRestOfPeek)) {
+            // Each card already taken left the peeked window through the
+            // top of the deck, so what is left to discard is the window
+            // shrunk by however many that was — not the window's full
+            // original size, which would reach past it into cards the
+            // peek never showed.
+            let peek_size = slots
+                .first()
+                .and_then(|s| s.peek)
+                .unwrap_or(0)
+                .saturating_sub(moved) as usize;
+            let deck = &mut state.players[chooser.index()].deck;
+            let seen = peek_size.min(deck.len());
+            let start = deck.len() - seen;
+            let rest: Vec<CardId> = deck.drain(start..).collect();
+            state.players[chooser.index()].discard.extend(rest);
+        }
         if (from == Zone::Deck || puts_back) && !already_ordered_on_top {
             let deck = &mut state.players[chooser.index()].deck;
             shuffle(state.rng.as_mut(), deck);
@@ -2775,7 +2795,9 @@ fn enter_slot(
             Some(crate::card::Then::EndTurnIfMoved) if moved > 0 => {
                 state.pending_end_turn = true;
             }
-            Some(crate::card::Then::EndTurnIfMoved) | None => {}
+            Some(crate::card::Then::EndTurnIfMoved)
+            | Some(crate::card::Then::DiscardRestOfPeek)
+            | None => {}
         }
         state.phase = Phase::Main;
         settle(state);

@@ -5,8 +5,8 @@
 use sim::action::{Action, legal_actions};
 use sim::card::{
     Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, PromoteFollowUp,
-    Requirement, Slot, Stage, TargetFilter, Trainer, TrainerEffect, TrainerKind, TurnBonusTarget,
-    Type, Zone,
+    Requirement, Slot, Stage, TargetFilter, Then, Trainer, TrainerEffect, TrainerKind,
+    TurnBonusTarget, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId, PokemonId};
@@ -2937,5 +2937,71 @@ fn biancas_devotion_is_admitted_from_the_artifact() {
     assert_eq!(
         card.effect,
         TrainerEffect::HealFullyIfRemainingHpAtMost(30)
+    );
+}
+
+// --- Beyond the field: a peeked search that discards its leftovers ---
+
+#[test]
+fn explorers_guidance_discards_the_four_cards_not_taken() {
+    let mut db = build().db;
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-explorers-guidance",
+        name: "Explorer's Guidance",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Deck,
+            slots: vec![Slot {
+                filter: CardFilter::AnyCard,
+                to: Destination::Zone(Zone::Hand),
+                limit: 2,
+                excludes_type_of_previous: false,
+                peek: Some(6),
+            }],
+            then: Some(Then::DiscardRestOfPeek),
+        },
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, card, 3);
+    let player = state.current;
+    let window: Vec<CardId> = state.player(player).deck[state.player(player).deck.len() - 6..]
+        .to_vec();
+    let discard_before = state.player(player).discard.len();
+
+    let played = ensure_in_hand(&mut state, player, card);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    for _ in 0..2 {
+        let take = offered(&state).first().copied().unwrap();
+        apply(&mut state, Action::TakeCard { card: take }).unwrap();
+    }
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.phase, Phase::Main);
+    assert_eq!(
+        state.player(player).discard.len(),
+        discard_before + 4 + 1,
+        "the four cards not taken are discarded, plus the played Supporter itself"
+    );
+    for c in &window {
+        assert!(
+            state.player(player).hand.contains(c) || state.player(player).discard.contains(c),
+            "every peeked card is now in hand or discard, none stayed in the deck"
+        );
+    }
+}
+
+#[test]
+fn explorers_guidance_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import
+            .cards
+            .iter()
+            .any(|c| c.name == "Explorer's Guidance" && c.playable.is_some()),
+        "Explorer's Guidance should play",
     );
 }
