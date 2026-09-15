@@ -2358,3 +2358,81 @@ fn fighting_gong_is_admitted_from_the_artifact() {
         "Fighting Gong should play",
     );
 }
+
+// --- Beyond the field: return a Pokemon and its attachments to hand ---
+
+#[test]
+fn scoop_up_cyclone_returns_the_active_and_promotes_a_new_one() {
+    let mut set = build();
+    let cyclone = plain_item(&mut set.db, "test-scoop-up-cyclone", "Scoop Up Cyclone", TrainerEffect::ReturnChosenToHand);
+    let mut state = game(&set, cyclone, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let energy_card = deal_new_card(&mut state, player, set.energy);
+    state.pokemon[active.index()].attached.push(energy_card);
+    let stack: Vec<_> = state.pokemon(active).cards.clone();
+
+    let card = ensure_in_hand(&mut state, player, cyclone);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    let offered: Vec<_> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::ReturnToHand { target } => Some(target),
+            _ => None,
+        })
+        .collect();
+    assert!(offered.contains(&active));
+    apply(&mut state, Action::ReturnToHand { target: active }).unwrap();
+
+    assert!(state.player(player).hand.contains(&energy_card), "the attached Energy lands in hand");
+    for c in &stack {
+        assert!(
+            state.player(player).hand.contains(c),
+            "the Pokemon's whole stack lands in hand: {c:?}"
+        );
+    }
+
+    // The Active is gone, so a new one is promoted from the Bench.
+    let promote = legal_actions(&state)
+        .into_iter()
+        .find_map(|a| match a {
+            Action::Promote { pokemon } => Some(pokemon),
+            _ => None,
+        })
+        .expect("a new Active must be promoted");
+    apply(&mut state, Action::Promote { pokemon: promote }).unwrap();
+    assert_eq!(state.player(player).active, Some(promote));
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn scoop_up_cyclone_can_return_a_benched_pokemon_without_promoting() {
+    let mut set = build();
+    let cyclone = plain_item(&mut set.db, "test-scoop-up-cyclone-2", "Scoop Up Cyclone", TrainerEffect::ReturnChosenToHand);
+    let mut state = game(&set, cyclone, 3);
+    let player = state.current;
+    let benched = state.player(player).bench[0];
+
+    let card = ensure_in_hand(&mut state, player, cyclone);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::ReturnToHand { target: benched }).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "no Active was lost, so nothing to promote");
+    assert!(!state.player(player).bench.contains(&benched));
+}
+
+#[test]
+fn scoop_up_cyclone_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import
+            .cards
+            .iter()
+            .any(|c| c.name == "Scoop Up Cyclone" && c.playable.is_some()),
+        "Scoop Up Cyclone should play",
+    );
+}

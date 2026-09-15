@@ -24,7 +24,7 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
         "a Supporter is refused as a Supporter"
     );
     assert_eq!(
-        reason_for("sv06-162"),
+        reason_for("me02-086"),
         Some(Refusal::IsATrainer(TrainerKind::Item)),
         "Scoop Up Cyclone is an Item"
     );
@@ -129,7 +129,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Salvatore takes it to 116.
     // Lisia's Appeal takes it to 113.
     // Acerola's Mischief takes it to 109.
-    assert_eq!(trainers, 109, "the Trainers still refused, by kind");
+    // Scoop Up Cyclone takes it to 107.
+    assert_eq!(trainers, 107, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

@@ -315,6 +315,10 @@ pub enum TrainerEffect {
     /// from an ex the opponent attacks with next turn: no damage, no
     /// effect. `Acerola's Mischief`.
     ProtectChosenFromExNextTurn,
+    /// Choose one of the player's own Pokémon in play, Active or
+    /// Benched, and return it with everything attached to hand.
+    /// `Scoop Up Cyclone`.
+    ReturnChosenToHand,
     /// Devolve one of the player's own evolved Pokémon, any number of
     /// evolution cards, into their hand; the Pokémon cannot evolve again
     /// this turn. `Strange Timepiece`.

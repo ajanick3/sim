@@ -268,6 +268,10 @@ pub enum Phase {
     /// `player` played `Acerola's Mischief`: choose one of their own
     /// Pokémon in play to protect from an ex next turn.
     ChoosingProtectedFromEx { player: PlayerId },
+    /// `player` played `Scoop Up Cyclone`: choose one of their own
+    /// Pokémon in play — Active or Benched — to return, with everything
+    /// attached, to hand.
+    ChoosingToReturnToHand { player: PlayerId },
     /// `player` played `Rare Candy` and chooses both the Stage 2 from hand
     /// and the Basic in play it evolves, skipping the Stage 1 between them.
     /// A card and a target are chosen together, the same reason

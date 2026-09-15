@@ -166,6 +166,9 @@ pub enum Action {
     /// Choose the Pokémon `Acerola's Mischief` protects from an ex next
     /// turn.
     ProtectFromEx { target: PokemonId },
+    /// Return this Pokémon in play, with everything attached, to hand.
+    /// `Scoop Up Cyclone`.
+    ReturnToHand { target: PokemonId },
     /// Put one damage counter on this Benched Pokémon, as part of
     /// `Phase::DistributingDamageCounters`.
     PlaceDamageCounter { target: PokemonId },
@@ -397,6 +400,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::PromotingOwnNamePrefixThenOpponent { player, .. } => Some(player),
         Phase::PromotingOpponentBasicThenConfuse { player } => Some(player),
         Phase::ChoosingProtectedFromEx { player } => Some(player),
+        Phase::ChoosingToReturnToHand { player } => Some(player),
         Phase::ChoosingWhoGoesFirst { winner } => Some(winner),
         Phase::TakingBonusDraws { player, .. } => Some(player),
         Phase::PlacingActive { player } => Some(player),
@@ -1384,6 +1388,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         return actions;
     }
 
+    if let Phase::ChoosingToReturnToHand { player } = state.phase {
+        for target in state.player(player).in_play() {
+            actions.push(Action::ReturnToHand { target });
+        }
+        return actions;
+    }
+
     if let Phase::ChoosingProtectedFromEx { player } = state.phase {
         for target in state.player(player).in_play() {
             actions.push(Action::ProtectFromEx { target });
@@ -2141,6 +2152,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
             state.pokemon_def(target).name,
             state.def_of(card).name()
         ),
+        Action::ReturnToHand { target } => {
+            format!("Return {} to hand", state.pokemon_def(target).name)
+        }
         Action::ProtectFromEx { target } => {
             format!("Protect {} from an ex next turn", state.pokemon_def(target).name)
         }
