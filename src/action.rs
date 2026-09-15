@@ -387,6 +387,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
     match state.phase {
         Phase::Main => Some(state.current),
         Phase::Promoting { chooser, .. } => Some(chooser),
+        Phase::PromotingOwnNamePrefixThenOpponent { player, .. } => Some(player),
         Phase::ChoosingWhoGoesFirst { winner } => Some(winner),
         Phase::TakingBonusDraws { player, .. } => Some(player),
         Phase::PlacingActive { player } => Some(player),
@@ -1358,6 +1359,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         return actions;
     }
 
+    if let Phase::PromotingOwnNamePrefixThenOpponent { player, prefix } = state.phase {
+        for pokemon in &state.player(player).bench {
+            if state.pokemon_def(*pokemon).name.starts_with(prefix) {
+                actions.push(Action::Promote { pokemon: *pokemon });
+            }
+        }
+        return actions;
+    }
+
     // A Stadium's own once-a-turn action — not dispatched through
     // PlayTrainer, since the Stadium is already in play; offered
     // directly, the way AttachEnergy and PlayTool are.
@@ -1582,6 +1592,13 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     .in_play()
                     .iter()
                     .any(|p| state.pokemon_def(*p).markers.contains(&crate::card::Marker::Tera)),
+                Some(Requirement::ActiveNamePrefix(prefix)) => {
+                    side.active.is_some_and(|a| state.pokemon_def(a).name.starts_with(prefix))
+                        && side
+                            .bench
+                            .iter()
+                            .any(|b| state.pokemon_def(*b).name.starts_with(prefix))
+                }
                 Some(Requirement::SecondCopyOfThisInHand) => {
                     let def = state.cards[card.index()].def;
                     side.hand

@@ -341,5 +341,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // 934.
     // Team Rocket's Ariana (a new
     // `DrawUpToHandSizeOrMoreIfAllOwnNamePrefix`) takes it to 938.
-    assert_eq!(admitted, 938, "coverage moves only on purpose");
+    // Team Rocket's Giovanni (a new `ActiveNamePrefix` Requirement and
+    // `SwitchOwnNamePrefixThenOpponent`) takes it to 942.
+    assert_eq!(admitted, 942, "coverage moves only on purpose");
 }

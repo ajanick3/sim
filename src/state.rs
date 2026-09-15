@@ -252,6 +252,15 @@ pub enum Phase {
     /// "heal all" and "restricted by remaining HP" are both unlike
     /// anything that phase already reads.
     HealingChosenIfRemainingHpAtMost { player: PlayerId, at_most: u32 },
+    /// `player` played `Team Rocket's Giovanni`: switch the Active with a
+    /// Benched Pokémon carrying `prefix`, both sides — `legal_actions`
+    /// already confirmed one exists before the card could be played.
+    /// Its own phase rather than a filter on `Promoting`, which every
+    /// other switch reads unfiltered and should go on doing.
+    PromotingOwnNamePrefixThenOpponent {
+        player: PlayerId,
+        prefix: &'static str,
+    },
     /// `player` played `Rare Candy` and chooses both the Stage 2 from hand
     /// and the Basic in play it evolves, skipping the Stage 1 between them.
     /// A card and a target are chosen together, the same reason
