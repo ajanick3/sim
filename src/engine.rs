@@ -2490,6 +2490,24 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
             }
         }
 
+        Action::EvolveFromDeck { card, target } => {
+            let player = match state.phase {
+                Phase::EvolvingFromDeckNoAbility { player } => player,
+                _ => return Err(IllegalAction),
+            };
+            state.players[player.index()].deck.retain(|c| *c != card);
+            state.pokemon[target.index()].cards.push(card);
+            state.spend(Limit::Evolved(target));
+            state.clear_conditions(target);
+            let name = state.pokemon_def(target).name;
+            state
+                .log
+                .push(format!("{player:?} uses Salvatore: evolves into {name}."));
+            shuffle(state.rng.as_mut(), &mut state.players[player.index()].deck);
+            state.phase = Phase::Main;
+            settle(state);
+        }
+
         Action::DiscardOpponentEnergy { card } => {
             let of = match state.phase {
                 Phase::DiscardingOpponentEnergy { of, .. } => of,
@@ -2894,6 +2912,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
 
         TrainerEffect::EvolveSkippingOneStage => {
             state.phase = Phase::EvolvingWithRareCandy { player };
+        }
+
+        TrainerEffect::SearchDeckToEvolveNoAbility => {
+            state.phase = Phase::EvolvingFromDeckNoAbility { player };
         }
 
         TrainerEffect::SwitchOpponentActive => {

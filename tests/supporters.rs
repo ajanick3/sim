@@ -3167,3 +3167,62 @@ fn team_rockets_giovanni_is_admitted_from_the_artifact() {
         "Team Rocket's Giovanni should play",
     );
 }
+
+// --- Beyond the field: an evolution searched straight from the deck ---
+
+#[test]
+fn salvatore_evolves_a_pokemon_put_into_play_this_very_turn() {
+    let mut set = build();
+    let salvatore = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-salvatore",
+        name: "Salvatore",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::SearchDeckToEvolveNoAbility,
+    }));
+    let mut state = game(&set, salvatore, 3);
+    let player = state.current;
+
+    // Bigmon (stage1) goes onto the Bench this very turn — Rare Candy's
+    // own restriction would refuse this; Salvatore's own text allows it.
+    let bigmon_card = deal_new_card(&mut state, player, set.stage1);
+    let bigmon = state.put_into_play(player, bigmon_card);
+    state.players[player.index()].bench.push(bigmon);
+    state.pokemon[bigmon.index()].played_on_turn = state.turn_number;
+
+    let hugemon_card = deal_new_card(&mut state, player, set.stage2);
+    state.players[player.index()].deck.push(hugemon_card);
+
+    let card = ensure_in_hand(&mut state, player, salvatore);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    let pairs: Vec<_> = legal_actions(&state)
+        .into_iter()
+        .filter_map(|a| match a {
+            Action::EvolveFromDeck { card, target } => Some((card, target)),
+            _ => None,
+        })
+        .collect();
+    assert!(pairs.contains(&(hugemon_card, bigmon)), "{pairs:?}");
+
+    apply(&mut state, Action::EvolveFromDeck { card: hugemon_card, target: bigmon }).unwrap();
+
+    assert_eq!(state.pokemon_def(bigmon).name, "Hugemon");
+    assert!(!state.player(player).deck.contains(&hugemon_card));
+    assert_eq!(state.phase, Phase::Main);
+}
+
+#[test]
+fn salvatore_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import
+            .cards
+            .iter()
+            .any(|c| c.name == "Salvatore" && c.playable.is_some()),
+        "Salvatore should play",
+    );
+}
