@@ -269,6 +269,11 @@ pub enum Phase {
     /// own step. `legal_actions` guaranteed a matching pair exists before
     /// the card could be played, so no action here declines.
     EvolvingWithRareCandy { player: PlayerId },
+    /// `player` played `Salvatore`: search the deck for a no-Ability card
+    /// that evolves one of their own Pokémon in play, and evolve it —
+    /// even one put into play this turn or during setup, which every
+    /// other evolution refuses.
+    EvolvingFromDeckNoAbility { player: PlayerId },
     /// `chooser` picks one Energy attached to a Pokémon `of` controls, in
     /// play, to discard. `Crushing Hammer`'s heads case and
     /// `Rust Syndicate Grunt` reach this; a Pokémon's attachments are not

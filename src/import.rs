@@ -1371,6 +1371,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             Some(Requirement::ActiveNamePrefix("Team Rocket's")),
             TrainerEffect::SwitchOwnNamePrefixThenOpponent("Team Rocket's"),
         ),
+        "Salvatore" => (free, TrainerEffect::SearchDeckToEvolveNoAbility),
         "Academy at Night" => (free, TrainerEffect::MayPutHandCardOnTopOfDeck),
         "Team Rocket's Factory" => (
             free,

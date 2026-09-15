@@ -159,6 +159,10 @@ pub enum Action {
     /// Evolve a Basic in play straight into the named Stage 2 from hand,
     /// skipping the Stage 1 between them.
     EvolveSkippingOneStage { card: CardId, target: PokemonId },
+    /// Evolve a Pokémon in play from a card found in the deck, not the
+    /// hand — and, unlike every other evolution, with no restriction on
+    /// the turn it or its target came into play. `Salvatore`.
+    EvolveFromDeck { card: CardId, target: PokemonId },
     /// Put one damage counter on this Benched Pokémon, as part of
     /// `Phase::DistributingDamageCounters`.
     PlaceDamageCounter { target: PokemonId },
@@ -462,6 +466,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::ChoosingJaninesTargets { player, .. } => Some(player),
         Phase::JaninesSearch { player, .. } => Some(player),
         Phase::EvolvingWithRareCandy { player } => Some(player),
+        Phase::EvolvingFromDeckNoAbility { player } => Some(player),
         Phase::DiscardingOpponentEnergy { chooser, .. } => Some(chooser),
         Phase::DiscardingOpponentSpecialEnergy { chooser, .. } => Some(chooser),
         Phase::DiscardingDefenderEnergyForAttack { chooser, .. } => Some(chooser),
@@ -1349,6 +1354,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             }
             return actions;
         }
+        Phase::EvolvingFromDeckNoAbility { player: whose } => {
+            for (card, target) in salvatore_pairs(state, whose) {
+                actions.push(Action::EvolveFromDeck { card, target });
+            }
+            return actions;
+        }
         _ => {}
     }
 
@@ -1895,6 +1906,35 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
 /// own first turn of the game, the target in play since before this turn,
 /// not yet evolved this turn — matched by `evolves_from_basic` two links
 /// down rather than by `evolve_from` one link up.
+/// Every (card in the deck, target in play) pair `Salvatore` could
+/// evolve — a no-Ability card whose `evolve_from` names an in-play
+/// Pokémon of the player's own, with no restriction on the turn either
+/// one came into play, unlike `rare_candy_pairs`.
+fn salvatore_pairs(state: &GameState, player: PlayerId) -> Vec<(CardId, PokemonId)> {
+    let side = state.player(player);
+    let mut pairs = Vec::new();
+    for card in &side.deck {
+        let Some(evolution) = state.def_of(*card).as_pokemon() else {
+            continue;
+        };
+        let Some(from) = evolution.evolve_from else {
+            continue;
+        };
+        if evolution.ability.is_some() {
+            continue;
+        }
+        for target in side.in_play() {
+            let eligible = state.pokemon_def(target).name == from
+                && !state.is_spent(Limit::Evolved(target))
+                && !state.pokemon(target).cannot_evolve_this_turn;
+            if eligible {
+                pairs.push((*card, target));
+            }
+        }
+    }
+    pairs
+}
+
 fn rare_candy_pairs(state: &GameState, player: PlayerId) -> Vec<(CardId, PokemonId)> {
     if state.is_players_first_turn() {
         return Vec::new();
@@ -2072,6 +2112,11 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::FinishJaninesSearch => "Move on".to_string(),
         Action::EvolveSkippingOneStage { card, target } => format!(
             "Use Rare Candy: evolve {} into {}",
+            state.pokemon_def(target).name,
+            state.def_of(card).name()
+        ),
+        Action::EvolveFromDeck { card, target } => format!(
+            "Use Salvatore: evolve {} into {}",
             state.pokemon_def(target).name,
             state.def_of(card).name()
         ),

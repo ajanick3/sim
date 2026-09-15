@@ -534,6 +534,10 @@ pub enum TrainerEffect {
     /// `evolve_from` to the Pokémon it is played on, one stage at a time,
     /// and this reads `evolves_from_basic` instead.
     EvolveSkippingOneStage,
+    /// Search the deck for a no-Ability card that evolves one of the
+    /// player's own Pokémon, and evolve it, even one put into play this
+    /// turn. `Salvatore`.
+    SearchDeckToEvolveNoAbility,
     /// Flip a coin; on heads, discard one Energy attached to a Pokémon the
     /// opponent controls, the player's choice of which.
     CoinFlipDiscardOpponentEnergy,
