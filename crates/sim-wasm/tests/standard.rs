@@ -6,9 +6,9 @@ use sim_wasm::{CardData, Game};
 
 const CARDS: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../data/cards.json");
 const DRAGAPULT: &str =
-    concat!(env!("CARGO_MANIFEST_DIR"), "/../../decks/2026-worlds/03-brent-tonisson.txt");
+    concat!(env!("CARGO_MANIFEST_DIR"), "/../../decks/2026-worlds/003-brent-tonisson.txt");
 const ALAKAZAM: &str =
-    concat!(env!("CARGO_MANIFEST_DIR"), "/../../decks/2026-worlds/02-diego-cassiraga.txt");
+    concat!(env!("CARGO_MANIFEST_DIR"), "/../../decks/2026-worlds/002-diego-cassiraga.txt");
 
 #[test]
 fn the_curated_matchup_starts_and_offers_actions() {
