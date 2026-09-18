@@ -16,4 +16,4 @@ export function loadDeckIndex(): Promise<DeckEntry[]> {
 }
 
 /** The two decks a fresh game opens with when the URL names none. */
-export const DEFAULT_DECKS = { a: "03-brent-tonisson", b: "02-diego-cassiraga" };
+export const DEFAULT_DECKS = { a: "003-brent-tonisson", b: "002-diego-cassiraga" };
