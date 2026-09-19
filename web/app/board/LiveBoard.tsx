@@ -19,6 +19,7 @@ import { PromptBar } from "./PromptBar";
 import { SideRail } from "./SideRail";
 import { SideRow } from "./SideRow";
 import { StadiumSlot } from "./StadiumSlot";
+import { useBoardVariant } from "./variant";
 import {
   asDecision,
   asPrompt,
@@ -320,10 +321,19 @@ export function LiveBoard({
 
   const dragCard = drag ? view.your_hand.find((c) => c.id === drag.card) : undefined;
   const dragSrc = dragCard ? art(dragCard.print_id) : null;
+  const roundedCourt = useBoardVariant() === "rounded-court";
+  const laneDivider = roundedCourt && (
+    <div
+      className="mx-auto h-px w-4/5 rounded-full bg-gradient-to-r from-transparent via-accent/40 to-transparent"
+      aria-hidden
+    />
+  );
 
   return (
     <div className="mt-3">
-      <div className="mx-auto w-full max-w-[560px] rounded-xl border border-edge bg-felt p-2">
+      <div
+        className={`mx-auto w-full max-w-[560px] border border-edge bg-felt p-2 ${roundedCourt ? "rounded-[32px]" : "rounded-xl"}`}
+      >
         <div className="relative flex flex-col gap-1">
           <SideRow
             side={opp}
@@ -343,6 +353,7 @@ export function LiveBoard({
                 column, so it falls back to the collapsed "All actions"
                 spot under the Hand instead; see the `md:hidden` details
                 below. */}
+          {laneDivider}
           <div className="flex items-center justify-center gap-3">
             <StadiumSlot
               card={view.stadium}
@@ -366,21 +377,29 @@ export function LiveBoard({
                 )}
               />
               <div className="h-px w-24 bg-white/15" aria-hidden />
-              <LiveMon
-                mon={mine.active}
-                active
-                art={art}
-                placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
-                {...monHooks(
-                  mine.active,
-                  meta,
-                  selection,
-                  dropTargets,
-                  onPokemon,
-                  onCardMoves.length > 0,
-                  hoverDropId,
-                )}
-              />
+              <div
+                className={
+                  roundedCourt
+                    ? "rounded-card shadow-[0_0_28px_6px_rgba(110,168,254,0.35)]"
+                    : undefined
+                }
+              >
+                <LiveMon
+                  mon={mine.active}
+                  active
+                  art={art}
+                  placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
+                  {...monHooks(
+                    mine.active,
+                    meta,
+                    selection,
+                    dropTargets,
+                    onPokemon,
+                    onCardMoves.length > 0,
+                    hoverDropId,
+                  )}
+                />
+              </div>
             </div>
             {finishPlacing >= 0 ? (
               <button
@@ -407,6 +426,7 @@ export function LiveBoard({
               </div>
             )}
           </div>
+          {laneDivider}
 
           <SideRow
             side={mine}
