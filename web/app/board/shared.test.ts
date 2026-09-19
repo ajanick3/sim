@@ -73,6 +73,20 @@ describe("splitHandRows", () => {
     expect(a.every((c) => c.category === "pokemon")).toBe(true);
     expect(a).toHaveLength(4);
   });
+
+  it("leads with the fuller row, so a short second row is the one that centres", () => {
+    // 2 pokemon + 1 supporter, then 3 item + 1 stadium — the nearest
+    // boundary splits 3/4, and the 4-card half should come first.
+    const hand = [
+      ...Array.from({ length: 2 }, (_, i) => card("pokemon", i)),
+      card("supporter", 2),
+      ...Array.from({ length: 3 }, (_, i) => card("item", 10 + i)),
+      card("stadium", 20),
+    ];
+    const [a, b] = splitHandRows(hand);
+    expect(a).toHaveLength(4);
+    expect(b).toHaveLength(3);
+  });
 });
 
 describe("asDecision", () => {

@@ -63,7 +63,9 @@ export const HAND_ORDER = [
  *  category boundary nearest the middle — always two, so the Hand's
  *  own container is a fixed height whatever the hand holds. A hand of
  *  one card is the one case with nothing to split; it renders alone in
- *  the first row. */
+ *  the first row. The fuller row leads; a shorter second row is the
+ *  one `HandStrip` centres, so an uneven split reads bottom-centred
+ *  rather than top-centred. */
 export function splitHandRows(hand: WireCard[]): WireCard[][] {
   const order = HAND_ORDER as readonly string[];
   const rank = (c: string) => {
@@ -84,7 +86,9 @@ export function splitHandRows(hand: WireCard[]): WireCard[][] {
     if (Math.abs(best - target) <= 2) split = best;
   }
   split = Math.max(1, Math.min(split, n - 1));
-  return [sorted.slice(0, split), sorted.slice(split)];
+  const first = sorted.slice(0, split);
+  const second = sorted.slice(split);
+  return first.length >= second.length ? [first, second] : [second, first];
 }
 
 // --- Decision bar / prompt shapes ----------------------------------------
