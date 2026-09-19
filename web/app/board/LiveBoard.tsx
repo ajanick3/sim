@@ -323,7 +323,7 @@ export function LiveBoard({
 
   return (
     <div className="mt-3">
-      <div className="mx-auto w-full max-w-[560px] rounded-xl border border-edge bg-felt p-2">
+      <div className="mx-auto w-full max-w-[560px] rounded-[32px] border border-edge bg-felt p-2">
         <div className="relative flex flex-col gap-1">
           <SideRow
             side={opp}
@@ -343,6 +343,10 @@ export function LiveBoard({
                 column, so it falls back to the collapsed "All actions"
                 spot under the Hand instead; see the `md:hidden` details
                 below. */}
+          <div
+            className="mx-auto h-px w-4/5 rounded-full bg-gradient-to-r from-transparent via-accent/40 to-transparent"
+            aria-hidden
+          />
           <div className="flex items-center justify-center gap-3">
             <StadiumSlot
               card={view.stadium}
@@ -366,21 +370,23 @@ export function LiveBoard({
                 )}
               />
               <div className="h-px w-24 bg-white/15" aria-hidden />
-              <LiveMon
-                mon={mine.active}
-                active
-                art={art}
-                placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
-                {...monHooks(
-                  mine.active,
-                  meta,
-                  selection,
-                  dropTargets,
-                  onPokemon,
-                  onCardMoves.length > 0,
-                  hoverDropId,
-                )}
-              />
+              <div className="rounded-card shadow-[0_0_28px_6px_rgba(110,168,254,0.35)]">
+                <LiveMon
+                  mon={mine.active}
+                  active
+                  art={art}
+                  placeHere={activePlace >= 0 ? () => onAct(activePlace) : undefined}
+                  {...monHooks(
+                    mine.active,
+                    meta,
+                    selection,
+                    dropTargets,
+                    onPokemon,
+                    onCardMoves.length > 0,
+                    hoverDropId,
+                  )}
+                />
+              </div>
             </div>
             {finishPlacing >= 0 ? (
               <button
@@ -407,6 +413,10 @@ export function LiveBoard({
               </div>
             )}
           </div>
+          <div
+            className="mx-auto h-px w-4/5 rounded-full bg-gradient-to-r from-transparent via-accent/40 to-transparent"
+            aria-hidden
+          />
 
           <SideRow
             side={mine}

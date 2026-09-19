@@ -46,7 +46,7 @@ export function SideRail({
       <button
         onClick={onEndTurn}
         disabled={!canEndTurn}
-        className={`${fab} size-14 border-warn/70 bg-warn/25 text-[10px] font-bold leading-tight text-warn disabled:opacity-40`}
+        className="grid h-11 w-16 place-items-center rounded-2xl border-2 border-warn bg-transparent text-[10px] font-bold leading-tight text-warn shadow-[0_2px_10px_rgba(0,0,0,0.4)] backdrop-blur transition-colors hover:bg-warn/10 disabled:opacity-40"
       >
         END
         <br />
