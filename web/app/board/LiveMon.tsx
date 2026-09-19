@@ -5,6 +5,7 @@ import { EnergyIcon, energyKind } from "./EnergyIcon";
 import { PlayingCard } from "./PlayingCard";
 import { CARD_SIZE } from "./sizes";
 import { damageSpot, type Art } from "./shared";
+import { useBoardVariant } from "./variant";
 
 /** One Pokémon in play. The Active stays the top-of-print slice this
  *  board has always shown, at your own scale or the opponent's smaller
@@ -40,8 +41,17 @@ export function LiveMon({
   /** Empty slot: a selected hand card can be placed here. */
   placeHere?: () => void;
 }) {
-  const size = active ? (far ? "activeFar" : "active") : "fluid";
-  const crop = active ? "top" : "full";
+  const cardForward = useBoardVariant() === "card-forward";
+  const size = active
+    ? far
+      ? cardForward
+        ? "activeFarCard"
+        : "activeFar"
+      : cardForward
+        ? "activeCard"
+        : "active"
+    : "fluid";
+  const crop = active && !cardForward ? "top" : "full";
   if (!mon) {
     return (
       <button

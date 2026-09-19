@@ -4,6 +4,7 @@ import type { WireCard } from "../view";
 import { PlayingCard } from "./PlayingCard";
 import { CARD_SIZE } from "./sizes";
 import type { Art } from "./shared";
+import { useBoardVariant } from "./variant";
 
 /** The Stadium in play, the whole card, always upright — a little
  *  larger than a deck/discard pile so its text stays legible. A dashed
@@ -22,6 +23,7 @@ export function StadiumSlot({
   ghost?: boolean;
   placeHere?: () => void;
 }) {
+  const roundedCourt = useBoardVariant() === "rounded-court";
   if (card && art) {
     return (
       <PlayingCard
@@ -41,13 +43,26 @@ export function StadiumSlot({
       data-drop-id={placeHere ? "slot:stadium" : undefined}
       disabled={!placeHere}
       onClick={placeHere}
-      className={`${CARD_SIZE.stadium} flex flex-none flex-col items-center justify-center rounded-card border border-dashed text-center text-[8px] disabled:cursor-default ${
+      className={`${CARD_SIZE.stadium} flex flex-none flex-col items-center justify-center text-center disabled:cursor-default ${
+        roundedCourt
+          ? "gap-1 rounded-2xl border border-dashed text-[9px]"
+          : "rounded-card border border-dashed text-[8px]"
+      } ${
         placeHere
           ? "border-accent bg-accent/10 text-accent animate-pulse"
           : "border-white/15 text-dim"
       } ${ghost ? "invisible" : ""}`}
     >
-      {placeHere ? "place here" : "stadium"}
+      {placeHere ? (
+        "place here"
+      ) : roundedCourt ? (
+        <>
+          <span className="text-[15px] leading-none">+</span>
+          Stadium
+        </>
+      ) : (
+        "stadium"
+      )}
     </button>
   );
 }

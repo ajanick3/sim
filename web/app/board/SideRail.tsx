@@ -1,5 +1,7 @@
 "use client";
 
+import { useBoardVariant } from "./variant";
+
 /** Turn number, both prize counts, END TURN, a log button, and a » to
  *  collapse the lot — floating over the board as a column of small,
  *  unobtrusive FABs pinned to the right edge of, and vertically
@@ -28,6 +30,7 @@ export function SideRail({
 }) {
   const fab =
     "grid place-items-center rounded-full border border-edge bg-panel/80 shadow-[0_2px_10px_rgba(0,0,0,0.4)] backdrop-blur transition-colors";
+  const roundedCourt = useBoardVariant() === "rounded-court";
   return (
     <div className="absolute right-1 top-1/2 z-30 flex -translate-y-1/2 flex-col items-center gap-2.5">
       <button
@@ -46,7 +49,11 @@ export function SideRail({
       <button
         onClick={onEndTurn}
         disabled={!canEndTurn}
-        className={`${fab} size-14 border-warn/70 bg-warn/25 text-[10px] font-bold leading-tight text-warn disabled:opacity-40`}
+        className={
+          roundedCourt
+            ? "grid h-11 w-16 place-items-center rounded-2xl border-2 border-warn bg-transparent text-[10px] font-bold leading-tight text-warn shadow-[0_2px_10px_rgba(0,0,0,0.4)] backdrop-blur transition-colors hover:bg-warn/10 disabled:opacity-40"
+            : `${fab} size-14 border-warn/70 bg-warn/25 text-[10px] font-bold leading-tight text-warn disabled:opacity-40`
+        }
       >
         END
         <br />
