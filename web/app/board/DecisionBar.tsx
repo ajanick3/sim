@@ -94,30 +94,32 @@ export function DecisionBar({
       </div>
       <div className="flex flex-wrap justify-center gap-3 p-3">
         {showDeck
-          ? deck.map((card) => {
-              const indices = takeIndex.get(card.id);
-              const takeable = indices !== undefined;
-              return (
-                <PlayingCard
-                  key={card.id}
-                  size="picker"
-                  crop="full"
-                  src={art(card.print_id)}
-                  name={card.name}
-                  energyType={card.energy_type}
-                  raised={takeable}
-                  dimmed={!takeable}
-                  selected={awaitingTarget === card.id}
-                  disabled={busy || !takeable}
-                  onClick={takeable ? () => act(card.id, indices) : undefined}
-                  className={
-                    takeable
-                      ? "transition-transform hover:-translate-y-1 hover:scale-[1.04] disabled:opacity-50"
-                      : "cursor-default"
-                  }
-                />
-              );
-            })
+          ? [...deck]
+              .sort((a, b) => Number(takeIndex.has(b.id)) - Number(takeIndex.has(a.id)))
+              .map((card) => {
+                const indices = takeIndex.get(card.id);
+                const takeable = indices !== undefined;
+                return (
+                  <PlayingCard
+                    key={card.id}
+                    size="picker"
+                    crop="full"
+                    src={art(card.print_id)}
+                    name={card.name}
+                    energyType={card.energy_type}
+                    raised={takeable}
+                    dimmed={!takeable}
+                    selected={awaitingTarget === card.id}
+                    disabled={busy || !takeable}
+                    onClick={takeable ? () => act(card.id, indices) : undefined}
+                    className={
+                      takeable
+                        ? "transition-transform hover:-translate-y-1 hover:scale-[1.04] disabled:opacity-50"
+                        : "cursor-default"
+                    }
+                  />
+                );
+              })
           : choices.map(({ label, index }) => {
               const face = meta[index]?.card_face ?? null;
               const id = meta[index]?.card;
