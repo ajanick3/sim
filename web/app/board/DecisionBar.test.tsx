@@ -59,6 +59,14 @@ describe("DecisionBar with a whole-deck search", () => {
     expect(getByText("Ralts")).toBeTruthy();
     expect(queryByText("Kirlia")).toBeNull();
   });
+
+  it("draws the takeable card ahead of the deck order it came in", () => {
+    const { container } = bar();
+    const names = [...container.querySelectorAll("button")]
+      .map((b) => b.textContent)
+      .filter((t) => t !== "DONE");
+    expect(names[0]).toContain("Ralts");
+  });
 });
 
 describe("DecisionBar for a slot bound to attach", () => {
