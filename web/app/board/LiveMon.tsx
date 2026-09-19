@@ -41,7 +41,7 @@ export function LiveMon({
   placeHere?: () => void;
 }) {
   const size = active ? (far ? "activeFar" : "active") : "fluid";
-  const crop = active ? "top" : "full";
+  const crop = "full";
   if (!mon) {
     return (
       <button
