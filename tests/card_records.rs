@@ -358,5 +358,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // it to 960.
     // Ignition Energy (two prints) and Neo Upper Energy (one print)
     // take it to 963.
-    assert_eq!(admitted, 963, "coverage moves only on purpose");
+    // Sparkling Crystal (two prints) and Counter Gain (four prints)
+    // take it to 969.
+    assert_eq!(admitted, 969, "coverage moves only on purpose");
 }

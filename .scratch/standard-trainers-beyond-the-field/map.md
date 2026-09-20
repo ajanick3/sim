@@ -63,9 +63,13 @@ More clusters merged:
 - Ignition and Neo Upper Energy — `ProvidesMoreColorlessIfCarrierIsEvolutionThenDiscardsAtEndOfTurn`,
   `ProvidesMoreOfAnyTypeIfCarrierIsStage2`; the first end-of-turn
   self-discard an Energy card has needed, read in `end_the_turn`.
+- Sparkling Crystal and Counter Gain — `ReducesAttackCostByAnyTypeIfCarrierMarked`,
+  `ReducesAttackCostIfMorePrizesRemaining`; the first Tools to
+  discount their own carrier's attack cost, read in `legal_actions`'
+  attack-cost loop alongside the Ability discounts already there.
 
-Coverage: 926 / 3051 prints (30.4%). Refused, by kind:
-Supporter 58, Item 40, Tool 20, Stadium 20, Special Energy 3.
+Coverage: 932 / 3051 prints (30.5%). Refused, by kind:
+Supporter 58, Item 40, Tool 18, Stadium 20, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
@@ -93,8 +97,16 @@ Deferred — the tier that needs its own design/ADR before it is cheap:
   enum has Ex/Mega/Tera only.
 - **"Playable on the first turn" allowance**: Carmine's rider, Team
   Rocket's Proton, Call Bell, Chill Teaser Toy.
-- **Retreat-cost modifier Tools**: Rescue Board, Gravity Gemstone,
-  Heavy Baton, Sparkling Crystal, Counter Gain.
+- **Retreat-cost modifier Tools**: mostly resolved — Rescue Board
+  (`ReducesRetreatCost`, though its own "no Retreat Cost at 30 HP or
+  less" clause is still unread) and Gravity Gemstone
+  (`RaisesBothActiveRetreatWhileCarrierActive`) already play, and
+  Sparkling Crystal and Counter Gain turned out to be attack-cost,
+  not retreat-cost, Tools — built above. Heavy Baton remains: a
+  knockout-triggered "move Energy off the Pokémon that was just
+  Knocked Out, before its cards go to discard" moment nothing in the
+  engine has a hook for yet — `knock_out_the_dead` moves straight to
+  the Prize count, with no pause for a choice first.
 - **Attack-granting Tools**: Core Memory, Technical Machine: Fluorite.
 - Coin-gated searches (Poké Ball, Energy Coin, Team Rocket's Great Ball),
   the many single-effect one-offs (Scoop Up Cyclone, Megaton Blower,

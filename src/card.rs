@@ -713,6 +713,17 @@ pub enum TrainerEffect {
     /// at every site that would otherwise offer, trigger, or read a
     /// standing Ability effect. `Team Rocket's Watchtower`.
     AbilitiesDisabled,
+    /// A Tool: while the carrier bears the marker, its own attacks
+    /// cost this many fewer Energy, of any type — unlike every other
+    /// cost reduction built so far, which only ever removes a `{C}`
+    /// requirement. Read in `legal_actions`' own attack-cost loop.
+    /// `Sparkling Crystal`.
+    ReducesAttackCostByAnyTypeIfCarrierMarked(Marker, u32),
+    /// A Tool: while its owner has more Prize cards remaining than
+    /// the opponent, the carrier's own attacks cost this many fewer
+    /// `{C}`. Read in `legal_actions`' own attack-cost loop, the same
+    /// site the other cost reductions already are. `Counter Gain`.
+    ReducesAttackCostIfMorePrizesRemaining(u32),
 }
 
 /// A side-wide effect a card grants for the opponent's next turn, held in
