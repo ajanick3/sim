@@ -1433,6 +1433,33 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             Some(Requirement::ActiveNamePrefix("Team Rocket's")),
             TrainerEffect::SwitchOwnNamePrefixThenOpponent("Team Rocket's"),
         ),
+        "Team Rocket's Great Ball" => (
+            free,
+            TrainerEffect::CoinFlipEitherThen(
+                Box::new(TrainerEffect::Decide {
+                    from: Zone::Deck,
+                    slots: vec![Slot {
+                        filter: CardFilter::EvolutionPokemonNameContains("Team Rocket's"),
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    }],
+                    then: None,
+                }),
+                Box::new(TrainerEffect::Decide {
+                    from: Zone::Deck,
+                    slots: vec![Slot {
+                        filter: CardFilter::BasicPokemonNameContains("Team Rocket's"),
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    }],
+                    then: None,
+                }),
+            ),
+        ),
         "Salvatore" => (free, TrainerEffect::SearchDeckToEvolveNoAbility),
         "Lisia's Appeal" => (free, TrainerEffect::SwitchOpponentActiveBasicThenConfuse),
         "Scoop Up Cyclone" => (free, TrainerEffect::ReturnChosenToHand),

@@ -192,6 +192,11 @@ pub enum CardFilter {
     /// narrowed by a name substring instead of a Pokémon type on the
     /// Pokémon side. `Ethan's Adventure`.
     PokemonNameContainsOrBasicEnergyOfType(&'static str, Type),
+    /// An Evolution Pokémon whose printed name contains this word — the
+    /// same substring match `BasicPokemonNameContains` reads, narrowed
+    /// to an Evolution instead of a Basic. `Team Rocket's Great Ball`'s
+    /// heads side.
+    EvolutionPokemonNameContains(&'static str),
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
@@ -462,6 +467,14 @@ pub enum TrainerEffect {
     /// Flip a coin; on heads, resolve the wrapped effect. On tails,
     /// nothing. `Poké Ball`.
     CoinFlipThen(Box<TrainerEffect>),
+    /// Flip a coin; resolve the first wrapped effect on heads, the
+    /// second on tails — unlike `CoinFlipThen`, tails is a different
+    /// search, not a no-op. Both sides must be a `Decide` of exactly
+    /// one slot: `resolve_trainer` opens the chosen side's own
+    /// `Phase::Deciding` directly, rather than through `Trainer::slots`,
+    /// since which side won is only known once the coin lands.
+    /// `Team Rocket's Great Ball`.
+    CoinFlipEitherThen(Box<TrainerEffect>, Box<TrainerEffect>),
     /// A Tool: while its carrier is the Active, the Retreat Cost of both
     /// Active Pokémon is `amount` higher. `Gravity Gemstone`.
     RaisesBothActiveRetreatWhileCarrierActive(u32),

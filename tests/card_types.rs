@@ -137,7 +137,8 @@ fn the_kinds_add_up_to_the_pool() {
     // take it to 95.
     // Super Potion and Misty's Vitality (two prints) take it to 92.
     // Ethan's Adventure (three prints) takes it to 89.
-    assert_eq!(trainers, 89, "the Trainers still refused, by kind");
+    // Team Rocket's Great Ball (two prints) takes it to 87.
+    assert_eq!(trainers, 87, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

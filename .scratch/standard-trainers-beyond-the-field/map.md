@@ -80,17 +80,29 @@ More clusters merged:
   `BasicPokemonNameContains` and `IncreasesHpForNamePrefix` for them,
   before this map's own notes caught up); only Proton's separate
   "playable on your first turn" clause remains open, filed below.
+- Team Rocket's Great Ball — `CardFilter::EvolutionPokemonNameContains`,
+  paired with the existing `BasicPokemonNameContains` inside a new
+  `TrainerEffect::CoinFlipEitherThen`, the first coin flip to choose
+  between two different searches rather than "the same search or
+  nothing." Its `Decide` phase opens directly from `resolve_trainer`
+  once the coin lands, bypassing `Trainer::slots()` — that accessor
+  is a pure function of the card's own printed effect and cannot know
+  which side of a flip already happened.
 
-Coverage: 938 / 3051 prints (30.7%). Refused, by kind:
-Supporter 56, Item 39, Tool 18, Stadium 20, Special Energy 3.
+Coverage: 940 / 3051 prints (30.8%). Refused, by kind:
+Supporter 56, Item 37, Tool 18, Stadium 20, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
 its prize-count clause wants milestone-3's deferred prize-count support
-instead); Team Rocket's Energy (needs a Basic-restricted sibling of the
-name-prefix filter, cheap now that `PokemonNameContainsOrBasicEnergyOfType`
-exists as a model — left for the next name-prefix pass rather than bundled
-here).
+instead); Team Rocket's Energy — checked its real text and it is not a
+name-prefix search at all: it is a Special Energy restricted to attach
+only to a Team Rocket's Pokémon (discarding itself immediately if
+attached to anything else) that then provides 2 Energy in any
+combination of two named types. Nothing in the engine validates an
+attach against the carrier's name, or discards a card the instant it
+lands somewhere illegal — a real new mechanic, moved to Deferred below
+rather than bundled as a "cheap filter reuse."
 
 Deferred — the tier that needs its own design/ADR before it is cheap:
 - **Trainer-as-Pokémon**: the eight "Antique … Fossil" Items play as a
@@ -99,12 +111,12 @@ Deferred — the tier that needs its own design/ADR before it is cheap:
   Acerola's Mischief, Iron Defender. `opponent_next_turn_restriction`
   is keyed to one `PokemonId` + an `AttackEffect`; a Supporter/Item
   shield over a whole side needs a new store and clear/arm logic.
-- **Team Rocket's Great Ball**: a coin flip choosing between two
-  different `Decide` searches (an Evolution Team Rocket's Pokémon on
-  heads, a Basic one on tails) — `CoinFlipThen` only ever runs one
-  inner effect on heads and does nothing on tails; this wants a new
-  two-branch variant, filed with the other coin-gated searches below
-  rather than the name-prefix cluster it first looked like it belonged to.
+- **Team Rocket's Energy**: attaches only to a Team Rocket's Pokémon,
+  discarding itself the instant it lands anywhere else, then provides
+  2 Energy in any combination of two named types. Needs an attach-time
+  name check plus an immediate self-discard on a failed one — nothing
+  in the engine validates an attach against the carrier's identity
+  today; `AttachEnergy`'s handler assumes every attach succeeds.
 - **Light Ball**: not a name-prefix card at all, despite the family
   resemblance — its bonus is gated on the Tool's own carrier being
   the specific printed Pokémon ("the Pikachu ex this card is attached

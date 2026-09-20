@@ -3143,6 +3143,28 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::CoinFlipEitherThen(heads, tails) => {
+            let chosen = if state.flip_for(player) { *heads } else { *tails };
+            let TrainerEffect::Decide { from, slots, then } = chosen else {
+                unreachable!("both sides of a CoinFlipEitherThen are a Decide of one slot");
+            };
+            let slot = slots[0].clone();
+            state.phase = Phase::Deciding {
+                chooser: player,
+                card,
+                step: 0,
+                from,
+                to: slot.to,
+                filter: slot.filter,
+                excludes_type_of_previous: slot.excludes_type_of_previous,
+                peek: slot.peek,
+                remaining: slot.limit,
+                moved: 0,
+                previous: None,
+                then,
+            };
+        }
+
         TrainerEffect::DrawThenBonusIfOpponentPrizesAtMost {
             base,
             bonus,
