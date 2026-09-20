@@ -63,6 +63,11 @@ More clusters merged:
 Coverage at #276: 921 / 3051 prints (30.2%). Refused, by kind:
 Supporter 60, Item 40, Tool 20, Stadium 20, Special Energy 6.
 
+Also refused, flagged by a sample-deck build check: Larry's Skill — a
+three-way search (a Pokémon, a Supporter, and a Basic Energy, in one
+`Decide`) after a full hand discard. No existing cluster covers a
+search across three distinct `CardFilter`s in one effect.
+
 Special Energy still refused: Ignition, Legacy, Neo Upper (a
 conditional-provision family — provides X, or Y off an Evolution /
 Stage 2 — plus Ignition's end-of-turn self-discard); Team Rocket's
