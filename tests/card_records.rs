@@ -360,5 +360,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // take it to 963.
     // Sparkling Crystal (two prints) and Counter Gain (four prints)
     // take it to 969.
-    assert_eq!(admitted, 969, "coverage moves only on purpose");
+    // Super Potion (one print) and Misty's Vitality (two prints) take
+    // it to 972.
+    assert_eq!(admitted, 972, "coverage moves only on purpose");
 }

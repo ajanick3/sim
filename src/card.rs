@@ -205,6 +205,10 @@ pub enum Then {
     /// the one slot's `peek` size names the window. `Explorer's
     /// Guidance`.
     DiscardRestOfPeek,
+    /// The turn ends once the search is done, whether it moved anything
+    /// or not — unlike `EndTurnIfMoved`, which only ends it on a find.
+    /// `Misty's Vitality`.
+    EndTurnAlways,
 }
 
 /// One step of a search: what to look for, where it goes, and how many. A
@@ -610,6 +614,11 @@ pub enum TrainerEffect {
     /// `HealChosen` but without the Special Condition clear, optionally
     /// restricted to a type. `Potion`, `Poké Vital A`, `Jacinthe`.
     HealChosenPlain { amount: u32, of_type: Option<Type> },
+    /// Heal this many points from a Pokémon the player chooses, like
+    /// `HealChosenPlain` restricted to no type — but if that actually
+    /// removed damage, its owner then discards one Energy attached to
+    /// it. Read by `Action::HealTarget`. `Super Potion`.
+    HealChosenThenDiscardEnergyIfHealed(u32),
     /// Heal this many from the player's own Active and clear every
     /// Special Condition on it. `Lumiose Galette` prints "a Special
     /// Condition" singular; the Active only carries one at a time.

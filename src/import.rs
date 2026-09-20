@@ -611,6 +611,7 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::HealChosenPlain { amount: 30, of_type: None },
         ),
+        "Super Potion" => (free, TrainerEffect::HealChosenThenDiscardEnergyIfHealed(60)),
         "Poké Vital A" => (
             free,
             TrainerEffect::HealChosenPlain { amount: 150, of_type: None },
@@ -620,6 +621,20 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             TrainerEffect::HealChosenPlain {
                 amount: 150,
                 of_type: Some(Type::Psychic),
+            },
+        ),
+        "Misty's Vitality" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Deck,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicEnergyOfType(Type::Water),
+                    to: Destination::Attach(TargetFilter::AnyInPlay),
+                    limit: 4,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: Some(Then::EndTurnAlways),
             },
         ),
         "Picnicker" => (free, TrainerEffect::CoinFlipDraw { heads: 4, tails: 2 }),
