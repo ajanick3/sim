@@ -67,9 +67,13 @@ More clusters merged:
   `ReducesAttackCostIfMorePrizesRemaining`; the first Tools to
   discount their own carrier's attack cost, read in `legal_actions`'
   attack-cost loop alongside the Ability discounts already there.
+- Super Potion and Misty's Vitality — `HealChosenThenDiscardEnergyIfHealed`
+  reuses the attack-cost energy-discard phase for a Trainer's own
+  effect; `Then::EndTurnAlways` joins `EndTurnIfMoved` for a search
+  that ends the turn whether or not it found anything.
 
-Coverage: 932 / 3051 prints (30.5%). Refused, by kind:
-Supporter 58, Item 40, Tool 18, Stadium 20, Special Energy 3.
+Coverage: 935 / 3051 prints (30.6%). Refused, by kind:
+Supporter 57, Item 39, Tool 18, Stadium 20, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
@@ -107,7 +111,17 @@ Deferred — the tier that needs its own design/ADR before it is cheap:
   Knocked Out, before its cards go to discard" moment nothing in the
   engine has a hook for yet — `knock_out_the_dead` moves straight to
   the Prize count, with no pause for a choice first.
-- **Attack-granting Tools**: Core Memory, Technical Machine: Fluorite.
+- **Attack-granting Tools**: Core Memory, Technical Machine: Fluorite
+  — the Tool itself carries an `Attack` and grants it to the carrier;
+  today an `Attack` only ever comes from the Pokémon's own printed
+  list, so `legal_actions`' attack loop has no seam for one sourced
+  from an attached card.
+- **Same-Pokémon dual discard**: Ruffian discards a Tool *and* a
+  Special Energy, but both from one opponent Pokémon the player
+  picks first — `DiscardOpponentSpecialEnergy`'s existing phase
+  offers a Special Energy from anywhere on the board, not scoped to
+  a target chosen up front. Needs a target-then-discard-both phase
+  pair, not a reskin of what is there.
 - Coin-gated searches (Poké Ball, Energy Coin, Team Rocket's Great Ball),
   the many single-effect one-offs (Scoop Up Cyclone, Megaton Blower,
   Great Haul Net, Precious Trolley, Redeemable Ticket, …).
