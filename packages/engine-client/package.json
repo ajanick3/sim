@@ -1,0 +1,19 @@
+{
+  "name": "@sim/engine-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@9.0.0",
+  "exports": {
+    "./wire": "./src/wire/index.ts",
+    "./selection-flow": "./src/selection-flow/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.9"
+  }
+}

@@ -1,0 +1,59 @@
+// The wasm-pack glue in `public/pkg` is loaded here with a native
+// `import()`, so no bundler needs to resolve it statically. Every UI
+// serves it from that same path — the whole system is deployed as one
+// tree of static assets, so a domain-root-relative path is already
+// portable across every consumer without a parameter. These types
+// describe the part of its surface a Wire client uses; they mirror
+// `crates/sim-wasm/src/lib.rs`. See ADR 0104 and the "Wire" / "Wire
+// client" glossary entries.
+
+export interface Game {
+  legal_actions(): string;
+  /** What each legal action touches, index-aligned with `legal_actions`. JSON of `WireActionMeta[]`. */
+  action_meta(): string;
+  apply(index: number): void;
+  /** Every action index applied so far, oldest first, as JSON `number[]`. */
+  history(): string;
+  log(): string;
+  player_to_act(): number | undefined;
+  is_over(): boolean;
+  view(): string;
+  free(): void;
+}
+
+export interface CardData {
+  free(): void;
+}
+
+export interface SimWasm {
+  default(path?: string): Promise<unknown>;
+  CardData: { new: (cardsJson: string) => CardData };
+  Game: {
+    synthetic: (seed: bigint) => Game;
+    standard: (data: CardData, deckA: string, deckB: string, seed: bigint) => Game;
+    replay_standard: (
+      data: CardData,
+      deckA: string,
+      deckB: string,
+      seed: bigint,
+      indices: Uint32Array | number[],
+    ) => Game;
+  };
+}
+
+let cached: Promise<SimWasm> | null = null;
+
+/** Load and initialise the engine once; later calls share the instance. */
+export function loadSim(): Promise<SimWasm> {
+  if (!cached) {
+    cached = (async () => {
+      // A non-literal specifier keeps the bundler and the type checker from
+      // trying to resolve this path; the file is served from `public/pkg`.
+      const glue = "/pkg/sim_wasm.js";
+      const mod = (await import(/* @vite-ignore */ /* webpackIgnore: true */ glue)) as unknown as SimWasm;
+      await mod.default("/pkg/sim_wasm_bg.wasm");
+      return mod;
+    })();
+  }
+  return cached;
+}
