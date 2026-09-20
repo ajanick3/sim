@@ -59,9 +59,10 @@ More clusters merged:
 - #273 Shadowy Darkness Energy — `PreventsBenchDamageWhileCarrierTypeMatches`, a second clause in `bench_attack_damage_blocked`.
 - #274 unlimited searches — Precious Trolley (`Decide`, Basic Pokemon to Bench), Energy Search Pro (`Decide`, Basic Energy of distinct types to hand via `excludes_type_of_previous`).
 - #276 filtered searches — Mega Signal (`CardFilter::MegaPokemon`), TM Machine (`CardFilter::ToolNameContains`).
+- #386 Larry's Skill — `DiscardHandThenDecide { slots }`, a hand discard ahead of the existing one-slot-per-kind search.
 
-Coverage at #276: 921 / 3051 prints (30.2%). Refused, by kind:
-Supporter 60, Item 40, Tool 20, Stadium 20, Special Energy 6.
+Coverage at #386: 923 / 3051 prints (30.3%). Refused, by kind:
+Supporter 58, Item 40, Tool 20, Stadium 20, Special Energy 6.
 
 Also refused, flagged by a sample-deck build check: Larry's Skill — a
 three-way search (a Pokémon, a Supporter, and a Basic Energy, in one

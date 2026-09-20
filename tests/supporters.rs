@@ -1261,6 +1261,195 @@ fn eri_is_admitted_from_the_artifact() {
     );
 }
 
+// --- Larry's Skill: a hand discard ahead of a three-kind search ---
+
+fn with_larrys_skill(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let larrys_skill = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-larrys-skill",
+        name: "Larry's Skill",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::DiscardHandThenDecide {
+            slots: vec![
+                Slot {
+                    filter: CardFilter::AnyPokemon,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+                Slot {
+                    filter: CardFilter::TrainerOfKind(TrainerKind::Supporter),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+                Slot {
+                    filter: CardFilter::BasicEnergy,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+            ],
+        },
+    }));
+    let plain_supporter = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-plain-supporter",
+        name: "Test Supporter",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Draw(3),
+    }));
+    (Set { db, ..set }, larrys_skill, plain_supporter)
+}
+
+/// As `game`, but with two extras in the deck: `deck`'s single-`extra`
+/// slot isn't enough when the search also needs a Supporter to find.
+fn larrys_skill_game(
+    set: &Set,
+    larrys_skill: CardDefId,
+    plain_supporter: CardDefId,
+    seed: u64,
+) -> GameState {
+    let mut decklist = vec![set.mon; 10];
+    decklist.extend([plain_supporter; 2]);
+    decklist.push(larrys_skill);
+    while decklist.len() < 60 {
+        decklist.push(set.energy);
+    }
+    let mut state = GameState::new(
+        set.db.clone(),
+        [decklist.clone(), decklist],
+        Box::new(SeededRng::new(seed)),
+    );
+    for _ in 0..2 {
+        while state.phase != Phase::Main && !state.is_over() {
+            let first = legal_actions(&state)[0];
+            apply(&mut state, first).unwrap();
+        }
+        if state.turn_number > 1 {
+            break;
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
+    }
+    state
+}
+
+/// Which slot the search is on, or `None` once it has finished.
+fn step_of(state: &GameState) -> Option<u32> {
+    match state.phase {
+        Phase::Deciding { step, .. } => Some(step),
+        _ => None,
+    }
+}
+
+#[test]
+fn larrys_skill_discards_the_hand_then_finds_one_of_each_kind() {
+    let (set, larrys_skill, plain_supporter) = with_larrys_skill(build());
+    let mut state = larrys_skill_game(&set, larrys_skill, plain_supporter, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, larrys_skill);
+    let hand_before = state.player(player).hand.len();
+    let discard_before = state.player(player).discard.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    assert_eq!(
+        state.player(player).discard.len(),
+        discard_before + hand_before,
+        "the whole hand, Larry's Skill included, is in the discard"
+    );
+    assert_eq!(
+        state.player(player).hand.len(),
+        0,
+        "the hand stays empty until the search fills it"
+    );
+
+    assert_eq!(step_of(&state), Some(0));
+    for offered in offered(&state) {
+        assert!(
+            state.def_of(offered).as_pokemon().is_some(),
+            "the first slot wants a Pokémon"
+        );
+    }
+    let mon = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: mon }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(step_of(&state), Some(1));
+    for offered in offered(&state) {
+        assert_eq!(
+            state.def_of(offered).as_trainer().map(|t| t.kind),
+            Some(TrainerKind::Supporter),
+            "the second slot wants a Supporter"
+        );
+    }
+    let supporter = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: supporter }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(step_of(&state), Some(2));
+    for offered in offered(&state) {
+        assert!(
+            state.def_of(offered).is_energy(),
+            "the third slot wants an Energy"
+        );
+    }
+    let energy = offered(&state)[0];
+    apply(&mut state, Action::TakeCard { card: energy }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "three slots, three cards, done");
+    assert_eq!(state.player(player).hand.len(), 3);
+    assert!(state.player(player).hand.contains(&mon));
+    assert!(state.player(player).hand.contains(&supporter));
+    assert!(state.player(player).hand.contains(&energy));
+}
+
+#[test]
+fn larrys_skill_is_admitted_from_the_artifact() {
+    let json = std::fs::read_to_string("data/cards.json").expect("the artifact is committed");
+    let import = sim::import::load(&json).unwrap();
+    let effect = import
+        .admitted
+        .iter()
+        .map(|id| import.db.get(*id))
+        .filter_map(|def| def.as_trainer())
+        .find(|t| t.name == "Larry's Skill")
+        .map(|t| t.effect.clone());
+    assert_eq!(
+        effect,
+        Some(TrainerEffect::DiscardHandThenDecide {
+            slots: vec![
+                Slot {
+                    filter: CardFilter::AnyPokemon,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+                Slot {
+                    filter: CardFilter::TrainerOfKind(TrainerKind::Supporter),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+                Slot {
+                    filter: CardFilter::BasicEnergy,
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                },
+            ],
+        })
+    );
+}
+
 // --- Ticket 11: Brock's Scouting ---
 
 fn with_brocks_scouting(set: Set) -> (Set, CardDefId) {

@@ -354,5 +354,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // to 955. Every Item in the field is now built.
     // Prism Tower and Community Center (two new Stadium standing
     // actions) take it to 958.
-    assert_eq!(admitted, 958, "coverage moves only on purpose");
+    // Larry's Skill (a new `DiscardHandThenDecide`, two prints) takes
+    // it to 960.
+    assert_eq!(admitted, 960, "coverage moves only on purpose");
 }

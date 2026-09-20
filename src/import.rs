@@ -1251,6 +1251,34 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             Some(Requirement::HandSizeIs(1)),
             TrainerEffect::BonusDamageThisTurn(80, TurnBonusTarget::OpponentActiveWithoutRuleBox),
         ),
+        "Larry's Skill" => (
+            free,
+            TrainerEffect::DiscardHandThenDecide {
+                slots: vec![
+                    Slot {
+                        filter: CardFilter::AnyPokemon,
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    },
+                    Slot {
+                        filter: CardFilter::TrainerOfKind(TrainerKind::Supporter),
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    },
+                    Slot {
+                        filter: CardFilter::BasicEnergy,
+                        to: Destination::Zone(Zone::Hand),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    },
+                ],
+            },
+        ),
         "Kieran" => (
             free,
             TrainerEffect::ChooseOneOf(
