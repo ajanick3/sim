@@ -667,22 +667,35 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
         }
 
         Action::HealTarget { target } => {
-            let (amount, clear) = match state.phase {
+            let (amount, clear, discards_energy_if_healed) = match state.phase {
                 Phase::HealingChosen {
                     amount,
                     clear_conditions,
+                    discards_energy_if_healed,
                     ..
-                } => (amount, clear_conditions),
-                Phase::HealingChosenIfRemainingHpAtMost { .. } => (u32::MAX, false),
+                } => (amount, clear_conditions, discards_energy_if_healed),
+                Phase::HealingChosenIfRemainingHpAtMost { .. } => (u32::MAX, false, false),
                 _ => return Err(IllegalAction),
             };
-            state.pokemon[target.index()].damage =
-                state.pokemon(target).damage.saturating_sub(amount);
+            let player = state.current;
+            let before = state.pokemon(target).damage;
+            state.pokemon[target.index()].damage = before.saturating_sub(amount);
             if clear {
                 state.clear_conditions(target);
             }
             let name = state.pokemon_def(target).name;
             state.log.push(format!("{name} is healed."));
+            if discards_energy_if_healed
+                && before > 0
+                && state.pokemon(target).attached.iter().any(|c| state.def_of(*c).is_energy())
+            {
+                state.phase = Phase::ChoosingOwnEnergyToDiscardForAttack {
+                    player,
+                    attacker: target,
+                    remaining: 1,
+                };
+                return Ok(());
+            }
             state.phase = Phase::Main;
             settle(state);
         }
@@ -2950,6 +2963,9 @@ fn enter_slot(
             Some(crate::card::Then::EndTurnIfMoved) if moved > 0 => {
                 state.pending_end_turn = true;
             }
+            Some(crate::card::Then::EndTurnAlways) => {
+                state.pending_end_turn = true;
+            }
             Some(crate::card::Then::EndTurnIfMoved)
             | Some(crate::card::Then::DiscardRestOfPeek)
             | None => {}
@@ -3390,6 +3406,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                 amount,
                 clear_conditions: true,
                 of_type: None,
+                discards_energy_if_healed: false,
             };
         }
 
@@ -3411,6 +3428,17 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                 amount,
                 clear_conditions: false,
                 of_type,
+                discards_energy_if_healed: false,
+            };
+        }
+
+        TrainerEffect::HealChosenThenDiscardEnergyIfHealed(amount) => {
+            state.phase = Phase::HealingChosen {
+                player,
+                amount,
+                clear_conditions: false,
+                of_type: None,
+                discards_energy_if_healed: true,
             };
         }
 

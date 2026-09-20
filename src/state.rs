@@ -245,6 +245,12 @@ pub enum Phase {
         clear_conditions: bool,
         /// Only a Pokémon of this type may be chosen, when set. `Jacinthe`.
         of_type: Option<crate::card::Type>,
+        /// If healing actually removed damage, the healed Pokémon's
+        /// owner must then discard one Energy attached to it — read at
+        /// `Action::HealTarget`, which opens
+        /// `ChoosingOwnEnergyToDiscardForAttack` when this is set and
+        /// the target has an Energy card to discard. `Super Potion`.
+        discards_energy_if_healed: bool,
     },
     /// `player` played `Bianca's Devotion`: choose one of their own
     /// Pokémon with `at_most` remaining HP or less, and heal it fully.

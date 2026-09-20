@@ -135,7 +135,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Larry's Skill (two prints) takes it to 101.
     // Sparkling Crystal (two prints) and Counter Gain (four prints)
     // take it to 95.
-    assert_eq!(trainers, 95, "the Trainers still refused, by kind");
+    // Super Potion and Misty's Vitality (two prints) take it to 92.
+    assert_eq!(trainers, 92, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and
