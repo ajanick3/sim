@@ -366,5 +366,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // `PokemonNameContainsOrBasicEnergyOfType`) takes it to 975.
     // Team Rocket's Great Ball (two prints, a new `CoinFlipEitherThen`)
     // takes it to 977.
-    assert_eq!(admitted, 977, "coverage moves only on purpose");
+    // Light Ball (one print, a new
+    // `BonusDamageVsActiveExForCarrierNamed`) takes it to 978.
+    assert_eq!(admitted, 978, "coverage moves only on purpose");
 }

@@ -529,6 +529,12 @@ pub enum TrainerEffect {
     /// opponent's Active that is a Pokémon ex, before Weakness and
     /// Resistance. `Maximum Belt`.
     BonusDamageVsActiveEx(u32),
+    /// A Tool on the attacker: its attacks do `amount` more damage to an
+    /// opponent's Active that is a Pokémon ex, before Weakness and
+    /// Resistance — but only while the carrier's own printed name is an
+    /// exact match, not a substring the way `IncreasesHpForNamePrefix`
+    /// reads by. `Light Ball`, gated to `Pikachu ex` alone.
+    BonusDamageVsActiveExForCarrierNamed(&'static str, u32),
     /// A Tool on the defender: it takes `amount` less damage from attacks
     /// by an opponent's Pokémon that has an Ability, after Weakness and
     /// Resistance. `Sacred Charm`.

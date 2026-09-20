@@ -3549,6 +3549,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::IncreasesHpForNamePrefix { .. }
         | TrainerEffect::RaisesBothActiveRetreatWhileCarrierActive(_)
         | TrainerEffect::BonusDamageVsActiveEx(_)
+        | TrainerEffect::BonusDamageVsActiveExForCarrierNamed(..)
         | TrainerEffect::ReducesDamageFromAbilityHolders(_)
         | TrainerEffect::MovesEnergyFromAttackerToTheirBench
         | TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd
@@ -5039,6 +5040,11 @@ fn damage_dealt_with(
             }
             crate::card::TrainerEffect::BonusDamageVsActiveEx(bonus)
                 if state.pokemon_def(defender).prizes > 1 =>
+            {
+                damage += bonus;
+            }
+            crate::card::TrainerEffect::BonusDamageVsActiveExForCarrierNamed(name, bonus)
+                if state.pokemon_def(attacker).name == *name && state.pokemon_def(defender).prizes > 1 =>
             {
                 damage += bonus;
             }

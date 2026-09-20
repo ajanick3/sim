@@ -1119,3 +1119,96 @@ fn the_conditional_damage_tools_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: a bonus gated on the carrier's own exact name ---
+
+#[test]
+fn light_ball_adds_fifty_only_when_the_carrier_is_pikachu_ex() {
+    let mut set = build();
+    let light_ball = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-light-ball",
+        name: "Light Ball",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::BonusDamageVsActiveExForCarrierNamed("Pikachu ex", 50),
+    }));
+    let pikachu_ex = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-pikachu-ex",
+        name: "Pikachu ex",
+        hp: 120,
+        kind: Type::Lightning,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 2,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Thunder Shock",
+            cost: vec![Type::Colorless],
+            base_damage: 10,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let mut state = game(&set, light_ball, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+
+    let atk_card = deal_new_card(&mut state, attacker_player, pikachu_ex);
+    let atk = state.put_into_play(attacker_player, atk_card);
+    state.players[attacker_player.index()].active = Some(atk);
+
+    let ex_card = deal_new_card(&mut state, defender_player, set.mon_ex);
+    let ex = state.put_into_play(defender_player, ex_card);
+    state.players[defender_player.index()].active = Some(ex);
+
+    let tool = deal_new_card(&mut state, attacker_player, light_ball);
+    state.pokemon[atk.index()].attached.push(tool);
+
+    pay_and_attack(&mut state, attacker_player);
+
+    assert_eq!(state.pokemon(ex).damage, 60, "10 + 50");
+}
+
+#[test]
+fn light_ball_adds_nothing_off_any_other_carrier() {
+    let mut set = build();
+    let light_ball = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-light-ball-wrong-carrier",
+        name: "Light Ball",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::BonusDamageVsActiveExForCarrierNamed("Pikachu ex", 50),
+    }));
+    let mut state = game(&set, light_ball, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+    let attacker = state.player(attacker_player).active.unwrap();
+
+    let ex_card = deal_new_card(&mut state, defender_player, set.mon_ex);
+    let ex = state.put_into_play(defender_player, ex_card);
+    state.players[defender_player.index()].active = Some(ex);
+
+    let tool = deal_new_card(&mut state, attacker_player, light_ball);
+    state.pokemon[attacker.index()].attached.push(tool);
+
+    pay_and_attack(&mut state, attacker_player);
+
+    assert_eq!(state.pokemon(ex).damage, 10, "the fixture's own Tackle, no bonus");
+}
+
+#[test]
+fn light_ball_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Light Ball" && c.playable.is_some()),
+        "Light Ball should play"
+    );
+}
