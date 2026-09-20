@@ -485,6 +485,12 @@ pub enum TrainerEffect {
     /// `ShuffleHandThenDraw`, what is given up does not go back in the
     /// deck. `Carmine`.
     DiscardHandThenDraw(u32),
+    /// Discard the player's whole hand, then search the deck with these
+    /// slots — one per distinct kind wanted, same as `Decide`, but the
+    /// hand is gone before the first slot opens rather than after.
+    /// `Larry's Skill` wants a Pokémon, a Supporter, and a Basic Energy,
+    /// one of each.
+    DiscardHandThenDecide { slots: Vec<Slot> },
     /// Discard this many cards from the top of the player's own deck.
     /// `Hole-Digging Shovel`.
     DiscardTopOfDeck(u32),
@@ -810,6 +816,7 @@ impl Trainer {
                 _ => &[],
             },
             TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn => &LUMIOSE_CITY_SLOT,
+            TrainerEffect::DiscardHandThenDecide { slots } => slots,
             _ => &[],
         }
     }

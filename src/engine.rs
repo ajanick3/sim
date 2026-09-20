@@ -3241,6 +3241,23 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::DiscardHandThenDecide { .. } => {
+            let hand = std::mem::take(&mut state.players[player.index()].hand);
+            state.players[player.index()].discard.extend(hand);
+            enter_slot(
+                state,
+                player,
+                card,
+                0,
+                Zone::Deck,
+                None,
+                Progress {
+                    moved: 0,
+                    previous: None,
+                },
+            );
+        }
+
         TrainerEffect::DiscardTopOfDeck(count) => {
             for _ in 0..count {
                 let Some(top) = state.players[player.index()].deck.pop() else {
