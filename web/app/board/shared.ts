@@ -59,13 +59,12 @@ export const HAND_ORDER = [
   "energy",
 ] as const;
 
-/** Sort the hand by category, then break it into two rows at the
- *  category boundary nearest the middle — always two, so the Hand's
- *  own container is a fixed height whatever the hand holds. A hand of
- *  one card is the one case with nothing to split; it renders alone in
- *  the first row. The fuller row leads; a shorter second row is the
- *  one `HandStrip` centres, so an uneven split reads bottom-centred
- *  rather than top-centred. */
+const HAND_ROW_WIDTH = 5;
+
+/** Sort the hand by category, then fill the first row to
+ *  {@link HAND_ROW_WIDTH} before wrapping to the second — so a short
+ *  hand never leaves the top row half-empty while the second row holds
+ *  cards. */
 export function splitHandRows(hand: WireCard[]): WireCard[][] {
   const order = HAND_ORDER as readonly string[];
   const rank = (c: string) => {
@@ -74,21 +73,8 @@ export function splitHandRows(hand: WireCard[]): WireCard[][] {
   };
   const sorted = [...hand].sort((a, b) => rank(a.category) - rank(b.category));
   const n = sorted.length;
-  if (n <= 1) return [sorted];
-  const target = Math.ceil(n / 2);
-  const boundaries: number[] = [];
-  for (let i = 1; i < n; i++) {
-    if (sorted[i].category !== sorted[i - 1].category) boundaries.push(i);
-  }
-  let split = target;
-  if (boundaries.length) {
-    const best = boundaries.reduce((p, c) => (Math.abs(c - target) < Math.abs(p - target) ? c : p));
-    if (Math.abs(best - target) <= 2) split = best;
-  }
-  split = Math.max(1, Math.min(split, n - 1));
-  const first = sorted.slice(0, split);
-  const second = sorted.slice(split);
-  return first.length >= second.length ? [first, second] : [second, first];
+  if (n <= HAND_ROW_WIDTH) return [sorted];
+  return [sorted.slice(0, HAND_ROW_WIDTH), sorted.slice(HAND_ROW_WIDTH)];
 }
 
 // --- Decision bar / prompt shapes ----------------------------------------

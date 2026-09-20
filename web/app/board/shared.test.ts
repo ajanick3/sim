@@ -39,10 +39,10 @@ describe("damageSpot", () => {
 });
 
 describe("splitHandRows", () => {
-  it("splits even a small hand into two rows, sorted by category", () => {
+  it("keeps a hand of five or fewer in one row, sorted by category", () => {
     const hand = [card("energy", 1), card("pokemon", 2), card("item", 3)];
     const rows = splitHandRows(hand);
-    expect(rows).toHaveLength(2);
+    expect(rows).toHaveLength(1);
     expect(rows.flat().map((c) => c.category)).toEqual(["pokemon", "item", "energy"]);
   });
 
@@ -52,39 +52,25 @@ describe("splitHandRows", () => {
     expect(rows[0]).toHaveLength(1);
   });
 
-  it("splits a larger hand into two rows of at least three", () => {
+  it("fills the first row to five before wrapping to the second", () => {
     const hand = [
       ...Array.from({ length: 5 }, (_, i) => card("pokemon", i)),
       ...Array.from({ length: 4 }, (_, i) => card("energy", 10 + i)),
     ];
     const [a, b] = splitHandRows(hand);
-    expect(a.length).toBeGreaterThanOrEqual(3);
-    expect(b.length).toBeGreaterThanOrEqual(3);
-    expect(a.length + b.length).toBe(9);
+    expect(a).toHaveLength(5);
+    expect(b).toHaveLength(4);
   });
 
-  it("prefers a category boundary near the middle for the split", () => {
-    // 4 pokemon then 4 items — the boundary at 4 is the midpoint.
+  it("never leaves the first row short while the second holds cards", () => {
+    // 4 pokemon then 4 items — the first row still fills to five, cutting
+    // into the items rather than stopping at the category boundary.
     const hand = [
       ...Array.from({ length: 4 }, (_, i) => card("pokemon", i)),
       ...Array.from({ length: 4 }, (_, i) => card("item", 10 + i)),
     ];
-    const [a] = splitHandRows(hand);
-    expect(a.every((c) => c.category === "pokemon")).toBe(true);
-    expect(a).toHaveLength(4);
-  });
-
-  it("leads with the fuller row, so a short second row is the one that centres", () => {
-    // 2 pokemon + 1 supporter, then 3 item + 1 stadium — the nearest
-    // boundary splits 3/4, and the 4-card half should come first.
-    const hand = [
-      ...Array.from({ length: 2 }, (_, i) => card("pokemon", i)),
-      card("supporter", 2),
-      ...Array.from({ length: 3 }, (_, i) => card("item", 10 + i)),
-      card("stadium", 20),
-    ];
     const [a, b] = splitHandRows(hand);
-    expect(a).toHaveLength(4);
+    expect(a).toHaveLength(5);
     expect(b).toHaveLength(3);
   });
 });
