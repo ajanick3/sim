@@ -133,7 +133,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Team Rocket's Venture Bomb takes it to 106.
     // Prism Tower and Community Center take it to 103.
     // Larry's Skill (two prints) takes it to 101.
-    assert_eq!(trainers, 101, "the Trainers still refused, by kind");
+    // Sparkling Crystal (two prints) and Counter Gain (four prints)
+    // take it to 95.
+    assert_eq!(trainers, 95, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

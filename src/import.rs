@@ -409,6 +409,11 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::RaisesBothActiveRetreatWhileCarrierActive(1),
         ),
+        "Sparkling Crystal" => (
+            free,
+            TrainerEffect::ReducesAttackCostByAnyTypeIfCarrierMarked(crate::card::Marker::Tera, 1),
+        ),
+        "Counter Gain" => (free, TrainerEffect::ReducesAttackCostIfMorePrizesRemaining(1)),
         "Poké Ball" => (
             free,
             TrainerEffect::CoinFlipThen(Box::new(TrainerEffect::Decide {

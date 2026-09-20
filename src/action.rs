@@ -1762,6 +1762,34 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                 }
                 _ => None,
             });
+            let tool_any_type_discount: u32 = state
+                .pokemon(active)
+                .attached
+                .iter()
+                .filter_map(|c| state.def_of(*c).as_trainer())
+                .map(|t| match t.effect {
+                    crate::card::TrainerEffect::ReducesAttackCostByAnyTypeIfCarrierMarked(marker, amount)
+                        if state.pokemon_def(active).markers.contains(&marker) =>
+                    {
+                        amount
+                    }
+                    _ => 0,
+                })
+                .sum();
+            let tool_colorless_discount: u32 = state
+                .pokemon(active)
+                .attached
+                .iter()
+                .filter_map(|c| state.def_of(*c).as_trainer())
+                .map(|t| match t.effect {
+                    crate::card::TrainerEffect::ReducesAttackCostIfMorePrizesRemaining(amount)
+                        if state.player(player).prizes.len() > state.player(player.opponent()).prizes.len() =>
+                    {
+                        amount
+                    }
+                    _ => 0,
+                })
+                .sum();
             let colorless_override = state.pokemon_def(active).ability.and_then(|a| match a.effect {
                 crate::card::AbilityEffect::PassiveNamedAttackCostsJustColorlessIfOpponentDiscardNameContains(
                     attack_name,
@@ -1796,6 +1824,19 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                         } else {
                             break;
                         }
+                    }
+                }
+                for _ in 0..tool_any_type_discount {
+                    if cost.is_empty() {
+                        break;
+                    }
+                    cost.remove(cost.len() - 1);
+                }
+                for _ in 0..tool_colorless_discount {
+                    if let Some(pos) = cost.iter().rposition(|t| *t == crate::card::Type::Colorless) {
+                        cost.remove(pos);
+                    } else {
+                        break;
                     }
                 }
                 if state.pays_cost(active, &cost) {

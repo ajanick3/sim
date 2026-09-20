@@ -3501,7 +3501,9 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::BonusDamageVsActiveEx(_)
         | TrainerEffect::ReducesDamageFromAbilityHolders(_)
         | TrainerEffect::MovesEnergyFromAttackerToTheirBench
-        | TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd => {
+        | TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd
+        | TrainerEffect::ReducesAttackCostByAnyTypeIfCarrierMarked(..)
+        | TrainerEffect::ReducesAttackCostIfMorePrizesRemaining(_) => {
             unreachable!(
                 "a static effect is read wherever it applies, never dispatched \
                  at play time — a Tool never reaches resolve_trainer at all"
