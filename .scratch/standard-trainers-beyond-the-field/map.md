@@ -60,19 +60,18 @@ More clusters merged:
 - #274 unlimited searches — Precious Trolley (`Decide`, Basic Pokemon to Bench), Energy Search Pro (`Decide`, Basic Energy of distinct types to hand via `excludes_type_of_previous`).
 - #276 filtered searches — Mega Signal (`CardFilter::MegaPokemon`), TM Machine (`CardFilter::ToolNameContains`).
 - #386 Larry's Skill — `DiscardHandThenDecide { slots }`, a hand discard ahead of the existing one-slot-per-kind search.
+- Ignition and Neo Upper Energy — `ProvidesMoreColorlessIfCarrierIsEvolutionThenDiscardsAtEndOfTurn`,
+  `ProvidesMoreOfAnyTypeIfCarrierIsStage2`; the first end-of-turn
+  self-discard an Energy card has needed, read in `end_the_turn`.
 
-Coverage at #386: 923 / 3051 prints (30.3%). Refused, by kind:
-Supporter 58, Item 40, Tool 20, Stadium 20, Special Energy 6.
+Coverage: 926 / 3051 prints (30.4%). Refused, by kind:
+Supporter 58, Item 40, Tool 20, Stadium 20, Special Energy 3.
 
-Also refused, flagged by a sample-deck build check: Larry's Skill — a
-three-way search (a Pokémon, a Supporter, and a Basic Energy, in one
-`Decide`) after a full hand discard. No existing cluster covers a
-search across three distinct `CardFilter`s in one effect.
-
-Special Energy still refused: Ignition, Legacy, Neo Upper (a
-conditional-provision family — provides X, or Y off an Evolution /
-Stage 2 — plus Ignition's end-of-turn self-discard); Team Rocket's
-Energy (needs the deferred name-prefix Pokemon filter).
+Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
+card, not the conditional-provision-by-stage shape this cluster built —
+its prize-count clause wants milestone-3's deferred prize-count support
+instead); Team Rocket's Energy (needs the deferred name-prefix Pokemon
+filter).
 
 Deferred — the tier that needs its own design/ADR before it is cheap:
 - **Trainer-as-Pokémon**: the eight "Antique … Fossil" Items play as a
