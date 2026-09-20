@@ -12,7 +12,7 @@ import { loadSim, type CardData, type Game } from "./wasm";
 import { shouldAutoAdvance, type Selection } from "./session";
 import { decodeRecipe, encodeRecipe, newRecipe, type Recipe } from "./recipe";
 import { artUrl, isInstalled, loadArtIndex, type ArtIndex, type ArtQuality } from "./art";
-import { DEFAULT_DECKS } from "./decks";
+import { DEFAULT_DECKS, isPastedDeck, pastedDeckText } from "./decks";
 import { noteRecent } from "./recent";
 import { loadPrintPrefs } from "./printPrefs";
 import { buildPrintIndex, resolveCardPrint, type CatalogCard, type PrintIndex } from "./prints";
@@ -89,10 +89,11 @@ export default function GameShell() {
             // requirement — an unparsable artifact just skips them.
           }
         }
-        const [a, b] = await Promise.all([
-          fetch(deckPath(recipe.a)).then((r) => r.text()),
-          fetch(deckPath(recipe.b)).then((r) => r.text()),
-        ]);
+        const deckText = (key: string) =>
+          isPastedDeck(key)
+            ? Promise.resolve(pastedDeckText(key))
+            : fetch(deckPath(key)).then((r) => r.text());
+        const [a, b] = await Promise.all([deckText(recipe.a), deckText(recipe.b)]);
         gameRef.current?.free();
         recipeRef.current = recipe;
         setMatchup({ a: recipe.a, b: recipe.b });
@@ -258,10 +259,12 @@ export default function GameShell() {
 }
 
 const deckLabel = (key: string) =>
-  key
-    .replace(/^\d+-/, "")
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  isPastedDeck(key)
+    ? "Pasted deck"
+    : key
+        .replace(/^\d+-/, "")
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
 
 function CopyLinkButton() {
   const [copied, setCopied] = useState(false);

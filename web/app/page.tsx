@@ -3,14 +3,26 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { DEFAULT_DECKS, loadDeckIndex, type DeckEntry } from "./decks";
+import {
+  DEFAULT_DECKS,
+  encodePastedDeck,
+  isPastedDeck,
+  loadDeckIndex,
+  type DeckEntry,
+} from "./decks";
 import { loadRecent, type RecentGame } from "./recent";
+
+type SideMode = "field" | "paste";
 
 export default function Page() {
   const router = useRouter();
   const [decks, setDecks] = useState<DeckEntry[]>([]);
   const [a, setA] = useState(DEFAULT_DECKS.a);
   const [b, setB] = useState(DEFAULT_DECKS.b);
+  const [aMode, setAMode] = useState<SideMode>("field");
+  const [bMode, setBMode] = useState<SideMode>("field");
+  const [aPaste, setAPaste] = useState("");
+  const [bPaste, setBPaste] = useState("");
   const [recent, setRecent] = useState<RecentGame[]>([]);
 
   useEffect(() => {
@@ -18,7 +30,16 @@ export default function Page() {
     setRecent(loadRecent());
   }, []);
 
-  const play = () => router.push(`/play?a=${a}&b=${b}`);
+  const effective = (mode: SideMode, key: string, paste: string) =>
+    mode === "paste" ? encodePastedDeck(paste) : key;
+  const canPlay =
+    (aMode === "field" || aPaste.trim() !== "") && (bMode === "field" || bPaste.trim() !== "");
+  const play = () => {
+    if (!canPlay) return;
+    const ea = encodeURIComponent(effective(aMode, a, aPaste));
+    const eb = encodeURIComponent(effective(bMode, b, bPaste));
+    router.push(`/play?a=${ea}&b=${eb}`);
+  };
   const shuffle = () => {
     if (decks.length < 2) return;
     const i = Math.floor(Math.random() * decks.length);
@@ -42,14 +63,35 @@ export default function Page() {
       </p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <DeckColumn label="You" side="a" value={a} decks={decks} onPick={pick} />
-        <DeckColumn label="Opponent" side="b" value={b} decks={decks} onPick={pick} />
+        <DeckColumn
+          label="You"
+          side="a"
+          value={a}
+          decks={decks}
+          onPick={pick}
+          mode={aMode}
+          onModeChange={setAMode}
+          pasteValue={aPaste}
+          onPasteChange={setAPaste}
+        />
+        <DeckColumn
+          label="Opponent"
+          side="b"
+          value={b}
+          decks={decks}
+          onPick={pick}
+          mode={bMode}
+          onModeChange={setBMode}
+          pasteValue={bPaste}
+          onPasteChange={setBPaste}
+        />
       </div>
 
       <div className="mt-5 flex gap-2">
         <button
           onClick={play}
-          className="rounded-md border-accent bg-accent px-5 py-2 font-bold text-black"
+          disabled={!canPlay}
+          className="rounded-md border-accent bg-accent px-5 py-2 font-bold text-black disabled:opacity-50"
         >
           Play
         </button>
@@ -93,37 +135,66 @@ function DeckColumn({
   value,
   decks,
   onPick,
+  mode,
+  onModeChange,
+  pasteValue,
+  onPasteChange,
 }: {
   label: string;
   side: "a" | "b";
   value: string;
   decks: DeckEntry[];
   onPick: (side: "a" | "b", value: string) => void;
+  mode: SideMode;
+  onModeChange: (mode: SideMode) => void;
+  pasteValue: string;
+  onPasteChange: (text: string) => void;
 }) {
   return (
-    <label className="flex flex-col gap-1">
-      <span className="text-[12px] uppercase tracking-widest text-dim">{label}</span>
-      <select
-        value={value}
-        onChange={(e) => onPick(side, e.target.value)}
-        className="rounded-md border border-edge bg-panel px-2 py-2 text-[13px]"
-      >
-        {decks.map((d) => (
-          <option key={d.key} value={d.key}>
-            {d.player}
-            {d.headline ? ` — ${d.headline}` : ""}
-          </option>
-        ))}
-      </select>
-    </label>
+    <div className="flex flex-col gap-1">
+      <div className="flex items-baseline justify-between">
+        <span className="text-[12px] uppercase tracking-widest text-dim">{label}</span>
+        <button
+          type="button"
+          onClick={() => onModeChange(mode === "field" ? "paste" : "field")}
+          className="text-[11px] text-dim underline hover:text-text"
+        >
+          {mode === "field" ? "Paste a decklist instead" : "Pick from the field instead"}
+        </button>
+      </div>
+      {mode === "field" ? (
+        <select
+          value={value}
+          onChange={(e) => onPick(side, e.target.value)}
+          className="rounded-md border border-edge bg-panel px-2 py-2 text-[13px]"
+        >
+          {decks.map((d) => (
+            <option key={d.key} value={d.key}>
+              {d.player}
+              {d.headline ? ` — ${d.headline}` : ""}
+            </option>
+          ))}
+        </select>
+      ) : (
+        <textarea
+          value={pasteValue}
+          onChange={(e) => onPasteChange(e.target.value)}
+          placeholder={"Pokémon: 18\n4 Dreepy TWM 128\n…"}
+          rows={6}
+          className="rounded-md border border-edge bg-panel px-2 py-2 font-mono text-[12px]"
+        />
+      )}
+    </div>
   );
 }
 
 const name = (key: string) =>
-  key
-    .replace(/^\d+-/, "")
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  isPastedDeck(key)
+    ? "Pasted deck"
+    : key
+        .replace(/^\d+-/, "")
+        .replace(/-/g, " ")
+        .replace(/\b\w/g, (c) => c.toUpperCase());
 
 function ago(at: number): string {
   const s = Math.max(0, Math.round((Date.now() - at) / 1000));
