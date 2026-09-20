@@ -1895,6 +1895,175 @@ fn the_name_prefix_cards_are_admitted_from_the_artifact() {
     }
 }
 
+// --- Beyond the field: a two-branch coin-flipped search ---
+
+fn team_rockets_great_ball_fixture(set: &Set) -> (CardDb, CardDefId, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let basic_tr_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-tr-great-ball-basic",
+        name: "Team Rocket's Grunt Rattata",
+        hp: 60,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack { name: "Nip", cost: vec![Type::Colorless], base_damage: 10, inflicts: None, effect: None }],
+    }));
+    let evolution_tr_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-tr-great-ball-evolution",
+        name: "Team Rocket's Grunt Raticate",
+        hp: 120,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Stage1,
+        evolve_from: Some("Team Rocket's Grunt Rattata"),
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack { name: "Bite", cost: vec![Type::Colorless], base_damage: 40, inflicts: None, effect: None }],
+    }));
+    let great_ball = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tr-great-ball",
+        name: "Team Rocket's Great Ball",
+        kind: TrainerKind::Item,
+        requirement: None,
+        effect: TrainerEffect::CoinFlipEitherThen(
+            Box::new(TrainerEffect::Decide {
+                from: Zone::Deck,
+                slots: vec![Slot {
+                    filter: CardFilter::EvolutionPokemonNameContains("Team Rocket's"),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            }),
+            Box::new(TrainerEffect::Decide {
+                from: Zone::Deck,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicPokemonNameContains("Team Rocket's"),
+                    to: Destination::Zone(Zone::Hand),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            }),
+        ),
+    }));
+    (db, great_ball, basic_tr_mon, evolution_tr_mon)
+}
+
+#[test]
+fn team_rockets_great_ball_finds_an_evolution_on_heads() {
+    use sim::rng::ScriptedRng;
+    let set = build();
+    let (db, great_ball, basic_tr_mon, evolution_tr_mon) = team_rockets_great_ball_fixture(&set);
+    let set = Set { db, ..set };
+    let decklist = deck(&set, great_ball);
+    let mut state = GameState::new(
+        set.db.clone(),
+        [decklist.clone(), decklist],
+        Box::new(ScriptedRng::new(vec![1u32])), // heads
+    );
+    for _ in 0..2 {
+        while state.phase != Phase::Main && !state.is_over() {
+            let a = legal_actions(&state)[0];
+            apply(&mut state, a).unwrap();
+        }
+        if state.turn_number > 1 {
+            break;
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
+    }
+    let player = state.current;
+    let evolution_card = deal_new_card(&mut state, player, evolution_tr_mon);
+    state.players[player.index()].deck.push(evolution_card);
+    let basic_card = deal_new_card(&mut state, player, basic_tr_mon);
+    state.players[player.index()].deck.push(basic_card);
+    let card = ensure_in_hand(&mut state, player, great_ball);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let take = legal_actions(&state)
+        .into_iter()
+        .find_map(|a| match a {
+            Action::TakeCard { card } => Some(card),
+            _ => None,
+        })
+        .expect("heads opens a search");
+    assert_eq!(take, evolution_card, "heads finds the Evolution, not the Basic");
+    apply(&mut state, Action::TakeCard { card: take }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert!(state.player(player).hand.contains(&evolution_card));
+}
+
+#[test]
+fn team_rockets_great_ball_finds_a_basic_on_tails() {
+    use sim::rng::ScriptedRng;
+    let set = build();
+    let (db, great_ball, basic_tr_mon, evolution_tr_mon) = team_rockets_great_ball_fixture(&set);
+    let set = Set { db, ..set };
+    let decklist = deck(&set, great_ball);
+    let mut state = GameState::new(
+        set.db.clone(),
+        [decklist.clone(), decklist],
+        Box::new(ScriptedRng::new(vec![0u32])), // tails
+    );
+    for _ in 0..2 {
+        while state.phase != Phase::Main && !state.is_over() {
+            let a = legal_actions(&state)[0];
+            apply(&mut state, a).unwrap();
+        }
+        if state.turn_number > 1 {
+            break;
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
+    }
+    let player = state.current;
+    let evolution_card = deal_new_card(&mut state, player, evolution_tr_mon);
+    state.players[player.index()].deck.push(evolution_card);
+    let basic_card = deal_new_card(&mut state, player, basic_tr_mon);
+    state.players[player.index()].deck.push(basic_card);
+    let card = ensure_in_hand(&mut state, player, great_ball);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let take = legal_actions(&state)
+        .into_iter()
+        .find_map(|a| match a {
+            Action::TakeCard { card } => Some(card),
+            _ => None,
+        })
+        .expect("tails opens a search");
+    assert_eq!(take, basic_card, "tails finds the Basic, not the Evolution");
+    apply(&mut state, Action::TakeCard { card: take }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert!(state.player(player).hand.contains(&basic_card));
+}
+
+#[test]
+fn team_rockets_great_ball_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Team Rocket's Great Ball" && c.playable.is_some()),
+        "Team Rocket's Great Ball should play"
+    );
+}
+
 // --- Beyond the field: a coin-flipped search and retreat modifiers ---
 
 #[test]

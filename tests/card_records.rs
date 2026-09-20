@@ -364,5 +364,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // it to 972.
     // Ethan's Adventure (three prints, a new
     // `PokemonNameContainsOrBasicEnergyOfType`) takes it to 975.
-    assert_eq!(admitted, 975, "coverage moves only on purpose");
+    // Team Rocket's Great Ball (two prints, a new `CoinFlipEitherThen`)
+    // takes it to 977.
+    assert_eq!(admitted, 977, "coverage moves only on purpose");
 }

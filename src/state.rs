@@ -1636,6 +1636,11 @@ impl GameState {
                 CardDef::Energy(e) => e.kind == kind && e.effect.is_none(),
                 CardDef::Trainer(_) => false,
             },
+            CardFilter::EvolutionPokemonNameContains(word) => {
+                self.def_of(card).as_pokemon().is_some_and(|p| {
+                    p.stage != crate::card::Stage::Basic && p.name.contains(word)
+                })
+            }
         }
     }
 
