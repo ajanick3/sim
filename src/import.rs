@@ -1886,6 +1886,16 @@ fn known_energy(name: &str) -> Option<(Type, crate::card::EnergyEffect)> {
         "Shadowy Darkness Energy" => {
             (Type::Darkness, crate::card::EnergyEffect::PreventsBenchDamageWhileCarrierTypeMatches)
         }
+        "Ignition Energy" => (
+            Type::Colorless,
+            crate::card::EnergyEffect::ProvidesMoreColorlessIfCarrierIsEvolutionThenDiscardsAtEndOfTurn(
+                1, 3,
+            ),
+        ),
+        "Neo Upper Energy" => (
+            Type::Colorless,
+            crate::card::EnergyEffect::ProvidesMoreOfAnyTypeIfCarrierIsStage2(1, 2),
+        ),
         _ => return None,
     })
 }

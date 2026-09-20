@@ -356,5 +356,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // actions) take it to 958.
     // Larry's Skill (a new `DiscardHandThenDecide`, two prints) takes
     // it to 960.
-    assert_eq!(admitted, 960, "coverage moves only on purpose");
+    // Ignition Energy (two prints) and Neo Upper Energy (one print)
+    // take it to 963.
+    assert_eq!(admitted, 963, "coverage moves only on purpose");
 }

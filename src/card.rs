@@ -1955,6 +1955,18 @@ pub enum EnergyEffect {
     /// this card provides. Read by `bench_attack_damage_blocked`.
     /// `Shadowy Darkness Energy`.
     PreventsBenchDamageWhileCarrierTypeMatches,
+    /// While attached, this card provides Colorless Energy: the first
+    /// amount off a Basic carrier, the second off an Evolution. Read by
+    /// `pays_cost`. Discarded at the end of the owner's turn, wherever
+    /// it is attached — `end_the_turn` reads this same variant to find
+    /// it, rather than a second, always-paired effect. `Ignition
+    /// Energy`.
+    ProvidesMoreColorlessIfCarrierIsEvolutionThenDiscardsAtEndOfTurn(u32, u32),
+    /// While attached, this card provides Colorless Energy: the first
+    /// amount off any other stage, or any type at all — up to the
+    /// second amount — off a Stage 2 carrier. Read by `pays_cost`.
+    /// `Neo Upper Energy`.
+    ProvidesMoreOfAnyTypeIfCarrierIsStage2(u32, u32),
 }
 
 #[derive(Debug, Clone)]

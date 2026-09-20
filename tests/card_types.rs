@@ -34,9 +34,9 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
         "Mystery Garden is a Stadium"
     );
     assert_eq!(
-        reason_for("me02-124"),
+        reason_for("sv06-167"),
         Some(Refusal::IsASpecialEnergy),
-        "Ignition Energy is a special Energy"
+        "Legacy Energy is a special Energy"
     );
     assert_eq!(
         reason_for("me02.5-072"),
@@ -140,7 +140,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Prism Energy (two prints), taking this from 21 to 12.
     // The standard-trainers effort's type-plus-rider Special Energy
     // (Rocky Fighting, Magnetic Metal, Bubbly Water) take this to 9.
-    assert_eq!(count(Refusal::IsASpecialEnergy), 6, "every Energy card");
+    // Ignition Energy (two prints) and Neo Upper Energy take this to 3.
+    assert_eq!(count(Refusal::IsASpecialEnergy), 3, "every Energy card");
     assert_eq!(
         count(Refusal::IsAnEvolution),
         0,
