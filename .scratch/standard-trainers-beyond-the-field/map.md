@@ -148,8 +148,15 @@ Deferred — the tier that needs its own design/ADR before it is cheap:
   Special Energy, but both from one opponent Pokémon the player
   picks first — `DiscardOpponentSpecialEnergy`'s existing phase
   offers a Special Energy from anywhere on the board, not scoped to
-  a target chosen up front. Needs a target-then-discard-both phase
-  pair, not a reskin of what is there.
+  a target chosen up front. Confirmed tractable, just bigger than
+  this cluster's other entries: a `Phase::ChoosingRuffianTarget
+  { chooser }`, legal only when the opponent has an in-play Pokémon
+  carrying both a Tool and a Special Energy (the same "no legal
+  target, card unplayable" shape `enhanced_hammer`'s own Requirement
+  already reads by); on choosing it, discard the one attached Tool
+  (a Pokémon carries at most one, by rule) and the first attached
+  Special Energy found, no further choice needed. Left unbuilt this
+  pass for a session with room for a new phase and Action variant.
 - Coin-gated searches (Poké Ball, Energy Coin, Team Rocket's Great Ball),
   the many single-effect one-offs (Scoop Up Cyclone, Megaton Blower,
   Great Haul Net, Precious Trolley, Redeemable Ticket, …).
