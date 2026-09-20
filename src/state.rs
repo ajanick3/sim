@@ -1140,7 +1140,11 @@ impl GameState {
                     | crate::card::EnergyEffect::CarrierHasNoRetreatCost
                     | crate::card::EnergyEffect::CarrierImmuneToSpecialConditions
                     | crate::card::EnergyEffect::CarrierAttacksHitOpponentActiveHarder(_)
-                    | crate::card::EnergyEffect::PreventsBenchDamageWhileCarrierTypeMatches,
+                    | crate::card::EnergyEffect::PreventsBenchDamageWhileCarrierTypeMatches
+                    | crate::card::EnergyEffect::ProvidesMoreColorlessIfCarrierIsEvolutionThenDiscardsAtEndOfTurn(
+                        ..,
+                    )
+                    | crate::card::EnergyEffect::ProvidesMoreOfAnyTypeIfCarrierIsStage2(..),
                 )
                 | None => 0,
             })
@@ -1715,10 +1719,34 @@ impl GameState {
             let Some(energy) = self.def_of(*card).as_energy() else {
                 continue;
             };
+            let carrier_is_stage2 = self.pokemon_def(id).stage == crate::card::Stage::Stage2;
             if carrier_is_basic
                 && energy.effect == Some(crate::card::EnergyEffect::ProvidesAnyTypeIfAttachedToBasic)
             {
                 wildcards += 1;
+            } else if let Some(
+                crate::card::EnergyEffect::ProvidesMoreColorlessIfCarrierIsEvolutionThenDiscardsAtEndOfTurn(
+                    base,
+                    evolved,
+                ),
+            ) = energy.effect
+            {
+                let count = if carrier_is_basic { base } else { evolved };
+                for _ in 0..count {
+                    available.push(Type::Colorless);
+                }
+            } else if let Some(crate::card::EnergyEffect::ProvidesMoreOfAnyTypeIfCarrierIsStage2(
+                base,
+                stage2,
+            )) = energy.effect
+            {
+                if carrier_is_stage2 {
+                    wildcards += stage2;
+                } else {
+                    for _ in 0..base {
+                        available.push(Type::Colorless);
+                    }
+                }
             } else {
                 available.push(energy.kind);
                 if wild_growth && energy.kind == Type::Grass && energy.effect.is_none() {

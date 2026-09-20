@@ -5252,7 +5252,36 @@ fn settle(state: &mut GameState) {
 fn end_the_turn(state: &mut GameState) {
     fill_checkup(state);
     clear_paralysis(state);
+    discard_ignition_energy(state);
     state.pending_turn_start = true;
+}
+
+/// `Ignition Energy` discards itself at the end of the turn of
+/// whoever it is attached to, wherever it sits on the board.
+fn discard_ignition_energy(state: &mut GameState) {
+    let owner = state.current;
+    let carriers: Vec<PokemonId> = state.player(owner).in_play();
+    for carrier in carriers {
+        let ignitions: Vec<CardId> = state.pokemon(carrier)
+            .attached
+            .iter()
+            .copied()
+            .filter(|card| {
+                state.def_of(*card).as_energy().is_some_and(|e| {
+                    matches!(
+                        e.effect,
+                        Some(crate::card::EnergyEffect::ProvidesMoreColorlessIfCarrierIsEvolutionThenDiscardsAtEndOfTurn(..))
+                    )
+                })
+            })
+            .collect();
+        for card in ignitions {
+            state.pokemon[carrier.index()].attached.retain(|c| *c != card);
+            state.players[owner.index()].discard.push(card);
+            let name = state.pokemon_def(carrier).name;
+            state.log.push(format!("Ignition Energy is discarded from {name}."));
+        }
+    }
 }
 
 /// The Active of the player whose turn is ending, if it carries

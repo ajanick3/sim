@@ -959,6 +959,160 @@ fn shadowy_darkness_energy_is_admitted_from_the_artifact() {
     );
 }
 
+// --- Beyond the field: conditional-provision Special Energy ---
+
+#[test]
+fn ignition_energy_provides_one_colorless_off_a_basic_carrier() {
+    let (mut state, pokemon) = one_pokemon_game(100, Type::Colorless);
+    let ignition = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-ignition-energy-basic",
+        name: "Ignition Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::ProvidesMoreColorlessIfCarrierIsEvolutionThenDiscardsAtEndOfTurn(1, 3)),
+    }));
+    attach(&mut state, pokemon, ignition);
+
+    assert!(state.pays_cost(pokemon, &[Type::Colorless]));
+    assert!(!state.pays_cost(pokemon, &[Type::Colorless, Type::Colorless]));
+}
+
+#[test]
+fn ignition_energy_provides_three_colorless_off_an_evolution_carrier() {
+    let (mut state, _active) = one_pokemon_game(100, Type::Colorless);
+    let evolution_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-ignition-evolution-carrier",
+        name: "Evolvemon",
+        hp: 100,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Stage1,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let card = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: evolution_def, owner: PlayerId::One });
+    let evolution = state.put_into_play(PlayerId::One, card);
+
+    let ignition = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-ignition-energy-evolution",
+        name: "Ignition Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::ProvidesMoreColorlessIfCarrierIsEvolutionThenDiscardsAtEndOfTurn(1, 3)),
+    }));
+    attach(&mut state, evolution, ignition);
+
+    assert!(state.pays_cost(evolution, &[Type::Colorless, Type::Colorless, Type::Colorless]));
+    assert!(!state.pays_cost(
+        evolution,
+        &[Type::Colorless, Type::Colorless, Type::Colorless, Type::Colorless]
+    ));
+}
+
+#[test]
+fn ignition_energy_discards_itself_at_the_end_of_the_turn() {
+    let mut state = game_through_setup(3);
+    let pokemon = state.player(state.current).active.unwrap();
+    let ignition = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-ignition-energy-discards",
+        name: "Ignition Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::ProvidesMoreColorlessIfCarrierIsEvolutionThenDiscardsAtEndOfTurn(1, 3)),
+    }));
+    let card = attach(&mut state, pokemon, ignition);
+    let owner = state.current;
+
+    apply(&mut state, Action::EndTurn).unwrap();
+
+    assert!(
+        !state.pokemon(pokemon).attached.contains(&card),
+        "Ignition Energy leaves the carrier"
+    );
+    assert!(
+        state.players[owner.index()].discard.contains(&card),
+        "Ignition Energy lands in its owner's discard"
+    );
+}
+
+#[test]
+fn ignition_energy_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Ignition Energy" && c.playable.is_some()),
+        "Ignition Energy should play"
+    );
+}
+
+#[test]
+fn neo_upper_energy_provides_one_colorless_off_a_non_stage2_carrier() {
+    let (mut state, pokemon) = one_pokemon_game(100, Type::Colorless);
+    let neo_upper = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-neo-upper-energy-basic",
+        name: "Neo Upper Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::ProvidesMoreOfAnyTypeIfCarrierIsStage2(1, 2)),
+    }));
+    attach(&mut state, pokemon, neo_upper);
+
+    assert!(state.pays_cost(pokemon, &[Type::Colorless]));
+    assert!(!state.pays_cost(pokemon, &[Type::Fire]), "not a Stage 2 carrier, so no wildcard");
+}
+
+#[test]
+fn neo_upper_energy_provides_two_of_any_type_off_a_stage_2_carrier() {
+    let (mut state, _active) = one_pokemon_game(100, Type::Colorless);
+    let stage2_def = state.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-neo-upper-stage2-carrier",
+        name: "Toweringmon",
+        hp: 100,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Stage2,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let card = sim::ids::CardId(state.cards.len() as u32);
+    state.cards.push(sim::state::Card { def: stage2_def, owner: PlayerId::One });
+    let stage2 = state.put_into_play(PlayerId::One, card);
+
+    let neo_upper = state.db.add(CardDef::Energy(Energy {
+        print_id: "test-neo-upper-energy-stage2",
+        name: "Neo Upper Energy",
+        kind: Type::Colorless,
+        effect: Some(EnergyEffect::ProvidesMoreOfAnyTypeIfCarrierIsStage2(1, 2)),
+    }));
+    attach(&mut state, stage2, neo_upper);
+
+    assert!(state.pays_cost(stage2, &[Type::Fire, Type::Water]));
+    assert!(!state.pays_cost(stage2, &[Type::Fire, Type::Water, Type::Grass]));
+}
+
+#[test]
+fn neo_upper_energy_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Neo Upper Energy" && c.playable.is_some()),
+        "Neo Upper Energy should play"
+    );
+}
+
 #[test]
 fn the_type_matched_attack_rider_energy_are_admitted_from_the_artifact() {
     let import = sim::import::load(
@@ -972,3 +1126,4 @@ fn the_type_matched_attack_rider_energy_are_admitted_from_the_artifact() {
         );
     }
 }
+
