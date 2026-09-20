@@ -380,6 +380,10 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
         "Cook" => (free, TrainerEffect::HealActive(70)),
         "Hole-Digging Shovel" => (free, TrainerEffect::DiscardTopOfDeck(2)),
         "Maximum Belt" => (free, TrainerEffect::BonusDamageVsActiveEx(50)),
+        "Light Ball" => (
+            free,
+            TrainerEffect::BonusDamageVsActiveExForCarrierNamed("Pikachu ex", 50),
+        ),
         "Sacred Charm" => (free, TrainerEffect::ReducesDamageFromAbilityHolders(30)),
         "Lively Stadium" => (free, TrainerEffect::StadiumBoostsBasicHp(30)),
         "Rescue Board" => (free, TrainerEffect::ReducesRetreatCost(1)),

@@ -88,9 +88,12 @@ More clusters merged:
   once the coin lands, bypassing `Trainer::slots()` — that accessor
   is a pure function of the card's own printed effect and cannot know
   which side of a flip already happened.
+- Light Ball — `BonusDamageVsActiveExForCarrierNamed`, `BonusDamageVsActiveEx`
+  narrowed to an exact carrier name, read in `damage_dealt_with` the
+  same way `Cobalt Command`'s own name check already is.
 
-Coverage: 940 / 3051 prints (30.8%). Refused, by kind:
-Supporter 56, Item 37, Tool 18, Stadium 20, Special Energy 3.
+Coverage: 941 / 3051 prints (30.8%). Refused, by kind:
+Supporter 56, Item 37, Tool 17, Stadium 20, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
@@ -117,12 +120,6 @@ Deferred — the tier that needs its own design/ADR before it is cheap:
   name check plus an immediate self-discard on a failed one — nothing
   in the engine validates an attach against the carrier's identity
   today; `AttachEnergy`'s handler assumes every attach succeeds.
-- **Light Ball**: not a name-prefix card at all, despite the family
-  resemblance — its bonus is gated on the Tool's own carrier being
-  the specific printed Pokémon ("the Pikachu ex this card is attached
-  to"), the same shape `IncreasesHpForNamePrefix` reads by name
-  already, not a deck-search `CardFilter`. Belongs with the static
-  per-carrier bonus-damage Tools (`BonusDamageVsActiveEx`) instead.
 - **Peek-then-discard/reorder the rest**: Explorer's Guidance, Deduction
   Kit, Roto-Stick, Grimsley's Move — the `Decide`/`peek` leftover is
   always "shuffle back" today.
