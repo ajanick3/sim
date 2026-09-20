@@ -35,6 +35,18 @@ One of the six cards a player sets aside at setup and takes for a knockout. Taki
 **Masked view**:
 The game as one player may see it. It hides the opponent's hand, both libraries, and both Prize piles, and keeps a count for each.
 
+**Wire**:
+The JSON shape a Masked view (and the moves legal against it) takes crossing the wasm boundary — `WireView`, `WireCard`, `WireActionMeta` in TypeScript, mirroring `crates/sim-wasm`'s own wire structs field for field. Kept deliberately separate from the engine's internal view types ([ADR 0096](../adr/0096-the-engine-compiles-to-wasm-behind-an-opaque-handle.md)), so a UI's contract does not shift when those change.
+
+**Wire client**:
+The pure engine-access half of `packages/engine-client`: loads the wasm module, exposes typed Wire data, applies a move by its index into `legal_actions`. Carries no opinion about how a UI presents or gathers that choice — any UI needs exactly this, unmodified.
+
+**Selection**:
+What a player has tapped on the board and not yet resolved into a move — a hand Card or a Pokémon. Not an engine concept; input to a Selection flow.
+
+**Selection flow**:
+The reference tap-to-choose interaction model in `packages/engine-client`, built on a Wire client but not required by one: narrows `legal_actions` to a current Selection, groups the rest for display, and decides when a single forced choice auto-advances rather than waiting for a tap. One particular pointer-and-tap paradigm, not the only way to drive a Wire client — a CLI menu or a Strategy-like automated driver has no use for it.
+
 **Strategy**:
 The decision a seat's own player makes each turn: which legal Action to take, reading only that seat's own masked view. One per seat, swappable independently of the other. The engine offers legal Actions; a Strategy is what picks among them.
 
