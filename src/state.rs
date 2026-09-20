@@ -1631,6 +1631,11 @@ impl GameState {
                 CardDef::Trainer(t) => t.kind == crate::card::TrainerKind::Stadium,
                 CardDef::Energy(_) => false,
             },
+            CardFilter::PokemonNameContainsOrBasicEnergyOfType(word, kind) => match self.def_of(card) {
+                CardDef::Pokemon(p) => p.name.contains(word),
+                CardDef::Energy(e) => e.kind == kind && e.effect.is_none(),
+                CardDef::Trainer(_) => false,
+            },
         }
     }
 

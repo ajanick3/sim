@@ -186,6 +186,12 @@ pub enum CardFilter {
     /// kind is a Trainer kind rather than Energy. `Celebi`'s
     /// `Traverse Time`.
     PokemonOfTypeOrStadium(Type),
+    /// A Pokémon whose printed name contains this word, any stage, or
+    /// a basic Energy of this type — the same "one filter, two kinds
+    /// of card" pairing `PokemonOfTypeOrBasicEnergyOfType` reads,
+    /// narrowed by a name substring instead of a Pokémon type on the
+    /// Pokémon side. `Ethan's Adventure`.
+    PokemonNameContainsOrBasicEnergyOfType(&'static str, Type),
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
