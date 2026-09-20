@@ -71,15 +71,26 @@ More clusters merged:
   reuses the attack-cost energy-discard phase for a Trainer's own
   effect; `Then::EndTurnAlways` joins `EndTurnIfMoved` for a search
   that ends the turn whether or not it found anything.
+- Ethan's Adventure — `CardFilter::PokemonNameContainsOrBasicEnergyOfType`,
+  a name-substring match paired with a typed-Energy alternative in one
+  filter, the same "one filter, two kinds of card" shape
+  `PokemonOfTypeOrBasicEnergyOfType` already is. Checking the rest of
+  the name-prefix cluster found Team Rocket's Proton, Hop's Bag, and
+  Cynthia's Power Weight already built (an earlier cluster used
+  `BasicPokemonNameContains` and `IncreasesHpForNamePrefix` for them,
+  before this map's own notes caught up); only Proton's separate
+  "playable on your first turn" clause remains open, filed below.
 
-Coverage: 935 / 3051 prints (30.6%). Refused, by kind:
-Supporter 57, Item 39, Tool 18, Stadium 20, Special Energy 3.
+Coverage: 938 / 3051 prints (30.7%). Refused, by kind:
+Supporter 56, Item 39, Tool 18, Stadium 20, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
 its prize-count clause wants milestone-3's deferred prize-count support
-instead); Team Rocket's Energy (needs the deferred name-prefix Pokemon
-filter).
+instead); Team Rocket's Energy (needs a Basic-restricted sibling of the
+name-prefix filter, cheap now that `PokemonNameContainsOrBasicEnergyOfType`
+exists as a model — left for the next name-prefix pass rather than bundled
+here).
 
 Deferred — the tier that needs its own design/ADR before it is cheap:
 - **Trainer-as-Pokémon**: the eight "Antique … Fossil" Items play as a
@@ -88,10 +99,18 @@ Deferred — the tier that needs its own design/ADR before it is cheap:
   Acerola's Mischief, Iron Defender. `opponent_next_turn_restriction`
   is keyed to one `PokemonId` + an `AttackEffect`; a Supporter/Item
   shield over a whole side needs a new store and clear/arm logic.
-- **Name-prefix Pokémon filters**: "Ethan's Pokémon", "Team Rocket's
-  Pokémon", "Hop's Pokémon" — a `PokemonNameContains` filter (mirror
-  `SupporterNameContains`), then Ethan's Adventure, Team Rocket's Proton,
-  Hop's Bag, Team Rocket's Great Ball, Cynthia's Power Weight, Light Ball.
+- **Team Rocket's Great Ball**: a coin flip choosing between two
+  different `Decide` searches (an Evolution Team Rocket's Pokémon on
+  heads, a Basic one on tails) — `CoinFlipThen` only ever runs one
+  inner effect on heads and does nothing on tails; this wants a new
+  two-branch variant, filed with the other coin-gated searches below
+  rather than the name-prefix cluster it first looked like it belonged to.
+- **Light Ball**: not a name-prefix card at all, despite the family
+  resemblance — its bonus is gated on the Tool's own carrier being
+  the specific printed Pokémon ("the Pikachu ex this card is attached
+  to"), the same shape `IncreasesHpForNamePrefix` reads by name
+  already, not a deck-search `CardFilter`. Belongs with the static
+  per-carrier bonus-damage Tools (`BonusDamageVsActiveEx`) instead.
 - **Peek-then-discard/reorder the rest**: Explorer's Guidance, Deduction
   Kit, Roto-Stick, Grimsley's Move — the `Decide`/`peek` leftover is
   always "shuffle back" today.

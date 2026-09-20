@@ -3555,3 +3555,93 @@ fn acerolas_mischief_is_admitted_from_the_artifact() {
         "Acerola's Mischief should play",
     );
 }
+
+// --- Beyond the field: a name-prefix-or-energy search ---
+
+#[test]
+fn ethans_adventure_pulls_named_pokemon_or_fire_energy() {
+    let mut set = build();
+    let ethan_mon = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-ethans-typhlosion",
+        name: "Ethan's Typhlosion",
+        hp: 150,
+        kind: Type::Fire,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 1,
+        stage: Stage::Stage2,
+        evolve_from: Some("Ethan's Quilava"),
+        evolves_from_basic: Some("Ethan's Cyndaquil"),
+        ability: None,
+        attacks: vec![Attack {
+            name: "Flame Wheel",
+            cost: vec![Type::Fire],
+            base_damage: 30,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let fire_energy = set.db.add(CardDef::Energy(Energy {
+        print_id: "test-fire-energy",
+        name: "Fire Energy",
+        kind: Type::Fire,
+        effect: None,
+    }));
+    let ethan = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-ethans-adventure",
+        name: "Ethan's Adventure",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Deck,
+            slots: vec![Slot {
+                filter: CardFilter::PokemonNameContainsOrBasicEnergyOfType("Ethan's", Type::Fire),
+                to: Destination::Zone(Zone::Hand),
+                limit: 3,
+                excludes_type_of_previous: false,
+                peek: None,
+            }],
+            then: None,
+        },
+    }));
+    let mut state = game(&set, ethan, 3);
+    let player = state.current;
+    let ethan_card = deal_new_card(&mut state, player, ethan_mon);
+    state.players[player.index()].deck.push(ethan_card);
+    let fire_card = deal_new_card(&mut state, player, fire_energy);
+    state.players[player.index()].deck.push(fire_card);
+    // A non-Ethan's Colorless energy must not be offered.
+    let plain_energy = deal_new_card(&mut state, player, set.energy);
+    state.players[player.index()].deck.push(plain_energy);
+    let card = ensure_in_hand(&mut state, player, ethan);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let mut took = Vec::new();
+    while let Some(t) = legal_actions(&state).into_iter().find_map(|a| match a {
+        Action::TakeCard { card } => Some(card),
+        _ => None,
+    }) {
+        apply(&mut state, Action::TakeCard { card: t }).unwrap();
+        took.push(t);
+    }
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(took.len(), 2, "only the Ethan's Pokemon and the Fire Energy match");
+    assert!(took.contains(&ethan_card));
+    assert!(took.contains(&fire_card));
+    assert!(!took.contains(&plain_energy));
+}
+
+#[test]
+fn ethans_adventure_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Ethan's Adventure" && c.playable.is_some()),
+        "Ethan's Adventure should play"
+    );
+}
