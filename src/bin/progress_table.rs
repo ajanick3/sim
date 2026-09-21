@@ -13,6 +13,39 @@ use std::path::Path;
 use sim::decklist::parse;
 use sim::import::load;
 
+/// Why a refused Trainer or Special Energy stays refused, for the names
+/// this effort has actually opened and read — never a guess. A refused
+/// name absent from this list is simply not yet triaged, and the table
+/// says so rather than implying a reason nobody has checked.
+fn known_blocker(name: &str) -> Option<&'static str> {
+    match name {
+        "Antique Armor Fossil" | "Antique Cover Fossil" | "Antique Jaw Fossil"
+        | "Antique Plume Fossil" | "Antique Root Fossil" | "Antique Sail Fossil"
+        | "Antique Skull Fossil" => {
+            Some("plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet")
+        }
+        "Heavy Baton" | "Survival Brace" | "Amulet of Hope" | "Deluxe Bomb" => Some(
+            "needs a pause for a choice at the moment of knockout, before cards move to discard",
+        ),
+        "Core Memory" | "Technical Machine: Fluorite" => {
+            Some("the Tool grants an attack; today an attack only ever comes from a Pokémon's own printed list")
+        }
+        "Team Rocket's Energy" => {
+            Some("attaches only to a Team Rocket's Pokémon and discards itself instantly off any other — nothing validates an attach against the carrier's identity yet")
+        }
+        "Legacy Energy" => Some("its Prize-count clause needs the deferred Prize-count mechanic"),
+        "Ruffian" => Some("needs a target-then-discard-both phase, scoped to one Pokémon chosen up front"),
+        "Call Bell" | "Chill Teaser Toy" => Some("needs the \"playable on the first turn\" allowance"),
+        "Lt. Surge's Bargain" | "Meddling Memo" | "Team Rocket's Bother-Bot" | "Tyme" => {
+            Some("needs an interactive opponent choice the engine has no shape for yet")
+        }
+        "Deduction Kit" | "Roto-Stick" | "Grimsley's Move" => {
+            Some("needs to peek and then discard or reorder — today's peek always shuffles back")
+        }
+        _ => None,
+    }
+}
+
 fn every_deck_file(dir: &Path, out: &mut Vec<std::path::PathBuf>) {
     for entry in std::fs::read_dir(dir).expect("the decks directory is committed") {
         let path = entry.expect("a readable directory entry").path();
@@ -134,40 +167,50 @@ fn main() {
     }
 
     // Standard-wide coverage, over every card in the artifact rather than
-    // only the field. The standard-trainers effort works down the Trainer
-    // and Special Energy rows here; the field tables below stay frozen.
+    // only the field. `full_kind_of` and `full_built` carry this same
+    // pass's per-name detail into the Trainer and Special Energy tables
+    // below, which track the whole pool; the Pokémon table alone stays
+    // scoped to the field, by `kind_of`/`built` above.
     let mut all_total: BTreeMap<&'static str, usize> = BTreeMap::new();
     let mut all_built: BTreeMap<&'static str, usize> = BTreeMap::new();
+    let mut full_kind_of: BTreeMap<String, &'static str> = BTreeMap::new();
+    let mut full_built: HashSet<String> = HashSet::new();
     let mut counted: HashSet<String> = HashSet::new();
     for card in &import.cards {
         let kind = card.raw["category"].as_str().unwrap_or("");
-        let label = if kind == "Trainer" {
+        let (plural, singular) = if kind == "Trainer" {
             match card.raw["trainerType"].as_str().unwrap_or("") {
-                "Supporter" => "Supporters",
-                "Item" => "Items",
-                "Tool" => "Tools",
-                "Stadium" => "Stadiums",
+                "Supporter" => ("Supporters", "Supporter"),
+                "Item" => ("Items", "Item"),
+                "Tool" => ("Tools", "Tool"),
+                "Stadium" => ("Stadiums", "Stadium"),
                 _ => continue,
             }
         } else if kind == "Energy" {
-            "Special Energy"
+            ("Special Energy", "Energy")
         } else {
             continue;
         };
+        full_kind_of.insert(card.name.clone(), singular);
         if !counted.insert(card.name.clone()) {
             continue;
         }
-        *all_total.entry(label).or_default() += 1;
+        *all_total.entry(plural).or_default() += 1;
         let name_built = import
             .cards
             .iter()
             .any(|c| c.name == card.name && c.playable.is_some());
         if name_built {
-            *all_built.entry(label).or_default() += 1;
+            *all_built.entry(plural).or_default() += 1;
+            full_built.insert(card.name.clone());
         }
     }
     println!("### Standard coverage\n");
-    println!("Every card in the artifact, by name; the tables below track the field.\n");
+    println!(
+        "Every card in the artifact, by name. The Trainer and Special Energy \
+         tables below cover the whole pool; the Pokémon table stays scoped \
+         to the field (the decks under `decks/`).\n"
+    );
     println!("| Kind | Built | Total |");
     println!("| --- | --- | --- |");
     for kind in ["Supporters", "Items", "Tools", "Stadiums", "Special Energy"] {
@@ -178,16 +221,22 @@ fn main() {
     println!();
 
     for kind in ["Supporter", "Item", "Tool", "Stadium", "Energy", "Pokemon"] {
-        let mut names: Vec<&String> = kind_of
+        let (names_map, built_set): (&BTreeMap<String, &'static str>, &HashSet<String>) =
+            if kind == "Pokemon" {
+                (&kind_of, &built)
+            } else {
+                (&full_kind_of, &full_built)
+            };
+        let mut names: Vec<&String> = names_map
             .iter()
             .filter(|(_, k)| **k == kind)
             .map(|(n, _)| n)
             .collect();
         names.sort();
         let total = names.len();
-        let done = names.iter().filter(|n| built.contains(**n)).count();
+        let done = names.iter().filter(|n| built_set.contains(**n)).count();
         let heading = if kind == "Pokemon" {
-            "Pokémon".to_string()
+            "Pokémon (field)".to_string()
         } else if kind == "Energy" {
             "Special Energy".to_string()
         } else {
@@ -227,14 +276,13 @@ fn main() {
             println!("| Card | Status |");
             println!("| --- | --- |");
             for name in names {
-                let mark = if built.contains(name) { "✅" } else { "❌" };
-                let cell = if built.contains(name) {
+                if built_set.contains(name) {
                     let line = source_line(&import_rs, name, span);
-                    format!("[{name}](src/import.rs#L{line})")
+                    println!("| [{name}](src/import.rs#L{line}) | ✅ |");
                 } else {
-                    name.clone()
-                };
-                println!("| {cell} | {mark} |");
+                    let status = known_blocker(name).unwrap_or("not yet triaged");
+                    println!("| {name} | ❌ — {status} |");
+                }
             }
         }
         println!();

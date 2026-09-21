@@ -107,13 +107,16 @@ attach against the carrier's name, or discards a card the instant it
 lands somewhere illegal — a real new mechanic, moved to Deferred below
 rather than bundled as a "cheap filter reuse."
 
+Confirmed built already, despite an earlier version of this map still
+listing them as deferred: Roxie's Performance, Jasmine's Gaze, and Iron
+Defender (the next-turn-shield cluster resolved as #268, ADR 0098) —
+checked directly against `src/import.rs` and the artifact's own refusal
+list rather than trusted from an older note.
+
 Deferred — the tier that needs its own design/ADR before it is cheap:
-- **Trainer-as-Pokémon**: the eight "Antique … Fossil" Items play as a
-  60-HP Basic. A whole mechanic; no seam for it yet.
-- **Next-turn player-wide effects**: Roxie's Performance, Jasmine's Gaze,
-  Acerola's Mischief, Iron Defender. `opponent_next_turn_restriction`
-  is keyed to one `PokemonId` + an `AttackEffect`; a Supporter/Item
-  shield over a whole side needs a new store and clear/arm logic.
+- **Trainer-as-Pokémon**: the seven "Antique … Fossil" Items (Armor,
+  Cover, Jaw, Plume, Root, Sail, Skull — the pool holds no eighth) play
+  as a 60-HP Basic. A whole mechanic; no seam for it yet.
 - **Team Rocket's Energy**: attaches only to a Team Rocket's Pokémon,
   discarding itself the instant it lands anywhere else, then provides
   2 Energy in any combination of two named types. Needs an attach-time
@@ -134,11 +137,13 @@ Deferred — the tier that needs its own design/ADR before it is cheap:
   less" clause is still unread) and Gravity Gemstone
   (`RaisesBothActiveRetreatWhileCarrierActive`) already play, and
   Sparkling Crystal and Counter Gain turned out to be attack-cost,
-  not retreat-cost, Tools — built above. Heavy Baton remains: a
-  knockout-triggered "move Energy off the Pokémon that was just
-  Knocked Out, before its cards go to discard" moment nothing in the
-  engine has a hook for yet — `knock_out_the_dead` moves straight to
-  the Prize count, with no pause for a choice first.
+  not retreat-cost, Tools — built above.
+- **Defender-Tool-on-knockout**: Heavy Baton, Survival Brace, Amulet of
+  Hope, Deluxe Bomb — each a knockout-triggered "move Energy (or heal,
+  or search) off the Pokémon that was just Knocked Out, before its
+  cards go to discard" moment nothing in the engine has a hook for
+  yet — `knock_out_the_dead` moves straight to the Prize count, with
+  no pause for a choice first.
 - **Attack-granting Tools**: Core Memory, Technical Machine: Fluorite
   — the Tool itself carries an `Attack` and grants it to the carrier;
   today an `Attack` only ever comes from the Pokémon's own printed
@@ -157,6 +162,16 @@ Deferred — the tier that needs its own design/ADR before it is cheap:
   (a Pokémon carries at most one, by rule) and the first attached
   Special Energy found, no further choice needed. Left unbuilt this
   pass for a session with room for a new phase and Action variant.
-- Coin-gated searches (Poké Ball, Energy Coin, Team Rocket's Great Ball),
-  the many single-effect one-offs (Scoop Up Cyclone, Megaton Blower,
-  Great Haul Net, Precious Trolley, Redeemable Ticket, …).
+Not yet triaged — refused, but nobody has opened the printed text yet to
+say whether it fits an existing shape or needs a new one. Checked
+directly against the artifact's own refusal list rather than carried
+over from an older note, which had drifted (naming several cards, like
+Poké Ball and Scoop Up Cyclone, that later clusters had already built):
+Accompanying Flute, Adversity Policy, Amarys, Ange Floette, Anthea &
+Concordia, Arven's Sandwich, Backtrack Badge, Blowtorch, Caretaker,
+Celebratory Fanfare, Dizzying Valley, Energy Coin, Energy Swatter,
+Fossil Quarry, Grand Tree, Great Haul Net, Hop's Choice Band, Kofu,
+Lacey, Levincia, Love Ball, Lucian, Megaton Blower, Mystery Garden,
+Neutralization Zone, Ogre's Mask, Paradise Resort, Perrin, Postwick,
+Redeemable Ticket, Scramble Switch, Spikemuth Gym, Surfing Beach, Team
+Rocket's Hypnotizer, Thick Scale, Tremendous Bomb, Waitress.
