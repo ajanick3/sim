@@ -22,8 +22,8 @@ their Energy live in `src/cards.rs` as literals. This is deliberate — see
 What the engine does today: setup with mulligans, the turn loop, the damage
 order, Energy costs by type, the five Special Conditions and the Pokémon
 Checkup, knockouts, Prizes, the three win conditions, evolution, every kind
-of Trainer, Pokémon Abilities, Pokémon attacks with their own effects, and
-the first Special Energy.
+of Trainer, Pokémon Abilities, Pokémon attacks with their own effects, and a
+growing set of Special Energy.
 
 ## The code
 
@@ -55,7 +55,7 @@ python3 tools/import_cards.py        # about 95 seconds, 3051 cards
 The engine reads the artifact, and admits only the cards it can run all of:
 
 ```sh
-cargo run --bin coverage             # 368 of 3051 Standard cards (12.1%)
+cargo run --bin coverage             # 978 of 3051 Standard cards (32.1%)
 cargo run --bin coverage -- refused  # every refused card, and why
 cargo run --bin deckcheck -- decks/brent-tonisson.txt  # check a decklist
 ```
@@ -78,7 +78,7 @@ for an entrant who did not reach one. All 143 are kept and check clean.
 
 ### Standard coverage
 
-Every card in the artifact, by name; the tables below track the field.
+Every card in the artifact, by name. The Trainer and Special Energy tables below cover the whole pool; the Pokémon table stays scoped to the field (the decks under `decks/`).
 
 | Kind | Built | Total |
 | --- | --- | --- |
@@ -88,141 +88,278 @@ Every card in the artifact, by name; the tables below track the field.
 | Stadiums | 19 | 31 |
 | Special Energy | 15 | 17 |
 
-### Supporters (36/36 built)
+### Supporters (66/78 built)
 
 | Card | Status |
 | --- | --- |
 | [AZ's Tranquility](src/import.rs#L1272) | ✅ |
 | [Acerola's Mischief](src/import.rs#L1474) | ✅ |
+| Amarys | ❌ — not yet triaged |
+| Anthea & Concordia | ❌ — not yet triaged |
 | [Bianca's Devotion](src/import.rs#L1257) | ✅ |
+| [Billy & O'Nare](src/import.rs#L743) | ✅ |
 | [Black Belt's Training](src/import.rs#L1280) | ✅ |
 | [Boss's Orders](src/import.rs#L378) | ✅ |
 | [Briar](src/import.rs#L835) | ✅ |
 | [Brock's Scouting](src/import.rs#L1342) | ✅ |
+| [Canari](src/import.rs#L702) | ✅ |
+| Caretaker | ❌ — not yet triaged |
 | [Carmine](src/import.rs#L659) | ✅ |
+| [Cassiopeia](src/import.rs#L720) | ✅ |
+| [Cheren](src/import.rs#L234) | ✅ |
 | [Ciphermaniac's Codebreaking](src/import.rs#L1211) | ✅ |
+| [Clemont's Quick Wit](src/import.rs#L827) | ✅ |
+| [Colress's Tenacity](src/import.rs#L1060) | ✅ |
+| [Cook](src/import.rs#L380) | ✅ |
 | [Crispin](src/import.rs#L1117) | ✅ |
 | [Cyrano](src/import.rs#L965) | ✅ |
 | [Dawn](src/import.rs#L1083) | ✅ |
+| [Drasna](src/import.rs#L752) | ✅ |
+| [Drayton](src/import.rs#L784) | ✅ |
+| [Emcee's Hype](src/import.rs#L735) | ✅ |
+| [Emma](src/import.rs#L751) | ✅ |
 | [Eri](src/import.rs#L1335) | ✅ |
+| [Ethan's Adventure](src/import.rs#L435) | ✅ |
 | [Explorer's Guidance](src/import.rs#L770) | ✅ |
+| [Fennel](src/import.rs#L823) | ✅ |
+| [Firebreather](src/import.rs#L688) | ✅ |
+| [Friends in Paldea](src/import.rs#L234) | ✅ |
 | [Gladion's Final Battle](src/import.rs#L1288) | ✅ |
+| Grimsley's Move | ❌ — needs to peek and then discard or reorder — today's peek always shuffles back |
 | [Gwynn](src/import.rs#L979) | ✅ |
+| [Harlequin](src/import.rs#L807) | ✅ |
+| [Hassel](src/import.rs#L756) | ✅ |
 | [Hilda](src/import.rs#L1036) | ✅ |
+| [Iris's Fighting Spirit](src/import.rs#L819) | ✅ |
+| [Jacinthe](src/import.rs#L637) | ✅ |
 | [Janine's Secret Art](src/import.rs#L1366) | ✅ |
+| [Jasmine's Gaze](src/import.rs#L390) | ✅ |
+| [Jett](src/import.rs#L734) | ✅ |
 | [Judge](src/import.rs#L858) | ✅ |
 | [Kieran](src/import.rs#L1320) | ✅ |
+| Kofu | ❌ — not yet triaged |
+| Lacey | ❌ — not yet triaged |
 | [Lana's Aid](src/import.rs#L1237) | ✅ |
+| [Larry's Skill](src/import.rs#L1292) | ✅ |
 | [Lillie's Determination](src/import.rs#L859) | ✅ |
 | [Lisia's Appeal](src/import.rs#L1468) | ✅ |
+| Lt. Surge's Bargain | ❌ — needs an interactive opponent choice the engine has no shape for yet |
+| Lucian | ❌ — not yet triaged |
+| [Misty's Vitality](src/import.rs#L644) | ✅ |
 | [Morty's Conviction](src/import.rs#L1330) | ✅ |
 | [N's Plan](src/import.rs#L1255) | ✅ |
+| [Naveen](src/import.rs#L818) | ✅ |
+| Perrin | ❌ — not yet triaged |
 | [Philippe](src/import.rs#L674) | ✅ |
+| [Picnicker](src/import.rs#L658) | ✅ |
+| [Pokémon Center Lady](src/import.rs#L1256) | ✅ |
 | [Rosa's Encouragement](src/import.rs#L1258) | ✅ |
+| [Roxie's Performance](src/import.rs#L400) | ✅ |
+| Ruffian | ❌ — needs a target-then-discard-both phase, scoped to one Pokémon chosen up front |
 | [Rust Syndicate Grunt](src/import.rs#L1251) | ✅ |
 | [Salvatore](src/import.rs#L1467) | ✅ |
 | [Surfer](src/import.rs#L1276) | ✅ |
+| [Tarragon](src/import.rs#L660) | ✅ |
+| [Team Rocket's Archer](src/import.rs#L716) | ✅ |
 | [Team Rocket's Ariana](src/import.rs#L1428) | ✅ |
 | [Team Rocket's Giovanni](src/import.rs#L1436) | ✅ |
 | [Team Rocket's Petrel](src/import.rs#L1141) | ✅ |
 | [Team Rocket's Proton](src/import.rs#L449) | ✅ |
+| Tyme | ❌ — needs an interactive opponent choice the engine has no shape for yet |
+| [Urbain](src/import.rs#L379) | ✅ |
+| Waitress | ❌ — not yet triaged |
 | [Wally's Compassion](src/import.rs#L1365) | ✅ |
 | [Xerosic's Machinations](src/import.rs#L1334) | ✅ |
 
-### Items (37/37 built)
+### Items (61/85 built)
 
 | Card | Status |
 | --- | --- |
+| Accompanying Flute | ❌ — not yet triaged |
+| Antique Armor Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
+| Antique Cover Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
+| Antique Jaw Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
+| Antique Plume Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
+| Antique Root Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
+| Antique Sail Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
+| Antique Skull Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
+| Arven's Sandwich | ❌ — not yet triaged |
+| [Awakening Drum](src/import.rs#L406) | ✅ |
+| Blowtorch | ❌ — not yet triaged |
+| [Boxed Order](src/import.rs#L581) | ✅ |
 | [Brilliant Blender](src/import.rs#L525) | ✅ |
 | [Buddy-Buddy Poffin](src/import.rs#L951) | ✅ |
 | [Bug Catching Set](src/import.rs#L1197) | ✅ |
+| Call Bell | ❌ — needs the "playable on the first turn" allowance |
+| Chill Teaser Toy | ❌ — needs the "playable on the first turn" allowance |
 | [Crushing Hammer](src/import.rs#L894) | ✅ |
+| [Dangerous Laser](src/import.rs#L513) | ✅ |
 | [Dark Bell](src/import.rs#L520) | ✅ |
+| Deduction Kit | ❌ — needs to peek and then discard or reorder — today's peek always shuffles back |
+| [Dragon Elixir](src/import.rs#L624) | ✅ |
 | [Dusk Ball](src/import.rs#L1396) | ✅ |
+| Energy Coin | ❌ — not yet triaged |
 | [Energy Recycler](src/import.rs#L1551) | ✅ |
 | [Energy Retrieval](src/import.rs#L1381) | ✅ |
 | [Energy Search](src/import.rs#L1367) | ✅ |
+| [Energy Search Pro](src/import.rs#L909) | ✅ |
+| Energy Swatter | ❌ — not yet triaged |
 | [Energy Switch](src/import.rs#L1021) | ✅ |
 | [Enhanced Hammer](src/import.rs#L839) | ✅ |
 | [Fighting Gong](src/import.rs#L1402) | ✅ |
 | [Glass Trumpet](src/import.rs#L840) | ✅ |
+| Great Haul Net | ❌ — not yet triaged |
 | [Hand Trimmer](src/import.rs#L1395) | ✅ |
+| [Hole-Digging Shovel](src/import.rs#L381) | ✅ |
+| [Hop's Bag](src/import.rs#L463) | ✅ |
+| [Hyper Aroma](src/import.rs#L553) | ✅ |
 | [Iron Defender](src/import.rs#L394) | ✅ |
 | [Jumbo Ice Cream](src/import.rs#L1233) | ✅ |
+| Love Ball | ❌ — not yet triaged |
+| [Lumiose Galette](src/import.rs#L623) | ✅ |
+| [Master Ball](src/import.rs#L539) | ✅ |
 | [Max Rod](src/import.rs#L595) | ✅ |
+| Meddling Memo | ❌ — needs an interactive opponent choice the engine has no shape for yet |
+| [Mega Signal](src/import.rs#L923) | ✅ |
+| Megaton Blower | ❌ — not yet triaged |
+| [Miracle Headset](src/import.rs#L609) | ✅ |
 | [N's PP Up](src/import.rs#L1155) | ✅ |
 | [Night Stretcher](src/import.rs#L866) | ✅ |
+| Ogre's Mask | ❌ — not yet triaged |
+| [Poké Ball](src/import.rs#L421) | ✅ |
+| [Poké Pad](src/import.rs#L880) | ✅ |
+| [Poké Vital A](src/import.rs#L633) | ✅ |
+| [Pokégear 3.0](src/import.rs#L1183) | ✅ |
+| [Pokémon Catcher](src/import.rs#L1398) | ✅ |
+| [Potion](src/import.rs#L628) | ✅ |
 | [Precious Trolley](src/import.rs#L895) | ✅ |
 | [Premium Power Pro](src/import.rs#L1284) | ✅ |
 | [Prime Catcher](src/import.rs#L1397) | ✅ |
 | [Rare Candy](src/import.rs#L1140) | ✅ |
+| [Reboot Pod](src/import.rs#L410) | ✅ |
+| Redeemable Ticket | ❌ — not yet triaged |
+| [Repel](src/import.rs#L524) | ✅ |
+| Roto-Stick | ❌ — needs to peek and then discard or reorder — today's peek always shuffles back |
 | [Sacred Ash](src/import.rs#L993) | ✅ |
 | [Scoop Up Cyclone](src/import.rs#L1469) | ✅ |
+| Scramble Switch | ❌ — not yet triaged |
 | [Secret Box](src/import.rs#L1500) | ✅ |
 | [Special Red Card](src/import.rs#L1113) | ✅ |
 | [Strange Timepiece](src/import.rs#L1416) | ✅ |
+| [Super Potion](src/import.rs#L632) | ✅ |
 | [Switch](src/import.rs#L1232) | ✅ |
+| [TM Machine](src/import.rs#L937) | ✅ |
+| Team Rocket's Bother-Bot | ❌ — needs an interactive opponent choice the engine has no shape for yet |
+| [Team Rocket's Great Ball](src/import.rs#L1440) | ✅ |
 | [Team Rocket's Transceiver](src/import.rs#L1537) | ✅ |
 | [Team Rocket's Venture Bomb](src/import.rs#L1470) | ✅ |
 | [Tera Orb](src/import.rs#L1022) | ✅ |
 | [Tool Scrapper](src/import.rs#L834) | ✅ |
 | [Transformation Tome](src/import.rs#L1496) | ✅ |
+| [Treasure Tracker](src/import.rs#L567) | ✅ |
 | [Ultra Ball](src/import.rs#L1007) | ✅ |
 | [Unfair Stamp](src/import.rs#L1225) | ✅ |
 | [Wondrous Patch](src/import.rs#L1169) | ✅ |
 
-### Tools (10/10 built)
+### Tools (23/35 built)
 
 | Card | Status |
 | --- | --- |
+| Adversity Policy | ❌ — not yet triaged |
 | [Air Balloon](src/import.rs#L1417) | ✅ |
+| Amulet of Hope | ❌ — needs a pause for a choice at the moment of knockout, before cards move to discard |
+| [Babiri Berry](src/import.rs#L489) | ✅ |
+| Backtrack Badge | ❌ — not yet triaged |
 | [Binding Mochi](src/import.rs#L1420) | ✅ |
 | [Brave Bangle](src/import.rs#L1419) | ✅ |
+| [Colbur Berry](src/import.rs#L493) | ✅ |
+| Core Memory | ❌ — the Tool grants an attack; today an attack only ever comes from a Pokémon's own printed list |
+| [Counter Gain](src/import.rs#L420) | ✅ |
+| [Cynthia's Power Weight](src/import.rs#L477) | ✅ |
+| Deluxe Bomb | ❌ — needs a pause for a choice at the moment of knockout, before cards move to discard |
+| [Gravity Gemstone](src/import.rs#L412) | ✅ |
+| [Haban Berry](src/import.rs#L509) | ✅ |
 | [Handheld Fan](src/import.rs#L1424) | ✅ |
+| Heavy Baton | ❌ — needs a pause for a choice at the moment of knockout, before cards move to discard |
 | [Hero's Cape](src/import.rs#L1418) | ✅ |
+| Hop's Choice Band | ❌ — not yet triaged |
+| [Light Ball](src/import.rs#L383) | ✅ |
 | [Lillie's Pearl](src/import.rs#L1421) | ✅ |
 | [Lucky Helmet](src/import.rs#L1423) | ✅ |
 | [Maximum Belt](src/import.rs#L382) | ✅ |
+| [Occa Berry](src/import.rs#L497) | ✅ |
+| [Passho Berry](src/import.rs#L501) | ✅ |
+| [Payapa Berry](src/import.rs#L505) | ✅ |
 | [Powerglass](src/import.rs#L1425) | ✅ |
 | [Punk Helmet](src/import.rs#L1422) | ✅ |
+| [Rescue Board](src/import.rs#L389) | ✅ |
+| [Sacred Charm](src/import.rs#L387) | ✅ |
+| [Sparkling Crystal](src/import.rs#L416) | ✅ |
+| Survival Brace | ❌ — needs a pause for a choice at the moment of knockout, before cards move to discard |
+| Team Rocket's Hypnotizer | ❌ — not yet triaged |
+| Technical Machine: Fluorite | ❌ — the Tool grants an attack; today an attack only ever comes from a Pokémon's own printed list |
+| Thick Scale | ❌ — not yet triaged |
+| Tremendous Bomb | ❌ — not yet triaged |
 
-### Stadiums (15/15 built)
+### Stadiums (19/31 built)
 
 | Card | Status |
 | --- | --- |
 | [Academy at Night](src/import.rs#L1478) | ✅ |
+| Ange Floette | ❌ — not yet triaged |
 | [Area Zero Underdepths](src/import.rs#L855) | ✅ |
 | [Battle Cage](src/import.rs#L856) | ✅ |
+| Celebratory Fanfare | ❌ — not yet triaged |
 | [Community Center](src/import.rs#L1485) | ✅ |
+| Dizzying Valley | ❌ — not yet triaged |
 | [Festival Grounds](src/import.rs#L1492) | ✅ |
 | [Forest of Vitality](src/import.rs#L1491) | ✅ |
+| Fossil Quarry | ❌ — not yet triaged |
+| [Full Metal Lab](src/import.rs#L485) | ✅ |
+| Grand Tree | ❌ — not yet triaged |
+| [Granite Cave](src/import.rs#L481) | ✅ |
 | [Gravity Mountain](src/import.rs#L1426) | ✅ |
 | [Jamming Tower](src/import.rs#L1489) | ✅ |
+| Levincia | ❌ — not yet triaged |
+| [Lively Stadium](src/import.rs#L388) | ✅ |
 | [Lumiose City](src/import.rs#L1483) | ✅ |
+| Mystery Garden | ❌ — not yet triaged |
 | [N's Castle](src/import.rs#L1427) | ✅ |
+| Neutralization Zone | ❌ — not yet triaged |
 | [Nighttime Mine](src/import.rs#L854) | ✅ |
+| Paradise Resort | ❌ — not yet triaged |
+| [Perilous Jungle](src/import.rs#L411) | ✅ |
+| Postwick | ❌ — not yet triaged |
 | [Prism Tower](src/import.rs#L1484) | ✅ |
 | [Risky Ruins](src/import.rs#L1490) | ✅ |
+| Spikemuth Gym | ❌ — not yet triaged |
+| Surfing Beach | ❌ — not yet triaged |
 | [Team Rocket's Factory](src/import.rs#L1479) | ✅ |
 | [Team Rocket's Watchtower](src/import.rs#L857) | ✅ |
 
-### Special Energy (9/11 built)
+### Special Energy (15/17 built)
 
 | Card | Status |
 | --- | --- |
 | [Boomerang Energy](src/import.rs#L1930) | ✅ |
+| [Bubbly Water Energy](src/import.rs#L1942) | ✅ |
 | [Enriching Energy](src/import.rs#L1913) | ✅ |
 | [Growing Grass Energy](src/import.rs#L1912) | ✅ |
-| Legacy Energy | ❌ |
+| [Ignition Energy](src/import.rs#L1954) | ✅ |
+| Legacy Energy | ❌ — its Prize-count clause needs the deferred Prize-count mechanic |
+| [Magnetic Metal Energy](src/import.rs#L1939) | ✅ |
 | [Mist Energy](src/import.rs#L1927) | ✅ |
 | [Neo Upper Energy](src/import.rs#L1960) | ✅ |
+| [Nitro Fire Energy](src/import.rs#L1945) | ✅ |
 | [Prism Energy](src/import.rs#L1933) | ✅ |
 | [Rocky Fighting Energy](src/import.rs#L1936) | ✅ |
+| [Shadowy Darkness Energy](src/import.rs#L1951) | ✅ |
 | [Spiky Energy](src/import.rs#L1924) | ✅ |
-| Team Rocket's Energy | ❌ |
+| Team Rocket's Energy | ❌ — attaches only to a Team Rocket's Pokémon and discards itself instantly off any other — nothing validates an attach against the carrier's identity yet |
 | [Telepathic Psychic Energy](src/import.rs#L1916) | ✅ |
+| [Voltaic Lightning Energy](src/import.rs#L1948) | ✅ |
 
-### Pokémon (102/131 built)
+### Pokémon (field) (102/131 built)
 
 | Card | Attacks | Ability |
 | --- | --- | --- |
