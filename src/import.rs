@@ -510,6 +510,21 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::ReducesDamageFromType { kind: Type::Dragon, amount: 60 },
         ),
+        "Thick Scale" => (
+            free,
+            TrainerEffect::ReducesDamageFromTypes {
+                kinds: &[Type::Grass, Type::Fire, Type::Water, Type::Lightning],
+                amount: 50,
+            },
+        ),
+        "Team Rocket's Hypnotizer" => (
+            free,
+            TrainerEffect::InflictsConditionOnAttackerIfDefenderNamed(
+                crate::card::Condition::Asleep,
+                "Team Rocket's",
+            ),
+        ),
+        "Adversity Policy" => (free, TrainerEffect::DrawsWhenDefenderWeakToAttackerIsHit(3)),
         "Dangerous Laser" => (
             free,
             TrainerEffect::InflictOnOpponentActive(

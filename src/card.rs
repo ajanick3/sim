@@ -390,6 +390,15 @@ pub enum TrainerEffect {
     /// The same trigger as `DamagesAttackerWhenDefenderIsHit`: the
     /// Pokémon's owner draws this many cards. `Lucky Helmet`.
     DrawsWhenDefenderIsHit(u32),
+    /// The same trigger, but only while the defender's own printed
+    /// name holds this word — inflicts a Special Condition on the
+    /// attacker instead of countering with damage or a draw.
+    /// `Team Rocket's Hypnotizer`.
+    InflictsConditionOnAttackerIfDefenderNamed(Condition, &'static str),
+    /// The same trigger, gated on the defender having Weakness to the
+    /// attacker's own type: the defender's owner draws this many
+    /// cards. `Adversity Policy`.
+    DrawsWhenDefenderWeakToAttackerIsHit(u32),
     /// The same trigger, but with a choice: move one Energy off the
     /// attacker onto one of the attacker's own Benched Pokémon, the
     /// defender's controller's choice. Opens `Phase::MovingEnergyForHandheldFan`
@@ -532,6 +541,9 @@ pub enum TrainerEffect {
     /// and Resistance. The "-Berry" Tools (`Babiri`, `Colbur`, `Occa`,
     /// `Passho`, `Payapa`, `Haban`).
     ReducesDamageFromType { kind: Type, amount: u32 },
+    /// The same reduction `ReducesDamageFromType` reads, against any of
+    /// several attacker types at once rather than one. `Thick Scale`.
+    ReducesDamageFromTypes { kinds: &'static [Type], amount: u32 },
     /// A Tool on the attacker: its attacks do `amount` more damage to an
     /// opponent's Active that is a Pokémon ex, before Weakness and
     /// Resistance. `Maximum Belt`.
