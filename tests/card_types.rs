@@ -152,7 +152,12 @@ fn the_kinds_add_up_to_the_pool() {
     // Kofu (two prints), Perrin (three prints), and Caretaker (two
     // prints) take it to 53.
     // Hop's Choice Band takes it to 52.
-    assert_eq!(trainers, 52, "the Trainers still refused, by kind");
+    // Six of the seven "Antique … Fossil" Items (Antique Cover Fossil
+    // has two prints; the rest one each) leave the refused Item pool
+    // entirely — they are admitted as a synthetic Pokémon now, not a
+    // Trainer (ADR 0105). Antique Sail Fossil alone stays refused.
+    // Takes it to 45.
+    assert_eq!(trainers, 45, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

@@ -232,7 +232,46 @@ fn read_sets(root: &Value) -> Vec<SetRef> {
         .unwrap_or_default()
 }
 
+/// The "Antique … Fossil" Items this engine admits as a synthetic Basic
+/// Pokémon rather than a Trainer — see ADR 0105. `Antique Sail Fossil`
+/// is deliberately absent: its own Ability ("prevent all effects of an
+/// opponent's Supporter done to this Pokémon") has no single read site
+/// the way the other six do, so it stays refused as an ordinary Item.
+pub const ANTIQUE_FOSSILS: &[&str] = &[
+    "Antique Jaw Fossil",
+    "Antique Armor Fossil",
+    "Antique Skull Fossil",
+    "Antique Cover Fossil",
+    "Antique Root Fossil",
+    "Antique Plume Fossil",
+];
+
 fn read_card(card: &Value, lineage: &HashMap<&str, &str>) -> Result<CardDef, Refusal> {
+    let name_str = card["name"].as_str().unwrap_or("?");
+    if card["category"].as_str() == Some("Trainer") && ANTIQUE_FOSSILS.contains(&name_str) {
+        let id = card["id"].as_str().unwrap_or("?");
+        let ability = read_ability(name_str, card["abilities"].as_array())?;
+        return Ok(CardDef::Pokemon(Pokemon {
+            print_id: leak(id),
+            name: leak(name_str),
+            hp: card["hp"].as_u64().ok_or(Refusal::UnknownSymbol)? as u32,
+            kind: Type::Colorless,
+            weakness: None,
+            resistance: None,
+            // "Can't retreat" — the same fixed-cost trick a real Retreat
+            // discount already uses in reverse, rather than a new
+            // `cannot_retreat` field the whole `Pokemon` struct would
+            // carry for six cards.
+            retreat_cost: u8::MAX,
+            prizes: 1,
+            stage: Stage::Basic,
+            evolve_from: None,
+            evolves_from_basic: None,
+            attacks: Vec::new(),
+            ability,
+            markers: Vec::new(),
+        }));
+    }
     match card["category"].as_str() {
         Some("Trainer") => {
             let kind = trainer_kind(card);
@@ -2187,6 +2226,26 @@ fn known_ability(pokemon_name: &str, ability_name: &str) -> Option<AbilityEffect
                 Type::Darkness,
                 "Pecharunt ex",
             )
+        }
+        ("Antique Jaw Fossil", "Intimidating Jaw") => {
+            AbilityEffect::PassiveWhileActiveTakesLessDamage(30)
+        }
+        ("Antique Armor Fossil", "Protective Armor") => {
+            AbilityEffect::PassiveWhileActiveReducesDamageToOwnSide(10)
+        }
+        ("Antique Skull Fossil", "Spiny Skull") => {
+            // "3 damage counters" — 10 each, the same raw-damage
+            // convention `CountersAttackerOnDamageTakenWhileActive` stores.
+            AbilityEffect::PassiveWhileActiveCountersAttackerOnDamageTaken(30)
+        }
+        ("Antique Cover Fossil", "Protective Cover") => {
+            AbilityEffect::PassivePreventsAttackEffectsOnSelf
+        }
+        ("Antique Plume Fossil", "Plume Protection") => {
+            AbilityEffect::PassiveWhileBenchedPreventsAllDamage
+        }
+        ("Antique Root Fossil", "Primal Root") => {
+            AbilityEffect::PassiveWhileActiveOpponentBasicAttacksCostMore
         }
         _ => return None,
     })

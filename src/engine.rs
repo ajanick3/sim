@@ -235,6 +235,11 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
 
         Action::Retreat { to } => retreat(state, to),
 
+        Action::DiscardOwnPokemonFromPlay { pokemon } => {
+            discard_own_pokemon_voluntarily(state, pokemon);
+            settle(state);
+        }
+
         Action::DiscardEnergy { card } => {
             let Phase::DiscardingForRetreat {
                 player,
@@ -1621,7 +1626,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 | crate::card::AbilityEffect::PassiveDoublesBasicGrassEnergyForCost
                 | crate::card::AbilityEffect::PassiveBonusCheckupDamageToOpponentsPoisonedWhileActive(
                     _,
-                ) => {
+                )
+                | crate::card::AbilityEffect::PassiveWhileActiveTakesLessDamage(_)
+                | crate::card::AbilityEffect::PassiveWhileActiveReducesDamageToOwnSide(_)
+                | crate::card::AbilityEffect::PassiveWhileActiveCountersAttackerOnDamageTaken(_)
+                | crate::card::AbilityEffect::PassivePreventsAttackEffectsOnSelf
+                | crate::card::AbilityEffect::PassiveWhileBenchedPreventsAllDamage
+                | crate::card::AbilityEffect::PassiveWhileActiveOpponentBasicAttacksCostMore => {
                     unreachable!("legal_actions never offers UseAbility for a standing passive effect")
                 }
                 crate::card::AbilityEffect::OncePerTurnIfEnergyOfTypeAttachedMayMoveDamageCountersToOpponent(
@@ -4334,6 +4345,17 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
             let attacker_name = state.pokemon_def(attacker).name;
             state.log.push(format!("{attacker_name} takes {amount} back."));
         }
+        // `Antique Skull Fossil`'s `Spiny Skull` (ADR 0105) — the same
+        // counter, Ability-carried instead of Energy-carried.
+        if !state.abilities_disabled_for(defender)
+            && let Some(crate::card::AbilityEffect::PassiveWhileActiveCountersAttackerOnDamageTaken(
+                amount,
+            )) = state.pokemon_def(defender).ability.map(|a| a.effect)
+        {
+            state.pokemon[attacker.index()].damage += amount;
+            let attacker_name = state.pokemon_def(attacker).name;
+            state.log.push(format!("{attacker_name} takes {amount} back."));
+        }
     }
     if let Some(condition) = attack.inflicts
         && !state.attack_effects_on_it_prevented(attacker, defender)
@@ -5479,6 +5501,23 @@ fn damage_dealt_with(
         }
     }
 
+    // Step 33d: an Ability on the defender itself — the Active Pokémon
+    // is always its own side's only possible defender here, so "while
+    // this Pokémon is in the Active Spot" and "while this Pokémon is
+    // being hit" are the same fact. `Antique Jaw Fossil` and `Antique
+    // Armor Fossil` (ADR 0105).
+    if !state.abilities_disabled_for(defender)
+        && let Some(effect) = state.pokemon_def(defender).ability.map(|a| a.effect)
+    {
+        match effect {
+            crate::card::AbilityEffect::PassiveWhileActiveTakesLessDamage(amount)
+            | crate::card::AbilityEffect::PassiveWhileActiveReducesDamageToOwnSide(amount) => {
+                damage = damage.saturating_sub(amount);
+            }
+            _ => {}
+        }
+    }
+
     // Step 34: effects on the defending Pokémon. A restriction granted
     // on a previous turn against this Pokémon, read only during the
     // granting player's very next turn — the same lifetime
@@ -6006,6 +6045,29 @@ fn knock_out(state: &mut GameState, pokemon: PokemonId) {
     state.pokemon[pokemon.index()].knocked_out = true;
     state.knocked_out_last_turn[owner.index()] = true;
     state.log.push(format!("{name} is Knocked Out."));
+}
+
+/// `Antique … Fossil` (ADR 0105): "at any time during your turn, you may
+/// discard this card from play" — its owner's own choice, from the
+/// Active Spot or the Bench alike, not a Knockout: no Prize, no
+/// `knocked_out` flag, the same non-Knockout exit
+/// `discard_benched_pokemon` already is for the Bench, widened to clear
+/// the Active Spot too. `settle`'s own Rule 40/42 check, run by the
+/// caller right after, promotes from the Bench or ends the game if none
+/// is left — the same real rule a Knockout already triggers that way.
+fn discard_own_pokemon_voluntarily(state: &mut GameState, pokemon: PokemonId) {
+    let owner = state.pokemon(pokemon).owner;
+    let name = state.pokemon_def(pokemon).name;
+    let cards = std::mem::take(&mut state.pokemon[pokemon.index()].cards);
+    let attached = std::mem::take(&mut state.pokemon[pokemon.index()].attached);
+    let side = &mut state.players[owner.index()];
+    side.discard.extend(cards);
+    side.discard.extend(attached);
+    if side.active == Some(pokemon) {
+        side.active = None;
+    }
+    side.bench.retain(|p| *p != pokemon);
+    state.log.push(format!("{name} is discarded from play."));
 }
 
 /// A Benched Pokémon leaving play because the Bench must shrink — not a

@@ -1421,6 +1421,12 @@ impl GameState {
                 .as_energy()
                 .is_some_and(|e| e.effect == Some(crate::card::EnergyEffect::PreventsAttackEffectsOnCarrier))
         });
+        // `Antique Cover Fossil`'s `Protective Cover` (ADR 0105) — the
+        // same shield, Ability-carried instead of Energy-carried.
+        let carried_ability = !self.abilities_disabled_for(id)
+            && self.pokemon_def(id).ability.is_some_and(|a| {
+                a.effect == crate::card::AbilityEffect::PassivePreventsAttackEffectsOnSelf
+            });
         // `Acerola's Mischief`: this Pokémon takes no effect at all from
         // an ex the granting player's opponent attacks with, during
         // that opponent's next turn — the same condition `damage_dealt`
@@ -1430,7 +1436,7 @@ impl GameState {
             .is_some_and(|(granted_by, protected)| {
                 protected == id && self.current != granted_by && self.pokemon_def(attacker).prizes > 1
             });
-        carried_energy || mischief
+        carried_energy || carried_ability || mischief
     }
 
     /// Whether `player` has a Pokémon carrying `Marker::Tera` in play,
@@ -1501,7 +1507,13 @@ impl GameState {
                     && e.kind == carrier_kind
             })
         });
-        non_rule_box_shield || energy_shield
+        // `Antique Plume Fossil`'s `Plume Protection` (ADR 0105) —
+        // shields only its own carrier, no type match needed.
+        let fossil_shield = !self.abilities_disabled_for(target)
+            && self.pokemon_def(target).ability.is_some_and(|a| {
+                a.effect == crate::card::AbilityEffect::PassiveWhileBenchedPreventsAllDamage
+            });
+        non_rule_box_shield || energy_shield || fossil_shield
     }
 
     /// Whether `target`, sitting on its own owner's Bench, is
@@ -1941,6 +1953,15 @@ impl GameState {
             return;
         }
         if self.carries_special_condition_immunity(id) {
+            return;
+        }
+        // The "Antique … Fossil" Pokémon (ADR 0105) print "can't be
+        // affected by any Special Conditions" alongside their own
+        // unique Ability, which already fills the one `ability` slot
+        // a `Pokemon` carries — so this reads the printed name
+        // directly, the same way a handful of other single-card
+        // carve-outs in this codebase already do.
+        if crate::import::ANTIQUE_FOSSILS.contains(&self.pokemon_def(id).name) {
             return;
         }
         if condition == Condition::Asleep

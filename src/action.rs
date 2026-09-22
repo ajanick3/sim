@@ -35,6 +35,10 @@ pub enum Action {
     PlayTool { card: CardId, target: PokemonId },
     /// Retreat the Active, promoting a Benched Pokémon. Once per turn.
     Retreat { to: PokemonId },
+    /// Discard one of the "Antique … Fossil" Pokémon (ADR 0105) from
+    /// play, at no cost, any number of times a turn — its own printed
+    /// text, not a real Pokémon leaving play, so no Prize either.
+    DiscardOwnPokemonFromPlay { pokemon: PokemonId },
     /// Discard one attached Energy toward a Retreat Cost.
     DiscardEnergy { card: CardId },
     /// Resolve one of your own between-turn effects.
@@ -1818,6 +1822,20 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         if !state.is_first_turn_of_game() && !held(active) && !cannot_attack_at_all {
             let tera_surcharge = state.pokemon_def(active).markers.contains(&crate::card::Marker::Tera)
                 && state.stadium_effect() == Some(crate::card::TrainerEffect::TeraAttacksCostMore);
+            // `Antique Root Fossil`'s `Primal Root` (ADR 0105) — read from
+            // the opponent's own side, the first surcharge this loop
+            // charges against `active` rather than reading off it.
+            let fossil_surcharge = state.pokemon_def(active).stage == crate::card::Stage::Basic
+                && state
+                    .player(player.opponent())
+                    .active
+                    .is_some_and(|opp_active| {
+                        !state.abilities_disabled_for(opp_active)
+                            && state.pokemon_def(opp_active).ability.is_some_and(|a| {
+                                a.effect
+                                    == crate::card::AbilityEffect::PassiveWhileActiveOpponentBasicAttacksCostMore
+                            })
+                    });
             let locked_attack_name = matches!(
                 state.locked_attack_next_turn,
                 Some((target, _, true)) if target == active
@@ -1885,6 +1903,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     cost = vec![crate::card::Type::Colorless];
                 }
                 if tera_surcharge {
+                    cost.push(crate::card::Type::Colorless);
+                }
+                if fossil_surcharge {
                     cost.push(crate::card::Type::Colorless);
                 }
                 if let Some((discounted_name, prizes_taken)) = discount
@@ -2039,6 +2060,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             crate::card::AbilityEffect::PassiveBonusCheckupDamageToOpponentsPoisonedWhileActive(_) => {
                 false
             }
+            crate::card::AbilityEffect::PassiveWhileActiveTakesLessDamage(_) => false,
+            crate::card::AbilityEffect::PassiveWhileActiveReducesDamageToOwnSide(_) => false,
+            crate::card::AbilityEffect::PassiveWhileActiveCountersAttackerOnDamageTaken(_) => false,
+            crate::card::AbilityEffect::PassivePreventsAttackEffectsOnSelf => false,
+            crate::card::AbilityEffect::PassiveWhileBenchedPreventsAllDamage => false,
+            crate::card::AbilityEffect::PassiveWhileActiveOpponentBasicAttacksCostMore => false,
             crate::card::AbilityEffect::OncePerTurnMaySearchAnyCardIfActiveHasNamedAbility(name) => {
                 side.active.is_some_and(|a| {
                     state.pokemon_def(a).ability.is_some_and(|active_ability| active_ability.name == name)
@@ -2075,6 +2102,15 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
         };
         if eligible {
             actions.push(Action::UseAbility { pokemon });
+        }
+    }
+
+    // `Antique … Fossil` (ADR 0105): "at any time during your turn, you
+    // may discard this card from play" — no cost, no once-per-turn
+    // limit, offered for every one of the player's own in play.
+    for pokemon in side.in_play() {
+        if crate::import::ANTIQUE_FOSSILS.contains(&state.pokemon_def(pokemon).name) {
+            actions.push(Action::DiscardOwnPokemonFromPlay { pokemon });
         }
     }
 
@@ -2171,6 +2207,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         ),
         Action::Retreat { to } => {
             format!("Retreat, promoting {}", state.pokemon_def(to).name)
+        }
+        Action::DiscardOwnPokemonFromPlay { pokemon } => {
+            format!("Discard {} from play", state.pokemon_def(pokemon).name)
         }
         Action::Attack { index } => {
             let active = state
