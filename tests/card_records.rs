@@ -387,5 +387,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // (two prints, a new
     // `DrawThenShuffleSelfIntoDeckIfCommunityCenterAndDrew`) take it
     // to 1011.
-    assert_eq!(admitted, 1011, "coverage moves only on purpose");
+    // Hop's Choice Band (one print, a new
+    // `ReducesAttackCostAndBonusDamageForCarrierNamePrefix`) takes it
+    // to 1012.
+    assert_eq!(admitted, 1012, "coverage moves only on purpose");
 }

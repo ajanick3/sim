@@ -864,6 +864,20 @@ pub enum TrainerEffect {
     /// `{C}`. Read in `legal_actions`' own attack-cost loop, the same
     /// site the other cost reductions already are. `Counter Gain`.
     ReducesAttackCostIfMorePrizesRemaining(u32),
+    /// A Tool: while the carrier's own printed name holds this word,
+    /// its own attacks cost this many fewer `{C}` and do this much
+    /// more damage to the opponent's Active Pokémon, before Weakness
+    /// and Resistance — the named-carrier attack-cost discount
+    /// (`ReducesAttackCostIfMorePrizesRemaining`'s own shape, gated on
+    /// a name instead of a Prize count) and the named-carrier bonus
+    /// damage (`BonusDamageVsActiveExForCarrierNamed`'s shape, without
+    /// the ex restriction) in the one Tool that prints both.
+    /// `Hop's Choice Band`.
+    ReducesAttackCostAndBonusDamageForCarrierNamePrefix {
+        prefix: &'static str,
+        cost_reduction: u32,
+        bonus_damage: u32,
+    },
 }
 
 /// A side-wide effect a card grants for the opponent's next turn, held in

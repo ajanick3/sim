@@ -418,6 +418,14 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             TrainerEffect::ReducesAttackCostByAnyTypeIfCarrierMarked(crate::card::Marker::Tera, 1),
         ),
         "Counter Gain" => (free, TrainerEffect::ReducesAttackCostIfMorePrizesRemaining(1)),
+        "Hop's Choice Band" => (
+            free,
+            TrainerEffect::ReducesAttackCostAndBonusDamageForCarrierNamePrefix {
+                prefix: "Hop's",
+                cost_reduction: 1,
+                bonus_damage: 30,
+            },
+        ),
         "Poké Ball" => (
             free,
             TrainerEffect::CoinFlipThen(Box::new(TrainerEffect::Decide {

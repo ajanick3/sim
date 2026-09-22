@@ -151,7 +151,8 @@ fn the_kinds_add_up_to_the_pool() {
     // once-a-turn Stadium actions — take it to 60.
     // Kofu (two prints), Perrin (three prints), and Caretaker (two
     // prints) take it to 53.
-    assert_eq!(trainers, 53, "the Trainers still refused, by kind");
+    // Hop's Choice Band takes it to 52.
+    assert_eq!(trainers, 52, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

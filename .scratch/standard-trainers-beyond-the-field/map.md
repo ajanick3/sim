@@ -154,9 +154,17 @@ More clusters merged:
   (a new `DiscardFollowUp::DrawUpToInPlayCountOfType`); Surfing Beach
   is the first Stadium to grant a free switch action, gated on both
   the Active and the chosen Bench Pokémon sharing its type.
+- Hop's Choice Band — `ReducesAttackCostAndBonusDamageForCarrierNamePrefix`,
+  the named-carrier attack-cost discount `ReducesAttackCostIfMore-
+  PrizesRemaining`'s shape already is, gated on a name instead of a
+  Prize count, combined in one Tool with the named-carrier bonus
+  damage `BonusDamageVsActiveExForCarrierNamed`'s shape already is,
+  without the ex restriction. Read at both existing sites: the
+  attack-cost loop in `legal_actions`, and the Tool-bonus step of
+  `damage_dealt_with`.
 
-Coverage: 1011 / 3051 prints (33.1%). Refused, by kind:
-Supporter 15, Item 26, Tool 10, Stadium 10, Special Energy 3.
+Coverage: 1012 / 3051 prints (33.2%). Refused, by kind:
+Supporter 15, Item 26, Tool 9, Stadium 10, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
@@ -301,15 +309,10 @@ Deferred — the tier that needs its own design/ADR before it is cheap:
   neither tracked today.
 
 Triaged but cheap, left unbuilt this pass for a session with room —
-each reuses an existing shape closely enough that no new mechanic is
 needed, just the time to wire and test it. Kofu, Perrin, Caretaker,
-Levincia, Spikemuth Gym, Mystery Garden, and Surfing Beach, all listed
-here in an earlier pass, are now built and recorded under Decisions
-above instead:
-- Hop's Choice Band — combines a named-carrier attack-cost discount
-  with a named-carrier bonus-damage clause in one Tool; both shapes
-  exist separately, only the combined variant is unbuilt.
+Levincia, Spikemuth Gym, Mystery Garden, Surfing Beach, and Hop's
+Choice Band, all listed here in an earlier pass, are now built and
+recorded under Decisions above instead — nothing is left in this list.
 
 Not yet triaged: none. Every refused Trainer and Special Energy in the
-pool is now either built, filed under a Deferred mechanic above, or
-filed in the cheap-but-unbuilt list just above with a real reason.
+pool is now either built or filed under a Deferred mechanic above.

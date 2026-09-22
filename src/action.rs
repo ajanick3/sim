@@ -1854,6 +1854,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                     {
                         amount
                     }
+                    crate::card::TrainerEffect::ReducesAttackCostAndBonusDamageForCarrierNamePrefix {
+                        prefix,
+                        cost_reduction,
+                        ..
+                    } if state.pokemon_def(active).name.starts_with(prefix) => cost_reduction,
                     _ => 0,
                 })
                 .sum();
