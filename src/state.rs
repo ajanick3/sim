@@ -1660,6 +1660,9 @@ impl GameState {
                     p.stage != crate::card::Stage::Basic && p.name.contains(word)
                 })
             }
+            CardFilter::PokemonNameContains(word) => {
+                self.def_of(card).as_pokemon().is_some_and(|p| p.name.contains(word))
+            }
         }
     }
 

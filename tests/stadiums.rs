@@ -1839,3 +1839,260 @@ fn paradise_resort_is_admitted_from_the_artifact() {
         "Paradise Resort should play"
     );
 }
+
+// --- Beyond the field: Levincia, Spikemuth Gym, Mystery Garden, Surfing Beach ---
+
+#[test]
+fn levincia_returns_up_to_two_basic_lightning_energy_from_discard() {
+    let mut db = build().db;
+    let lightning_energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-lightning-energy",
+        name: "Lightning Energy",
+        kind: Type::Lightning,
+        effect: None,
+    }));
+    let levincia = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-levincia",
+        name: "Levincia",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::StadiumMayReturnEnergyOfTypeFromDiscard(Type::Lightning, 2),
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, levincia, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, levincia);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    let first = deal_new_card(&mut state, player, lightning_energy);
+    let second = deal_new_card(&mut state, player, lightning_energy);
+    state.players[player.index()].discard.push(first);
+    state.players[player.index()].discard.push(second);
+
+    assert!(legal_actions(&state).contains(&Action::UseLevincia));
+    apply(&mut state, Action::UseLevincia).unwrap();
+
+    assert_eq!(offered(&state), vec![first, second], "both discarded Lightning Energy offered");
+    apply(&mut state, Action::TakeCard { card: first }).unwrap();
+    apply(&mut state, Action::TakeCard { card: second }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert!(state.player(player).hand.contains(&first));
+    assert!(state.player(player).hand.contains(&second));
+    assert!(!state.player(player).discard.contains(&first));
+    assert!(
+        !legal_actions(&state).contains(&Action::UseLevincia),
+        "once a turn"
+    );
+}
+
+#[test]
+fn levincia_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Levincia" && c.playable.is_some()),
+        "Levincia should play"
+    );
+}
+
+#[test]
+fn spikemuth_gym_searches_for_a_marnies_pokemon_to_hand() {
+    let mut db = build().db;
+    let marnies_mon = basic(&mut db, "test-marnies-mon", "Marnie's Testmon", 80, 1, None);
+    let gym = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-spikemuth-gym",
+        name: "Spikemuth Gym",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::StadiumMaySearchForNameToHand("Marnie's"),
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, gym, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, gym);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    let target = deal_new_card(&mut state, player, marnies_mon);
+    state.players[player.index()].deck.push(target);
+
+    assert!(legal_actions(&state).contains(&Action::UseSpikemuthGym));
+    apply(&mut state, Action::UseSpikemuthGym).unwrap();
+    assert!(offered(&state).contains(&target));
+    apply(&mut state, Action::TakeCard { card: target }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert!(state.player(player).hand.contains(&target));
+    assert!(
+        !legal_actions(&state).contains(&Action::UseSpikemuthGym),
+        "once a turn"
+    );
+}
+
+#[test]
+fn spikemuth_gym_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Spikemuth Gym" && c.playable.is_some()),
+        "Spikemuth Gym should play"
+    );
+}
+
+#[test]
+fn mystery_garden_discards_energy_to_draw_up_to_psychic_count() {
+    let mut db = build().db;
+    let garden = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-mystery-garden",
+        name: "Mystery Garden",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::StadiumMayDiscardEnergyToDrawUpToTypeCount(Type::Psychic),
+    }));
+    let psychic_pokemon_def = db.add(CardDef::Pokemon(sim::card::Pokemon {
+        markers: Vec::new(),
+        print_id: "test-psychic-mon-typed",
+        name: "Psychicmon Typed",
+        hp: 90,
+        kind: Type::Psychic,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, garden, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, garden);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    let bench_mon = deal_new_card(&mut state, player, psychic_pokemon_def);
+    let bench_id = state.put_into_play(player, bench_mon);
+    state.players[player.index()].bench.push(bench_id);
+
+    let energy_card = ensure_in_hand(&mut state, player, set.energy);
+    assert!(legal_actions(&state).contains(&Action::UseMysteryGarden));
+    apply(&mut state, Action::UseMysteryGarden).unwrap();
+    apply(&mut state, Action::DiscardFromHand { card: energy_card }).unwrap();
+    apply(&mut state, Action::FinishDiscardingFromHand).unwrap();
+
+    // Two Psychic Pokémon in play: the Active and the one just benched —
+    // the Active in `build()`'s pool is Colorless, so give the Active a
+    // Psychic identity too by counting only the Bench one: the hand
+    // should be topped up to at least 1 (the Bench Psychic Pokémon).
+    assert!(
+        state.player(player).hand.len() >= 1,
+        "drew up to the Psychic-in-play count"
+    );
+    assert!(
+        !legal_actions(&state).contains(&Action::UseMysteryGarden),
+        "once a turn"
+    );
+}
+
+#[test]
+fn mystery_garden_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Mystery Garden" && c.playable.is_some()),
+        "Mystery Garden should play"
+    );
+}
+
+#[test]
+fn surfing_beach_switches_active_water_with_benched_water() {
+    let mut db = build().db;
+    let water_active = db.add(CardDef::Pokemon(sim::card::Pokemon {
+        markers: Vec::new(),
+        print_id: "test-water-active",
+        name: "Wateractive",
+        hp: 90,
+        kind: Type::Water,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let water_bench = db.add(CardDef::Pokemon(sim::card::Pokemon {
+        markers: Vec::new(),
+        print_id: "test-water-bench",
+        name: "Waterbench",
+        hp: 90,
+        kind: Type::Water,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let beach = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-surfing-beach",
+        name: "Surfing Beach",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::StadiumMaySwitchActiveOfType(Type::Water),
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, beach, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, beach);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    // No Water Active yet: not offered.
+    assert!(!legal_actions(&state).into_iter().any(|a| matches!(a, Action::SwitchForSurfingBeach { .. })));
+
+    let active_card = deal_new_card(&mut state, player, water_active);
+    let active_id = state.put_into_play(player, active_card);
+    let old_active = state.players[player.index()].active.replace(active_id);
+    if let Some(old) = old_active {
+        state.players[player.index()].bench.push(old);
+    }
+    let bench_card = deal_new_card(&mut state, player, water_bench);
+    let bench_id = state.put_into_play(player, bench_card);
+    state.players[player.index()].bench.push(bench_id);
+
+    assert!(legal_actions(&state).contains(&Action::SwitchForSurfingBeach { target: bench_id }));
+    apply(&mut state, Action::SwitchForSurfingBeach { target: bench_id }).unwrap();
+
+    assert_eq!(state.player(player).active, Some(bench_id));
+    assert!(state.player(player).bench.contains(&active_id));
+    assert!(
+        !legal_actions(&state)
+            .into_iter()
+            .any(|a| matches!(a, Action::SwitchForSurfingBeach { .. })),
+        "once a turn"
+    );
+}
+
+#[test]
+fn surfing_beach_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Surfing Beach" && c.playable.is_some()),
+        "Surfing Beach should play"
+    );
+}

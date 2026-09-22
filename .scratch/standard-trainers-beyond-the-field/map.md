@@ -128,8 +128,22 @@ More clusters merged:
   many-coin sibling: flip several coins and resolve the wrapped effect
   only if every one lands heads.
 
-Coverage: 996 / 3051 prints (32.6%). Refused, by kind:
-Supporter 18, Item 26, Tool 10, Stadium 14, Special Energy 3.
+- Levincia, Spikemuth Gym, Mystery Garden, Surfing Beach — four
+  once-a-turn Stadium actions, each opening `Phase::Deciding` or
+  `Phase::DiscardingFromHand` directly from its own `Action::Use*`
+  handler rather than through the card's own `slots()`, the same way
+  `Prism Tower` and `Community Center` already do: Levincia moves up
+  to 2 Basic Lightning Energy from discard to hand; Spikemuth Gym
+  searches the deck for a Marnie's Pokémon (a new
+  `CardFilter::PokemonNameContains`, the un-Basic-restricted sibling
+  of `BasicPokemonNameContains`) to hand; Mystery Garden discards an
+  Energy card to draw up to the discarder's own Psychic-in-play count
+  (a new `DiscardFollowUp::DrawUpToInPlayCountOfType`); Surfing Beach
+  is the first Stadium to grant a free switch action, gated on both
+  the Active and the chosen Bench Pokémon sharing its type.
+
+Coverage: 1004 / 3051 prints (32.9%). Refused, by kind:
+Supporter 18, Item 26, Tool 10, Stadium 10, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
@@ -287,18 +301,6 @@ needed, just the time to wire and test it:
   discarding, but only if Community Center (already built) is in
   play; needs a resolve-time read of one specific Stadium's presence,
   which no effect does yet.
-- Levincia — once per turn, returns up to 2 Basic Lightning Energy
-  from discard to hand; a per-turn Stadium search keyed to a type
-  instead of a name, the same shape the per-turn name-prefix Stadium
-  searches already use.
-- Spikemuth Gym — once per turn, searches for a Marnie's Pokémon to
-  hand; the same per-turn name-prefix Stadium search shape as above.
-- Mystery Garden — discards an Energy to draw up to the player's own
-  in-play Pokémon count; the draw target reads the board instead of a
-  fixed number, unlike `DrawUpToHandSize`.
-- Surfing Beach — once per turn, switches Active with a Benched Water
-  Pokémon; no Stadium effect yet grants a free switch action, but the
-  switch itself is a existing primitive.
 - Hop's Choice Band — combines a named-carrier attack-cost discount
   with a named-carrier bonus-damage clause in one Tool; both shapes
   exist separately, only the combined variant is unbuilt.

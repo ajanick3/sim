@@ -197,6 +197,11 @@ pub enum CardFilter {
     /// to an Evolution instead of a Basic. `Team Rocket's Great Ball`'s
     /// heads side.
     EvolutionPokemonNameContains(&'static str),
+    /// A Pokémon whose printed name contains this word, any stage — the
+    /// same substring match `BasicPokemonNameContains` reads, without
+    /// the Basic restriction. `Spikemuth Gym` searches for "a Marnie's
+    /// Pokémon", which is not confined to a Basic.
+    PokemonNameContains(&'static str),
 }
 
 /// What happens once a `Deciding` phase ends, beyond the cards it moved. A
@@ -273,6 +278,12 @@ pub enum DiscardFollowUp {
     /// nothing. `Prism Tower`'s "discard 2 to draw a card" is a trade,
     /// not two separate optional discards.
     DrawIfFullyDiscarded(u32),
+    /// Draw until the hand holds as many cards as the discarder has
+    /// Pokémon of this type in play — but only if the discard actually
+    /// happened, the same all-or-nothing gate `DrawIfFullyDiscarded`
+    /// reads, with a board-sized target instead of a fixed one.
+    /// `Mystery Garden`.
+    DrawUpToInPlayCountOfType(Type),
 }
 
 /// What a this-turn damage bonus restricts itself to — always the
@@ -420,6 +431,31 @@ pub enum TrainerEffect {
     /// by an exact name and a partial amount rather than a prefix and
     /// the whole cost. `Paradise Resort`.
     StadiumReducesRetreatCostForName(&'static str, u32),
+    /// A Stadium's own once-a-turn action, opening a `Phase::Deciding`
+    /// by hand rather than through the card's own `slots()` — its
+    /// destination reads a discard pile, not a deck, so nothing here
+    /// shuffles either. Up to `1` Basic Energy of `Type` moves from
+    /// the discard pile to hand. `Levincia`.
+    StadiumMayReturnEnergyOfTypeFromDiscard(Type, u32),
+    /// A Stadium's own once-a-turn action: search the deck for a
+    /// Pokémon whose printed name holds this word, reveal it, and put
+    /// it into hand; then shuffle. The same once-a-turn search shape
+    /// `MaySearchBasicToBenchThenMaybeEndTurn` already reads, keyed on
+    /// a name instead of a fixed stage, and to hand rather than the
+    /// Bench. `Spikemuth Gym`.
+    StadiumMaySearchForNameToHand(&'static str),
+    /// A Stadium's own once-a-turn action: discard an Energy card from
+    /// hand, then draw until the hand holds as many cards as the
+    /// discarder has Pokémon of this type in play. No-op at play
+    /// time, like every other Stadium standing action; the discard
+    /// and the draw both run from `Action::UseMysteryGarden`.
+    /// `Mystery Garden`.
+    StadiumMayDiscardEnergyToDrawUpToTypeCount(Type),
+    /// A Stadium's own once-a-turn action: switch the Active with a
+    /// Benched Pokémon of this type, but only while the Active is
+    /// also this type — the first Stadium to grant a free switch.
+    /// `Surfing Beach`.
+    StadiumMaySwitchActiveOfType(Type),
     /// A Stadium's own once-a-turn action, offered directly in the acting
     /// player's Main phase rather than dispatched at play time: put a
     /// card from hand on top of the Deck. `Academy at Night`.

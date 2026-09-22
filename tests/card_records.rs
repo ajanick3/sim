@@ -378,5 +378,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // (one print each) take it to 992.
     // Postwick and Paradise Resort (one print each) take it to 995.
     // Energy Coin (one print, a new `CoinFlipAllThen`) takes it to 996.
-    assert_eq!(admitted, 996, "coverage moves only on purpose");
+    // Levincia (two prints), Spikemuth Gym (one print), Mystery
+    // Garden (three prints), and Surfing Beach (two prints) — four
+    // once-a-turn Stadium actions — take it to 1004.
+    assert_eq!(admitted, 1004, "coverage moves only on purpose");
 }

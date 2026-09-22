@@ -507,6 +507,22 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::StadiumReducesRetreatCostForName("Psyduck", 1),
         ),
+        "Levincia" => (
+            free,
+            TrainerEffect::StadiumMayReturnEnergyOfTypeFromDiscard(Type::Lightning, 2),
+        ),
+        "Spikemuth Gym" => (
+            free,
+            TrainerEffect::StadiumMaySearchForNameToHand("Marnie's"),
+        ),
+        "Mystery Garden" => (
+            free,
+            TrainerEffect::StadiumMayDiscardEnergyToDrawUpToTypeCount(Type::Psychic),
+        ),
+        "Surfing Beach" => (
+            free,
+            TrainerEffect::StadiumMaySwitchActiveOfType(Type::Water),
+        ),
         "Full Metal Lab" => (
             free,
             TrainerEffect::StadiumReducesDamageToType { kind: Type::Metal, amount: 30 },
