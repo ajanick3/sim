@@ -482,6 +482,14 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::StadiumReducesDamageForNamePrefix { word: "Steven's", amount: 30 },
         ),
+        "Postwick" => (
+            free,
+            TrainerEffect::StadiumBoostsDamageForNamePrefix { word: "Hop's", amount: 30 },
+        ),
+        "Paradise Resort" => (
+            free,
+            TrainerEffect::StadiumReducesRetreatCostForName("Psyduck", 1),
+        ),
         "Full Metal Lab" => (
             free,
             TrainerEffect::StadiumReducesDamageToType { kind: Type::Metal, amount: 30 },

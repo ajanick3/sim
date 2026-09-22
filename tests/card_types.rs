@@ -143,7 +143,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Amarys (three prints) and Waitress (one print) take it to 75.
     // Thick Scale, Team Rocket's Hypnotizer, and Adversity Policy
     // take it to 72.
-    assert_eq!(trainers, 72, "the Trainers still refused, by kind");
+    // Postwick and Paradise Resort take it to 69.
+    assert_eq!(trainers, 69, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

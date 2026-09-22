@@ -3619,6 +3619,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         // reads the effect from there, not from this dispatch.
         TrainerEffect::ReducesHpForStage(..)
         | TrainerEffect::RemovesRetreatCostForNamePrefix(_)
+        | TrainerEffect::StadiumReducesRetreatCostForName(..)
         | TrainerEffect::MayPutHandCardOnTopOfDeck
         | TrainerEffect::MayDrawTwoIfPlayedTeamRocketSupporter
         | TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn
@@ -3632,6 +3633,7 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::StadiumExtraPoisonDamage(_)
         | TrainerEffect::StadiumReducesDamageToType { .. }
         | TrainerEffect::StadiumReducesDamageForNamePrefix { .. }
+        | TrainerEffect::StadiumBoostsDamageForNamePrefix { .. }
         | TrainerEffect::StadiumMayDiscardTwoToDrawOne
         | TrainerEffect::StadiumMayHealAllIfPlayedSupporter(_)
         | TrainerEffect::AbilitiesDisabled => {}
@@ -5115,6 +5117,15 @@ fn damage_dealt_with(
             }
             _ => {}
         }
+    }
+
+    // Step 32b2: a Stadium that boosts attacks by a name prefix, read
+    // for either side's attacker. `Postwick`.
+    if let Some(crate::card::TrainerEffect::StadiumBoostsDamageForNamePrefix { word, amount }) =
+        state.stadium_effect()
+        && state.pokemon_def(attacker).name.contains(word)
+    {
+        damage += amount;
     }
 
     // Step 32c: `Cobalt Command` — read from the attacker's own side,

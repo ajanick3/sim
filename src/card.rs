@@ -414,6 +414,12 @@ pub enum TrainerEffect {
     /// A Stadium's static effect: every Pokémon in play whose name starts
     /// with this has no Retreat Cost, both sides alike. `N's Castle`.
     RemovesRetreatCostForNamePrefix(&'static str),
+    /// A Stadium's static effect: every Pokémon in play with this exact
+    /// name has its Retreat Cost reduced by this much, both sides
+    /// alike — the same reach `RemovesRetreatCostForNamePrefix` has,
+    /// by an exact name and a partial amount rather than a prefix and
+    /// the whole cost. `Paradise Resort`.
+    StadiumReducesRetreatCostForName(&'static str, u32),
     /// A Stadium's own once-a-turn action, offered directly in the acting
     /// player's Main phase rather than dispatched at play time: put a
     /// card from hand on top of the Deck. `Academy at Night`.
@@ -568,6 +574,12 @@ pub enum TrainerEffect {
     /// takes `amount` less damage from the opponent's attacks, after
     /// Weakness and Resistance. `Granite Cave`.
     StadiumReducesDamageForNamePrefix { word: &'static str, amount: u32 },
+    /// A Stadium: an attacker whose name contains the word, either
+    /// side, does `amount` more damage to the opponent's Active,
+    /// before Weakness and Resistance — the same name-substring gate
+    /// `StadiumReducesDamageForNamePrefix` reads, on the attacker's
+    /// side of the exchange instead of the defender's. `Postwick`.
+    StadiumBoostsDamageForNamePrefix { word: &'static str, amount: u32 },
     /// A Stadium: a Pokémon of `kind`, either side, takes `amount` less
     /// damage from the opponent's attacks, after Weakness and Resistance.
     /// `Full Metal Lab`.

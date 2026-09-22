@@ -1308,6 +1308,18 @@ impl GameState {
         {
             return 0;
         }
+        // `Paradise Resort`: a Stadium reduction by an exact name,
+        // rather than `RemovesRetreatCostForNamePrefix`'s "to zero, by
+        // a prefix."
+        let stadium_reduction =
+            if let Some(crate::card::TrainerEffect::StadiumReducesRetreatCostForName(name, amount)) =
+                self.stadium_effect()
+                && self.pokemon_def(id).name == name
+            {
+                amount
+            } else {
+                0
+            };
         if self.pokemon_def(id).stage == crate::card::Stage::Basic {
             let owner = self.pokemon(id).owner;
             let has_skyliner = self.player(owner).in_play().iter().any(|p| {
@@ -1362,7 +1374,7 @@ impl GameState {
                 })
                 .sum()
         };
-        printed.saturating_sub(reduction)
+        printed.saturating_sub(reduction).saturating_sub(stadium_reduction)
     }
 
     /// Whether any Pokémon in play, on either side, carries
