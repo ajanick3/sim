@@ -3811,7 +3811,8 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::MovesEnergyFromAttackerToTheirBench
         | TrainerEffect::MayAttachBasicEnergyFromDiscardAtTurnEnd
         | TrainerEffect::ReducesAttackCostByAnyTypeIfCarrierMarked(..)
-        | TrainerEffect::ReducesAttackCostIfMorePrizesRemaining(_) => {
+        | TrainerEffect::ReducesAttackCostIfMorePrizesRemaining(_)
+        | TrainerEffect::ReducesAttackCostAndBonusDamageForCarrierNamePrefix { .. } => {
             unreachable!(
                 "a static effect is read wherever it applies, never dispatched \
                  at play time — a Tool never reaches resolve_trainer at all"
@@ -5325,6 +5326,13 @@ fn damage_dealt_with(
                 if state.pokemon_def(attacker).name == *name && state.pokemon_def(defender).prizes > 1 =>
             {
                 damage += bonus;
+            }
+            crate::card::TrainerEffect::ReducesAttackCostAndBonusDamageForCarrierNamePrefix {
+                prefix,
+                bonus_damage,
+                ..
+            } if state.pokemon_def(attacker).name.starts_with(prefix) => {
+                damage += bonus_damage;
             }
             _ => {}
         }

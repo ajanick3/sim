@@ -193,3 +193,131 @@ fn counter_gain_is_admitted_from_the_artifact() {
         "Counter Gain should play"
     );
 }
+
+// --- Beyond the field: Hop's Choice Band ---
+
+/// A game through setup, its Active named `name`, with one attack costing
+/// two Colorless and doing 60 damage — enough to show both a one-Energy
+/// discount and a bonus-damage clause landing at once.
+fn game_with_named_active(seed: u64, name: &'static str) -> (GameState, sim::ids::PokemonId) {
+    let mut db = CardDb::new();
+    let mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-named-mon",
+        name,
+        hp: 100,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack {
+            name: "Slam",
+            cost: vec![Type::Colorless, Type::Colorless],
+            base_damage: 60,
+            inflicts: None,
+            effect: None,
+        }],
+    }));
+    let energy = db.add(CardDef::Energy(Energy {
+        print_id: "test-colorless-energy-2",
+        name: "Colorless Energy",
+        kind: Type::Colorless,
+        effect: None,
+    }));
+    let mut decklist = vec![mon; 4];
+    while decklist.len() < 60 {
+        decklist.push(energy);
+    }
+    let mut state = GameState::new(db, [decklist.clone(), decklist], Box::new(SeededRng::new(seed)));
+    for _ in 0..2 {
+        while state.phase != Phase::Main && !state.is_over() {
+            let first = legal_actions(&state)[0];
+            apply(&mut state, first).unwrap();
+        }
+        if state.turn_number > 1 {
+            break;
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
+    }
+    let pokemon = state.player(state.current).active.unwrap();
+    (state, pokemon)
+}
+
+#[test]
+fn hops_choice_band_discounts_cost_and_boosts_damage_for_a_hops_carrier() {
+    let (mut state, pokemon) = game_with_named_active(1, "Hop's Testmon");
+    let owner = state.current;
+    attach_one_energy(&mut state, pokemon, owner, 1);
+
+    assert!(
+        !legal_actions(&state).contains(&Action::Attack { index: 0 }),
+        "one Energy alone can't pay a two-Colorless attack"
+    );
+
+    let band = state.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-hops-choice-band",
+        name: "Hop's Choice Band",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::ReducesAttackCostAndBonusDamageForCarrierNamePrefix {
+            prefix: "Hop's",
+            cost_reduction: 1,
+            bonus_damage: 30,
+        },
+    }));
+    attach(&mut state, pokemon, owner, band);
+
+    assert!(
+        legal_actions(&state).contains(&Action::Attack { index: 0 }),
+        "Hop's Choice Band discounts a Hop's carrier's attack by one Energy"
+    );
+
+    let defender = state.player(owner.opponent()).active.unwrap();
+    apply(&mut state, Action::Attack { index: 0 }).unwrap();
+    assert_eq!(
+        state.pokemon(defender).damage, 90,
+        "60 base damage plus Hop's Choice Band's 30 bonus"
+    );
+}
+
+#[test]
+fn hops_choice_band_does_nothing_off_a_non_hops_carrier() {
+    let (mut state, pokemon) = game_with_named_active(1, "Testmon");
+    let owner = state.current;
+    attach_one_energy(&mut state, pokemon, owner, 1);
+
+    let band = state.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-hops-choice-band-plain",
+        name: "Hop's Choice Band",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::ReducesAttackCostAndBonusDamageForCarrierNamePrefix {
+            prefix: "Hop's",
+            cost_reduction: 1,
+            bonus_damage: 30,
+        },
+    }));
+    attach(&mut state, pokemon, owner, band);
+
+    assert!(
+        !legal_actions(&state).contains(&Action::Attack { index: 0 }),
+        "only a Hop's carrier is discounted"
+    );
+}
+
+#[test]
+fn hops_choice_band_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Hop's Choice Band" && c.playable.is_some()),
+        "Hop's Choice Band should play"
+    );
+}
