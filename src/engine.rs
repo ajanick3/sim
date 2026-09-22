@@ -770,6 +770,23 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                     state.phase = Phase::Main;
                     settle(state);
                 }
+                Some(crate::card::DiscardFollowUp::DrawUpToInPlayCountOfType(kind)) => {
+                    if remaining == 0 {
+                        let target = state
+                            .player(chooser)
+                            .in_play()
+                            .iter()
+                            .filter(|id| state.pokemon_def(**id).kind == kind)
+                            .count() as u32;
+                        while state.player(chooser).hand.len() < target as usize {
+                            if !state.draw(chooser) {
+                                break;
+                            }
+                        }
+                    }
+                    state.phase = Phase::Main;
+                    settle(state);
+                }
                 Some(crate::card::DiscardFollowUp::AlsoDiscardOwnHandDownTo(target)) => {
                     // `chooser` here is still the player whose discard just
                     // ended (the opponent, for `Hand Trimmer`); the follow-up
@@ -993,6 +1010,90 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 state.pokemon[id.index()].damage = state.pokemon[id.index()].damage.saturating_sub(amount);
             }
             state.log.push(format!("{player:?} heals the team (Community Center)."));
+        }
+
+        Action::UseLevincia => {
+            let player = state.current;
+            let amount = match state.stadium_effect() {
+                Some(crate::card::TrainerEffect::StadiumMayReturnEnergyOfTypeFromDiscard(
+                    kind,
+                    amount,
+                )) => (kind, amount),
+                _ => panic!("Levincia is in play to offer this"),
+            };
+            let (kind, amount) = amount;
+            state.spend(Limit::StadiumEffectUsed(player));
+            let (_, stadium_card) = state.stadium.expect("Levincia is in play to offer this");
+            state.phase = Phase::Deciding {
+                chooser: player,
+                card: stadium_card,
+                step: 0,
+                from: Zone::Discard,
+                to: Destination::Zone(Zone::Hand),
+                filter: crate::card::CardFilter::BasicEnergyOfType(kind),
+                excludes_type_of_previous: false,
+                peek: None,
+                remaining: amount,
+                moved: 0,
+                previous: None,
+                then: None,
+            };
+        }
+
+        Action::UseSpikemuthGym => {
+            let player = state.current;
+            let word = match state.stadium_effect() {
+                Some(crate::card::TrainerEffect::StadiumMaySearchForNameToHand(word)) => word,
+                _ => panic!("Spikemuth Gym is in play to offer this"),
+            };
+            state.spend(Limit::StadiumEffectUsed(player));
+            let (_, stadium_card) = state.stadium.expect("Spikemuth Gym is in play to offer this");
+            state.phase = Phase::Deciding {
+                chooser: player,
+                card: stadium_card,
+                step: 0,
+                from: Zone::Deck,
+                to: Destination::Zone(Zone::Hand),
+                filter: crate::card::CardFilter::PokemonNameContains(word),
+                excludes_type_of_previous: false,
+                peek: None,
+                remaining: 1,
+                moved: 0,
+                previous: None,
+                then: None,
+            };
+        }
+
+        Action::UseMysteryGarden => {
+            let player = state.current;
+            let kind = match state.stadium_effect() {
+                Some(crate::card::TrainerEffect::StadiumMayDiscardEnergyToDrawUpToTypeCount(kind)) => {
+                    kind
+                }
+                _ => panic!("Mystery Garden is in play to offer this"),
+            };
+            state.spend(Limit::StadiumEffectUsed(player));
+            state.phase = Phase::DiscardingFromHand {
+                chooser: player,
+                of: player,
+                filter: crate::card::CardFilter::AnyEnergy,
+                remaining: 1,
+                then: Some(crate::card::DiscardFollowUp::DrawUpToInPlayCountOfType(kind)),
+            };
+        }
+
+        Action::SwitchForSurfingBeach { target } => {
+            let player = state.current;
+            state.spend(Limit::StadiumEffectUsed(player));
+            let side = &mut state.players[player.index()];
+            side.bench.retain(|p| *p != target);
+            let displaced = side.active.replace(target);
+            if let Some(displaced) = displaced {
+                side.bench.push(displaced);
+            }
+            state.promoted_from_bench_this_turn[player.index()] = Some(target);
+            let name = state.pokemon_def(target).name;
+            state.log.push(format!("{player:?} switches in {name} (Surfing Beach)."));
         }
 
         Action::PlaceDamageCounter { target } => {
@@ -3643,6 +3744,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::StadiumBoostsDamageForNamePrefix { .. }
         | TrainerEffect::StadiumMayDiscardTwoToDrawOne
         | TrainerEffect::StadiumMayHealAllIfPlayedSupporter(_)
+        | TrainerEffect::StadiumMayReturnEnergyOfTypeFromDiscard(..)
+        | TrainerEffect::StadiumMaySearchForNameToHand(_)
+        | TrainerEffect::StadiumMayDiscardEnergyToDrawUpToTypeCount(_)
+        | TrainerEffect::StadiumMaySwitchActiveOfType(_)
         | TrainerEffect::AbilitiesDisabled => {}
 
         // "Recovers from all Special Conditions" reads as an immediate

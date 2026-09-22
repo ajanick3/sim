@@ -179,6 +179,19 @@ pub enum Action {
     /// Heal `amount` from every one of the player's own Pokémon,
     /// `Community Center`'s own standing action.
     UseCommunityCenter,
+    /// `Levincia`'s once-a-turn action: open a `Deciding` phase moving
+    /// up to 2 Basic Lightning Energy from discard to hand.
+    UseLevincia,
+    /// `Spikemuth Gym`'s once-a-turn action: open a `Deciding` phase
+    /// searching the deck for a Marnie's Pokémon to hand.
+    UseSpikemuthGym,
+    /// `Mystery Garden`'s once-a-turn action: discard an Energy from
+    /// hand, then draw up to the discarder's own in-play Pokémon count
+    /// of the Stadium's type.
+    UseMysteryGarden,
+    /// `Surfing Beach`'s once-a-turn action: switch the Active with
+    /// this Benched Pokémon of the Stadium's own type.
+    SwitchForSurfingBeach { target: PokemonId },
     /// Put one damage counter on this Benched Pokémon, as part of
     /// `Phase::DistributingDamageCounters`.
     PlaceDamageCounter { target: PokemonId },
@@ -1464,6 +1477,47 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
     {
         actions.push(Action::UseCommunityCenter);
     }
+    if let Some(crate::card::TrainerEffect::StadiumMayReturnEnergyOfTypeFromDiscard(kind, _)) =
+        state.stadium_effect()
+        && !state.is_spent(Limit::StadiumEffectUsed(player))
+        && side
+            .discard
+            .iter()
+            .any(|c| state.matches_filter(*c, crate::card::CardFilter::BasicEnergyOfType(kind)))
+    {
+        actions.push(Action::UseLevincia);
+    }
+    if let Some(crate::card::TrainerEffect::StadiumMaySearchForNameToHand(word)) =
+        state.stadium_effect()
+        && !state.is_spent(Limit::StadiumEffectUsed(player))
+        && side
+            .deck
+            .iter()
+            .any(|c| state.matches_filter(*c, crate::card::CardFilter::PokemonNameContains(word)))
+    {
+        actions.push(Action::UseSpikemuthGym);
+    }
+    if let Some(crate::card::TrainerEffect::StadiumMayDiscardEnergyToDrawUpToTypeCount(_)) =
+        state.stadium_effect()
+        && !state.is_spent(Limit::StadiumEffectUsed(player))
+        && side
+            .hand
+            .iter()
+            .any(|c| state.matches_filter(*c, crate::card::CardFilter::AnyEnergy))
+    {
+        actions.push(Action::UseMysteryGarden);
+    }
+    if let Some(crate::card::TrainerEffect::StadiumMaySwitchActiveOfType(kind)) =
+        state.stadium_effect()
+        && !state.is_spent(Limit::StadiumEffectUsed(player))
+        && side.active.is_some_and(|a| state.pokemon_def(a).kind == kind)
+    {
+        for target in &side.bench {
+            if state.pokemon_def(*target).kind == kind {
+                actions.push(Action::SwitchForSurfingBeach { target: *target });
+            }
+        }
+    }
 
     for card in &side.hand {
         let def = state.def_of(*card);
@@ -2226,6 +2280,12 @@ pub fn describe(state: &GameState, action: Action) -> String {
         ),
         Action::UsePrismTower => "Discard 2 to draw 1 (Prism Tower)".to_string(),
         Action::UseCommunityCenter => "Heal every Pokemon (Community Center)".to_string(),
+        Action::UseLevincia => "Return Energy from discard (Levincia)".to_string(),
+        Action::UseSpikemuthGym => "Search for a Marnie's Pokemon (Spikemuth Gym)".to_string(),
+        Action::UseMysteryGarden => "Discard Energy to draw (Mystery Garden)".to_string(),
+        Action::SwitchForSurfingBeach { target } => {
+            format!("Switch in {} (Surfing Beach)", state.pokemon_def(target).name)
+        }
         Action::PlaceDamageCountersOn { target } => {
             format!("Place damage counters on {}", state.pokemon_def(target).name)
         }

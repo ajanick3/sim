@@ -29,9 +29,10 @@ fn a_refusal_names_the_kind_of_card_it_refused() {
         "Scoop Up Cyclone is an Item"
     );
     assert_eq!(
-        reason_for("me01-122"),
+        reason_for("me04-075"),
         Some(Refusal::IsATrainer(TrainerKind::Stadium)),
-        "Mystery Garden is a Stadium"
+        "Ange Floette is a Stadium, still deferred (a Stadium-consumes-\
+         a-Stadium play condition)"
     );
     assert_eq!(
         reason_for("sv06-167"),
@@ -145,7 +146,10 @@ fn the_kinds_add_up_to_the_pool() {
     // take it to 72.
     // Postwick and Paradise Resort take it to 69.
     // Energy Coin takes it to 68.
-    assert_eq!(trainers, 68, "the Trainers still refused, by kind");
+    // Levincia (two prints), Spikemuth Gym (one print), Mystery
+    // Garden (three prints), and Surfing Beach (two prints) — four
+    // once-a-turn Stadium actions — take it to 60.
+    assert_eq!(trainers, 60, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and
