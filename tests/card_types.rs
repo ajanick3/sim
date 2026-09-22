@@ -141,7 +141,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Light Ball takes it to 86.
     // Lucian (two prints) and Lacey (five prints) take it to 79.
     // Amarys (three prints) and Waitress (one print) take it to 75.
-    assert_eq!(trainers, 75, "the Trainers still refused, by kind");
+    // Thick Scale, Team Rocket's Hypnotizer, and Adversity Policy
+    // take it to 72.
+    assert_eq!(trainers, 72, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

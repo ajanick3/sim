@@ -1212,3 +1212,218 @@ fn light_ball_is_admitted_from_the_artifact() {
         "Light Ball should play"
     );
 }
+
+// --- Beyond the field: multi-type reduction, and while-active-hit triggers ---
+
+#[test]
+fn thick_scale_softens_attacks_from_each_of_its_four_types() {
+    let mut set = build();
+    let fire_mon = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-thick-scale-fire-attacker",
+        name: "Firemon",
+        hp: 100,
+        kind: Type::Fire,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack { name: "Ember", cost: vec![Type::Fire], base_damage: 10, inflicts: None, effect: None }],
+    }));
+    let thick_scale = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-thick-scale",
+        name: "Thick Scale",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::ReducesDamageFromTypes {
+            kinds: &[Type::Grass, Type::Fire, Type::Water, Type::Lightning],
+            amount: 50,
+        },
+    }));
+    let fire_energy = set.db.add(CardDef::Energy(Energy {
+        print_id: "test-thick-scale-fire-energy",
+        name: "Fire Energy",
+        kind: Type::Fire,
+        effect: None,
+    }));
+    let mut state = game(&set, thick_scale, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+    let fire_card = deal_new_card(&mut state, attacker_player, fire_mon);
+    let attacker = state.put_into_play(attacker_player, fire_card);
+    state.players[attacker_player.index()].active = Some(attacker);
+    let defender = state.player(defender_player).active.unwrap();
+    let tool = deal_new_card(&mut state, defender_player, thick_scale);
+    state.pokemon[defender.index()].attached.push(tool);
+    let energy_card = deal_new_card(&mut state, attacker_player, fire_energy);
+    state.pokemon[attacker.index()].attached.push(energy_card);
+
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("a paid-for Active can attack");
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(state.pokemon(defender).damage, 0, "10 base damage, softened below zero");
+}
+
+#[test]
+fn thick_scale_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Thick Scale" && c.playable.is_some()),
+        "Thick Scale should play"
+    );
+}
+
+#[test]
+fn team_rockets_hypnotizer_puts_the_attacker_to_sleep_when_the_named_carrier_is_hit() {
+    let mut set = build();
+    let tr_mon = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-tr-hypnotizer-carrier",
+        name: "Team Rocket's Grunt Rattata",
+        hp: 60,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack { name: "Nip", cost: vec![Type::Colorless], base_damage: 10, inflicts: None, effect: None }],
+    }));
+    let hypnotizer = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-tr-hypnotizer",
+        name: "Team Rocket's Hypnotizer",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::InflictsConditionOnAttackerIfDefenderNamed(
+            sim::card::Condition::Asleep,
+            "Team Rocket's",
+        ),
+    }));
+    let mut state = game(&set, hypnotizer, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+    let attacker = state.player(attacker_player).active.unwrap();
+
+    let tr_card = deal_new_card(&mut state, defender_player, tr_mon);
+    let tr = state.put_into_play(defender_player, tr_card);
+    state.players[defender_player.index()].active = Some(tr);
+    let tool = deal_new_card(&mut state, defender_player, hypnotizer);
+    state.pokemon[tr.index()].attached.push(tool);
+
+    pay_and_attack(&mut state, attacker_player);
+
+    assert!(state.pokemon(attacker).conditions.contains(&sim::card::Condition::Asleep));
+}
+
+#[test]
+fn team_rockets_hypnotizer_does_nothing_off_a_non_team_rockets_carrier() {
+    let (set, hypnotizer) = {
+        let mut set = build();
+        let card = set.db.add(CardDef::Trainer(Trainer {
+            print_id: "test-tr-hypnotizer-wrong-carrier",
+            name: "Team Rocket's Hypnotizer",
+            kind: TrainerKind::Tool,
+            requirement: None,
+            effect: TrainerEffect::InflictsConditionOnAttackerIfDefenderNamed(
+                sim::card::Condition::Asleep,
+                "Team Rocket's",
+            ),
+        }));
+        (set, card)
+    };
+    let mut state = game(&set, hypnotizer, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+    let attacker = state.player(attacker_player).active.unwrap();
+    let defender = state.player(defender_player).active.unwrap();
+
+    let tool = deal_new_card(&mut state, defender_player, hypnotizer);
+    state.pokemon[defender.index()].attached.push(tool);
+
+    pay_and_attack(&mut state, attacker_player);
+
+    assert!(state.pokemon(attacker).conditions.is_empty());
+}
+
+#[test]
+fn team_rockets_hypnotizer_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Team Rocket's Hypnotizer" && c.playable.is_some()),
+        "Team Rocket's Hypnotizer should play"
+    );
+}
+
+#[test]
+fn adversity_policy_draws_three_when_a_weak_defender_is_hit() {
+    let mut set = build();
+    let weak_mon = set.db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-weak-mon",
+        name: "Weakmon",
+        hp: 100,
+        kind: Type::Grass,
+        weakness: Some(Type::Colorless),
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack { name: "Tackle", cost: vec![Type::Colorless], base_damage: 10, inflicts: None, effect: None }],
+    }));
+    let policy = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-adversity-policy",
+        name: "Adversity Policy",
+        kind: TrainerKind::Tool,
+        requirement: None,
+        effect: TrainerEffect::DrawsWhenDefenderWeakToAttackerIsHit(3),
+    }));
+    let mut state = game(&set, policy, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+
+    let weak_card = deal_new_card(&mut state, defender_player, weak_mon);
+    let weak = state.put_into_play(defender_player, weak_card);
+    state.players[defender_player.index()].active = Some(weak);
+    let tool = deal_new_card(&mut state, defender_player, policy);
+    state.pokemon[weak.index()].attached.push(tool);
+    let hand_before = state.player(defender_player).hand.len();
+
+    pay_and_attack(&mut state, attacker_player);
+
+    assert_eq!(
+        state.player(defender_player).hand.len(),
+        hand_before + 3 + 1,
+        "Adversity Policy's 3, plus the ordinary turn-start draw"
+    );
+}
+
+#[test]
+fn adversity_policy_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Adversity Policy" && c.playable.is_some()),
+        "Adversity Policy should play"
+    );
+}

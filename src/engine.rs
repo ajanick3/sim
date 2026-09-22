@@ -3592,7 +3592,10 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
         | TrainerEffect::FewerPrizeIfLilliesKnockedOutByAttack
         | TrainerEffect::DamagesAttackerWhenDefenderIsHit(_)
         | TrainerEffect::DrawsWhenDefenderIsHit(_)
+        | TrainerEffect::InflictsConditionOnAttackerIfDefenderNamed(..)
+        | TrainerEffect::DrawsWhenDefenderWeakToAttackerIsHit(_)
         | TrainerEffect::ReducesDamageFromType { .. }
+        | TrainerEffect::ReducesDamageFromTypes { .. }
         | TrainerEffect::IncreasesHpForNamePrefix { .. }
         | TrainerEffect::RaisesBothActiveRetreatWhileCarrierActive(_)
         | TrainerEffect::BonusDamageVsActiveEx(_)
@@ -4981,6 +4984,21 @@ fn trigger_defenders_tool(state: &mut GameState, attacker: PokemonId, defender: 
                     state.draw(owner);
                 }
             }
+            TrainerEffect::InflictsConditionOnAttackerIfDefenderNamed(condition, word) => {
+                if state.pokemon_def(defender).name.contains(word) {
+                    state.inflict(attacker, condition);
+                    let name = state.pokemon_def(attacker).name;
+                    state.log.push(format!("{name} is now {condition:?}."));
+                }
+            }
+            TrainerEffect::DrawsWhenDefenderWeakToAttackerIsHit(count) => {
+                if state.effective_weakness(defender) == Some(state.pokemon_def(attacker).kind) {
+                    let owner = state.pokemon(defender).owner;
+                    for _ in 0..count {
+                        state.draw(owner);
+                    }
+                }
+            }
             TrainerEffect::MovesEnergyFromAttackerToTheirBench => {
                 let attacker_owner = state.pokemon(attacker).owner;
                 let has_energy = state
@@ -5213,6 +5231,11 @@ fn damage_dealt_with(
             match state.def_of(*tool).as_trainer().map(|t| &t.effect) {
                 Some(&crate::card::TrainerEffect::ReducesDamageFromType { kind, amount })
                     if kind == attacker_type =>
+                {
+                    damage = damage.saturating_sub(amount);
+                }
+                Some(&crate::card::TrainerEffect::ReducesDamageFromTypes { kinds, amount })
+                    if kinds.contains(&attacker_type) =>
                 {
                     damage = damage.saturating_sub(amount);
                 }

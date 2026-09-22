@@ -108,8 +108,19 @@ More clusters merged:
   the rest of the peek back by default, which is the whole of what
   the card asks for.
 
-Coverage: 989 / 3051 prints (32.4%). Refused, by kind:
-Supporter 18, Item 27, Tool 13, Stadium 17, Special Energy 3.
+- Thick Scale — `ReducesDamageFromTypes`, `ReducesDamageFromType`
+  widened to several attacker types at once.
+- Team Rocket's Hypnotizer — `InflictsConditionOnAttackerIfDefenderNamed`,
+  the same "while the defender is hit, even by a knockout" trigger
+  `DamagesAttackerWhenDefenderIsHit`/`DrawsWhenDefenderIsHit` already
+  read, inflicting a Special Condition instead, gated on the
+  defender's own name.
+- Adversity Policy — `DrawsWhenDefenderWeakToAttackerIsHit`, the same
+  trigger again, gated on `effective_weakness` matching the
+  attacker's type instead of a name.
+
+Coverage: 992 / 3051 prints (32.5%). Refused, by kind:
+Supporter 18, Item 27, Tool 10, Stadium 17, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
@@ -183,11 +194,11 @@ say whether it fits an existing shape or needs a new one. Checked
 directly against the artifact's own refusal list rather than carried
 over from an older note, which had drifted (naming several cards, like
 Poké Ball and Scoop Up Cyclone, that later clusters had already built):
-Accompanying Flute, Adversity Policy, Ange Floette, Anthea &
+Accompanying Flute, Ange Floette, Anthea &
 Concordia, Arven's Sandwich, Backtrack Badge, Blowtorch, Caretaker,
 Celebratory Fanfare, Dizzying Valley, Energy Coin, Energy Swatter,
 Fossil Quarry, Grand Tree, Great Haul Net, Hop's Choice Band, Kofu,
 Levincia, Love Ball, Megaton Blower, Mystery Garden,
 Neutralization Zone, Ogre's Mask, Paradise Resort, Perrin, Postwick,
-Redeemable Ticket, Scramble Switch, Spikemuth Gym, Surfing Beach, Team
-Rocket's Hypnotizer, Thick Scale, Tremendous Bomb.
+Redeemable Ticket, Scramble Switch, Spikemuth Gym, Surfing Beach,
+Tremendous Bomb.
