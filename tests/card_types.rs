@@ -149,7 +149,9 @@ fn the_kinds_add_up_to_the_pool() {
     // Levincia (two prints), Spikemuth Gym (one print), Mystery
     // Garden (three prints), and Surfing Beach (two prints) — four
     // once-a-turn Stadium actions — take it to 60.
-    assert_eq!(trainers, 60, "the Trainers still refused, by kind");
+    // Kofu (two prints), Perrin (three prints), and Caretaker (two
+    // prints) take it to 53.
+    assert_eq!(trainers, 53, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

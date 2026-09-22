@@ -381,5 +381,11 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Levincia (two prints), Spikemuth Gym (one print), Mystery
     // Garden (three prints), and Surfing Beach (two prints) — four
     // once-a-turn Stadium actions — take it to 1004.
-    assert_eq!(admitted, 1004, "coverage moves only on purpose");
+    // Kofu (two prints, a new `Requirement::PutOtherCardsOnBottomOf-
+    // Deck`), Perrin (three prints, a new
+    // `RevealUpToTwoPokemonToDeckThenSearchSameCount`), and Caretaker
+    // (two prints, a new
+    // `DrawThenShuffleSelfIntoDeckIfCommunityCenterAndDrew`) take it
+    // to 1011.
+    assert_eq!(admitted, 1011, "coverage moves only on purpose");
 }

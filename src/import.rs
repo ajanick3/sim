@@ -1648,6 +1648,18 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             },
         ),
+        "Kofu" => (
+            Some(Requirement::PutOtherCardsOnBottomOfDeck(2)),
+            TrainerEffect::Draw(4),
+        ),
+        "Perrin" => (
+            free,
+            TrainerEffect::RevealUpToTwoPokemonToDeckThenSearchSameCount,
+        ),
+        "Caretaker" => (
+            free,
+            TrainerEffect::DrawThenShuffleSelfIntoDeckIfCommunityCenterAndDrew(2),
+        ),
         _ => return None,
     })
 }

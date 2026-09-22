@@ -91,6 +91,9 @@ pub enum Action {
     DiscardBenchedPokemon { pokemon: PokemonId },
     /// Discard one card from hand toward what a card demanded to be played.
     PayWithCard { card: CardId },
+    /// Put one card from hand on the bottom of the deck toward what a
+    /// card demanded to be played. `Kofu`.
+    PayWithCardToBottomOfDeck { card: CardId },
     /// Move one attached Energy onto another Pokémon you control.
     MoveEnergy { card: CardId, target: PokemonId },
     /// Move one Energy from a Benched Pokémon onto the Active.
@@ -432,6 +435,7 @@ pub fn player_to_act(state: &GameState) -> Option<PlayerId> {
         Phase::DiscardingForRetreat { player, .. } => Some(player),
         Phase::Deciding { chooser, .. } => Some(chooser),
         Phase::Paying { player, .. } => Some(player),
+        Phase::PayingToBottomOfDeck { player, .. } => Some(player),
         Phase::MovingEnergy { player } => Some(player),
         Phase::MovingEnergyFromBenchToActive { player, .. } => Some(player),
         Phase::HealingChosen { player, .. } => Some(player),
@@ -657,6 +661,12 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
             // already discarded, so no card need be excluded here.
             for card in &side.hand {
                 actions.push(Action::PayWithCard { card: *card });
+            }
+            return actions;
+        }
+        Phase::PayingToBottomOfDeck { .. } => {
+            for card in &side.hand {
+                actions.push(Action::PayWithCardToBottomOfDeck { card: *card });
             }
             return actions;
         }
@@ -1740,6 +1750,9 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
                         .count()
                         > 1
                 }
+                Some(Requirement::PutOtherCardsOnBottomOfDeck(count)) => {
+                    side.hand.len() as u32 > count
+                }
             };
             // Rule 59: not a Stadium whose name is already in play.
             let name_is_free = trainer.kind != TrainerKind::Stadium
@@ -2176,6 +2189,9 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::FinishDeciding => "Stop taking cards".to_string(),
         Action::PayWithCard { card } => {
             format!("Discard {} to pay for the card", state.def_of(card).name())
+        }
+        Action::PayWithCardToBottomOfDeck { card } => {
+            format!("Put {} on the bottom of the deck to pay", state.def_of(card).name())
         }
         Action::MoveEnergy { card, target } => format!(
             "Move {} to {}",

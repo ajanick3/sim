@@ -225,6 +225,12 @@ pub enum Then {
     /// or not — unlike `EndTurnIfMoved`, which only ends it on a find.
     /// `Misty's Vitality`.
     EndTurnAlways,
+    /// Once this slot's own search ends, open a second search of the
+    /// deck for up to as many Pokémon as this one just moved — "search
+    /// your deck for up to that many Pokémon" reads a count the first
+    /// search produced, not a fixed limit. Nothing opens if nothing
+    /// moved. `Perrin`.
+    SearchPokemonUpToMoved,
 }
 
 /// One step of a search: what to look for, where it goes, and how many. A
@@ -511,6 +517,22 @@ pub enum TrainerEffect {
     /// kin already carry past a single `resolve_trainer` call.
     /// `Amarys`.
     DrawThenDiscardHandAtEndOfTurnIfAtLeast { draw: u32, at_least: usize },
+    /// Draw this many cards; if at least one was actually drawn and
+    /// Community Center is in play, shuffle this card into the deck
+    /// instead of leaving it in the discard pile it already went to
+    /// when it was played — the first effect to read a specific
+    /// Stadium's presence at resolve time, and the first to reach
+    /// back into the discard pile for the very card being resolved.
+    /// `Caretaker`.
+    DrawThenShuffleSelfIntoDeckIfCommunityCenterAndDrew(u32),
+    /// Reveal up to 2 Pokémon from hand and put them into the deck;
+    /// if any moved, search the deck for up to that many Pokémon,
+    /// reveal them, and put them into hand; then shuffle. The first
+    /// slot opens through `Then::SearchPokemonUpToMoved` rather than
+    /// a fixed second slot, since the second search's own limit is
+    /// read from what the first one moved, not printed on the card.
+    /// `Perrin`.
+    RevealUpToTwoPokemonToDeckThenSearchSameCount,
     /// Draw up to `base` cards in hand, or up to `bonus` instead if every
     /// one of the player's own Pokémon in play carries this name prefix.
     /// `Team Rocket's Ariana`.
@@ -908,6 +930,12 @@ pub enum Requirement {
     /// way every other Requirement costs nothing to check but does not
     /// itself guarantee the effect resolves to completion.
     ActiveNamePrefix(&'static str),
+    /// Put this many cards from hand, other than this one, on the
+    /// bottom of the deck, in the order chosen — the same "enough
+    /// other cards in hand" gate `DiscardOtherCardsFromHand` reads,
+    /// paid to the bottom of the deck instead of to the discard pile.
+    /// `Kofu`.
+    PutOtherCardsOnBottomOfDeck(u32),
 }
 
 /// A Trainer as printed.
@@ -936,6 +964,18 @@ impl Trainer {
             excludes_type_of_previous: false,
             peek: None,
         }];
+        // `Perrin`'s first slot: reveal up to 2 Pokémon from hand into
+        // the deck. Its second slot has no fixed limit — the number
+        // found is read from how many this one moved — so it opens by
+        // hand, in `enter_slot`'s own terminal branch, rather than
+        // living here as a second array entry.
+        const PERRIN_REVEAL_SLOT: [Slot; 1] = [Slot {
+            filter: CardFilter::AnyPokemon,
+            to: Destination::Zone(Zone::Deck),
+            limit: 2,
+            excludes_type_of_previous: false,
+            peek: None,
+        }];
         match &self.effect {
             TrainerEffect::Decide { slots, .. } => slots,
             // `Poké Ball` wraps its search in a coin flip; once heads
@@ -947,6 +987,7 @@ impl Trainer {
                 }
             }
             TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn => &LUMIOSE_CITY_SLOT,
+            TrainerEffect::RevealUpToTwoPokemonToDeckThenSearchSameCount => &PERRIN_REVEAL_SLOT,
             TrainerEffect::DiscardHandThenDecide { slots } => slots,
             _ => &[],
         }
