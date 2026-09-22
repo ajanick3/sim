@@ -377,5 +377,6 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Thick Scale, Team Rocket's Hypnotizer, and Adversity Policy
     // (one print each) take it to 992.
     // Postwick and Paradise Resort (one print each) take it to 995.
-    assert_eq!(admitted, 995, "coverage moves only on purpose");
+    // Energy Coin (one print, a new `CoinFlipAllThen`) takes it to 996.
+    assert_eq!(admitted, 996, "coverage moves only on purpose");
 }

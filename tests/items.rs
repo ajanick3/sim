@@ -4,7 +4,7 @@
 use sim::action::{Action, legal_actions};
 use sim::card::{
     Attack, CardDb, CardDef, CardFilter, Destination, Energy, Pokemon, Requirement, Slot, Stage,
-    Marker, Then, Trainer, TrainerEffect, TrainerKind, TurnBonusTarget, Type, Zone,
+    Marker, TargetFilter, Then, Trainer, TrainerEffect, TrainerKind, TurnBonusTarget, Type, Zone,
 };
 use sim::engine::apply;
 use sim::ids::{CardDefId, CardId, PlayerId};
@@ -2118,6 +2118,77 @@ fn poke_ball_searches_for_a_pokemon_on_heads() {
     apply(&mut state, Action::FinishDeciding).unwrap();
 
     assert_eq!(state.player(player).hand.len(), before - 1 + 1);
+}
+
+#[test]
+fn energy_coin_attaches_a_basic_energy_on_two_heads() {
+    use sim::rng::ScriptedRng;
+    let mut set = build();
+    let energy_coin = plain_item(
+        &mut set.db,
+        "test-energy-coin",
+        "Energy Coin",
+        TrainerEffect::CoinFlipAllThen(
+            2,
+            Box::new(TrainerEffect::Decide {
+                from: Zone::Deck,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicEnergy,
+                    to: Destination::Attach(TargetFilter::AnyInPlay),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                }],
+                then: None,
+            }),
+        ),
+    );
+    let decklist = deck(&set, energy_coin);
+    let mut state = GameState::new(
+        set.db.clone(),
+        [decklist.clone(), decklist],
+        Box::new(ScriptedRng::new(vec![1u32, 1u32])), // heads, heads
+    );
+    for _ in 0..2 {
+        while state.phase != Phase::Main && !state.is_over() {
+            let a = legal_actions(&state)[0];
+            apply(&mut state, a).unwrap();
+        }
+        if state.turn_number > 1 {
+            break;
+        }
+        apply(&mut state, Action::EndTurn).unwrap();
+    }
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let energy_card = deal_new_card(&mut state, player, set.energy);
+    state.players[player.index()].deck.push(energy_card);
+    let card = ensure_in_hand(&mut state, player, energy_coin);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let take = legal_actions(&state)
+        .into_iter()
+        .find_map(|a| match a {
+            Action::TakeCardOnto { card, target } => Some((card, target)),
+            _ => None,
+        })
+        .expect("two heads opens the search");
+    apply(&mut state, Action::TakeCardOnto { card: take.0, target: take.1 }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert!(state.pokemon(active).attached.contains(&take.0));
+}
+
+#[test]
+fn energy_coin_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Energy Coin" && c.playable.is_some()),
+        "Energy Coin should play"
+    );
 }
 
 #[test]
