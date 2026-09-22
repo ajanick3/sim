@@ -139,7 +139,8 @@ fn the_kinds_add_up_to_the_pool() {
     // Ethan's Adventure (three prints) takes it to 89.
     // Team Rocket's Great Ball (two prints) takes it to 87.
     // Light Ball takes it to 86.
-    assert_eq!(trainers, 86, "the Trainers still refused, by kind");
+    // Lucian (two prints) and Lacey (five prints) take it to 79.
+    assert_eq!(trainers, 79, "the Trainers still refused, by kind");
     // Milestone 12 (Special Energy), now closed, admitted Growing
     // Grass Energy, Enriching Energy, Telepathic Psychic Energy,
     // Spiky Energy (two prints), Mist Energy, Boomerang Energy, and

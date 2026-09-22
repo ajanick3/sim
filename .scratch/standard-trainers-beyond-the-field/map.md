@@ -91,9 +91,15 @@ More clusters merged:
 - Light Ball — `BonusDamageVsActiveExForCarrierNamed`, `BonusDamageVsActiveEx`
   narrowed to an exact carrier name, read in `damage_dealt_with` the
   same way `Cobalt Command`'s own name check already is.
+- Lucian and Lacey — `BothHandToBottomThenEachCoinFlipDraw` (both
+  hands to the bottom of their own deck, then each player flips their
+  own coin, unlike `BothShuffleHandThenCoinFlipDraw`'s one shared
+  flip) and `ShuffleHandThenDrawBonusIfOpponentPrizesAtMost` (the same
+  shuffle-then-draw shape, conditioned on the opponent's Prizes
+  instead of the player's own).
 
-Coverage: 941 / 3051 prints (30.8%). Refused, by kind:
-Supporter 56, Item 37, Tool 17, Stadium 20, Special Energy 3.
+Coverage: 985 / 3051 prints (32.3%). Refused, by kind:
+Supporter 22, Item 27, Tool 13, Stadium 17, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
@@ -171,7 +177,7 @@ Accompanying Flute, Adversity Policy, Amarys, Ange Floette, Anthea &
 Concordia, Arven's Sandwich, Backtrack Badge, Blowtorch, Caretaker,
 Celebratory Fanfare, Dizzying Valley, Energy Coin, Energy Swatter,
 Fossil Quarry, Grand Tree, Great Haul Net, Hop's Choice Band, Kofu,
-Lacey, Levincia, Love Ball, Lucian, Megaton Blower, Mystery Garden,
+Levincia, Love Ball, Megaton Blower, Mystery Garden,
 Neutralization Zone, Ogre's Mask, Paradise Resort, Perrin, Postwick,
 Redeemable Ticket, Scramble Switch, Spikemuth Gym, Surfing Beach, Team
 Rocket's Hypnotizer, Thick Scale, Tremendous Bomb, Waitress.

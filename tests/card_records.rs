@@ -368,5 +368,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // takes it to 977.
     // Light Ball (one print, a new
     // `BonusDamageVsActiveExForCarrierNamed`) takes it to 978.
-    assert_eq!(admitted, 978, "coverage moves only on purpose");
+    // Lucian (two prints, a new `BothHandToBottomThenEachCoinFlipDraw`)
+    // and Lacey (five prints, a new
+    // `ShuffleHandThenDrawBonusIfOpponentPrizesAtMost`) take it to 985.
+    assert_eq!(admitted, 985, "coverage moves only on purpose");
 }
