@@ -371,5 +371,8 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Lucian (two prints, a new `BothHandToBottomThenEachCoinFlipDraw`)
     // and Lacey (five prints, a new
     // `ShuffleHandThenDrawBonusIfOpponentPrizesAtMost`) take it to 985.
-    assert_eq!(admitted, 985, "coverage moves only on purpose");
+    // Amarys (three prints, a new
+    // `DrawThenDiscardHandAtEndOfTurnIfAtLeast`) and Waitress (one
+    // print, a `Decide`/peek/`Attach` reskin) take it to 989.
+    assert_eq!(admitted, 989, "coverage moves only on purpose");
 }

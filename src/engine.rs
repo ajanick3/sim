@@ -3116,6 +3116,13 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::DrawThenDiscardHandAtEndOfTurnIfAtLeast { draw, at_least } => {
+            for _ in 0..draw {
+                state.draw(player);
+            }
+            state.discard_hand_at_end_of_turn_if_at_least[player.index()] = Some(at_least);
+        }
+
         TrainerEffect::DrawUpToHandSizeOrMoreIfAllOwnNamePrefix { base, bonus, prefix } => {
             let all_match = state
                 .player(player)
@@ -5351,7 +5358,22 @@ fn end_the_turn(state: &mut GameState) {
     fill_checkup(state);
     clear_paralysis(state);
     discard_ignition_energy(state);
+    discard_amarys_hand(state);
     state.pending_turn_start = true;
+}
+
+/// `Amarys`: the hand it filled earlier this same turn is discarded
+/// now if it still holds enough cards — read once, then cleared,
+/// whether or not the count still qualifies.
+fn discard_amarys_hand(state: &mut GameState) {
+    let owner = state.current;
+    if let Some(at_least) = state.discard_hand_at_end_of_turn_if_at_least[owner.index()].take() {
+        if state.player(owner).hand.len() >= at_least {
+            let hand = std::mem::take(&mut state.players[owner.index()].hand);
+            state.players[owner.index()].discard.extend(hand);
+            state.log.push(format!("{owner:?} discards their hand (Amarys)."));
+        }
+    }
 }
 
 /// `Ignition Energy` discards itself at the end of the turn of

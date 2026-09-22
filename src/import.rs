@@ -753,6 +753,24 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
             free,
             TrainerEffect::ShuffleHandThenCoinFlipDraw { heads: 8, tails: 3 },
         ),
+        "Amarys" => (
+            free,
+            TrainerEffect::DrawThenDiscardHandAtEndOfTurnIfAtLeast { draw: 4, at_least: 5 },
+        ),
+        "Waitress" => (
+            free,
+            TrainerEffect::Decide {
+                from: Zone::Deck,
+                slots: vec![Slot {
+                    filter: CardFilter::BasicEnergy,
+                    to: Destination::Attach(TargetFilter::AnyInPlay),
+                    limit: 1,
+                    excludes_type_of_previous: false,
+                    peek: Some(6),
+                }],
+                then: None,
+            },
+        ),
         "Hassel" => (
             Some(Requirement::KnockedOutDuringOpponentsLastTurn),
             TrainerEffect::Decide {
