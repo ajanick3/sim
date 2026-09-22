@@ -119,8 +119,14 @@ More clusters merged:
   trigger again, gated on `effective_weakness` matching the
   attacker's type instead of a name.
 
-Coverage: 992 / 3051 prints (32.5%). Refused, by kind:
-Supporter 18, Item 27, Tool 10, Stadium 17, Special Energy 3.
+- Postwick — `StadiumBoostsDamageForNamePrefix`, the attacker-side
+  mirror of `StadiumReducesDamageForNamePrefix`.
+- Paradise Resort — `StadiumReducesRetreatCostForName`, an exact-name,
+  partial-amount sibling of `RemovesRetreatCostForNamePrefix`'s
+  prefix-match, whole-cost removal.
+
+Coverage: 995 / 3051 prints (32.6%). Refused, by kind:
+Supporter 18, Item 27, Tool 10, Stadium 14, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
@@ -199,6 +205,6 @@ Concordia, Arven's Sandwich, Backtrack Badge, Blowtorch, Caretaker,
 Celebratory Fanfare, Dizzying Valley, Energy Coin, Energy Swatter,
 Fossil Quarry, Grand Tree, Great Haul Net, Hop's Choice Band, Kofu,
 Levincia, Love Ball, Megaton Blower, Mystery Garden,
-Neutralization Zone, Ogre's Mask, Paradise Resort, Perrin, Postwick,
+Neutralization Zone, Ogre's Mask, Perrin,
 Redeemable Ticket, Scramble Switch, Spikemuth Gym, Surfing Beach,
 Tremendous Bomb.

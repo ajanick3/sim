@@ -1682,3 +1682,160 @@ fn the_two_more_standing_stadiums_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: a name-prefix damage boost, and an exact-name retreat cut ---
+
+#[test]
+fn postwick_boosts_damage_for_hops_pokemon_either_side() {
+    let mut db = build().db;
+    let hop_mon = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-hops-mon",
+        name: "Hop's Wooloo",
+        hp: 90,
+        kind: Type::Colorless,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 1,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![Attack { name: "Tackle", cost: vec![Type::Colorless], base_damage: 10, inflicts: None, effect: None }],
+    }));
+    let postwick = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-postwick",
+        name: "Postwick",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::StadiumBoostsDamageForNamePrefix { word: "Hop's", amount: 30 },
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, postwick, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+    let played = ensure_in_hand(&mut state, attacker_player, postwick);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    let hop_card = deal_new_card(&mut state, attacker_player, hop_mon);
+    let hop_attacker = state.put_into_play(attacker_player, hop_card);
+    state.players[attacker_player.index()].active = Some(hop_attacker);
+    let energy = deal_new_card(&mut state, attacker_player, set.energy);
+    state.pokemon[hop_attacker.index()].attached.push(energy);
+    let defender = state.player(defender_player).active.unwrap();
+
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the Hop's Pokemon is paid for");
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(state.pokemon(defender).damage, 40, "10 base plus Postwick's 30");
+}
+
+#[test]
+fn postwick_does_nothing_for_an_ordinary_attacker() {
+    let mut db = build().db;
+    let postwick = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-postwick-ordinary",
+        name: "Postwick",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::StadiumBoostsDamageForNamePrefix { word: "Hop's", amount: 30 },
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, postwick, 3);
+    let attacker_player = state.current;
+    let defender_player = attacker_player.opponent();
+    let played = ensure_in_hand(&mut state, attacker_player, postwick);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    let defender = state.player(defender_player).active.unwrap();
+
+    let energy = deal_new_card(&mut state, attacker_player, set.energy);
+    let attacker = state.player(attacker_player).active.unwrap();
+    state.pokemon[attacker.index()].attached.push(energy);
+    let attack = legal_actions(&state)
+        .into_iter()
+        .find(|a| matches!(a, Action::Attack { .. }))
+        .expect("the ordinary Active is paid for");
+    apply(&mut state, attack).unwrap();
+
+    assert_eq!(state.pokemon(defender).damage, 10, "no Postwick bonus for a non-Hop's attacker");
+}
+
+#[test]
+fn postwick_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Postwick" && c.playable.is_some()),
+        "Postwick should play"
+    );
+}
+
+#[test]
+fn paradise_resort_reduces_retreat_cost_for_psyduck_by_name_either_side() {
+    let mut db = build().db;
+    let psyduck = db.add(CardDef::Pokemon(Pokemon {
+        markers: Vec::new(),
+        print_id: "test-psyduck",
+        name: "Psyduck",
+        hp: 60,
+        kind: Type::Water,
+        weakness: None,
+        resistance: None,
+        retreat_cost: 2,
+        prizes: 1,
+        stage: Stage::Basic,
+        evolve_from: None,
+        evolves_from_basic: None,
+        ability: None,
+        attacks: vec![],
+    }));
+    let resort = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-paradise-resort",
+        name: "Paradise Resort",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::StadiumReducesRetreatCostForName("Psyduck", 1),
+    }));
+    let set = Set { db, ..build() };
+    let mut state = game(&set, resort, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let played = ensure_in_hand(&mut state, player, resort);
+
+    let mine = deal_new_card(&mut state, player, psyduck);
+    let mine_mon = state.put_into_play(player, mine);
+    state.players[player.index()].bench.push(mine_mon);
+    let theirs = deal_new_card(&mut state, opponent, psyduck);
+    let their_mon = state.put_into_play(opponent, theirs);
+    state.players[opponent.index()].bench.push(their_mon);
+    let ordinary = state.player(player).active.unwrap();
+
+    assert_eq!(state.effective_retreat_cost(mine_mon), 2);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert_eq!(state.effective_retreat_cost(mine_mon), 1, "my own Psyduck");
+    assert_eq!(state.effective_retreat_cost(their_mon), 1, "the opponent's too");
+    assert_eq!(
+        state.effective_retreat_cost(ordinary),
+        1,
+        "an ordinary Pokémon keeps its printed cost"
+    );
+}
+
+#[test]
+fn paradise_resort_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Paradise Resort" && c.playable.is_some()),
+        "Paradise Resort should play"
+    );
+}
