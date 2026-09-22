@@ -2043,6 +2043,51 @@ pub enum AbilityEffect {
     /// — read directly in `resolve_checkup`, added to the ordinary
     /// Poison damage. `Pecharunt`'s `Toxic Subjugation`.
     PassiveBonusCheckupDamageToOpponentsPoisonedWhileActive(u32),
+    /// A standing effect, not a choice: while this Pokémon is in the
+    /// Active Spot, an attack from the opponent's Active does this
+    /// much less damage to it, before Weakness and Resistance — the
+    /// same reduction the "-Berry" Tools already read by
+    /// `ReducesDamageFromType`, but Ability-carried and not gated by
+    /// the attacker's type. `Antique Jaw Fossil`'s `Intimidating Jaw`.
+    PassiveWhileActiveTakesLessDamage(u32),
+    /// A standing effect, not a choice: while this Pokémon is in the
+    /// Active Spot, every Pokémon its own owner has in play takes
+    /// this much less damage from the opponent's attacks, after
+    /// Weakness and Resistance — the same reduction
+    /// `SideShield::DamageReduction` already carries for a
+    /// next-turn-granted shield, but standing rather than granted,
+    /// and read only while this specific carrier is Active.
+    /// `Antique Armor Fossil`'s `Protective Armor`.
+    PassiveWhileActiveReducesDamageToOwnSide(u32),
+    /// A standing effect, not a choice: whenever this Pokémon, in the
+    /// Active Spot, is damaged by an attack from the opponent's
+    /// Pokémon — even one that knocks it out — the attacker takes
+    /// this much damage right back, the same shape
+    /// `EnergyEffect::CountersAttackerOnDamageTakenWhileActive`
+    /// already is, but Ability-carried. `Antique Skull Fossil`'s
+    /// `Spiny Skull`.
+    PassiveWhileActiveCountersAttackerOnDamageTaken(u32),
+    /// A standing effect, not a choice: no effect an opponent's
+    /// attack would apply to this Pokémon lands — damage still does.
+    /// Read by `attack_effects_on_it_prevented`, the same site
+    /// `EnergyEffect::PreventsAttackEffectsOnCarrier` already is, but
+    /// Ability-carried. `Antique Cover Fossil`'s `Protective Cover`.
+    PassivePreventsAttackEffectsOnSelf,
+    /// A standing effect, not a choice: while this Pokémon sits on
+    /// its own owner's Bench, no attack from the opponent's Pokémon
+    /// does it any damage at all — narrower than `Shadowy Darkness
+    /// Energy` (no type match needed) and than `Flower Curtain`
+    /// (shields only its own carrier, not the whole Bench). Read by
+    /// `bench_attack_damage_blocked`. `Antique Plume Fossil`'s
+    /// `Plume Protection`.
+    PassiveWhileBenchedPreventsAllDamage,
+    /// A standing effect, not a choice: while this Pokémon is in the
+    /// Active Spot, an attack used by the opponent's Active Pokémon
+    /// costs one more `{C}`, but only if that Pokémon is a Basic —
+    /// the first Ability read from the opponent's own side of the
+    /// board in the attack-cost loop, rather than the carrier's own.
+    /// `Antique Root Fossil`'s `Primal Root`.
+    PassiveWhileActiveOpponentBasicAttacksCostMore,
 }
 
 /// An Energy card as printed — a Basic Energy every deck supplies for

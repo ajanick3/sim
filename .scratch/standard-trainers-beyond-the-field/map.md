@@ -164,7 +164,11 @@ More clusters merged:
   `damage_dealt_with`.
 
 Coverage: 1012 / 3051 prints (33.2%). Refused, by kind:
-Supporter 15, Item 26, Tool 9, Stadium 10, Special Energy 3.
+Supporter 11, Item 26, Tool 9, Stadium 6, Special Energy 3.
+
+Coverage after the Antique Fossils (ADR 0105, below): 1019 / 3051
+prints (33.4%). Refused, by kind:
+Supporter 11, Item 19, Tool 9, Stadium 6, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
@@ -184,10 +188,31 @@ Defender (the next-turn-shield cluster resolved as #268, ADR 0098) —
 checked directly against `src/import.rs` and the artifact's own refusal
 list rather than trusted from an older note.
 
+Trainer-as-Pokémon resolved (ADR 0105): `read_card` special-cases the
+seven "Antique … Fossil" Items by name (Armor, Cover, Jaw, Plume, Root,
+Sail, Skull — the pool holds no eighth), building a `CardDef::Pokemon`
+from the same JSON record's own `hp`/`abilities` fields despite
+`category: "Trainer"`, rather than adding a second dispatch key or a
+`Pokemon` field the 147 existing literals across the codebase would all
+need updating for. `retreat_cost: u8::MAX` stands in for "can't
+retreat"; "immune to every Special Condition" and the new
+`Action::DiscardOwnPokemonFromPlay` (the first voluntary,
+no-cost, no-limit self-discard in the engine) are both gated on the
+same fixed name list, `import::ANTIQUE_FOSSILS`. Six of the seven admit
+cleanly, each Ability a new passive `AbilityEffect` read at one site:
+Jaw and Armor in `damage_dealt_with`'s defender step, Skull alongside
+`CountersAttackerOnDamageTakenWhileActive`, Cover in
+`attack_effects_on_it_prevented`, Plume in `bench_attack_damage_blocked`,
+and Root — the first Ability ever read from the *opponent's* side in
+the attack-cost loop — as a surcharge on the opponent's Basic attacks.
+Sail alone stays refused: "prevent all effects of an opponent's
+Supporter played against this Pokémon" has no single read site the way
+the other six do — it would mean touching every `resolve_trainer` arm
+that could ever target an opponent's Pokémon, not one.
+
 Deferred — the tier that needs its own design/ADR before it is cheap:
-- **Trainer-as-Pokémon**: the seven "Antique … Fossil" Items (Armor,
-  Cover, Jaw, Plume, Root, Sail, Skull — the pool holds no eighth) play
-  as a 60-HP Basic. A whole mechanic; no seam for it yet.
+- **Antique Sail Fossil**: see above — a target-immunity check spread
+  across every opponent-targeting Supporter effect, not a single site.
 - **Team Rocket's Energy**: attaches only to a Team Rocket's Pokémon,
   discarding itself the instant it lands anywhere else, then provides
   2 Energy in any combination of two named types. Needs an attach-time
@@ -296,9 +321,13 @@ Deferred — the tier that needs its own design/ADR before it is cheap:
   devolves — evolving always clears conditions today; nothing hooks
   that step to skip it conditionally.
 - **Antique Fossil support**: Fossil Quarry searches for up to 2
-  "Antique …" Items and benches them as Pokémon — the same
-  Trainer-as-Pokémon mechanic the seven Antique Fossils themselves
-  are deferred under, above.
+  "Antique …" Items and benches them as Pokémon — the Trainer-as-
+  Pokémon mechanic itself is resolved now (ADR 0105, above), so this
+  is down to a `Decide` search whose destination is the Bench for
+  cards the deck holds as Trainers but that resolve into a Pokémon on
+  arrival; no existing `Slot`/`Destination` combination does that
+  double duty yet. Left for a future pass, not re-deferred for the
+  mechanic's own sake.
 - **Chained forced evolution**: Grand Tree searches for a Stage 1,
   evolves it onto a Basic, then chains into a Stage 2 of that same
   Pokémon — a two-step forced-evolution search nothing performs yet.

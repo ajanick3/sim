@@ -390,5 +390,7 @@ fn the_admitted_cards_still_play_and_coverage_does_not_move() {
     // Hop's Choice Band (one print, a new
     // `ReducesAttackCostAndBonusDamageForCarrierNamePrefix`) takes it
     // to 1012.
-    assert_eq!(admitted, 1012, "coverage moves only on purpose");
+    // The six admitted "Antique … Fossil" Pokémon (one print each,
+    // ADR 0105) take it to 1019.
+    assert_eq!(admitted, 1019, "coverage moves only on purpose");
 }
