@@ -784,6 +784,12 @@ pub struct GameState {
     /// same "this turn" lifetime `turn_bonus` already carries.
     /// `Team Rocket's Factory` is the only reader.
     pub played_a_team_rocket_supporter_this_turn: [bool; 2],
+    /// This many cards or more, and the player discards their whole
+    /// hand at the end of this same turn — set the moment `Amarys`
+    /// resolves, read and cleared once by `end_the_turn`, never by
+    /// `begin_turn` (the check runs before the boundary it would
+    /// otherwise be cleared at).
+    pub discard_hand_at_end_of_turn_if_at_least: [Option<usize>; 2],
     /// A restriction an attack granted "during your opponent's next
     /// turn" — a lifetime that outlives one `begin_turn`, unlike
     /// `turn_bonus`: it must survive the boundary into the target's own
@@ -920,6 +926,7 @@ impl GameState {
             knocked_out_last_turn: [false, false],
             promoted_from_bench_this_turn: [None, None],
             played_a_team_rocket_supporter_this_turn: [false, false],
+            discard_hand_at_end_of_turn_if_at_least: [None, None],
             opponent_next_turn_restriction: None,
             side_shield_next_turn: None,
             protected_from_ex_next_turn: None,

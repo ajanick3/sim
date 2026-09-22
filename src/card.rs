@@ -453,6 +453,13 @@ pub enum TrainerEffect {
     /// Draw until the player holds this many cards, stopping early if the
     /// deck runs out. `Iris's Fighting Spirit`.
     DrawUpToHandSize(u32),
+    /// Draw this many, then discard the whole hand at the end of this
+    /// same turn if it still holds at least this many cards. The draw
+    /// is immediate; the discard is a standing fact `end_the_turn`
+    /// reads once, the same lifetime `GrantSideShieldNextTurn` and its
+    /// kin already carry past a single `resolve_trainer` call.
+    /// `Amarys`.
+    DrawThenDiscardHandAtEndOfTurnIfAtLeast { draw: u32, at_least: usize },
     /// Draw up to `base` cards in hand, or up to `bonus` instead if every
     /// one of the player's own Pokémon in play carries this name prefix.
     /// `Team Rocket's Ariana`.

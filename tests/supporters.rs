@@ -3740,3 +3740,110 @@ fn lucian_and_lacey_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: a delayed end-of-turn discard, and a peek-attach ---
+
+#[test]
+fn amarys_draws_now_and_discards_the_hand_at_the_end_of_the_turn_if_still_full() {
+    let mut set = build();
+    let amarys = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-amarys",
+        name: "Amarys",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::DrawThenDiscardHandAtEndOfTurnIfAtLeast { draw: 4, at_least: 5 },
+    }));
+    let mut state = game(&set, amarys, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, amarys);
+    let hand_before = state.player(player).hand.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert_eq!(state.player(player).hand.len(), hand_before - 1 + 4);
+
+    apply(&mut state, Action::EndTurn).unwrap();
+    assert!(state.player(player).hand.is_empty(), "5+ cards in hand triggers the discard");
+}
+
+#[test]
+fn amarys_does_not_discard_a_hand_below_the_threshold() {
+    let mut set = build();
+    let amarys = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-amarys-small-hand",
+        name: "Amarys",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::DrawThenDiscardHandAtEndOfTurnIfAtLeast { draw: 4, at_least: 5 },
+    }));
+    let mut state = game(&set, amarys, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, amarys);
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    // Empty the hand below the threshold before the turn ends.
+    let keep = state.player(player).hand.first().copied();
+    let hand = std::mem::take(&mut state.players[player.index()].hand);
+    state.players[player.index()].discard.extend(hand);
+    if let Some(c) = keep {
+        state.players[player.index()].hand.push(c);
+    }
+
+    apply(&mut state, Action::EndTurn).unwrap();
+    assert_eq!(state.player(player).hand.len(), 1, "below the threshold, nothing is discarded");
+}
+
+#[test]
+fn waitress_peeks_six_and_attaches_a_basic_energy_found_there() {
+    let mut set = build();
+    let waitress = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-waitress",
+        name: "Waitress",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::Decide {
+            from: Zone::Deck,
+            slots: vec![Slot {
+                filter: CardFilter::BasicEnergy,
+                to: Destination::Attach(TargetFilter::AnyInPlay),
+                limit: 1,
+                excludes_type_of_previous: false,
+                peek: Some(6),
+            }],
+            then: None,
+        },
+    }));
+    let mut state = game(&set, waitress, 3);
+    let player = state.current;
+    let active = state.player(player).active.unwrap();
+    let energy_card = deal_new_card(&mut state, player, set.energy);
+    state.players[player.index()].deck.push(energy_card);
+    let card = ensure_in_hand(&mut state, player, waitress);
+    let deck_before = state.player(player).deck.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    let take = legal_actions(&state)
+        .into_iter()
+        .find_map(|a| match a {
+            Action::TakeCardOnto { card, target } => Some((card, target)),
+            _ => None,
+        })
+        .expect("a Basic Energy is among the top 6");
+    apply(&mut state, Action::TakeCardOnto { card: take.0, target: take.1 }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert!(state.pokemon(active).attached.contains(&take.0));
+    assert_eq!(state.player(player).deck.len(), deck_before - 1, "one card left the deck for good");
+}
+
+#[test]
+fn amarys_and_waitress_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Amarys", "Waitress"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play"
+        );
+    }
+}
