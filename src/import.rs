@@ -804,6 +804,18 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             },
         ),
+        "Lucian" => (
+            free,
+            TrainerEffect::BothHandToBottomThenEachCoinFlipDraw { heads: 6, tails: 3 },
+        ),
+        "Lacey" => (
+            free,
+            TrainerEffect::ShuffleHandThenDrawBonusIfOpponentPrizesAtMost {
+                normal: 4,
+                bonus: 8,
+                at_most: 3,
+            },
+        ),
         "Harlequin" => (
             free,
             TrainerEffect::BothShuffleHandThenCoinFlipDraw {

@@ -3645,3 +3645,98 @@ fn ethans_adventure_is_admitted_from_the_artifact() {
         "Ethan's Adventure should play"
     );
 }
+
+// --- Beyond the field: bottom-of-deck reshuffles ---
+
+#[test]
+fn lucian_moves_both_hands_to_the_bottom_then_each_flips_their_own_coin() {
+    let mut set = build();
+    let lucian = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-lucian",
+        name: "Lucian",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::BothHandToBottomThenEachCoinFlipDraw { heads: 6, tails: 3 },
+    }));
+    let mut state = game(&set, lucian, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let card = ensure_in_hand(&mut state, player, lucian);
+    let opp_hand_before: Vec<CardId> = state.player(opponent).hand.clone();
+    assert!(!opp_hand_before.is_empty());
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+
+    // Every card either side held before now sits at the deck's own
+    // bottom, none in hand any more (the two hands drew fresh after).
+    for c in &opp_hand_before {
+        assert!(
+            !state.player(opponent).hand.contains(c),
+            "the opponent's old hand left, to the bottom of their deck"
+        );
+    }
+    assert!(!state.player(player).hand.is_empty(), "the player drew from their own flip");
+    assert!(!state.player(opponent).hand.is_empty(), "the opponent drew from their own flip");
+}
+
+
+#[test]
+fn lacey_draws_four_normally_and_eight_at_low_opponent_prizes() {
+    let mut set = build();
+    let lacey = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-lacey",
+        name: "Lacey",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::ShuffleHandThenDrawBonusIfOpponentPrizesAtMost {
+            normal: 4,
+            bonus: 8,
+            at_most: 3,
+        },
+    }));
+    let mut state = game(&set, lacey, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, lacey);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert_eq!(state.player(player).hand.len(), 4);
+}
+
+#[test]
+fn lacey_draws_eight_when_the_opponent_holds_three_or_fewer_prizes() {
+    let mut set = build();
+    let lacey = set.db.add(CardDef::Trainer(Trainer {
+        print_id: "test-lacey-low-prizes",
+        name: "Lacey",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::ShuffleHandThenDrawBonusIfOpponentPrizesAtMost {
+            normal: 4,
+            bonus: 8,
+            at_most: 3,
+        },
+    }));
+    let mut state = game(&set, lacey, 3);
+    let player = state.current;
+    let opponent = player.opponent();
+    let taken: Vec<CardId> = state.players[opponent.index()].prizes.drain(3..).collect();
+    state.players[opponent.index()].discard.extend(taken);
+    let card = ensure_in_hand(&mut state, player, lacey);
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    assert_eq!(state.player(player).hand.len(), 8);
+}
+
+#[test]
+fn lucian_and_lacey_are_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    for name in ["Lucian", "Lacey"] {
+        assert!(
+            import.cards.iter().any(|c| c.name == name && c.playable.is_some()),
+            "{name} should play"
+        );
+    }
+}

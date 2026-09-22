@@ -585,6 +585,20 @@ pub enum TrainerEffect {
     /// rather than being shuffled in, so what they gave up is the last thing
     /// they draw again.
     OpponentHandToBottomThenDraw { count: u32 },
+    /// Both players put their own hand (shuffled) on the bottom of their
+    /// own deck — the same move `OpponentHandToBottomThenDraw` already
+    /// makes, run for each side. If either side held anything to move,
+    /// each player then flips their own coin and draws `heads` or
+    /// `tails` — two separate flips, unlike `BothShuffleHandThenCoinFlipDraw`'s
+    /// one shared flip. `Lucian`.
+    BothHandToBottomThenEachCoinFlipDraw { heads: u32, tails: u32 },
+    /// Shuffle the player's hand into their Deck, then draw `normal` —
+    /// or `bonus` instead, if the opponent holds at most `at_most`
+    /// Prizes. The same "shuffle hand, then draw" shape
+    /// `ShuffleHandThenDraw` already is, conditioned on the opponent's
+    /// Prizes the way `DrawThenBonusIfOpponentPrizesAtMost` reads them,
+    /// rather than the player's own Prize count. `Lacey`.
+    ShuffleHandThenDrawBonusIfOpponentPrizesAtMost { normal: u32, bonus: u32, at_most: usize },
     /// Move one Energy attached to a Pokémon the player controls onto
     /// another Pokémon they control. Both ends are attachments rather than
     /// zones, so this is neither a move between zones nor an attachment from

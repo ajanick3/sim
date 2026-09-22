@@ -3410,6 +3410,46 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::BothHandToBottomThenEachCoinFlipDraw { heads, tails } => {
+            let mut moved_any = false;
+            for whose in [player, player.opponent()] {
+                let mut hand = std::mem::take(&mut state.players[whose.index()].hand);
+                if hand.is_empty() {
+                    continue;
+                }
+                moved_any = true;
+                shuffle(state.rng.as_mut(), &mut hand);
+                let deck = &mut state.players[whose.index()].deck;
+                for card in hand.into_iter().rev() {
+                    deck.insert(0, card);
+                }
+            }
+            if moved_any {
+                for whose in [player, player.opponent()] {
+                    let count = if state.flip_for(whose) { heads } else { tails };
+                    for _ in 0..count {
+                        state.draw(whose);
+                    }
+                }
+            }
+        }
+
+        TrainerEffect::ShuffleHandThenDrawBonusIfOpponentPrizesAtMost {
+            normal,
+            bonus,
+            at_most,
+        } => {
+            let count = if state.player(player.opponent()).prizes.len() <= at_most {
+                bonus
+            } else {
+                normal
+            };
+            shuffle_hand_into_deck(state, player);
+            for _ in 0..count {
+                state.draw(player);
+            }
+        }
+
         // The card's own placement was the whole effect.
         TrainerEffect::Nothing => {}
 
