@@ -3847,3 +3847,210 @@ fn amarys_and_waitress_are_admitted_from_the_artifact() {
         );
     }
 }
+
+// --- Beyond the field: Kofu, Perrin, Caretaker ---
+
+fn with_kofu(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-kofu",
+        name: "Kofu",
+        kind: TrainerKind::Supporter,
+        requirement: Some(Requirement::PutOtherCardsOnBottomOfDeck(2)),
+        effect: TrainerEffect::Draw(4),
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn kofu_cannot_be_played_holding_fewer_than_two_other_cards() {
+    let (set, kofu) = with_kofu(build());
+    let mut state = game(&set, kofu, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, kofu);
+
+    let keep: Vec<CardId> = state
+        .player(player)
+        .hand
+        .iter()
+        .filter(|c| **c != card)
+        .take(1)
+        .copied()
+        .collect();
+    state.players[player.index()].hand = keep;
+    state.players[player.index()].hand.push(card);
+    assert!(
+        !legal_actions(&state).contains(&Action::PlayTrainer { card }),
+        "one other card does not pay for two"
+    );
+}
+
+#[test]
+fn kofu_bottom_decks_two_chosen_cards_then_draws_four() {
+    let (set, kofu) = with_kofu(build());
+    let mut state = game(&set, kofu, 3);
+    let player = state.current;
+    let card = ensure_in_hand(&mut state, player, kofu);
+
+    let others: Vec<CardId> = state
+        .player(player)
+        .hand
+        .iter()
+        .filter(|c| **c != card)
+        .take(2)
+        .copied()
+        .collect();
+    assert_eq!(others.len(), 2);
+    let hand_before = state.player(player).hand.len();
+    let deck_before = state.player(player).deck.len();
+
+    apply(&mut state, Action::PlayTrainer { card }).unwrap();
+    apply(&mut state, Action::PayWithCardToBottomOfDeck { card: others[0] }).unwrap();
+    apply(&mut state, Action::PayWithCardToBottomOfDeck { card: others[1] }).unwrap();
+
+    for other in &others {
+        assert!(state.player(player).deck.contains(other));
+        assert!(!state.player(player).hand.contains(other));
+    }
+    // Kofu itself left the hand, the 2 paid cards left too, and 4 were
+    // drawn: hand_before - 1 (Kofu) - 2 (paid) + 4 (drawn).
+    assert_eq!(state.player(player).hand.len(), hand_before + 1);
+    assert_eq!(state.player(player).deck.len(), deck_before - 4 + 2);
+}
+
+#[test]
+fn kofu_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Kofu" && c.playable.is_some()),
+        "Kofu should play"
+    );
+}
+
+fn with_perrin(set: Set) -> (Set, CardDefId) {
+    let mut db = set.db.clone();
+    let card = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-perrin",
+        name: "Perrin",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::RevealUpToTwoPokemonToDeckThenSearchSameCount,
+    }));
+    (Set { db, ..set }, card)
+}
+
+#[test]
+fn perrin_puts_hand_pokemon_into_the_deck_then_searches_the_same_count() {
+    let (set, perrin) = with_perrin(build());
+    let mut state = game(&set, perrin, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, perrin);
+
+    let mon_in_hand = ensure_in_hand(&mut state, player, set.mon);
+    let mon_ex_in_hand = ensure_in_hand(&mut state, player, set.mon_ex);
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    apply(&mut state, Action::TakeCard { card: mon_in_hand }).unwrap();
+    apply(&mut state, Action::TakeCard { card: mon_ex_in_hand }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    // The second search is now open, for up to 2 Pokémon from the deck.
+    let found: Vec<CardId> = offered(&state);
+    assert!(!found.is_empty(), "the deck still holds Pokémon to find");
+    let first = found[0];
+    apply(&mut state, Action::TakeCard { card: first }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert!(state.player(player).hand.contains(&first));
+    assert!(!state.player(player).hand.contains(&mon_in_hand));
+    assert!(!state.player(player).hand.contains(&mon_ex_in_hand));
+    assert!(state.player(player).deck.contains(&mon_in_hand));
+    assert!(state.player(player).deck.contains(&mon_ex_in_hand));
+}
+
+#[test]
+fn perrin_declining_to_reveal_anything_opens_no_search() {
+    let (set, perrin) = with_perrin(build());
+    let mut state = game(&set, perrin, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, perrin);
+
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+    apply(&mut state, Action::FinishDeciding).unwrap();
+
+    assert_eq!(state.phase, Phase::Main, "nothing moved, nothing to search for");
+}
+
+#[test]
+fn perrin_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Perrin" && c.playable.is_some()),
+        "Perrin should play"
+    );
+}
+
+fn with_caretaker(set: Set) -> (Set, CardDefId, CardDefId) {
+    let mut db = set.db.clone();
+    let community_center = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-community-center",
+        name: "Community Center",
+        kind: TrainerKind::Stadium,
+        requirement: None,
+        effect: TrainerEffect::StadiumMayHealAllIfPlayedSupporter(20),
+    }));
+    let caretaker = db.add(CardDef::Trainer(Trainer {
+        print_id: "test-caretaker",
+        name: "Caretaker",
+        kind: TrainerKind::Supporter,
+        requirement: None,
+        effect: TrainerEffect::DrawThenShuffleSelfIntoDeckIfCommunityCenterAndDrew(2),
+    }));
+    (Set { db, ..set }, caretaker, community_center)
+}
+
+#[test]
+fn caretaker_shuffles_into_the_deck_with_community_center_in_play() {
+    let (set, caretaker, community_center) = with_caretaker(build());
+    let mut state = game(&set, caretaker, 3);
+    let player = state.current;
+    let stadium_card = deal_new_card(&mut state, player, community_center);
+    state.players[player.index()].hand.push(stadium_card);
+    apply(&mut state, Action::PlayTrainer { card: stadium_card }).unwrap();
+
+    let played = ensure_in_hand(&mut state, player, caretaker);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert!(!state.player(player).discard.contains(&played));
+    assert!(state.player(player).deck.contains(&played));
+}
+
+#[test]
+fn caretaker_discards_normally_without_community_center() {
+    let (set, caretaker, _) = with_caretaker(build());
+    let mut state = game(&set, caretaker, 3);
+    let player = state.current;
+    let played = ensure_in_hand(&mut state, player, caretaker);
+    apply(&mut state, Action::PlayTrainer { card: played }).unwrap();
+
+    assert!(state.player(player).discard.contains(&played));
+    assert!(!state.player(player).deck.contains(&played));
+}
+
+#[test]
+fn caretaker_is_admitted_from_the_artifact() {
+    let import = sim::import::load(
+        &std::fs::read_to_string("data/cards.json").expect("the artifact is committed"),
+    )
+    .unwrap();
+    assert!(
+        import.cards.iter().any(|c| c.name == "Caretaker" && c.playable.is_some()),
+        "Caretaker should play"
+    );
+}

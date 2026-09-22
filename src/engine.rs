@@ -141,6 +141,13 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                         remaining: count,
                     };
                 }
+                Some(Requirement::PutOtherCardsOnBottomOfDeck(count)) => {
+                    state.phase = Phase::PayingToBottomOfDeck {
+                        player,
+                        card,
+                        remaining: count,
+                    };
+                }
                 // A requirement read from the board, or from history,
                 // costs nothing, and `legal_actions` has already checked it.
                 None
@@ -612,6 +619,39 @@ pub fn apply(state: &mut GameState, action: Action) -> Result<(), IllegalAction>
                 // No `settle` here, the same as playing the card itself:
                 // the effect either opened a phase of its own or finished,
                 // and both are settled where the phase ends.
+                resolve_trainer(state, player, played, effect);
+            }
+        }
+
+        Action::PayWithCardToBottomOfDeck { card } => {
+            let (player, played, remaining) = match state.phase {
+                Phase::PayingToBottomOfDeck {
+                    player,
+                    card: played,
+                    remaining,
+                } => (player, played, remaining),
+                _ => return Err(IllegalAction),
+            };
+            state.remove_from_hand(player, card);
+            state.players[player.index()].deck.insert(0, card);
+            let name = state.def_of(card).name();
+            state
+                .log
+                .push(format!("{player:?} puts {name} on the bottom of the deck to pay."));
+            if remaining > 1 {
+                state.phase = Phase::PayingToBottomOfDeck {
+                    player,
+                    card: played,
+                    remaining: remaining - 1,
+                };
+            } else {
+                let effect = state
+                    .def_of(played)
+                    .as_trainer()
+                    .expect("a cost is only ever paid for a Trainer")
+                    .effect
+                    .clone();
+                state.phase = Phase::Main;
                 resolve_trainer(state, player, played, effect);
             }
         }
@@ -3055,6 +3095,28 @@ fn enter_slot(
             let deck = &mut state.players[chooser.index()].deck;
             shuffle(state.rng.as_mut(), deck);
         }
+        if matches!(then, Some(crate::card::Then::SearchPokemonUpToMoved)) {
+            if moved > 0 {
+                state.phase = Phase::Deciding {
+                    chooser,
+                    card,
+                    step: step + 1,
+                    from: Zone::Deck,
+                    to: Destination::Zone(Zone::Hand),
+                    filter: crate::card::CardFilter::AnyPokemon,
+                    excludes_type_of_previous: false,
+                    peek: None,
+                    remaining: moved,
+                    moved: 0,
+                    previous: None,
+                    then: None,
+                };
+            } else {
+                state.phase = Phase::Main;
+                settle(state);
+            }
+            return;
+        }
         match then {
             Some(crate::card::Then::DrawPerCardMoved(per_card)) => {
                 for _ in 0..(moved * per_card) {
@@ -3070,6 +3132,9 @@ fn enter_slot(
             Some(crate::card::Then::EndTurnIfMoved)
             | Some(crate::card::Then::DiscardRestOfPeek)
             | None => {}
+            Some(crate::card::Then::SearchPokemonUpToMoved) => {
+                unreachable!("handled above, before this match, with its own return")
+            }
         }
         state.phase = Phase::Main;
         settle(state);
@@ -3215,6 +3280,40 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
                     break;
                 }
             }
+        }
+
+        TrainerEffect::DrawThenShuffleSelfIntoDeckIfCommunityCenterAndDrew(count) => {
+            let mut drew_any = false;
+            for _ in 0..count {
+                if state.draw(player) {
+                    drew_any = true;
+                }
+            }
+            let community_center_in_play = matches!(
+                state.stadium_effect(),
+                Some(TrainerEffect::StadiumMayHealAllIfPlayedSupporter(_))
+            );
+            if drew_any && community_center_in_play {
+                state.players[player.index()].discard.retain(|c| *c != card);
+                state.players[player.index()].deck.push(card);
+                shuffle(state.rng.as_mut(), &mut state.players[player.index()].deck);
+                let name = state.def_of(card).name();
+                state
+                    .log
+                    .push(format!("{name} shuffles back into the deck (Community Center)."));
+            }
+        }
+
+        TrainerEffect::RevealUpToTwoPokemonToDeckThenSearchSameCount => {
+            enter_slot(
+                state,
+                player,
+                card,
+                0,
+                Zone::Hand,
+                Some(crate::card::Then::SearchPokemonUpToMoved),
+                Progress { moved: 0, previous: None },
+            );
         }
 
         TrainerEffect::DrawThenDiscardHandAtEndOfTurnIfAtLeast { draw, at_least } => {

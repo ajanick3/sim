@@ -217,6 +217,13 @@ pub enum Phase {
         /// How many cards the player still owes.
         remaining: u32,
     },
+    /// The same shape as `Paying`, but the chosen cards go to the
+    /// bottom of the deck rather than the discard pile. `Kofu`.
+    PayingToBottomOfDeck {
+        player: PlayerId,
+        card: CardId,
+        remaining: u32,
+    },
     /// `player` moves one Energy between two Pokémon they control, and
     /// chooses both ends at once. A separate phase for each end would record
     /// a half-made move that no rule can read; the pair is small enough to

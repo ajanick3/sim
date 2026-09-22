@@ -127,6 +127,19 @@ More clusters merged:
 - Energy Coin — `CoinFlipAllThen(u32, Box<TrainerEffect>)`, `CoinFlipThen`'s
   many-coin sibling: flip several coins and resolve the wrapped effect
   only if every one lands heads.
+- Kofu, Perrin, Caretaker — three Supporter shapes, each new: Kofu
+  bottom-decks exactly 2 chosen cards then draws 4, gated by a new
+  `Requirement::PutOtherCardsOnBottomOfDeck` and a new
+  `Phase::PayingToBottomOfDeck` (the same shape `Paying` already is,
+  paid to the bottom of the deck instead of the discard pile). Perrin
+  reveals up to 2 Pokémon from hand into the deck, then searches for
+  up to that many back — a new `Then::SearchPokemonUpToMoved` opens a
+  second search phase by hand once the first ends, sized to what it
+  moved, since no fixed slot can print a limit read from another
+  slot's own result. Caretaker draws 2, then — only if it drew any
+  and Community Center is in play — shuffles itself out of the
+  discard pile it already went to and back into the deck, the first
+  effect to read a specific Stadium's presence at resolve time.
 
 - Levincia, Spikemuth Gym, Mystery Garden, Surfing Beach — four
   once-a-turn Stadium actions, each opening `Phase::Deciding` or
@@ -142,8 +155,8 @@ More clusters merged:
   is the first Stadium to grant a free switch action, gated on both
   the Active and the chosen Bench Pokémon sharing its type.
 
-Coverage: 1004 / 3051 prints (32.9%). Refused, by kind:
-Supporter 18, Item 26, Tool 10, Stadium 10, Special Energy 3.
+Coverage: 1011 / 3051 prints (33.1%). Refused, by kind:
+Supporter 15, Item 26, Tool 10, Stadium 10, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
@@ -289,18 +302,10 @@ Deferred — the tier that needs its own design/ADR before it is cheap:
 
 Triaged but cheap, left unbuilt this pass for a session with room —
 each reuses an existing shape closely enough that no new mechanic is
-needed, just the time to wire and test it:
-- Kofu — bottom-decks exactly 2 chosen cards (refusing itself below
-  that), then draws 4; close to the bottom-deck reskins above but adds
-  a choose-then-gate step none of them share.
-- Perrin — reveals up to 2 Pokémon from hand into the deck, then
-  tutors that many Pokémon back; a two-step "count what you gave up,
-  then search that count" pairing of moves the engine already runs
-  separately.
-- Caretaker — shuffles itself back into the deck instead of
-  discarding, but only if Community Center (already built) is in
-  play; needs a resolve-time read of one specific Stadium's presence,
-  which no effect does yet.
+needed, just the time to wire and test it. Kofu, Perrin, Caretaker,
+Levincia, Spikemuth Gym, Mystery Garden, and Surfing Beach, all listed
+here in an earlier pass, are now built and recorded under Decisions
+above instead:
 - Hop's Choice Band — combines a named-carrier attack-cost discount
   with a named-carrier bonus-damage clause in one Tool; both shapes
   exist separately, only the combined variant is unbuilt.
