@@ -432,6 +432,23 @@ fn known_trainer(name: &str) -> Option<(Option<Requirement>, TrainerEffect)> {
                 then: None,
             })),
         ),
+        "Energy Coin" => (
+            free,
+            TrainerEffect::CoinFlipAllThen(
+                2,
+                Box::new(TrainerEffect::Decide {
+                    from: Zone::Deck,
+                    slots: vec![Slot {
+                        filter: CardFilter::BasicEnergy,
+                        to: Destination::Attach(TargetFilter::AnyInPlay),
+                        limit: 1,
+                        excludes_type_of_previous: false,
+                        peek: None,
+                    }],
+                    then: None,
+                }),
+            ),
+        ),
         "Ethan's Adventure" => (
             free,
             TrainerEffect::Decide {

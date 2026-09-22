@@ -489,6 +489,9 @@ pub enum TrainerEffect {
     /// Flip a coin; on heads, resolve the wrapped effect. On tails,
     /// nothing. `Poké Ball`.
     CoinFlipThen(Box<TrainerEffect>),
+    /// Flip `count` coins; resolve the wrapped effect only if every one
+    /// lands heads. `CoinFlipThen`'s many-coin sibling. `Energy Coin`.
+    CoinFlipAllThen(u32, Box<TrainerEffect>),
     /// Flip a coin; resolve the first wrapped effect on heads, the
     /// second on tails — unlike `CoinFlipThen`, tails is a different
     /// search, not a no-op. Both sides must be a `Decide` of exactly
@@ -901,10 +904,12 @@ impl Trainer {
             TrainerEffect::Decide { slots, .. } => slots,
             // `Poké Ball` wraps its search in a coin flip; once heads
             // opens it, the slot read-back still needs to find it.
-            TrainerEffect::CoinFlipThen(inner) => match &**inner {
-                TrainerEffect::Decide { slots, .. } => slots,
-                _ => &[],
-            },
+            TrainerEffect::CoinFlipThen(inner) | TrainerEffect::CoinFlipAllThen(_, inner) => {
+                match &**inner {
+                    TrainerEffect::Decide { slots, .. } => slots,
+                    _ => &[],
+                }
+            }
             TrainerEffect::MaySearchBasicToBenchThenMaybeEndTurn => &LUMIOSE_CITY_SLOT,
             TrainerEffect::DiscardHandThenDecide { slots } => slots,
             _ => &[],

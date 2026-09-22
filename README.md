@@ -55,7 +55,7 @@ python3 tools/import_cards.py        # about 95 seconds, 3051 cards
 The engine reads the artifact, and admits only the cards it can run all of:
 
 ```sh
-cargo run --bin coverage             # 978 of 3051 Standard cards (32.1%)
+cargo run --bin coverage             # 996 of 3051 Standard cards (32.6%)
 cargo run --bin coverage -- refused  # every refused card, and why
 cargo run --bin deckcheck -- decks/brent-tonisson.txt  # check a decklist
 ```
@@ -95,7 +95,7 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [AZ's Tranquility](src/import.rs#L1325) | ✅ |
 | [Acerola's Mischief](src/import.rs#L1527) | ✅ |
 | [Amarys](src/import.rs#L779) | ✅ |
-| Anthea & Concordia | ❌ — not yet triaged |
+| Anthea & Concordia | ❌ — requires six named N's Pokémon in play at once and grants 3 extra Prizes on a KO — a compound in-play check plus the deferred prize-count support |
 | [Bianca's Devotion](src/import.rs#L1310) | ✅ |
 | [Billy & O'Nare](src/import.rs#L766) | ✅ |
 | [Black Belt's Training](src/import.rs#L1333) | ✅ |
@@ -103,7 +103,7 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Briar](src/import.rs#L888) | ✅ |
 | [Brock's Scouting](src/import.rs#L1395) | ✅ |
 | [Canari](src/import.rs#L725) | ✅ |
-| Caretaker | ❌ — not yet triaged |
+| Caretaker | ❌ — shuffles itself back into the deck instead of discarding, but only if Community Center is in play — no effect yet reads a specific Stadium's presence at resolve time |
 | [Carmine](src/import.rs#L682) | ✅ |
 | [Cassiopeia](src/import.rs#L743) | ✅ |
 | [Cheren](src/import.rs#L234) | ✅ |
@@ -137,7 +137,7 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Jett](src/import.rs#L757) | ✅ |
 | [Judge](src/import.rs#L911) | ✅ |
 | [Kieran](src/import.rs#L1373) | ✅ |
-| Kofu | ❌ — not yet triaged |
+| Kofu | ❌ — bottom-decks exactly 2 chosen cards, refusing itself if the hand holds fewer than 2, then draws 4 — a choose-then-gate shape none of the bottom-deck reskins share |
 | [Lacey](src/import.rs#L852) | ✅ |
 | [Lana's Aid](src/import.rs#L1290) | ✅ |
 | [Larry's Skill](src/import.rs#L1345) | ✅ |
@@ -149,7 +149,7 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Morty's Conviction](src/import.rs#L1383) | ✅ |
 | [N's Plan](src/import.rs#L1308) | ✅ |
 | [Naveen](src/import.rs#L871) | ✅ |
-| Perrin | ❌ — not yet triaged |
+| Perrin | ❌ — reveals up to 2 Pokémon from hand into the deck, then tutors that many Pokémon back — a two-step "count what you gave up, then search that count" mechanic |
 | [Philippe](src/import.rs#L697) | ✅ |
 | [Picnicker](src/import.rs#L681) | ✅ |
 | [Pokémon Center Lady](src/import.rs#L1309) | ✅ |
@@ -175,7 +175,7 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 
 | Card | Status |
 | --- | --- |
-| Accompanying Flute | ❌ — not yet triaged |
+| Accompanying Flute | ❌ — reveals the top 5 of the opponent's deck and fills the opponent's own Bench with any Basics found — the first search reading the opponent's deck to fill the opponent's board |
 | Antique Armor Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
 | Antique Cover Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
 | Antique Jaw Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
@@ -183,9 +183,9 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | Antique Root Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
 | Antique Sail Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
 | Antique Skull Fossil | ❌ — plays as a 60-HP Basic Pokémon — a whole mechanic, no seam for it yet |
-| Arven's Sandwich | ❌ — not yet triaged |
+| Arven's Sandwich | ❌ — heals 30, or 100 if the healed Pokémon's own name is an Arven's Pokémon — the bonus reads the target's name, not the carrier's, unlike every named-bonus shape built so far |
 | [Awakening Drum](src/import.rs#L406) | ✅ |
-| Blowtorch | ❌ — not yet triaged |
+| Blowtorch | ❌ — costs discarding a Basic Fire Energy from hand to play at all — the first Item whose own legality spends a hand card as its price, not just a `Requirement` check |
 | [Boxed Order](src/import.rs#L604) | ✅ |
 | [Brilliant Blender](src/import.rs#L548) | ✅ |
 | [Buddy-Buddy Poffin](src/import.rs#L1004) | ✅ |
@@ -198,34 +198,34 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | Deduction Kit | ❌ — needs to peek and then discard or reorder — today's peek always shuffles back |
 | [Dragon Elixir](src/import.rs#L647) | ✅ |
 | [Dusk Ball](src/import.rs#L1449) | ✅ |
-| Energy Coin | ❌ — not yet triaged |
+| [Energy Coin](src/import.rs#L435) | ✅ |
 | [Energy Recycler](src/import.rs#L1604) | ✅ |
 | [Energy Retrieval](src/import.rs#L1434) | ✅ |
 | [Energy Search](src/import.rs#L1420) | ✅ |
 | [Energy Search Pro](src/import.rs#L962) | ✅ |
-| Energy Swatter | ❌ — not yet triaged |
+| Energy Swatter | ❌ — opponent reveals their hand and you choose an Energy card there — the interactive-opponent-choice bucket already named in Deferred |
 | [Energy Switch](src/import.rs#L1074) | ✅ |
 | [Enhanced Hammer](src/import.rs#L892) | ✅ |
 | [Fighting Gong](src/import.rs#L1455) | ✅ |
 | [Glass Trumpet](src/import.rs#L893) | ✅ |
-| Great Haul Net | ❌ — not yet triaged |
+| Great Haul Net | ❌ — shuffles chosen cards from the discard pile back into the deck (in either of two categories) — today's shuffles only return unchosen peek cards, never chosen discard-pile ones |
 | [Hand Trimmer](src/import.rs#L1448) | ✅ |
 | [Hole-Digging Shovel](src/import.rs#L381) | ✅ |
 | [Hop's Bag](src/import.rs#L463) | ✅ |
 | [Hyper Aroma](src/import.rs#L576) | ✅ |
 | [Iron Defender](src/import.rs#L394) | ✅ |
 | [Jumbo Ice Cream](src/import.rs#L1286) | ✅ |
-| Love Ball | ❌ — not yet triaged |
+| Love Ball | ❌ — searches the deck for a Pokémon sharing a name with one the opponent has in play — a tutor filter keyed to the opponent's board state, not a fixed name or prefix |
 | [Lumiose Galette](src/import.rs#L646) | ✅ |
 | [Master Ball](src/import.rs#L562) | ✅ |
 | [Max Rod](src/import.rs#L618) | ✅ |
 | Meddling Memo | ❌ — needs an interactive opponent choice the engine has no shape for yet |
 | [Mega Signal](src/import.rs#L976) | ✅ |
-| Megaton Blower | ❌ — not yet triaged |
+| Megaton Blower | ❌ — discards every Tool and Special Energy from every opponent Pokémon at once, plus a Stadium — the existing discard effects work one target at a time |
 | [Miracle Headset](src/import.rs#L632) | ✅ |
 | [N's PP Up](src/import.rs#L1208) | ✅ |
 | [Night Stretcher](src/import.rs#L919) | ✅ |
-| Ogre's Mask | ❌ — not yet triaged |
+| Ogre's Mask | ❌ — swaps a Pokémon ex in the discard pile with one in play, carrying over attachments, damage, and conditions — a whole discard-to-active swap mechanic |
 | [Poké Ball](src/import.rs#L421) | ✅ |
 | [Poké Pad](src/import.rs#L933) | ✅ |
 | [Poké Vital A](src/import.rs#L656) | ✅ |
@@ -237,12 +237,12 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Prime Catcher](src/import.rs#L1450) | ✅ |
 | [Rare Candy](src/import.rs#L1193) | ✅ |
 | [Reboot Pod](src/import.rs#L410) | ✅ |
-| Redeemable Ticket | ❌ — not yet triaged |
+| Redeemable Ticket | ❌ — reshuffles the Prize cards and redraws that many — the first Item to touch the Prize pile itself, and it wants the deferred prize-count support |
 | [Repel](src/import.rs#L547) | ✅ |
 | Roto-Stick | ❌ — needs to peek and then discard or reorder — today's peek always shuffles back |
 | [Sacred Ash](src/import.rs#L1046) | ✅ |
 | [Scoop Up Cyclone](src/import.rs#L1522) | ✅ |
-| Scramble Switch | ❌ — not yet triaged |
+| Scramble Switch | ❌ — switches Active and Bench, then may move all Energy from the Pokémon just benched onto the new Active — switching exists, moving Energy along with one does not |
 | [Secret Box](src/import.rs#L1553) | ✅ |
 | [Special Red Card](src/import.rs#L1166) | ✅ |
 | [Strange Timepiece](src/import.rs#L1469) | ✅ |
@@ -269,7 +269,7 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Air Balloon](src/import.rs#L1470) | ✅ |
 | Amulet of Hope | ❌ — needs a pause for a choice at the moment of knockout, before cards move to discard |
 | [Babiri Berry](src/import.rs#L497) | ✅ |
-| Backtrack Badge | ❌ — not yet triaged |
+| Backtrack Badge | ❌ — re-flips an attack's coins after seeing the results — no Tool can intercept and redo flips that already landed |
 | [Binding Mochi](src/import.rs#L1473) | ✅ |
 | [Brave Bangle](src/import.rs#L1472) | ✅ |
 | [Colbur Berry](src/import.rs#L501) | ✅ |
@@ -282,7 +282,7 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Handheld Fan](src/import.rs#L1477) | ✅ |
 | Heavy Baton | ❌ — needs a pause for a choice at the moment of knockout, before cards move to discard |
 | [Hero's Cape](src/import.rs#L1471) | ✅ |
-| Hop's Choice Band | ❌ — not yet triaged |
+| Hop's Choice Band | ❌ — combines a named-carrier attack-cost discount with a named-carrier bonus-damage clause in one Tool — both shapes exist separately; the combined variant is unbuilt |
 | [Light Ball](src/import.rs#L383) | ✅ |
 | [Lillie's Pearl](src/import.rs#L1474) | ✅ |
 | [Lucky Helmet](src/import.rs#L1476) | ✅ |
@@ -299,41 +299,41 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Team Rocket's Hypnotizer](src/import.rs#L528) | ✅ |
 | Technical Machine: Fluorite | ❌ — the Tool grants an attack; today an attack only ever comes from a Pokémon's own printed list |
 | [Thick Scale](src/import.rs#L521) | ✅ |
-| Tremendous Bomb | ❌ — not yet triaged |
+| Tremendous Bomb | ❌ — retaliates only against a Mega Evolution Pokémon ex specifically, past a 240-damage threshold, then discards itself — the reactive-damage Tools don't yet gate on the attacker's own category or self-discard after firing |
 
 ### Stadiums (21/31 built)
 
 | Card | Status |
 | --- | --- |
 | [Academy at Night](src/import.rs#L1531) | ✅ |
-| Ange Floette | ❌ — not yet triaged |
+| Ange Floette | ❌ — can be put into play only by discarding a specific other Stadium (Prism Tower) that same turn — no rule lets a Stadium's play condition consume another Stadium already in play |
 | [Area Zero Underdepths](src/import.rs#L908) | ✅ |
 | [Battle Cage](src/import.rs#L909) | ✅ |
-| Celebratory Fanfare | ❌ — not yet triaged |
+| Celebratory Fanfare | ❌ — heals every Pokémon on both sides at once and ends the turn only if healing happened — pairs the "ends the turn if it did anything" clause with a heal instead of a search for the first time |
 | [Community Center](src/import.rs#L1538) | ✅ |
-| Dizzying Valley | ❌ — not yet triaged |
+| Dizzying Valley | ❌ — stops Confusion from clearing on evolve or devolve — evolving already always clears conditions, and nothing hooks that step to skip it |
 | [Festival Grounds](src/import.rs#L1545) | ✅ |
 | [Forest of Vitality](src/import.rs#L1544) | ✅ |
-| Fossil Quarry | ❌ — not yet triaged |
+| Fossil Quarry | ❌ — searches for up to 2 "Antique …" Items and benches them as Pokémon — part of the already-deferred Trainer-as-Pokémon Antique Fossil mechanic |
 | [Full Metal Lab](src/import.rs#L493) | ✅ |
-| Grand Tree | ❌ — not yet triaged |
+| Grand Tree | ❌ — searches for a Stage 1, evolves it onto a Basic, then chains into a Stage 2 of that same Pokémon — a two-step forced-evolution search nothing performs yet |
 | [Granite Cave](src/import.rs#L481) | ✅ |
 | [Gravity Mountain](src/import.rs#L1479) | ✅ |
 | [Jamming Tower](src/import.rs#L1542) | ✅ |
-| Levincia | ❌ — not yet triaged |
+| Levincia | ❌ — once per turn, returns up to 2 Basic Lightning Energy from discard to hand — a per-turn Stadium search keyed to a type instead of a name; feasible, unbuilt |
 | [Lively Stadium](src/import.rs#L388) | ✅ |
 | [Lumiose City](src/import.rs#L1536) | ✅ |
-| Mystery Garden | ❌ — not yet triaged |
+| Mystery Garden | ❌ — discards an Energy to draw up to your in-play Pokémon count — the draw target reads the board instead of a fixed number the way `DrawUpToHandSize` does |
 | [N's Castle](src/import.rs#L1480) | ✅ |
-| Neutralization Zone | ❌ — not yet triaged |
+| Neutralization Zone | ❌ — blocks damage from Pokémon ex/V onto non-Rule-Box Pokémon and can't return from the discard pile — needs a Rule-Box read and a discard-pile lockout, neither tracked today |
 | [Nighttime Mine](src/import.rs#L907) | ✅ |
 | [Paradise Resort](src/import.rs#L489) | ✅ |
 | [Perilous Jungle](src/import.rs#L411) | ✅ |
 | [Postwick](src/import.rs#L485) | ✅ |
 | [Prism Tower](src/import.rs#L1537) | ✅ |
 | [Risky Ruins](src/import.rs#L1543) | ✅ |
-| Spikemuth Gym | ❌ — not yet triaged |
-| Surfing Beach | ❌ — not yet triaged |
+| Spikemuth Gym | ❌ — once per turn, searches for a Marnie's Pokémon to hand — a name-prefix Stadium search; feasible, unbuilt |
+| Surfing Beach | ❌ — once per turn, switches Active with a Benched Water Pokémon — no Stadium effect yet grants a free switch action |
 | [Team Rocket's Factory](src/import.rs#L1532) | ✅ |
 | [Team Rocket's Watchtower](src/import.rs#L910) | ✅ |
 

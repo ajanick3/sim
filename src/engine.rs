@@ -3150,6 +3150,13 @@ fn resolve_trainer(state: &mut GameState, player: PlayerId, card: CardId, effect
             }
         }
 
+        TrainerEffect::CoinFlipAllThen(count, inner) => {
+            let all_heads = (0..count).fold(true, |all, _| state.flip_for(player) && all);
+            if all_heads {
+                resolve_trainer(state, player, card, *inner);
+            }
+        }
+
         TrainerEffect::CoinFlipEitherThen(heads, tails) => {
             let chosen = if state.flip_for(player) { *heads } else { *tails };
             let TrainerEffect::Decide { from, slots, then } = chosen else {

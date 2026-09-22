@@ -124,9 +124,12 @@ More clusters merged:
 - Paradise Resort — `StadiumReducesRetreatCostForName`, an exact-name,
   partial-amount sibling of `RemovesRetreatCostForNamePrefix`'s
   prefix-match, whole-cost removal.
+- Energy Coin — `CoinFlipAllThen(u32, Box<TrainerEffect>)`, `CoinFlipThen`'s
+  many-coin sibling: flip several coins and resolve the wrapped effect
+  only if every one lands heads.
 
-Coverage: 995 / 3051 prints (32.6%). Refused, by kind:
-Supporter 18, Item 27, Tool 10, Stadium 14, Special Energy 3.
+Coverage: 996 / 3051 prints (32.6%). Refused, by kind:
+Supporter 18, Item 26, Tool 10, Stadium 14, Special Energy 3.
 
 Special Energy still refused: Legacy Energy (a wildcard-plus-prize-count
 card, not the conditional-provision-by-stage shape this cluster built —
@@ -195,16 +198,111 @@ Deferred — the tier that needs its own design/ADR before it is cheap:
   (a Pokémon carries at most one, by rule) and the first attached
   Special Energy found, no further choice needed. Left unbuilt this
   pass for a session with room for a new phase and Action variant.
-Not yet triaged — refused, but nobody has opened the printed text yet to
-say whether it fits an existing shape or needs a new one. Checked
-directly against the artifact's own refusal list rather than carried
-over from an older note, which had drifted (naming several cards, like
-Poké Ball and Scoop Up Cyclone, that later clusters had already built):
-Accompanying Flute, Ange Floette, Anthea &
-Concordia, Arven's Sandwich, Backtrack Badge, Blowtorch, Caretaker,
-Celebratory Fanfare, Dizzying Valley, Energy Coin, Energy Swatter,
-Fossil Quarry, Grand Tree, Great Haul Net, Hop's Choice Band, Kofu,
-Levincia, Love Ball, Megaton Blower, Mystery Garden,
-Neutralization Zone, Ogre's Mask, Perrin,
-Redeemable Ticket, Scramble Switch, Spikemuth Gym, Surfing Beach,
-Tremendous Bomb.
+- **Named-target heal**: Arven's Sandwich heals 30, or 100 if the
+  *healed* Pokémon's own name is an Arven's Pokémon — every named-bonus
+  shape built so far reads the carrier's name, not the target's.
+- **Hand-card-as-price Items**: Blowtorch is playable only if a Basic
+  Fire Energy is discarded from hand as its own cost — no Item's
+  legality spends a hand card as its price today; `Requirement` checks
+  board state, never pays for itself out of the hand.
+- **Opponent's deck/hand as a search or reveal source**: Accompanying
+  Flute reveals the opponent's top 5 and fills the *opponent's* Bench
+  with Basics found there; Energy Swatter has the opponent reveal
+  their hand and lets the player choose an Energy card there. Both
+  need a search or reveal that reads and edits across the table, not
+  just the player's own side — the interactive-opponent-choice bucket
+  above is the closer cousin, but these two touch zones instead of
+  choices.
+- **Discard-to-deck shuffles keyed to a chosen set**: Great Haul Net
+  shuffles chosen cards from the discard pile back into the deck (of
+  either of two categories) — today's shuffles always return the
+  *unchosen* remainder of a peek, never a chosen discard-pile subset.
+- **Board-state-keyed tutor**: Love Ball searches the deck for a
+  Pokémon sharing a name with one the opponent already has in play —
+  every tutor filter built so far matches a fixed name or prefix, not
+  the live board.
+- **Discard-everything-from-everyone**: Megaton Blower discards every
+  Tool and every Special Energy from every one of the opponent's
+  Pokémon at once, plus a Stadium — the existing discard effects
+  (`DiscardOpponentTool`, `DiscardOpponentSpecialEnergy`) each resolve
+  against one target.
+- **Discard-to-active swap**: Ogre's Mask swaps a Pokémon ex sitting in
+  the discard pile with one in play, carrying over every attachment,
+  damage counter, condition, and turn count — a whole mechanic; no
+  seam moves a card from discard into an active board slot today.
+- **Prize-pile manipulation**: Redeemable Ticket reshuffles the Prize
+  cards and redraws that many from the deck; Anthea & Concordia grants
+  3 extra Prizes on a knockout by an N's Pokémon (also gated on six
+  named N's Pokémon being in play at once) — both want the same
+  deferred prize-count support Legacy Energy already named above.
+- **Switch-and-move-Energy**: Scramble Switch switches Active and
+  Bench, then may move all Energy from the Pokémon just benched onto
+  the new Active — switching exists; carrying Energy along with one
+  does not.
+- **Coin re-flip**: Backtrack Badge lets its carrier re-flip an
+  attack's coins after seeing the results — no Tool can intercept and
+  redo flips that already landed.
+- **Attacker-category-gated retaliation**: Tremendous Bomb retaliates
+  only against a Mega Evolution Pokémon ex specifically, only past a
+  240-damage threshold, then discards itself — the reactive-damage
+  Tools built so far gate on the defender's name or type, never the
+  attacker's category, and none self-discard after firing.
+- **Stadium consumes another Stadium**: Ange Floette can be put into
+  play only by discarding Prism Tower, in play, that same turn — no
+  rule lets one Stadium's play condition consume a different Stadium
+  already on the field.
+- **Both-sides heal that ends the turn**: Celebratory Fanfare heals
+  every Pokémon on both sides at once and ends the turn only if
+  healing happened — the "ends the turn if it did anything" clause has
+  only ever paired with a search before, never a heal, and never both
+  sides at once.
+- **Evolution skips a condition clear**: Dizzying Valley stops
+  Confusion from clearing when a confused Pokémon evolves or
+  devolves — evolving always clears conditions today; nothing hooks
+  that step to skip it conditionally.
+- **Antique Fossil support**: Fossil Quarry searches for up to 2
+  "Antique …" Items and benches them as Pokémon — the same
+  Trainer-as-Pokémon mechanic the seven Antique Fossils themselves
+  are deferred under, above.
+- **Chained forced evolution**: Grand Tree searches for a Stage 1,
+  evolves it onto a Basic, then chains into a Stage 2 of that same
+  Pokémon — a two-step forced-evolution search nothing performs yet.
+- **Rule-Box-aware damage shield**: Neutralization Zone blocks damage
+  from the opponent's Pokémon ex or Pokémon V onto non-Rule-Box
+  Pokémon, and can't be returned from the discard pile to hand or
+  deck — needs a Rule-Box category read and a discard-pile lockout,
+  neither tracked today.
+
+Triaged but cheap, left unbuilt this pass for a session with room —
+each reuses an existing shape closely enough that no new mechanic is
+needed, just the time to wire and test it:
+- Kofu — bottom-decks exactly 2 chosen cards (refusing itself below
+  that), then draws 4; close to the bottom-deck reskins above but adds
+  a choose-then-gate step none of them share.
+- Perrin — reveals up to 2 Pokémon from hand into the deck, then
+  tutors that many Pokémon back; a two-step "count what you gave up,
+  then search that count" pairing of moves the engine already runs
+  separately.
+- Caretaker — shuffles itself back into the deck instead of
+  discarding, but only if Community Center (already built) is in
+  play; needs a resolve-time read of one specific Stadium's presence,
+  which no effect does yet.
+- Levincia — once per turn, returns up to 2 Basic Lightning Energy
+  from discard to hand; a per-turn Stadium search keyed to a type
+  instead of a name, the same shape the per-turn name-prefix Stadium
+  searches already use.
+- Spikemuth Gym — once per turn, searches for a Marnie's Pokémon to
+  hand; the same per-turn name-prefix Stadium search shape as above.
+- Mystery Garden — discards an Energy to draw up to the player's own
+  in-play Pokémon count; the draw target reads the board instead of a
+  fixed number, unlike `DrawUpToHandSize`.
+- Surfing Beach — once per turn, switches Active with a Benched Water
+  Pokémon; no Stadium effect yet grants a free switch action, but the
+  switch itself is a existing primitive.
+- Hop's Choice Band — combines a named-carrier attack-cost discount
+  with a named-carrier bonus-damage clause in one Tool; both shapes
+  exist separately, only the combined variant is unbuilt.
+
+Not yet triaged: none. Every refused Trainer and Special Energy in the
+pool is now either built, filed under a Deferred mechanic above, or
+filed in the cheap-but-unbuilt list just above with a real reason.
