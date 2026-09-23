@@ -2217,7 +2217,16 @@ pub fn describe(state: &GameState, action: Action) -> String {
                 .active
                 .expect("attacking needs an Active");
             let attack = &state.pokemon_def(active).attacks[index];
-            format!("Attack: {} ({} damage)", attack.name, attack.base_damage)
+            // A coin-flip bonus only resolves when the attack runs, so it
+            // still shows the printed number here; every other bonus reads
+            // the board as it stands, so the label shows what it will
+            // really do — `Hydrapple ex`'s `Syrup Storm` says more than its
+            // printed `30+` once Grass Energy is actually attached.
+            let damage = match state.player(state.current.opponent()).active {
+                Some(defender) => crate::engine::base_damage_for_attack(state, active, defender, attack),
+                None => attack.base_damage,
+            };
+            format!("Attack: {} ({} damage)", attack.name, damage)
         }
         Action::EndTurn => "End turn".to_string(),
         Action::Promote { pokemon } => {

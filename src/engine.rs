@@ -4091,103 +4091,23 @@ fn attack(state: &mut GameState, index: usize) {
     attack_with(state, attacker, defender, attack);
 }
 
-/// The dispatch every attack's own `Attack` value runs through, once
-/// it is known — the attacker's own printed attack, ordinarily, or a
-/// Benched or discarded Pokémon's attack `Night Joker` or `Seek
-/// Inspiration` copied. Every call site shares this, including the
-/// actions that resolve those two copies themselves
-/// (`Action::CopyBenchedPokemonAttack`, `Action::CopyDiscardedPokemonAttack`),
-/// so a copied attack that is itself one of these two copying effects
-/// — copying a copy — opens its own choice correctly rather than
-/// reaching the dispatch below with nothing to read.
-fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, attack: crate::card::Attack) {
-    let player = state.pokemon(attacker).owner;
-    // `Night Joker` names no damage or effect of its own: it borrows
-    // a Benched Pokémon's own attack outright, so this opens a choice
-    // instead of continuing through the ordinary dispatch below — this
-    // function runs again once that choice names a real `Attack` to
-    // read `.effect` and `.base_damage` from. `N's Zoroark ex`.
-    if let Some(crate::card::AttackEffect::CopiesChosenBenchedPokemonAttackByNamePrefix(prefix)) =
-        attack.effect
-    {
-        let any_candidate = state
-            .player(player)
-            .bench
-            .iter()
-            .any(|p| state.pokemon_def(*p).name.starts_with(prefix));
-        if any_candidate {
-            state.phase = Phase::ChoosingBenchedPokemonAttackToCopy { player, prefix };
-        }
-        return;
-    }
-    // `Seek Inspiration` discards the top of the deck outright,
-    // then — only if that card turns out to be a Pokémon without a
-    // Rule Box — copies one of its own attacks, the same
-    // choose-and-run-this-function-again shape `Night Joker` already
-    // takes, just found by discarding rather than a player's own
-    // choice among the Bench. `Slowking`.
-    if matches!(
-        attack.effect,
-        Some(crate::card::AttackEffect::DiscardsTopOfDeckThenCopiesItsAttackIfNoRuleBox)
-    ) {
-        let Some(top) = state.players[player.index()].deck.pop() else {
-            return;
-        };
-        state.players[player.index()].discard.push(top);
-        let card_name = state.def_of(top).name();
-        state.log.push(format!("{player:?} discards {card_name} for Seek Inspiration."));
-        let copies = state
-            .def_of(top)
-            .as_pokemon()
-            .is_some_and(|p| p.prizes == 1 && !p.attacks.is_empty());
-        if copies {
-            state.phase = Phase::ChoosingDiscardedPokemonAttackToCopy { player, card: top };
-        }
-        return;
-    }
-    if matches!(attack.effect, Some(crate::card::AttackEffect::FizzlesWithNoStadiumInPlay))
-        && state.stadium.is_none()
-    {
-        let name = state.pokemon_def(attacker).name;
-        state.log.push(format!("{name}'s {} does nothing: no Stadium in play.", attack.name));
-        return;
-    }
-    if matches!(attack.effect, Some(crate::card::AttackEffect::DiscardsDefendersTools)) {
-        let opponent = state.pokemon(defender).owner;
-        let tools: Vec<CardId> = state
-            .pokemon(defender)
-            .attached
-            .iter()
-            .copied()
-            .filter(|c| state.def_of(*c).as_trainer().is_some_and(|t| t.kind == TrainerKind::Tool))
-            .collect();
-        for tool in tools {
-            state.pokemon[defender.index()].attached.retain(|c| *c != tool);
-            state.players[opponent.index()].discard.push(tool);
-        }
-    }
-    let flipper = state.pokemon(attacker).owner;
-    let base = match attack.effect {
+/// An attack's damage before Weakness and Resistance, for every effect
+/// whose bonus reads only the board as it stands right now — never a
+/// coin flip, which only resolves when the attack actually runs.
+/// `action::describe` shows this same number on the move's own label,
+/// so a Pokémon like `Hydrapple ex` shows what `Syrup Storm` will
+/// really do before it's tapped, not just its printed `30+`; `attack_with`
+/// starts from it too, for every effect but the three coin-flip ones it
+/// keeps for itself.
+pub(crate) fn base_damage_for_attack(
+    state: &GameState,
+    attacker: PokemonId,
+    defender: PokemonId,
+    attack: &crate::card::Attack,
+) -> u32 {
+    match attack.effect {
         Some(crate::card::AttackEffect::DamagePerCount(count, per_unit)) => {
             count_for_attack(state, attacker, defender, count) * per_unit
-        }
-        Some(crate::card::AttackEffect::DamagePerCoinFlipHeads { flips, per_head }) => {
-            let heads = (0..flips).filter(|_| state.flip_for(flipper)).count() as u32;
-            heads * per_head
-        }
-        Some(crate::card::AttackEffect::DamagePerCoinFlipUntilTails(per_head)) => {
-            let mut heads = 0;
-            while state.flip_for(flipper) {
-                heads += 1;
-            }
-            attack.base_damage + heads * per_head
-        }
-        Some(crate::card::AttackEffect::CoinFlipBonusDamage(bonus)) => {
-            if state.flip_for(flipper) {
-                attack.base_damage + bonus
-            } else {
-                attack.base_damage
-            }
         }
         Some(crate::card::AttackEffect::BonusDamageIfOwnDamaged(bonus)) => {
             if state.pokemon(attacker).damage > 0 {
@@ -4301,6 +4221,105 @@ fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, 
             }
         }
         _ => attack.base_damage,
+    }
+}
+
+/// The dispatch every attack's own `Attack` value runs through, once
+/// it is known — the attacker's own printed attack, ordinarily, or a
+/// Benched or discarded Pokémon's attack `Night Joker` or `Seek
+/// Inspiration` copied. Every call site shares this, including the
+/// actions that resolve those two copies themselves
+/// (`Action::CopyBenchedPokemonAttack`, `Action::CopyDiscardedPokemonAttack`),
+/// so a copied attack that is itself one of these two copying effects
+/// — copying a copy — opens its own choice correctly rather than
+/// reaching the dispatch below with nothing to read.
+fn attack_with(state: &mut GameState, attacker: PokemonId, defender: PokemonId, attack: crate::card::Attack) {
+    let player = state.pokemon(attacker).owner;
+    // `Night Joker` names no damage or effect of its own: it borrows
+    // a Benched Pokémon's own attack outright, so this opens a choice
+    // instead of continuing through the ordinary dispatch below — this
+    // function runs again once that choice names a real `Attack` to
+    // read `.effect` and `.base_damage` from. `N's Zoroark ex`.
+    if let Some(crate::card::AttackEffect::CopiesChosenBenchedPokemonAttackByNamePrefix(prefix)) =
+        attack.effect
+    {
+        let any_candidate = state
+            .player(player)
+            .bench
+            .iter()
+            .any(|p| state.pokemon_def(*p).name.starts_with(prefix));
+        if any_candidate {
+            state.phase = Phase::ChoosingBenchedPokemonAttackToCopy { player, prefix };
+        }
+        return;
+    }
+    // `Seek Inspiration` discards the top of the deck outright,
+    // then — only if that card turns out to be a Pokémon without a
+    // Rule Box — copies one of its own attacks, the same
+    // choose-and-run-this-function-again shape `Night Joker` already
+    // takes, just found by discarding rather than a player's own
+    // choice among the Bench. `Slowking`.
+    if matches!(
+        attack.effect,
+        Some(crate::card::AttackEffect::DiscardsTopOfDeckThenCopiesItsAttackIfNoRuleBox)
+    ) {
+        let Some(top) = state.players[player.index()].deck.pop() else {
+            return;
+        };
+        state.players[player.index()].discard.push(top);
+        let card_name = state.def_of(top).name();
+        state.log.push(format!("{player:?} discards {card_name} for Seek Inspiration."));
+        let copies = state
+            .def_of(top)
+            .as_pokemon()
+            .is_some_and(|p| p.prizes == 1 && !p.attacks.is_empty());
+        if copies {
+            state.phase = Phase::ChoosingDiscardedPokemonAttackToCopy { player, card: top };
+        }
+        return;
+    }
+    if matches!(attack.effect, Some(crate::card::AttackEffect::FizzlesWithNoStadiumInPlay))
+        && state.stadium.is_none()
+    {
+        let name = state.pokemon_def(attacker).name;
+        state.log.push(format!("{name}'s {} does nothing: no Stadium in play.", attack.name));
+        return;
+    }
+    if matches!(attack.effect, Some(crate::card::AttackEffect::DiscardsDefendersTools)) {
+        let opponent = state.pokemon(defender).owner;
+        let tools: Vec<CardId> = state
+            .pokemon(defender)
+            .attached
+            .iter()
+            .copied()
+            .filter(|c| state.def_of(*c).as_trainer().is_some_and(|t| t.kind == TrainerKind::Tool))
+            .collect();
+        for tool in tools {
+            state.pokemon[defender.index()].attached.retain(|c| *c != tool);
+            state.players[opponent.index()].discard.push(tool);
+        }
+    }
+    let flipper = state.pokemon(attacker).owner;
+    let base = match attack.effect {
+        Some(crate::card::AttackEffect::DamagePerCoinFlipHeads { flips, per_head }) => {
+            let heads = (0..flips).filter(|_| state.flip_for(flipper)).count() as u32;
+            heads * per_head
+        }
+        Some(crate::card::AttackEffect::DamagePerCoinFlipUntilTails(per_head)) => {
+            let mut heads = 0;
+            while state.flip_for(flipper) {
+                heads += 1;
+            }
+            attack.base_damage + heads * per_head
+        }
+        Some(crate::card::AttackEffect::CoinFlipBonusDamage(bonus)) => {
+            if state.flip_for(flipper) {
+                attack.base_damage + bonus
+            } else {
+                attack.base_damage
+            }
+        }
+        _ => base_damage_for_attack(state, attacker, defender, &attack),
     };
     let ignore_defenders_effects =
         matches!(attack.effect, Some(crate::card::AttackEffect::IgnoresDefendersEffects));
