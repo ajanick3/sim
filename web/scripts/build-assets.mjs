@@ -17,18 +17,57 @@ copyFileSync(
 
 const titleCase = (s) => s.replace(/\b\w/g, (c) => c.toUpperCase());
 
-/** The line "N <Pokémon> …" with the highest N — a rough archetype label. */
+// A Pokémon's evolution stage, by name, read once from the same artifact
+// `cards.json` this script already copies. Every print of a name shares
+// one stage, so the name alone is enough — no print id needed.
+const STAGE_RANK = { Basic: 0, Stage1: 1, Stage2: 2 };
+const stageOf = (() => {
+  const cardsJson = JSON.parse(
+    readFileSync(new URL("../../data/cards.json", import.meta.url).pathname, "utf8"),
+  );
+  const cards = Array.isArray(cardsJson) ? cardsJson : cardsJson.cards;
+  const byName = new Map();
+  for (const c of cards) {
+    if (c.category === "Pokemon" && c.stage in STAGE_RANK) byName.set(c.name, c.stage);
+  }
+  return (name) => byName.get(name);
+})();
+
+/**
+ * A name's place in its own evolution line, highest first. A Mega
+ * Pokémon ex (e.g. `Mega Kangaskhan ex`) is the finished form of its
+ * line same as any Stage 2 — it just Mega Evolves from a Basic already
+ * in play instead of evolving by a card in the deck, so the artifact
+ * still tags it `Basic`. Read the name, not the tag, for this one case.
+ */
+function evolutionRank(name) {
+  if (name.startsWith("Mega ")) return 3;
+  return STAGE_RANK[stageOf(name)] ?? -1;
+}
+
+/**
+ * The line "N <Pokémon> …" naming this deck's highest-evolution Pokémon —
+ * the finished attacker (Dragapult ex), not the Basic that starts its
+ * line (Dreepy) just because more copies of it are run. Ties on rank
+ * (e.g. two different Stage 2 lines) fall back to the higher count.
+ */
 function headline(text) {
   const lines = text.split("\n");
   const start = lines.findIndex((l) => /^Pok[ée]mon:/i.test(l));
   const end = lines.findIndex((l, i) => i > start && /^\s*$/.test(l));
   let best = "";
+  let bestRank = -1;
   let bestN = 0;
   for (const line of lines.slice(start + 1, end === -1 ? undefined : end)) {
     const m = /^(\d+)\s+(.+?)\s+[A-Z0-9]{2,4}\s+\d+\s*$/.exec(line.trim());
-    if (m && Number(m[1]) >= bestN) {
-      bestN = Number(m[1]);
-      best = m[2];
+    if (!m) continue;
+    const name = m[2];
+    const rank = evolutionRank(name);
+    const count = Number(m[1]);
+    if (rank > bestRank || (rank === bestRank && count > bestN)) {
+      bestRank = rank;
+      bestN = count;
+      best = name;
     }
   }
   return best;
