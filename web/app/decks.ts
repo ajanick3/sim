@@ -1,8 +1,9 @@
-// The 2026 Worlds decks, from `public/decks/index.json` (written by
-// `scripts/build-assets.mjs`). A deck's `key` is its file stem and what
-// a recipe's `a` / `b` carry.
+// Every tournament's decks, from `public/decks/index.json` (written by
+// `scripts/build-assets.mjs`). A deck's `key` is `<tournament-slug>/<player-slug>`
+// and what a recipe's `a` / `b` carry, and what `game-shell.tsx`'s
+// `deckPath` turns into the `.txt` it fetches.
 
-export type DeckEntry = { key: string; player: string; headline: string };
+export type DeckEntry = { key: string; player: string; tournament: string; headline: string };
 
 let cached: Promise<DeckEntry[]> | null = null;
 
@@ -16,7 +17,10 @@ export function loadDeckIndex(): Promise<DeckEntry[]> {
 }
 
 /** The two decks a fresh game opens with when the URL names none. */
-export const DEFAULT_DECKS = { a: "003-brent-tonisson", b: "002-diego-cassiraga" };
+export const DEFAULT_DECKS = {
+  a: "2026-worlds/003-brent-tonisson",
+  b: "2026-worlds/002-diego-cassiraga",
+};
 
 // A pasted decklist has no file key, so it travels as the recipe's `a` /
 // `b` itself, marked with this prefix. `Game.replay_standard` already

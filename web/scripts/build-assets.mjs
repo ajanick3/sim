@@ -1,11 +1,26 @@
-// Copy the card artifact and every 2026 Worlds decklist into public/, and
+// Copy the card artifact and every tournament's decklist into public/, and
 // write an index the deck selector reads. Run by `pnpm run assets` before
 // dev and build.
+//
+// Every direct subdirectory of decks/ is one tournament's field — the same
+// shape tools/fetch_worlds_decklists.py already writes, one file per player
+// named `<placement>-<player-slug>.txt`. A player can place in more than
+// one tournament (Andrew Hedrick reached Day 2 at both Worlds and
+// Baltimore), so a deck's key carries its tournament folder too:
+// `<tournament-slug>/<placement>-<player-slug>` — the same path
+// `deckPath` in game-shell.tsx already builds a URL from.
 
-import { mkdirSync, readdirSync, readFileSync, writeFileSync, copyFileSync } from "node:fs";
+import {
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  writeFileSync,
+  copyFileSync,
+  statSync,
+} from "node:fs";
 import { join } from "node:path";
 
-const DECK_SRC = new URL("../../decks/2026-worlds/", import.meta.url);
+const DECKS_ROOT = new URL("../../decks/", import.meta.url);
 const OUT = new URL("../public/decks/", import.meta.url);
 const outDir = OUT.pathname;
 
@@ -73,17 +88,32 @@ function headline(text) {
   return best;
 }
 
-const files = readdirSync(DECK_SRC.pathname)
-  .filter((f) => f.endsWith(".txt"))
+const tournamentSlugs = readdirSync(DECKS_ROOT.pathname)
+  .filter((f) => statSync(join(DECKS_ROOT.pathname, f)).isDirectory())
   .sort();
 
-const index = files.map((file) => {
-  const key = file.replace(/\.txt$/, "");
-  const text = readFileSync(join(DECK_SRC.pathname, file), "utf8");
-  writeFileSync(join(outDir, `${key}.txt`), text);
-  const player = titleCase(key.replace(/^\d+-/, "").replace(/-/g, " "));
-  return { key, player, headline: headline(text) };
-});
+const index = [];
+for (const tournamentSlug of tournamentSlugs) {
+  const tournament = titleCase(tournamentSlug.replace(/-/g, " "));
+  const srcDir = join(DECKS_ROOT.pathname, tournamentSlug);
+  const outSubdir = join(outDir, tournamentSlug);
+  mkdirSync(outSubdir, { recursive: true });
+
+  const files = readdirSync(srcDir)
+    .filter((f) => f.endsWith(".txt"))
+    .sort();
+
+  for (const file of files) {
+    const slug = file.replace(/\.txt$/, "");
+    const key = `${tournamentSlug}/${slug}`;
+    const text = readFileSync(join(srcDir, file), "utf8");
+    writeFileSync(join(outSubdir, file), text);
+    const player = titleCase(slug.replace(/^\d+-/, "").replace(/-/g, " "));
+    index.push({ key, player, tournament, headline: headline(text) });
+  }
+}
 
 writeFileSync(join(outDir, "index.json"), JSON.stringify(index, null, 0) + "\n");
-console.log(`assets: ${index.length} decks + cards.json`);
+console.log(
+  `assets: ${index.length} decks across ${tournamentSlugs.length} tournaments + cards.json`,
+);
