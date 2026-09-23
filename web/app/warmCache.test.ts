@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-import { warmCache } from "./warmCache";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { countCached, warmCache } from "./warmCache";
 
 describe("warmCache", () => {
   it("fetches every url and reports progress up to the total", async () => {
@@ -37,5 +37,31 @@ describe("warmCache", () => {
     await warmCache([], fetchOne, (done, total) => progress.push([done, total]));
     expect(fetchOne).not.toHaveBeenCalled();
     expect(progress).toEqual([[0, 0]]);
+  });
+});
+
+describe("countCached", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("counts how many of the urls the cache already has", async () => {
+    const cached = new Set(["a", "c"]);
+    const cache = { match: vi.fn(async (url: string) => (cached.has(url) ? {} : undefined)) };
+    vi.stubGlobal("caches", { open: vi.fn(async () => cache) });
+
+    await expect(countCached(["a", "b", "c"])).resolves.toBe(2);
+  });
+
+  it("returns null when the Cache API is unreachable", async () => {
+    vi.stubGlobal("caches", undefined);
+
+    await expect(countCached(["a"])).resolves.toBeNull();
+  });
+
+  it("returns null when caches.open rejects", async () => {
+    vi.stubGlobal("caches", { open: vi.fn(async () => Promise.reject(new Error("blocked"))) });
+
+    await expect(countCached(["a"])).resolves.toBeNull();
   });
 });

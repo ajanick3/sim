@@ -35,3 +35,22 @@ export async function warmCache(
 
   await Promise.all(Array.from({ length: Math.min(concurrency, total) }, worker));
 }
+
+// Kept in step with `CACHE_NAME` in `public/sw.js` by hand — bump one,
+// bump the other.
+const CACHE_NAME = "sim-v2";
+
+/** How many of these URLs the service worker has already cached, or
+ *  null if the Cache API isn't reachable here (no service worker, an
+ *  insecure context, a browser that blocks it) — the caller should
+ *  treat null as "unknown", not "none cached". */
+export async function countCached(urls: string[]): Promise<number | null> {
+  if (typeof caches === "undefined") return null;
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    const hits = await Promise.all(urls.map((url) => cache.match(url)));
+    return hits.filter((hit) => hit != null).length;
+  } catch {
+    return null;
+  }
+}
