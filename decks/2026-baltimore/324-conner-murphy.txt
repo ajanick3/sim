@@ -1,0 +1,27 @@
+Pokémon: 24
+4 Poltchageist PBL 005
+4 Sinistcha PBL 006
+4 Shuppet PBL 033
+4 Banette PBL 034
+3 Dhelmise PBL 039
+2 Lillie's Clefairy ex JTG 056
+1 Shaymin DRI 010
+1 Fezandipiti ex ASC 142
+1 Spiritomb PBL 035
+
+Trainer: 29
+3 Boss's Orders MEG 114
+3 Explorer's Guidance TEF 147
+3 Gwynn PBL 078
+2 Lillie's Determination MEG 119
+1 Surfer SSP 187
+4 Night Stretcher ASC 196
+4 Poke Pad POR 081
+4 Ultra Ball MEG 131
+1 Special Red Card CRI 082
+1 Secret Box TWM 163
+3 Prism Tower CRI 080
+
+Energy: 7
+4 Telepathic Psychic Energy POR 088
+3 Psychic Energy MEE 013

@@ -1,0 +1,33 @@
+Pokémon: 21
+4 Abra MEG 054
+4 Kadabra MEG 055
+3 Alakazam MEG 056
+3 Dunsparce JTG 120
+2 Dudunsparce TEF 129
+1 Psyduck ASC 039
+1 Dedenne SSP 087
+1 Fezandipiti ex ASC 142
+1 Genesect SFA 040
+1 Elgyem BLK 040
+
+Trainer: 33
+4 Dawn PFL 087
+3 Hilda WHT 084
+2 Boss's Orders MEG 114
+2 Rust Syndicate Grunt PBL 081
+1 Lana's Aid TWM 155
+1 Eri TEF 146
+4 Poke Pad POR 081
+4 Buddy-Buddy Poffin TEF 144
+2 Rare Candy MEG 125
+1 Enhanced Hammer TWM 148
+1 Night Stretcher ASC 196
+1 Sacred Ash DRI 168
+2 Air Balloon ASC 181
+1 Handheld Fan TWM 150
+4 Nighttime Mine ASC 197
+
+Energy: 6
+4 Telepathic Psychic Energy POR 088
+1 Psychic Energy MEE 013
+1 Enriching Energy SSP 191

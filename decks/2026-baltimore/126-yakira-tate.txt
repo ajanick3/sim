@@ -1,0 +1,32 @@
+Pokémon: 23
+4 Shuppet PBL 033
+4 Banette PBL 034
+4 Dhelmise PBL 039
+3 Dunsparce JTG 120
+2 Dudunsparce TEF 129
+1 Dudunsparce ex JTG 121
+2 Lillie's Clefairy ex JTG 056
+1 Bloodmoon Ursaluna ex TWM 141
+1 Shaymin DRI 010
+1 Patrat CRI 070
+
+Trainer: 30
+4 Lillie's Determination MEG 119
+3 Boss's Orders MEG 114
+2 Gwynn PBL 078
+1 Hassel TWM 151
+1 Judge POR 076
+1 Black Belt's Training JTG 143
+4 Poke Pad POR 081
+3 Ultra Ball MEG 131
+3 Night Stretcher ASC 196
+1 Secret Box TWM 163
+1 Switch MEG 130
+1 Wondrous Patch PFL 094
+1 Lillie's Pearl JTG 151
+1 Air Balloon ASC 181
+3 Prism Tower CRI 080
+
+Energy: 7
+4 Telepathic Psychic Energy POR 088
+3 Psychic Energy MEE 013

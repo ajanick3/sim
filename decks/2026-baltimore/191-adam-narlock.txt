@@ -1,0 +1,20 @@
+Pokémon: 8
+4 Teal Mask Ogerpon ex TWM 025
+4 Raging Bolt ex TEF 123
+
+Trainer: 32
+4 Lillie's Determination MEG 119
+4 Crispin SCR 133
+1 Boss's Orders MEG 114
+4 Ultra Ball MEG 131
+4 Pokegear 3.0 SVI 186
+4 Pokemon Catcher POR 082
+4 Bug Catching Set TWM 143
+3 Energy Retrieval SVI 171
+3 Tera Orb SSP 189
+1 Prime Catcher TEF 157
+
+Energy: 20
+12 Grass Energy MEE 009
+4 Lightning Energy MEE 012
+4 Fighting Energy MEE 014

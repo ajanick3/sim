@@ -1,0 +1,30 @@
+Pokémon: 19
+4 N's Zorua JTG 097
+4 N's Zoroark ex JTG 098
+2 N's Zekrom ASC 155
+2 Munkidori TWM 095
+1 Dunsparce JTG 120
+1 Dudunsparce ex JTG 121
+1 Dudunsparce TEF 129
+1 N's Reshiram JTG 116
+1 Meowth ex POR 062
+1 Yveltal MEG 088
+1 Pecharunt ex SFA 039
+
+Trainer: 33
+4 Lillie's Determination MEG 119
+4 Boss's Orders MEG 114
+2 Xerosic's Machinations SFA 064
+2 Cyrano SSP 170
+1 Black Belt's Training JTG 143
+4 Buddy-Buddy Poffin TEF 144
+4 Poke Pad POR 081
+3 N's PP Up JTG 153
+2 Ultra Ball MEG 131
+2 Night Stretcher ASC 196
+1 Binding Mochi PRE 095
+1 Hero's Cape TEF 152
+3 N's Castle JTG 152
+
+Energy: 8
+8 Darkness Energy MEE 015

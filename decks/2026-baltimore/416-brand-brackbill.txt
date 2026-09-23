@@ -1,0 +1,26 @@
+Pokémon: 17
+4 Riolu MEG 076
+3 Mega Lucario ex MEG 077
+3 Solrock MEG 075
+2 Makuhita MEG 072
+2 Hariyama MEG 073
+2 Lunatone MEG 074
+1 Meowth ex POR 062
+
+Trainer: 32
+4 Lillie's Determination MEG 119
+2 Boss's Orders MEG 114
+2 Judge POR 076
+1 Team Rocket's Petrel DRI 176
+1 Wally's Compassion MEG 132
+4 Poke Pad POR 081
+4 Fighting Gong MEG 116
+4 Ultra Ball MEG 131
+4 Premium Power Pro MEG 124
+1 Switch MEG 130
+1 Secret Box TWM 163
+2 Air Balloon ASC 181
+2 Gravity Mountain SSP 177
+
+Energy: 11
+11 Fighting Energy MEE 014

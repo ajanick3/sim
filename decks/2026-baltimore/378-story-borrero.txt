@@ -1,0 +1,33 @@
+Pokémon: 17
+3 Duskull PRE 035
+2 Dusclops PRE 036
+2 Dusknoir PRE 037
+3 Mega Diancie ex PFL 041
+2 Frillish WHT 044
+1 Jellicent ex WHT 045
+2 Latias ex SSP 076
+1 Meowth ex POR 062
+1 Lillie's Clefairy ex JTG 056
+
+Trainer: 32
+4 Lillie's Determination MEG 119
+2 Boss's Orders MEG 114
+2 Judge POR 076
+2 Team Rocket's Petrel DRI 176
+1 Hilda WHT 084
+1 Surfer SSP 187
+4 Ultra Ball MEG 131
+3 Wondrous Patch PFL 094
+2 Night Stretcher ASC 196
+2 Poke Pad POR 081
+1 Rare Candy MEG 125
+1 Special Red Card CRI 082
+1 Buddy-Buddy Poffin TEF 144
+1 Secret Box TWM 163
+1 Powerglass SFA 063
+1 Lillie's Pearl JTG 151
+3 Mystery Garden MEG 122
+
+Energy: 11
+7 Psychic Energy MEE 013
+4 Telepathic Psychic Energy POR 088

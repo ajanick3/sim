@@ -1,0 +1,35 @@
+Pokémon: 24
+4 Dreepy TWM 128
+4 Drakloak TWM 129
+2 Dragapult ex TWM 130
+1 Bronzor TEF 068
+1 Bronzor PRE 066
+2 Bronzong TEF 069
+2 Meowth ex POR 062
+1 Buneary PFL 083
+1 Mega Lopunny ex PFL 084
+1 Fezandipiti ex ASC 142
+1 Latias ex SSP 076
+1 Moltres PFL 014
+1 Munkidori TWM 095
+1 Shaymin DRI 010
+1 Budew ASC 016
+
+Trainer: 26
+4 Lillie's Determination MEG 119
+2 Boss's Orders MEG 114
+2 Crispin SCR 133
+1 Salvatore TEF 160
+4 Ultra Ball MEG 131
+4 Poke Pad POR 081
+4 Buddy-Buddy Poffin TEF 144
+2 Night Stretcher ASC 196
+1 Switch MEG 130
+1 Unfair Stamp TWM 165
+1 Risky Ruins MEG 127
+
+Energy: 10
+3 Fire Energy MEE 010
+3 Psychic Energy MEE 013
+2 Darkness Energy MEE 015
+2 Telepathic Psychic Energy POR 088

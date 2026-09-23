@@ -1,0 +1,25 @@
+Pokémon: 20
+4 Beldum TEF 113
+4 Metang TEF 114
+2 Metagross CRI 061
+4 Drilbur PBL 046
+2 Mega Excadrill ex PBL 065
+2 Genesect ex BLK 067
+1 Fezandipiti ex ASC 142
+1 Mega Skarmory ex POR 055
+
+Trainer: 24
+4 Team Rocket's Petrel DRI 176
+3 Brock's Scouting JTG 146
+2 Kieran TWM 154
+1 Boss's Orders MEG 114
+1 Judge POR 076
+4 Buddy-Buddy Poffin TEF 144
+3 Pokegear 3.0 SVI 186
+3 Jumbo Ice Cream PFL 091
+1 Special Red Card CRI 082
+1 Energy Recycler DRI 164
+1 Hero's Cape TEF 152
+
+Energy: 16
+16 Metal Energy MEE 016

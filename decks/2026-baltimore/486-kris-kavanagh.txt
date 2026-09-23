@@ -1,0 +1,30 @@
+Pokémon: 25
+4 Duskull PRE 035
+2 Dusclops PRE 036
+4 Dusknoir PRE 037
+2 Buneary MEG 107
+2 Mega Lopunny ex PFL 084
+2 Bronzor TEF 068
+2 Bronzong TEF 069
+2 Latias ex SSP 076
+2 Mega Kangaskhan ex MEG 104
+1 Bloodmoon Ursaluna ex TWM 141
+1 Meowth ex POR 062
+1 Budew ASC 016
+
+Trainer: 30
+4 Lillie's Determination MEG 119
+4 Hilda WHT 084
+2 Boss's Orders MEG 114
+1 Salvatore TEF 160
+4 Ultra Ball MEG 131
+4 Poke Pad POR 081
+4 Rare Candy MEG 125
+3 Switch MEG 130
+1 Night Stretcher ASC 196
+1 Special Red Card CRI 082
+2 Jamming Tower TWM 153
+
+Energy: 5
+4 Telepathic Psychic Energy POR 088
+1 Enriching Energy SSP 191

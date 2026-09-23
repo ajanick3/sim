@@ -1,0 +1,27 @@
+Pokémon: 16
+4 Dreepy TWM 128
+4 Drakloak TWM 129
+3 Dragapult ex TWM 130
+2 Munkidori TWM 095
+2 Budew ASC 016
+1 Fezandipiti ex ASC 142
+
+Trainer: 36
+4 Lillie's Determination MEG 119
+3 Boss's Orders MEG 114
+2 Judge POR 076
+2 Crispin SCR 133
+1 Rosa's Encouragement POR 084
+4 Poke Pad POR 081
+4 Buddy-Buddy Poffin TEF 144
+4 Crushing Hammer POR 071
+3 Ultra Ball MEG 131
+3 Night Stretcher ASC 196
+2 Pokegear 3.0 SVI 186
+1 Unfair Stamp TWM 165
+3 Team Rocket's Watchtower DRI 180
+
+Energy: 8
+3 Fire Energy MEE 010
+3 Psychic Energy MEE 013
+2 Darkness Energy MEE 015

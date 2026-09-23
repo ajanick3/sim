@@ -1,0 +1,27 @@
+Pokémon: 22
+4 Duskull PRE 035
+4 Dusclops PRE 036
+3 Dusknoir PRE 037
+3 Dreepy TWM 128
+3 Drakloak TWM 129
+2 Dragapult ex TWM 130
+2 Budew ASC 016
+1 Fezandipiti ex ASC 142
+
+Trainer: 31
+4 Lillie's Determination MEG 119
+4 Hilda WHT 084
+2 Dawn PFL 087
+2 Boss's Orders MEG 114
+4 Poke Pad POR 081
+4 Buddy-Buddy Poffin TEF 144
+3 Rare Candy MEG 125
+2 Pokegear 3.0 SVI 186
+2 Night Stretcher ASC 196
+2 Special Red Card CRI 082
+2 Team Rocket's Watchtower DRI 180
+
+Energy: 7
+4 Telepathic Psychic Energy POR 088
+2 Fire Energy MEE 010
+1 Neo Upper Energy TEF 162

@@ -1,0 +1,28 @@
+Pokémon: 21
+4 Beldum TEF 113
+4 Metang TEF 114
+1 Metagross CRI 061
+4 Drilbur PBL 046
+2 Mega Excadrill ex PBL 065
+2 Piplup PFL 027
+1 Empoleon ex PFL 070
+2 Genesect ex BLK 067
+1 Mega Skarmory ex POR 055
+
+Trainer: 23
+4 Team Rocket's Petrel DRI 176
+2 Brock's Scouting JTG 146
+2 Lillie's Determination MEG 119
+1 Boss's Orders MEG 114
+4 Buddy-Buddy Poffin TEF 144
+3 Jumbo Ice Cream PFL 091
+1 Energy Recycler DRI 164
+1 Switch MEG 130
+1 Rare Candy MEG 125
+1 Ultra Ball MEG 131
+1 Hero's Cape TEF 152
+1 Gravity Mountain SSP 177
+1 Team Rocket's Watchtower DRI 180
+
+Energy: 16
+16 Metal Energy MEE 016

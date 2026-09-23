@@ -1,0 +1,30 @@
+Pokémon: 15
+4 N's Zorua JTG 097
+4 N's Zoroark ex JTG 098
+2 N's Zekrom ASC 155
+2 Munkidori TWM 095
+1 Pecharunt ex SFA 039
+1 Fezandipiti ex ASC 142
+1 Tatsugiri TWM 131
+
+Trainer: 37
+4 Lillie's Determination MEG 119
+3 Boss's Orders MEG 114
+2 Xerosic's Machinations SFA 064
+2 Black Belt's Training JTG 143
+2 Cyrano SSP 170
+1 Ruffian JTG 157
+4 Buddy-Buddy Poffin TEF 144
+4 Poke Pad POR 081
+3 N's PP Up JTG 153
+2 Night Stretcher ASC 196
+2 Ultra Ball MEG 131
+1 Special Red Card CRI 082
+1 Secret Box TWM 163
+2 Binding Mochi PRE 095
+1 Air Balloon ASC 181
+2 Team Rocket's Watchtower DRI 180
+1 Gravity Mountain SSP 177
+
+Energy: 8
+8 Darkness Energy MEE 015

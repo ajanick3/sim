@@ -1,0 +1,29 @@
+Pokémon: 25
+4 Shuppet PBL 033
+4 Banette PBL 034
+4 Poltchageist PBL 005
+4 Sinistcha PBL 006
+3 Dhelmise PBL 039
+1 Spiritomb PBL 035
+1 Meowth ex POR 062
+1 Latias ex SSP 076
+1 Lillie's Clefairy ex JTG 056
+1 Shaymin DRI 010
+1 Fezandipiti ex ASC 142
+
+Trainer: 27
+4 Lillie's Determination MEG 119
+4 Gwynn PBL 078
+2 Boss's Orders MEG 114
+1 Lana's Aid TWM 155
+4 Ultra Ball MEG 131
+4 Poke Pad POR 081
+3 Night Stretcher ASC 196
+1 Brilliant Blender SSP 164
+1 Hand Trimmer TEF 150
+1 Special Red Card CRI 082
+2 Prism Tower CRI 080
+
+Energy: 8
+4 Telepathic Psychic Energy POR 088
+4 Psychic Energy MEE 013

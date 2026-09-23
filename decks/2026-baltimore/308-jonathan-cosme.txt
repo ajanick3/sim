@@ -1,0 +1,30 @@
+Pokémon: 14
+3 Riolu MEG 076
+3 Mega Lucario ex MEG 077
+2 Solrock MEG 075
+2 Lunatone MEG 074
+1 Mega Hawlucha ex ASC 116
+1 Meowth ex POR 062
+1 Shaymin DRI 010
+1 Genesect SFA 040
+
+Trainer: 36
+4 Lillie's Determination MEG 119
+2 Judge POR 076
+2 Boss's Orders MEG 114
+1 Team Rocket's Petrel DRI 176
+4 Poke Pad POR 081
+4 Fighting Gong MEG 116
+4 Premium Power Pro MEG 124
+3 Ultra Ball MEG 131
+3 Pokemon Catcher POR 082
+1 Special Red Card CRI 082
+1 Switch MEG 130
+1 Secret Box TWM 163
+3 Air Balloon ASC 181
+2 Gravity Mountain SSP 177
+1 Team Rocket's Watchtower DRI 180
+
+Energy: 10
+8 Fighting Energy MEE 014
+2 Rocky Fighting Energy POR 087

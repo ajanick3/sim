@@ -1,0 +1,30 @@
+Pokémon: 14
+3 Munkidori TWM 095
+2 Mega Audino ex ASC 172
+2 Mega Absol ex MEG 086
+2 Mega Kangaskhan ex MEG 104
+1 Psyduck ASC 039
+1 Latias ex SSP 076
+1 Pecharunt ex SFA 039
+1 Fezandipiti ex ASC 142
+1 Yveltal MEG 088
+
+Trainer: 36
+4 Boss's Orders MEG 114
+4 Team Rocket's Petrel DRI 176
+3 Lillie's Determination MEG 119
+4 Crushing Hammer POR 071
+4 Jumbo Ice Cream PFL 091
+3 Special Red Card CRI 082
+3 Team Rocket's Transceiver DRI 178
+2 Night Stretcher ASC 196
+2 Energy Switch MEG 115
+2 Ultra Ball MEG 131
+1 Precious Trolley SSP 185
+1 Dark Bell PBL 075
+1 Lumiose City POR 077
+1 Team Rocket's Watchtower DRI 180
+1 Nighttime Mine ASC 197
+
+Energy: 10
+10 Darkness Energy MEE 015
