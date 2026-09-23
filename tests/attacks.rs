@@ -3971,6 +3971,9 @@ fn bonus_damage_per_own_energy_of_type_across_the_whole_side() {
     let card = deal_new_card(&mut state, player, grass_energy);
     state.pokemon[bench_mon.index()].attached.push(card);
 
+    let label = sim::action::describe(&state, Action::Attack { index: 0 });
+    assert_eq!(label, "Attack: Syrup Storm (90 damage)", "the label shows the bonus, not just the printed 30+");
+
     pay_and_attack(&mut state);
 
     assert_eq!(state.pokemon(defender).damage, 90, "30 base plus 2 Grass Energy (attacker plus bench) times 30");
