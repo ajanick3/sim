@@ -14,7 +14,31 @@
 // otherwise keep the orphaned low-res bytes forever alongside the new
 // ones, since nothing here ever evicts a cached entry on its own. The
 // bump drops the old cache outright.
-const CACHE_NAME = "sim-v2";
+//
+// v3: the deck list's own data — `/decks/index.json` and each deck's
+// `.txt` — used to be cache-first like everything else below, so a
+// renumbered deck file (`04-henry-chao.txt` becoming
+// `004-henry-chao.txt` once the field passed 99 entries) left any
+// browser that had already cached the old index stuck picking a deck
+// key whose file no longer existed, forever, with no way to notice
+// online. These paths (plus `/cards.json` and `/art-index.json`, the
+// artifact's own two other bare, unhashed data files) are now
+// network-first below instead. The bump clears every stale copy of
+// them still sitting in an old cache.
+const CACHE_NAME = "sim-v3";
+
+/** Data the artifact can change without its URL changing — unlike a
+ *  Next.js chunk or a piece of card art, neither hashed nor keyed by an
+ *  id that pins one immutable value. Cache-first would serve a stale
+ *  copy forever once a deploy changes what it says. */
+function isMutableData(path) {
+  return (
+    path === "/cards.json" ||
+    path === "/art-index.json" ||
+    path === "/decks/index.json" ||
+    (path.startsWith("/decks/") && path.endsWith(".txt"))
+  );
+}
 
 self.addEventListener("install", () => {
   self.skipWaiting();
@@ -59,9 +83,28 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Everything else — JS/CSS/wasm chunks, the card artifact, deck lists,
-  // and card art from the TCGdex CDN — is cache-first: instant and free
-  // once seen, and what makes a card viewed once show up offline later.
+  // The artifact's own data (see `isMutableData`): network-first, same
+  // shape as a navigation — a deploy that changes it is seen right away
+  // while online, and a game already open still replays offline from
+  // whatever copy was last cached.
+  if (isMutableData(path)) {
+    event.respondWith(
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
+          return response;
+        })
+        .catch(() => caches.match(request)),
+    );
+    return;
+  }
+
+  // Everything else — JS/CSS/wasm chunks and card art from the TCGdex
+  // CDN — is cache-first: instant and free once seen, and what makes a
+  // card viewed once show up offline later. Safe here because each is
+  // either content-hashed (a Next.js chunk) or keyed by an id that pins
+  // one immutable value forever (a print's own art).
   event.respondWith(
     caches.match(request).then(
       (cached) =>
