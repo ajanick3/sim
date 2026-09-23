@@ -12,7 +12,25 @@ import type { DeckEntry } from "./decks";
 function matches(deck: DeckEntry, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  return deck.player.toLowerCase().includes(q) || deck.headline.toLowerCase().includes(q);
+  return (
+    deck.player.toLowerCase().includes(q) ||
+    deck.headline.toLowerCase().includes(q) ||
+    deck.tournament.toLowerCase().includes(q)
+  );
+}
+
+/** A deck's own label, everywhere it's shown: the player, its headline,
+ *  and — since the same player can place in more than one tournament,
+ *  e.g. Andrew Hedrick at both 2026 Worlds and Baltimore — which field
+ *  it's from. */
+function DeckLabel({ deck }: { deck: DeckEntry }) {
+  return (
+    <span className="truncate">
+      {deck.player}
+      {deck.headline && <span className="text-dim"> — {deck.headline}</span>}
+      <span className="text-dim"> · {deck.tournament}</span>
+    </span>
+  );
 }
 
 export function DeckPicker({
@@ -34,16 +52,11 @@ export function DeckPicker({
         onClick={() => setOpen(true)}
         className="flex w-full items-center justify-between gap-2 rounded-md border border-edge bg-panel px-3 py-2 text-left text-[13px] hover:border-accent"
       >
-        <span className="truncate">
-          {selected ? (
-            <>
-              {selected.player}
-              {selected.headline && <span className="text-dim"> — {selected.headline}</span>}
-            </>
-          ) : (
-            <span className="text-dim">Choose a deck…</span>
-          )}
-        </span>
+        {selected ? (
+          <DeckLabel deck={selected} />
+        ) : (
+          <span className="text-dim">Choose a deck…</span>
+        )}
         <span aria-hidden className="shrink-0 text-dim">
           ⌄
         </span>
@@ -115,7 +128,7 @@ function DeckPickerSheet({
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
-            placeholder="Search player or Pokémon…"
+            placeholder="Search player, Pokémon, or tournament…"
             // 16px minimum, or iOS Safari zooms the whole page in on focus.
             className="w-full rounded-md border border-edge bg-transparent px-3 py-1.5 text-[16px] outline-none focus:border-accent sm:text-[13px]"
           />
@@ -136,10 +149,7 @@ function DeckPickerSheet({
                   i === activeHighlight ? "bg-panel" : "hover:bg-panel"
                 }`}
               >
-                <span className="truncate">
-                  {d.player}
-                  {d.headline && <span className="text-dim"> — {d.headline}</span>}
-                </span>
+                <DeckLabel deck={d} />
               </button>
             </li>
           ))}

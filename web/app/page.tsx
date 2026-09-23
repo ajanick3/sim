@@ -183,6 +183,7 @@ const name = (key: string) =>
   isPastedDeck(key)
     ? "Pasted deck"
     : key
+        .replace(/^.*\//, "") // drop the tournament-slug directory, if any
         .replace(/^\d+-/, "")
         .replace(/-/g, " ")
         .replace(/\b\w/g, (c) => c.toUpperCase());
