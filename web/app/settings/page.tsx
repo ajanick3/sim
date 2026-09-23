@@ -6,7 +6,7 @@ import { loadRecent } from "../recent";
 import { artUrl, isInstalled, loadArtIndex, type ArtIndex, type ArtQuality } from "../art";
 import { catalogEntries, resolvePrint, type CatalogCard, type CatalogEntry } from "../prints";
 import { loadPrintPrefs, savePrintPref } from "../printPrefs";
-import { warmCache } from "../warmCache";
+import { countCached, warmCache } from "../warmCache";
 import { PlayingCard } from "../board/PlayingCard";
 
 /** The catalog's buckets a player can filter by, in `CATALOG_ORDER`.
@@ -34,6 +34,9 @@ export default function SettingsPage() {
   const [openEntry, setOpenEntry] = useState<CatalogEntry | null>(null);
   const [warming, setWarming] = useState(false);
   const [warmProgress, setWarmProgress] = useState<{ done: number; total: number } | null>(null);
+  // null until checked, or if the Cache API isn't reachable — treated as
+  // "unknown", so the button stays enabled rather than wrongly disabled.
+  const [cachedCount, setCachedCount] = useState<number | null>(null);
 
   useEffect(() => {
     setRecentCount(loadRecent().length);
@@ -45,6 +48,25 @@ export default function SettingsPage() {
       .catch(() => setCards([]));
     void loadArtIndex().then(setArtIndex);
   }, []);
+
+  const artUrls = useMemo(
+    () =>
+      Object.keys(artIndex)
+        .map((id) => artUrl(artIndex, id, artQuality))
+        .filter((u): u is string => u != null),
+    [artIndex, artQuality],
+  );
+
+  useEffect(() => {
+    if (artUrls.length === 0) return;
+    let cancelled = false;
+    void countCached(artUrls).then((count) => {
+      if (!cancelled) setCachedCount(count);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [artUrls]);
 
   const entries = useMemo(() => catalogEntries(cards), [cards]);
   const filtered = useMemo(() => {
@@ -73,18 +95,18 @@ export default function SettingsPage() {
   };
 
   const warmOfflineCache = async () => {
-    const urls = Object.keys(artIndex)
-      .map((id) => artUrl(artIndex, id, artQuality))
-      .filter((u): u is string => u != null);
     setWarming(true);
-    setWarmProgress({ done: 0, total: urls.length });
+    setWarmProgress({ done: 0, total: artUrls.length });
     await warmCache(
-      urls,
+      artUrls,
       (url) => fetch(url, { mode: "no-cors" }),
       (done, total) => setWarmProgress({ done, total }),
     );
     setWarming(false);
+    setCachedCount(await countCached(artUrls));
   };
+
+  const allCached = cachedCount != null && artUrls.length > 0 && cachedCount >= artUrls.length;
 
   return (
     <main className="px-4 py-8">
@@ -127,12 +149,14 @@ export default function SettingsPage() {
           </p>
           <button
             onClick={warmOfflineCache}
-            disabled={warming || Object.keys(artIndex).length === 0}
+            disabled={warming || artUrls.length === 0 || allCached}
             className="w-fit rounded-md border border-edge px-3 py-1.5 text-[13px] hover:border-accent disabled:opacity-40"
           >
             {warming
               ? `Caching ${warmProgress?.done ?? 0} of ${warmProgress?.total ?? 0}…`
-              : `Cache all card art (${Object.keys(artIndex).length})`}
+              : allCached
+                ? `All card art cached (${artUrls.length})`
+                : `Cache all card art (${artUrls.length})`}
           </button>
         </section>
       </div>
