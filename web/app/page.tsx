@@ -171,7 +171,8 @@ function DeckColumn({
           onChange={(e) => onPasteChange(e.target.value)}
           placeholder={"Pokémon: 18\n4 Dreepy TWM 128\n…"}
           rows={6}
-          className="rounded-md border border-edge bg-panel px-2 py-2 font-mono text-[12px]"
+          // 16px minimum, or iOS Safari zooms the whole page in on focus.
+          className="rounded-md border border-edge bg-panel px-2 py-2 font-mono text-[16px] sm:text-[12px]"
         />
       )}
     </div>

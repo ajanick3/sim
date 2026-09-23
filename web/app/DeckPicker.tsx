@@ -116,7 +116,8 @@ function DeckPickerSheet({
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Search player or Pokémon…"
-            className="w-full rounded-md border border-edge bg-transparent px-3 py-1.5 text-[13px] outline-none focus:border-accent"
+            // 16px minimum, or iOS Safari zooms the whole page in on focus.
+            className="w-full rounded-md border border-edge bg-transparent px-3 py-1.5 text-[16px] outline-none focus:border-accent sm:text-[13px]"
           />
         </div>
         <ul className="overflow-y-auto p-1" aria-label="Deck results">
