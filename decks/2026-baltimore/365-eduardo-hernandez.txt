@@ -1,0 +1,29 @@
+Pokémon: 22
+4 Teal Mask Ogerpon ex TWM 025
+3 Applin SCR 012
+3 Dipplin TWM 018
+2 Hydrapple ex SCR 014
+2 Chikorita ASC 008
+2 Bayleef MEG 009
+2 Meganium MEG 010
+1 Meowth ex POR 062
+1 Celebi MEG 012
+1 Fezandipiti ex ASC 142
+1 Tapu Bulu SFA 006
+
+Trainer: 26
+4 Lillie's Determination MEG 119
+2 Gwynn PBL 078
+2 Boss's Orders MEG 114
+1 Ciphermaniac's Codebreaking TEF 145
+1 Judge POR 076
+1 Lana's Aid TWM 155
+4 Ultra Ball MEG 131
+4 Bug Catching Set TWM 143
+2 Special Red Card CRI 082
+1 Max Rod PRE 116
+3 Forest of Vitality MEG 117
+1 Festival Grounds TWM 149
+
+Energy: 12
+12 Grass Energy MEE 009

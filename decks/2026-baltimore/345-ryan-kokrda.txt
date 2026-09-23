@@ -1,0 +1,27 @@
+Pokémon: 25
+4 Duskull PRE 035
+4 Dusclops PRE 036
+2 Dusknoir PRE 037
+3 Dunsparce JTG 120
+2 Dudunsparce TEF 129
+1 Dudunsparce ex JTG 121
+3 Staryu POR 020
+3 Mega Starmie ex POR 021
+1 Meowth ex POR 062
+1 Budew ASC 016
+1 Fezandipiti ex ASC 142
+
+Trainer: 26
+4 Lillie's Determination MEG 119
+4 Hilda WHT 084
+2 Boss's Orders MEG 114
+4 Buddy-Buddy Poffin TEF 144
+4 Poke Pad POR 081
+4 Ultra Ball MEG 131
+1 Prime Catcher TEF 157
+3 Risky Ruins MEG 127
+
+Energy: 9
+4 Bubbly Water Energy CRI 084
+3 Ignition Energy WHT 086
+2 Water Energy MEE 011

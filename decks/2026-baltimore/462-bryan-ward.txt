@@ -1,0 +1,34 @@
+Pokémon: 17
+4 Hop's Phantump ASC 095
+3 Hop's Trevenant ASC 096
+2 Hop's Snorlax JTG 117
+1 Hop's Wooloo JTG 135
+1 Hop's Dubwool JTG 136
+1 Hop's Zacian ex JTG 111
+1 Hop's Cramorant JTG 138
+1 Meowth ex POR 062
+1 Latias ex SSP 076
+1 Lillie's Clefairy ex JTG 056
+1 Shaymin DRI 010
+
+Trainer: 35
+4 Lillie's Determination MEG 119
+3 Boss's Orders MEG 114
+2 Morty's Conviction TEF 155
+2 Team Rocket's Petrel DRI 176
+1 Colress's Tenacity SFA 057
+1 Judge POR 076
+3 Hop's Bag JTG 147
+3 Poke Pad POR 081
+2 Night Stretcher ASC 196
+2 Ultra Ball MEG 131
+1 Secret Box TWM 163
+1 Switch MEG 130
+1 Special Red Card CRI 082
+4 Hop's Choice Band JTG 148
+4 Postwick JTG 154
+1 Battle Cage PFL 085
+
+Energy: 8
+4 Mist Energy TEF 161
+4 Telepathic Psychic Energy POR 088

@@ -1,0 +1,27 @@
+Pokémon: 27
+4 Shuppet PBL 033
+4 Banette PBL 034
+4 Poltchageist PBL 005
+4 Sinistcha PBL 006
+4 Dhelmise PBL 039
+2 Lillie's Clefairy ex JTG 056
+1 Dunsparce JTG 120
+1 Dudunsparce TEF 129
+1 Patrat CRI 070
+1 Spiritomb PBL 035
+1 Latias ex SSP 076
+
+Trainer: 26
+4 Gwynn PBL 078
+3 Boss's Orders MEG 114
+3 Lillie's Determination MEG 119
+2 Explorer's Guidance TEF 147
+4 Ultra Ball MEG 131
+4 Poke Pad POR 081
+3 Night Stretcher ASC 196
+1 Brilliant Blender SSP 164
+2 Prism Tower CRI 080
+
+Energy: 7
+4 Telepathic Psychic Energy POR 088
+3 Psychic Energy MEE 013

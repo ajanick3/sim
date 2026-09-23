@@ -1,0 +1,29 @@
+Pokémon: 16
+3 Electrike MEG 049
+3 Mega Manectric ex MEG 050
+1 Manectric PBL 024
+3 Tynamo ASC 059
+3 Eelektrik ASC 060
+1 Stunfisk ASC 062
+1 Zeraora DRI 078
+1 Fezandipiti ex ASC 142
+
+Trainer: 34
+4 Lillie's Determination MEG 119
+3 Canari ASC 185
+2 Surfer SSP 187
+2 Judge POR 076
+2 Hilda WHT 084
+2 Boss's Orders MEG 114
+4 Buddy-Buddy Poffin TEF 144
+3 Ultra Ball MEG 131
+2 Night Stretcher ASC 196
+2 Special Red Card CRI 082
+2 Pokegear 3.0 SVI 186
+1 Prime Catcher TEF 157
+2 Air Balloon ASC 181
+3 Team Rocket's Watchtower DRI 180
+
+Energy: 10
+8 Lightning Energy MEE 012
+2 Voltaic Lightning Energy PBL 084

@@ -1,0 +1,29 @@
+Pokémon: 16
+4 Teal Mask Ogerpon ex TWM 025
+2 Meowth ex POR 062
+2 Mega Kangaskhan ex MEG 104
+2 Latias ex SSP 076
+2 Pecharunt SVP 149
+1 Wellspring Mask Ogerpon ex TWM 064
+1 Lillie's Clefairy ex JTG 056
+1 Fezandipiti ex ASC 142
+1 Paldean Tauros SSP 018
+
+Trainer: 29
+3 Lillie's Determination MEG 119
+2 Boss's Orders MEG 114
+2 N's Plan BLK 083
+1 Briar SCR 132
+1 Ciphermaniac's Codebreaking TEF 145
+4 Bug Catching Set TWM 143
+4 Energy Switch MEG 115
+4 Ultra Ball MEG 131
+2 Night Stretcher ASC 196
+1 Tera Orb SSP 189
+1 Unfair Stamp TWM 165
+3 Area Zero Underdepths SCR 131
+1 Jamming Tower TWM 153
+
+Energy: 15
+11 Grass Energy MEE 009
+4 Prism Energy ASC 216

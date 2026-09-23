@@ -1,0 +1,31 @@
+Pokémon: 20
+3 Carvanha PFL 060
+3 Mega Sharpedo ex PFL 061
+2 Toxel PFL 067
+2 Toxtricity PFL 068
+2 Munkidori TWM 095
+2 Pecharunt ex SFA 039
+1 Buneary PFL 083
+1 Mega Lopunny ex PFL 084
+1 Yveltal MEG 088
+1 Chi-Yu PBL 059
+1 Fezandipiti ex ASC 142
+1 Tatsugiri TWM 131
+
+Trainer: 31
+4 Lillie's Determination MEG 119
+3 Judge POR 076
+3 Boss's Orders MEG 114
+2 Team Rocket's Petrel DRI 176
+4 Ultra Ball MEG 131
+3 Poke Pad POR 081
+3 Buddy-Buddy Poffin TEF 144
+2 Night Stretcher ASC 196
+1 Mega Signal MEG 121
+1 Prime Catcher TEF 157
+2 Binding Mochi PRE 095
+2 Team Rocket's Watchtower DRI 180
+1 Gravity Mountain SSP 177
+
+Energy: 9
+9 Darkness Energy MEE 015

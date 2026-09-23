@@ -1,0 +1,29 @@
+Pokémon: 14
+4 Hop's Phantump ASC 095
+3 Hop's Trevenant ASC 096
+2 Hop's Snorlax JTG 117
+1 Hop's Wooloo JTG 135
+1 Hop's Dubwool JTG 136
+1 Hop's Cramorant JTG 138
+1 Lillie's Clefairy ex JTG 056
+1 Shaymin DRI 010
+
+Trainer: 38
+4 Lillie's Determination MEG 119
+4 Team Rocket's Petrel DRI 176
+4 Boss's Orders MEG 114
+2 Hassel TWM 151
+4 Poke Pad POR 081
+3 Night Stretcher ASC 196
+2 Hop's Bag JTG 147
+2 Pokegear 3.0 SVI 186
+2 Switch MEG 130
+1 Secret Box TWM 163
+1 Ultra Ball MEG 131
+4 Hop's Choice Band JTG 148
+1 Air Balloon ASC 181
+4 Postwick JTG 154
+
+Energy: 8
+4 Telepathic Psychic Energy POR 088
+4 Mist Energy TEF 161

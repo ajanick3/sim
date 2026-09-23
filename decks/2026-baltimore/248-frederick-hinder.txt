@@ -1,0 +1,32 @@
+Pokémon: 20
+3 Teal Mask Ogerpon ex TWM 025
+2 Chikorita MEP 046
+1 Bayleef MEG 009
+1 Bayleef ASC 009
+2 Meganium MEG 010
+2 Wellspring Mask Ogerpon ex TWM 064
+2 Mega Kangaskhan ex MEG 104
+2 Latias ex SSP 076
+2 Meowth ex POR 062
+1 Hoothoot PRE 077
+1 Noctowl SCR 115
+1 Fezandipiti ex ASC 142
+
+Trainer: 27
+3 Lillie's Determination MEG 119
+2 Boss's Orders MEG 114
+2 Cyrano SSP 170
+2 Morty's Conviction TEF 155
+1 Crispin SCR 133
+4 Ultra Ball MEG 131
+4 Poke Pad POR 081
+2 Energy Switch MEG 115
+1 Special Red Card CRI 082
+1 Night Stretcher ASC 196
+1 Sparkling Crystal SCR 142
+2 Area Zero Underdepths SCR 131
+2 Forest of Vitality MEG 117
+
+Energy: 13
+11 Grass Energy MEE 009
+2 Water Energy MEE 011

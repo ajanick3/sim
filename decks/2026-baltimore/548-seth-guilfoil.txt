@@ -1,0 +1,25 @@
+Pokémon: 14
+3 Charcadet SSP 032
+1 Charcadet PFL 019
+3 Ceruledge ex SSP 036
+2 Solrock MEG 075
+2 Lunatone MEG 074
+1 Drilbur TEF 085
+1 Fezandipiti ex ASC 142
+1 Meowth ex POR 062
+
+Trainer: 26
+4 Carmine TWM 145
+3 Boss's Orders MEG 114
+2 Lillie's Determination MEG 119
+1 Explorer's Guidance TEF 147
+4 Ultra Ball MEG 131
+4 Poke Pad POR 081
+4 Fighting Gong MEG 116
+2 Night Stretcher ASC 196
+2 Jamming Tower TWM 153
+
+Energy: 20
+13 Fighting Energy MEE 014
+6 Fire Energy MEE 010
+1 Legacy Energy TWM 167

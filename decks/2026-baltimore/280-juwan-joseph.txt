@@ -1,0 +1,30 @@
+Pokémon: 15
+3 Riolu MEG 076
+3 Mega Lucario ex MEG 077
+2 Makuhita MEG 072
+2 Hariyama MEG 073
+2 Solrock MEG 075
+2 Lunatone MEG 074
+1 Shaymin DRI 010
+
+Trainer: 34
+4 Lillie's Determination MEG 119
+2 Boss's Orders MEG 114
+2 Judge POR 076
+2 Carmine TWM 145
+1 Ciphermaniac's Codebreaking TEF 145
+1 Tarragon POR 085
+4 Fighting Gong MEG 116
+4 Ultra Ball MEG 131
+4 Premium Power Pro MEG 124
+3 Poke Pad POR 081
+1 Night Stretcher ASC 196
+1 Switch MEG 130
+2 Air Balloon ASC 181
+1 Maximum Belt TEF 154
+1 Gravity Mountain SSP 177
+1 Team Rocket's Watchtower DRI 180
+
+Energy: 11
+8 Fighting Energy MEE 014
+3 Rocky Fighting Energy POR 087

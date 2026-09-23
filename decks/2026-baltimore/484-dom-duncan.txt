@@ -1,0 +1,28 @@
+Pokémon: 20
+4 Cynthia's Gible DRI 102
+4 Cynthia's Gabite DRI 103
+3 Cynthia's Garchomp ex DRI 104
+4 Cynthia's Roselia DRI 007
+3 Cynthia's Roserade DRI 008
+1 Shaymin DRI 010
+1 Cynthia's Spiritomb DRI 129
+
+Trainer: 32
+4 Lillie's Determination MEG 119
+3 Boss's Orders MEG 114
+2 Hilda WHT 084
+1 Surfer SSP 187
+4 Buddy-Buddy Poffin TEF 144
+4 Poke Pad POR 081
+3 Fighting Gong MEG 116
+3 Pokegear 3.0 SVI 186
+1 Special Red Card CRI 082
+1 Night Stretcher ASC 196
+1 Premium Power Pro MEG 124
+3 Cynthia's Power Weight DRI 162
+2 Prism Tower CRI 080
+
+Energy: 8
+4 Rocky Fighting Energy POR 087
+3 Fighting Energy MEE 014
+1 Neo Upper Energy TEF 162

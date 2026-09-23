@@ -1,0 +1,42 @@
+Pokémon: 22
+3 Hoothoot SCR 114
+3 Noctowl SCR 115
+2 Fan Rotom SCR 118
+2 Teal Mask Ogerpon ex TWM 025
+1 Pikipek PBL 066
+1 Toucannon PBL 068
+1 Pikachu ex SSP 057
+1 Wellspring Mask Ogerpon ex TWM 064
+1 Terapagos ex SCR 128
+1 Iron Leaves ex TEF 025
+1 Iron Crown ex TEF 081
+1 Lillie's Clefairy ex JTG 056
+1 Latias ex SSP 076
+1 Mega Kangaskhan ex MEG 104
+1 Meowth ex POR 062
+1 Fezandipiti ex ASC 142
+
+Trainer: 29
+3 Crispin SCR 133
+2 Boss's Orders MEG 114
+1 Cyrano SSP 170
+1 Lillie's Determination MEG 119
+1 Dawn PFL 087
+4 Ultra Ball MEG 131
+4 Poke Pad POR 081
+2 Night Stretcher ASC 196
+2 Energy Switch MEG 115
+1 Tera Orb SSP 189
+1 Energy Search POR 072
+1 Switch MEG 130
+1 Special Red Card CRI 082
+1 Rare Candy MEG 125
+1 Sparkling Crystal SCR 142
+3 Area Zero Underdepths SCR 131
+
+Energy: 9
+4 Grass Energy MEE 009
+2 Psychic Energy MEE 013
+1 Water Energy MEE 011
+1 Lightning Energy MEE 012
+1 Metal Energy MEE 016

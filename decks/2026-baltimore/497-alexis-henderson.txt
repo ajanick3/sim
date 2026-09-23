@@ -1,0 +1,27 @@
+Pokémon: 18
+4 Drilbur PBL 046
+2 Mega Excadrill ex PBL 065
+4 Beldum CRI 059
+4 Metang TEF 114
+1 Metagross CRI 061
+2 Genesect ex BLK 067
+1 Fezandipiti ex ASC 142
+
+Trainer: 26
+4 Team Rocket's Petrel DRI 176
+2 Boss's Orders MEG 114
+2 Lillie's Determination MEG 119
+2 Brock's Scouting JTG 146
+1 Xerosic's Machinations SFA 064
+1 Judge POR 076
+1 Kieran TWM 154
+4 Jumbo Ice Cream PFL 091
+3 Buddy-Buddy Poffin TEF 144
+2 Pokegear 3.0 SVI 186
+1 Switch MEG 130
+1 Energy Recycler DRI 164
+1 Ultra Ball MEG 131
+1 Hero's Cape TEF 152
+
+Energy: 16
+16 Metal Energy MEE 016

@@ -1,0 +1,28 @@
+Pokémon: 21
+4 Marnie's Impidimp DRI 134
+2 Marnie's Morgrem DRI 135
+2 Marnie's Grimmsnarl ex DRI 136
+4 Munkidori TWM 095
+3 Snorunt ASC 046
+3 Froslass TWM 053
+2 Budew ASC 016
+1 Yveltal MEG 088
+
+Trainer: 30
+4 Lillie's Determination MEG 119
+3 Boss's Orders MEG 114
+3 Gwynn PBL 078
+1 Team Rocket's Petrel DRI 176
+4 Poke Pad POR 081
+2 Buddy-Buddy Poffin TEF 144
+2 Night Stretcher ASC 196
+2 Pokegear 3.0 SVI 186
+1 Rare Candy MEG 125
+1 Special Red Card CRI 082
+1 Dark Bell PBL 075
+1 Secret Box TWM 163
+1 Air Balloon ASC 181
+4 Spikemuth Gym DRI 169
+
+Energy: 9
+9 Darkness Energy MEE 015

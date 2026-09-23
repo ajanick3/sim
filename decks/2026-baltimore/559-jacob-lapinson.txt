@@ -1,0 +1,35 @@
+Pokémon: 20
+4 Ethan's Cyndaquil DRI 032
+4 Ethan's Quilava DRI 033
+3 Ethan's Typhlosion DRI 034
+2 Dreepy TWM 128
+2 Drakloak TWM 129
+2 Victini SSP 021
+1 Budew ASC 016
+1 Shaymin DRI 010
+1 Fezandipiti ex ASC 142
+
+Trainer: 35
+4 Ethan's Adventure DRI 165
+2 Lillie's Determination MEG 119
+2 Lana's Aid TWM 155
+2 Boss's Orders MEG 114
+1 Kieran TWM 154
+1 Black Belt's Training JTG 143
+1 Judge POR 076
+4 Ultra Ball MEG 131
+2 Poke Pad POR 081
+2 Buddy-Buddy Poffin TEF 144
+2 Rare Candy MEG 125
+2 Night Stretcher ASC 196
+1 Redeemable Ticket JTG 156
+1 Switch MEG 130
+1 Pokemon Catcher POR 082
+1 Tool Scrapper ASC 212
+1 Secret Box TWM 163
+2 Brave Bangle WHT 080
+2 Battle Cage PFL 085
+1 Gravity Mountain SSP 177
+
+Energy: 5
+5 Fire Energy MEE 010

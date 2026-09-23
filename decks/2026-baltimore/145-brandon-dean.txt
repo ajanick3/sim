@@ -1,0 +1,31 @@
+Pokémon: 13
+3 Solrock MEG 075
+2 Lunatone MEG 074
+2 Bloodmoon Ursaluna PRE 054
+2 Froakie CRI 020
+2 Mega Greninja ex CRI 022
+1 Fezandipiti ex ASC 142
+1 Genesect SFA 040
+
+Trainer: 37
+4 Lillie's Determination MEG 119
+2 Boss's Orders MEG 114
+2 Team Rocket's Petrel DRI 176
+1 Lana's Aid TWM 155
+1 Judge POR 076
+4 Poke Pad POR 081
+4 Fighting Gong MEG 116
+3 Energy Retrieval SVI 171
+2 Rare Candy MEG 125
+2 Night Stretcher ASC 196
+2 Transformation Tome CRI 083
+2 Ultra Ball MEG 131
+1 Switch MEG 130
+1 Special Red Card CRI 082
+1 Secret Box TWM 163
+3 Air Balloon ASC 181
+2 Nighttime Mine ASC 197
+
+Energy: 10
+7 Fighting Energy MEE 014
+3 Water Energy MEE 011

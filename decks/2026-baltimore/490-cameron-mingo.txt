@@ -1,0 +1,36 @@
+Pokémon: 23
+4 Dreepy TWM 128
+4 Drakloak TWM 129
+2 Dragapult ex TWM 130
+2 Torchic DRI 040
+1 Combusken DRI 041
+2 Blaziken ex JTG 024
+1 Chi-Yu TWM 039
+1 Meowth ex POR 062
+1 Fezandipiti ex ASC 142
+1 Shaymin DRI 010
+1 Lillie's Clefairy ex JTG 056
+1 Munkidori TWM 095
+1 Budew ASC 016
+1 Psyduck ASC 039
+
+Trainer: 29
+3 Boss's Orders MEG 114
+3 Lillie's Determination MEG 119
+2 Crispin SCR 133
+1 Dawn PFL 087
+1 Judge POR 076
+4 Ultra Ball MEG 131
+3 Buddy-Buddy Poffin TEF 144
+3 Poke Pad POR 081
+2 Rare Candy MEG 125
+2 Night Stretcher ASC 196
+1 Special Red Card CRI 082
+1 Unfair Stamp TWM 165
+2 Team Rocket's Watchtower DRI 180
+1 Risky Ruins MEG 127
+
+Energy: 8
+3 Fire Energy MEE 010
+3 Psychic Energy MEE 013
+2 Darkness Energy MEE 015

@@ -1,0 +1,31 @@
+Pokémon: 15
+3 Staryu POR 020
+2 Mega Starmie ex POR 021
+2 Snorunt ASC 046
+2 Mega Froslass ex ASC 047
+2 Duskull PRE 035
+2 Dusclops PRE 036
+1 Dusknoir PRE 037
+1 Meowth ex POR 062
+
+Trainer: 35
+4 Lillie's Determination MEG 119
+4 Hilda WHT 084
+2 Team Rocket's Petrel DRI 176
+2 Salvatore TEF 160
+2 Boss's Orders MEG 114
+2 Wally's Compassion MEG 132
+4 Buddy-Buddy Poffin TEF 144
+3 Ultra Ball MEG 131
+3 Pokegear 3.0 SVI 186
+3 Poke Pad POR 081
+2 Night Stretcher ASC 196
+1 Prime Catcher TEF 157
+1 Energy Search POR 072
+2 Risky Ruins MEG 127
+
+Energy: 10
+3 Water Energy MEE 011
+3 Mist Energy TEF 161
+2 Bubbly Water Energy CRI 084
+2 Ignition Energy WHT 086

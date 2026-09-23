@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
-"""Fetch the 2026 World Championships' Day 2 decklists into decks/2026-worlds/.
+"""Fetch a tournament's published decklists from limitlesstcg into decks/.
 
-The source is limitlesstcg's tournament page:
+The source is limitlesstcg's own Decklists tab for the tournament:
 
-    https://limitlesstcg.com/tournaments/515/decklists
+    https://limitlesstcg.com/tournaments/<id>/decklists
 
 It embeds every decklist it has directly in one page — no per-player fetch
-needed — and it has one only for a player who reached a Day 2 standing.
-Someone eliminated in Swiss has no decklist here at all, so 143 is this
-source's ceiling, not a number this script chose.
+needed — and it has one only for an entrant the tournament chose to publish
+(commonly a Day 2 standing, but a smaller event may publish its whole field).
+An entrant with no decklist page there is simply absent from the output; the
+page's own count is a ceiling this script cannot pass, not a number it chose.
 
-    python3 tools/fetch_worlds_decklists.py
+    python3 tools/fetch_worlds_decklists.py <tournament-id> <decks-slug>
 
-Output matches the format already in decks/2026-worlds/: three sections
+    # the 2026 World Championships, decks/2026-worlds/
+    python3 tools/fetch_worlds_decklists.py 515 2026-worlds
+
+Output matches the format already in decks/: three sections
 (Pokémon/Trainer/Energy), each line `<count> <name> <set> <number>`, card
 names with diacritics stripped, numbers zero-padded to 3 digits. Filenames
-are `<placement>-<player-slug>.txt`, zero-padded to 3 digits — the field
-runs past 99. A file that already exists is left alone, so a re-run only
+are `<placement>-<player-slug>.txt`, zero-padded to 3 digits — a field can
+run past 99. A file that already exists is left alone, so a re-run only
 fills in what is still missing.
 """
 
@@ -26,12 +30,10 @@ import sys
 import unicodedata
 import urllib.request
 
-URL = "https://limitlesstcg.com/tournaments/515/decklists"
 UA = (
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/120.0 Safari/537.36"
 )
-OUT_DIR = "decks/2026-worlds"
 
 BLOCK_RE = re.compile(r'<div class="tournament-decklist">')
 ORDINAL_RE = re.compile(r'data-toggle data-target="decklist-\d+">(\d+)\w+ ([^<]+)<')
@@ -88,10 +90,17 @@ def main():
     import glob
     import os
 
-    text = fetch(URL)
+    if len(sys.argv) != 3:
+        print(f"usage: {sys.argv[0]} <tournament-id> <decks-slug>", file=sys.stderr)
+        sys.exit(2)
+    tournament_id, slug = sys.argv[1], sys.argv[2]
+    out_dir = f"decks/{slug}"
+    url = f"https://limitlesstcg.com/tournaments/{tournament_id}/decklists"
+
+    text = fetch(url)
     blocks = BLOCK_RE.split(text)[1:]
 
-    os.makedirs(OUT_DIR, exist_ok=True)
+    os.makedirs(out_dir, exist_ok=True)
     written, skipped, failed = 0, 0, []
 
     for block in blocks:
@@ -105,11 +114,11 @@ def main():
         # slug may already spell the player's name shorter than this page
         # does (a nickname kept from an earlier, hand-checked import), and
         # that spelling should win over re-deriving one from the live page.
-        if glob.glob(f"{OUT_DIR}/{placement:03d}-*.txt"):
+        if glob.glob(f"{out_dir}/{placement:03d}-*.txt"):
             skipped += 1
             continue
 
-        path = f"{OUT_DIR}/{placement:03d}-{slugify(name)}.txt"
+        path = f"{out_dir}/{placement:03d}-{slugify(name)}.txt"
 
         deck_text = parse_deck(block)
         if not deck_text.strip():

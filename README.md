@@ -70,11 +70,19 @@ per deck, named for its player in lower-case words joined by dashes. A test
 reads every one of them and checks that it parses, matches, and is legal, so a
 change to the parser or the card data fails loudly rather than quietly.
 
-`decks/2026-worlds/` holds the field of the 2026 World Championships, one file
-per player, named `<placement>-<player-slug>.txt`, zero-padded to three
-digits. `tools/fetch_worlds_decklists.py` fetches all 143 from limitlesstcg's
-Decklists tab, the tournament's Day 2 standings — the site holds no decklist
-for an entrant who did not reach one. All 143 are kept and check clean.
+`decks/2026-worlds/` holds the field of the 2026 World Championships, and
+`decks/2026-baltimore/` the field of the Baltimore Regional, each one file
+per player named `<placement>-<player-slug>.txt`, zero-padded to three
+digits. `tools/fetch_worlds_decklists.py <tournament-id> <decks-slug>` fetches
+a tournament's own Decklists tab from limitlesstcg — every entrant it
+publishes, commonly a Day 2 standing but sometimes a whole field:
+
+```sh
+python3 tools/fetch_worlds_decklists.py 515 2026-worlds     # 143 decks
+python3 tools/fetch_worlds_decklists.py 577 2026-baltimore  # 559 decks
+```
+
+All 702 are kept and check clean.
 
 ### Standard coverage
 
@@ -359,7 +367,7 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Telepathic Psychic Energy](src/import.rs#L2061) | ✅ |
 | [Voltaic Lightning Energy](src/import.rs#L2093) | ✅ |
 
-### Pokémon (field) (102/131 built)
+### Pokémon (field) (114/204 built)
 
 | Card | Attacks | Ability |
 | --- | --- | --- |
@@ -367,10 +375,14 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Alakazam](src/import.rs#L2467) | [✅](src/import.rs#L2467) | [✅](src/import.rs#L2164) |
 | [Annihilape](src/import.rs#L2341) | [✅](src/import.rs#L2341) | [✅](src/import.rs#L2130) |
 | [Applin](src/import.rs#L2302) | [✅](src/import.rs#L2302) | — |
+| Archaludon | ❌ | ❌ |
+| Archaludon ex | ❌ | ❌ |
 | Banette | ❌ | ❌ |
 | [Bayleef](src/import.rs#L2344) | [✅](src/import.rs#L2344) | — |
 | [Beldum](src/import.rs#L2324) | [✅](src/import.rs#L2324) | — |
+| Blaziken | ❌ | — |
 | [Blaziken ex](src/import.rs#L2408) | [✅](src/import.rs#L2408) | [✅](src/import.rs#L2204) |
+| Bloodmoon Ursaluna | ❌ | ❌ |
 | [Bloodmoon Ursaluna ex](src/import.rs#L2372) | [✅](src/import.rs#L2372) | [✅](src/import.rs#L2138) |
 | Bouffalant | ❌ | ❌ |
 | Bronzong | [✅](src/import.rs#L234) | ❌ |
@@ -381,16 +393,25 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Buneary](src/import.rs#L2343) | [✅](src/import.rs#L2343) | — |
 | [Carvanha](src/import.rs#L2261) | [✅](src/import.rs#L2261) | — |
 | [Celebi](src/import.rs#L2342) | [✅](src/import.rs#L2342) | — |
+| Ceruledge ex | ❌ | — |
 | Chandelure | ❌ | ❌ |
+| [Charcadet](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | [Chi-Yu](src/import.rs#L2440) | [✅](src/import.rs#L2440) | — |
 | [Chien-Pao](src/import.rs#L2409) | [✅](src/import.rs#L2409) | [✅](src/import.rs#L2207) |
 | [Chikorita](src/import.rs#L2345) | [✅](src/import.rs#L2345) | — |
 | Cinderace | ❌ | ❌ |
+| [Clefairy](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | [Cofagrigus](src/import.rs#L2390) | [✅](src/import.rs#L2390) | — |
 | [Combusken](src/import.rs#L2359) | [✅](src/import.rs#L2359) | — |
 | Comfey | ❌ | — |
 | Cornerstone Mask Ogerpon ex | ❌ | ❌ |
 | [Crustle](src/import.rs#L2479) | [✅](src/import.rs#L2479) | [✅](src/import.rs#L2119) |
+| Cynthia's Gabite | [✅](src/import.rs#L234) | ❌ |
+| Cynthia's Garchomp ex | ❌ | — |
+| Cynthia's Gible | ❌ | — |
+| [Cynthia's Roselia](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
+| Cynthia's Roserade | [✅](src/import.rs#L234) | ❌ |
+| Cynthia's Spiritomb | ❌ | — |
 | [Dedenne](src/import.rs#L2299) | [✅](src/import.rs#L2299) | — |
 | Dhelmise | ❌ | — |
 | [Dipplin](src/import.rs#L2424) | [✅](src/import.rs#L2424) | [✅](src/import.rs#L2192) |
@@ -402,25 +423,49 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Dudunsparce](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L2171) |
 | [Dudunsparce ex](src/import.rs#L2274) | [✅](src/import.rs#L2274) | — |
 | [Dunsparce](src/import.rs#L2325) | [✅](src/import.rs#L2325) | — |
+| Duraludon | ❌ | — |
 | [Dusclops](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L2175) |
 | [Dusknoir](src/import.rs#L2406) | [✅](src/import.rs#L2406) | [✅](src/import.rs#L2176) |
 | [Duskull](src/import.rs#L2328) | [✅](src/import.rs#L2328) | — |
 | [Dwebble](src/import.rs#L2318) | [✅](src/import.rs#L2318) | — |
+| Eelektrik | [✅](src/import.rs#L234) | ❌ |
+| [Electrike](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | [Elgyem](src/import.rs#L2348) | [✅](src/import.rs#L2348) | — |
+| Empoleon ex | ❌ | ❌ |
 | [Enamorus](src/import.rs#L2368) | [✅](src/import.rs#L2368) | — |
+| Ethan's Cyndaquil | ❌ | — |
+| Ethan's Quilava | [✅](src/import.rs#L234) | ❌ |
+| Ethan's Typhlosion | ❌ | — |
 | [Fan Rotom](src/import.rs#L2413) | [✅](src/import.rs#L2413) | [✅](src/import.rs#L2217) |
 | [Fezandipiti ex](src/import.rs#L2487) | [✅](src/import.rs#L2487) | [✅](src/import.rs#L2165) |
 | [Flutter Mane](src/import.rs#L2404) | [✅](src/import.rs#L2404) | [✅](src/import.rs#L2141) |
+| Frillish | ❌ | — |
+| [Froakie](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
+| [Frogadier](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
+| Froslass | [✅](src/import.rs#L234) | ❌ |
+| Galvantula | ❌ | ❌ |
 | [Genesect](src/import.rs#L2459) | [✅](src/import.rs#L2459) | [✅](src/import.rs#L2180) |
 | [Genesect ex](src/import.rs#L2407) | [✅](src/import.rs#L2407) | [✅](src/import.rs#L2177) |
 | [Goldeen](src/import.rs#L2422) | [✅](src/import.rs#L2422) | [✅](src/import.rs#L2190) |
+| Greninja ex | ❌ | — |
 | [Grookey](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | Hariyama | ❌ | ❌ |
+| Haxorus | ❌ | — |
+| Ho-Oh | ❌ | — |
 | [Hoothoot](src/import.rs#L2315) | [✅](src/import.rs#L2315) | [✅](src/import.rs#L2131) |
+| Hop's Cramorant | ❌ | — |
+| Hop's Dubwool | [✅](src/import.rs#L234) | ❌ |
+| Hop's Phantump | ❌ | — |
+| Hop's Snorlax | ❌ | ❌ |
+| Hop's Trevenant | ❌ | — |
+| [Hop's Wooloo](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
+| Hop's Zacian ex | ❌ | — |
 | [Hydrapple ex](src/import.rs#L2373) | [✅](src/import.rs#L2373) | [✅](src/import.rs#L2132) |
 | [Iron Crown ex](src/import.rs#L2333) | [✅](src/import.rs#L2333) | [✅](src/import.rs#L2127) |
 | [Iron Leaves ex](src/import.rs#L2412) | [✅](src/import.rs#L2412) | [✅](src/import.rs#L2208) |
 | [Ivysaur](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
+| Jellicent ex | ❌ | ❌ |
+| Joltik | ❌ | — |
 | [Kadabra](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L2160) |
 | [Koraidon ex](src/import.rs#L2334) | [✅](src/import.rs#L2334) | — |
 | [Kyurem](src/import.rs#L2456) | [✅](src/import.rs#L2456) | [✅](src/import.rs#L2199) |
@@ -430,26 +475,40 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Litwick](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | Lunatone | [✅](src/import.rs#L234) | ❌ |
 | [Makuhita](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
+| Manectric | ❌ | — |
+| Maractus | ❌ | ❌ |
+| Marnie's Grimmsnarl ex | ❌ | ❌ |
+| Marnie's Impidimp | ❌ | — |
+| [Marnie's Morgrem](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
+| Marnie's Morpeko | ❌ | — |
 | [Mega Absol ex](src/import.rs#L2380) | [✅](src/import.rs#L2380) | — |
+| Mega Audino ex | ❌ | — |
 | Mega Chandelure ex | ❌ | ❌ |
+| Mega Diancie ex | ❌ | ❌ |
 | [Mega Excadrill ex](src/import.rs#L2376) | [✅](src/import.rs#L2376) | — |
 | Mega Froslass ex | ❌ | — |
+| Mega Greninja ex | ❌ | ❌ |
+| Mega Hawlucha ex | ❌ | ❌ |
 | [Mega Kangaskhan ex](src/import.rs#L2483) | [✅](src/import.rs#L2483) | [✅](src/import.rs#L2115) |
 | [Mega Lopunny ex](src/import.rs#L2281) | [✅](src/import.rs#L2281) | — |
 | Mega Lucario ex | ❌ | — |
+| Mega Manectric ex | ❌ | — |
 | Mega Meganium ex | ❌ | — |
 | [Mega Sharpedo ex](src/import.rs#L2316) | [✅](src/import.rs#L2316) | — |
 | [Mega Skarmory ex](src/import.rs#L2394) | [✅](src/import.rs#L2394) | — |
 | [Mega Slowbro ex](src/import.rs#L2434) | [✅](src/import.rs#L2434) | — |
+| Mega Starmie ex | ❌ | — |
 | Mega Venusaur ex | ❌ | ❌ |
 | [Meganium](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L2186) |
 | [Meowth ex](src/import.rs#L2486) | [✅](src/import.rs#L2486) | [✅](src/import.rs#L2159) |
 | [Metagross](src/import.rs#L2290) | [✅](src/import.rs#L2290) | — |
 | [Metang](src/import.rs#L2474) | [✅](src/import.rs#L2474) | [✅](src/import.rs#L2150) |
 | [Moltres](src/import.rs#L2326) | [✅](src/import.rs#L2326) | — |
+| Mr. Mime | ❌ | — |
 | [Munkidori](src/import.rs#L2480) | [✅](src/import.rs#L2480) | [✅](src/import.rs#L2153) |
 | [N's Darmanitan](src/import.rs#L2271) | [✅](src/import.rs#L2271) | — |
 | [N's Darumaka](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
+| N's Purrloin | ❌ | — |
 | [N's Reshiram](src/import.rs#L2268) | [✅](src/import.rs#L2268) | — |
 | [N's Zekrom](src/import.rs#L2280) | [✅](src/import.rs#L2280) | — |
 | [N's Zoroark ex](src/import.rs#L2453) | [✅](src/import.rs#L2453) | [✅](src/import.rs#L2183) |
@@ -458,13 +517,19 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Paldean Tauros](src/import.rs#L2264) | [✅](src/import.rs#L2264) | — |
 | [Passimian](src/import.rs#L2277) | [✅](src/import.rs#L2277) | — |
 | [Patrat](src/import.rs#L2475) | [✅](src/import.rs#L2475) | [✅](src/import.rs#L2120) |
+| Pawmot | ❌ | — |
 | [Pecharunt](src/import.rs#L2417) | [✅](src/import.rs#L2417) | [✅](src/import.rs#L2187) |
 | [Pecharunt ex](src/import.rs#L2414) | [✅](src/import.rs#L2414) | [✅](src/import.rs#L2224) |
+| [Pikachu ex](src/import.rs#L234) | [✅](src/import.rs#L234) | ❌ |
+| Pikipek | ❌ | — |
+| [Piplup](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | Poltchageist | [✅](src/import.rs#L234) | ❌ |
 | [Psyduck](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L2121) |
+| Purrloin | ❌ | — |
 | [Rabsca](src/import.rs#L2330) | [✅](src/import.rs#L2330) | [✅](src/import.rs#L2126) |
 | [Raging Bolt ex](src/import.rs#L2295) | [✅](src/import.rs#L2295) | — |
 | Regigigas | ❌ | — |
+| Relicanth | [✅](src/import.rs#L234) | ❌ |
 | [Rellor](src/import.rs#L2262) | [✅](src/import.rs#L2262) | — |
 | [Riolu](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | [Seaking](src/import.rs#L2423) | [✅](src/import.rs#L2423) | [✅](src/import.rs#L2191) |
@@ -476,37 +541,38 @@ Every card in the artifact, by name. The Trainer and Special Energy tables below
 | [Smoochum](src/import.rs#L2387) | [✅](src/import.rs#L2387) | — |
 | [Snorunt](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | Solrock | ❌ | — |
+| Spectrier | ❌ | — |
 | Spiritomb | ❌ | ❌ |
+| [Staryu](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | [Stunfisk](src/import.rs#L2369) | [✅](src/import.rs#L2369) | — |
 | [Tapu Bulu](src/import.rs#L2263) | [✅](src/import.rs#L2263) | — |
 | [Tatsugiri](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L2144) |
 | [Teal Mask Ogerpon ex](src/import.rs#L2488) | [✅](src/import.rs#L2488) | [✅](src/import.rs#L2168) |
 | Team Rocket's Articuno | ❌ | ❌ |
+| Team Rocket's Honchkrow | ❌ | — |
+| Team Rocket's Kangaskhan ex | ❌ | — |
 | Team Rocket's Mewtwo ex | ❌ | ❌ |
 | Team Rocket's Mimikyu | ❌ | — |
+| Team Rocket's Murkrow | ❌ | — |
+| Team Rocket's Porygon | ❌ | — |
+| Team Rocket's Porygon2 | ❌ | — |
+| Team Rocket's Sneasel | ❌ | — |
 | Team Rocket's Spidops | ❌ | ❌ |
 | Team Rocket's Tarountula | ❌ | — |
+| Team Rocket's Wobbuffet | ❌ | — |
+| Terapagos ex | ❌ | — |
 | [Thwackey](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L2193) |
+| Togekiss | [✅](src/import.rs#L234) | ❌ |
+| [Togepi](src/import.rs#L234) | [✅](src/import.rs#L234) | — |
 | [Torchic](src/import.rs#L2329) | [✅](src/import.rs#L2329) | — |
+| Toucannon | ❌ | ❌ |
 | [Toxel](src/import.rs#L2314) | [✅](src/import.rs#L2314) | — |
 | [Toxtricity](src/import.rs#L234) | [✅](src/import.rs#L234) | [✅](src/import.rs#L2211) |
+| Trumbeak | ❌ | — |
+| Tynamo | ❌ | — |
+| Victini | [✅](src/import.rs#L234) | ❌ |
 | [Wellspring Mask Ogerpon ex](src/import.rs#L2304) | [✅](src/import.rs#L2304) | — |
 | [Yveltal](src/import.rs#L2303) | [✅](src/import.rs#L2303) | — |
 | [Zeraora](src/import.rs#L2286) | [✅](src/import.rs#L2286) | — |
 | Zoroark | ❌ | — |
-
-
-## The documents
-
-- [The domain glossary](docs/architecture/glossary.md) — the vocabulary.
-- [The effect vocabulary](docs/architecture/effects.md) — what a Trainer has
-  to be able to say, counted from the decks in `decks/`.
-- [The base rules](docs/architecture/rules.md) — the numbered rules the code
-  cites, and the cards that break a naive engine.
-- [Card data sources](docs/architecture/sources.md) — where card data comes
-  from, and what each source gets wrong.
-- [Card data findings](docs/architecture/card-data.md) — what the imported
-  artifact holds, the modelling findings already banked, and what the data
-  cannot express.
-- [The ADR directory](docs/adr/) — the decisions and their reasoning.
 

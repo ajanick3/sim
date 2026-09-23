@@ -1,0 +1,30 @@
+Pokémon: 20
+4 Slowpoke SCR 057
+3 Slowking SCR 058
+3 Mega Kangaskhan ex MEG 104
+2 Latias ex SSP 076
+2 Kyurem SFA 047
+1 Meowth ex POR 062
+1 Annihilape SSP 100
+1 Metagross CRI 061
+1 Zeraora DRI 078
+1 Fezandipiti ex ASC 142
+1 Lillie's Clefairy ex JTG 056
+
+Trainer: 29
+4 Lillie's Determination MEG 119
+4 Ciphermaniac's Codebreaking TEF 145
+4 Poke Pad POR 081
+4 Ultra Ball MEG 131
+3 Wondrous Patch PFL 094
+2 Night Stretcher ASC 196
+1 Switch MEG 130
+1 Secret Box TWM 163
+1 Brave Bangle WHT 080
+1 Lucky Helmet TWM 158
+4 Academy at Night SFA 054
+
+Energy: 11
+4 Psychic Energy MEE 013
+4 Telepathic Psychic Energy POR 088
+3 Boomerang Energy TWM 166

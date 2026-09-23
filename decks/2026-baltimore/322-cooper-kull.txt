@@ -1,0 +1,29 @@
+Pokémon: 23
+4 Litwick PBL 036
+4 Lampent PBL 037
+4 Chandelure TWM 038
+3 Mega Chandelure ex PBL 038
+2 Elgyem BLK 040
+2 Comfey SCR 063
+1 Mr. Mime TEF 063
+1 Clefairy POR 030
+1 Psyduck ASC 039
+1 Shaymin DRI 010
+
+Trainer: 28
+4 Hilda WHT 084
+3 Lillie's Determination MEG 119
+3 Boss's Orders MEG 114
+2 Dawn PFL 087
+2 Xerosic's Machinations SFA 064
+2 Lana's Aid TWM 155
+4 Poke Pad POR 081
+3 Pokegear 3.0 SVI 186
+2 Rare Candy MEG 125
+3 Air Balloon ASC 181
+
+Energy: 9
+4 Telepathic Psychic Energy POR 088
+2 Psychic Energy MEE 013
+2 Fire Energy MEE 010
+1 Legacy Energy TWM 167

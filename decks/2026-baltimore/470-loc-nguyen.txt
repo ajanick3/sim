@@ -1,0 +1,30 @@
+Pokémon: 20
+4 Cynthia's Roselia DRI 007
+4 Cynthia's Roserade DRI 008
+4 Cynthia's Gible DRI 102
+4 Cynthia's Gabite DRI 103
+3 Cynthia's Garchomp ex DRI 104
+1 Relicanth TEF 084
+
+Trainer: 31
+4 Lillie's Determination MEG 119
+2 Boss's Orders MEG 114
+1 Harlequin WHT 083
+1 Hilda WHT 084
+1 Kieran TWM 154
+1 Naveen POR 079
+1 Surfer SSP 187
+1 Xerosic's Machinations SFA 064
+4 Buddy-Buddy Poffin TEF 144
+4 Fighting Gong MEG 116
+3 Poke Pad POR 081
+1 Night Stretcher ASC 196
+1 Pokegear 3.0 SVI 186
+1 Prime Catcher TEF 157
+3 Cynthia's Power Weight DRI 162
+1 Powerglass SFA 063
+1 Prism Tower CRI 080
+
+Energy: 9
+5 Fighting Energy MEE 014
+4 Rocky Fighting Energy POR 087
