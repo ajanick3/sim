@@ -10,6 +10,7 @@ import {
   loadDeckIndex,
   type DeckEntry,
 } from "./decks";
+import { DeckPicker } from "./DeckPicker";
 import { loadRecent, type RecentGame } from "./recent";
 
 type SideMode = "field" | "paste";
@@ -163,25 +164,15 @@ function DeckColumn({
         </button>
       </div>
       {mode === "field" ? (
-        <select
-          value={value}
-          onChange={(e) => onPick(side, e.target.value)}
-          className="rounded-md border border-edge bg-panel px-2 py-2 text-[13px]"
-        >
-          {decks.map((d) => (
-            <option key={d.key} value={d.key}>
-              {d.player}
-              {d.headline ? ` — ${d.headline}` : ""}
-            </option>
-          ))}
-        </select>
+        <DeckPicker decks={decks} value={value} onPick={(key) => onPick(side, key)} />
       ) : (
         <textarea
           value={pasteValue}
           onChange={(e) => onPasteChange(e.target.value)}
           placeholder={"Pokémon: 18\n4 Dreepy TWM 128\n…"}
           rows={6}
-          className="rounded-md border border-edge bg-panel px-2 py-2 font-mono text-[12px]"
+          // 16px minimum, or iOS Safari zooms the whole page in on focus.
+          className="rounded-md border border-edge bg-panel px-2 py-2 font-mono text-[16px] sm:text-[12px]"
         />
       )}
     </div>
