@@ -171,7 +171,8 @@ export default function SettingsPage() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search cards…"
-            className="rounded-md border border-edge bg-transparent px-3 py-1.5 text-[13px] outline-none focus:border-accent"
+            // 16px minimum, or iOS Safari zooms the whole page in on focus.
+            className="rounded-md border border-edge bg-transparent px-3 py-1.5 text-[16px] outline-none focus:border-accent sm:text-[13px]"
           />
         </div>
         <div className="mx-auto w-full max-w-[560px] flex flex-wrap items-center gap-2">
