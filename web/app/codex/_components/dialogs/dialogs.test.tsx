@@ -42,4 +42,34 @@ describe("game dialogs", () => {
     fireEvent.click(screen.getByRole("button", { name: "Bite" }));
     expect(onChoose).toHaveBeenCalledWith(4);
   });
+
+  it("cancels on the Cancel button and on a click outside the dialog", () => {
+    const onCancel = vi.fn();
+    render(
+      <ActionDialog title="Choose" actions={[{ id: 4, label: "Bite" }]} onCancel={onCancel} />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
+    expect(onCancel).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getByRole("dialog"));
+    expect(onCancel).toHaveBeenCalledTimes(1); // a click inside the dialog does not cancel
+
+    fireEvent.click(screen.getByRole("dialog").parentElement!);
+    expect(onCancel).toHaveBeenCalledTimes(2); // a click on the backdrop does
+  });
+
+  it("cannot be dismissed by a click outside when it has no Cancel", () => {
+    const onCancel = vi.fn();
+    render(
+      <ActionDialog
+        title="Choose"
+        actions={[{ id: 4, label: "Bite" }]}
+        showCancel={false}
+        onCancel={onCancel}
+      />,
+    );
+    expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("dialog").parentElement!);
+    expect(onCancel).not.toHaveBeenCalled();
+  });
 });

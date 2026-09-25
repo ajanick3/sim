@@ -257,6 +257,11 @@ export function CodexGameShell() {
           actions={actionChoices(actions, visibleDialogIndices)}
           onChoose={act}
           showCancel={dialogIndices.length > 0}
+          onCancel={() => {
+            setSelectedHandId(null);
+            setSelectedPokemonId(null);
+            setDialogIndices([]);
+          }}
         />
       )}
     </div>
