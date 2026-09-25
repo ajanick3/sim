@@ -67,7 +67,47 @@ const bonusDrawStub = {
     }),
 };
 
-// A third stub: an Active with both an Attack and a legal Retreat, and
+// A third stub: PlacingBench, with two Basics still placeable and Finish
+// placing always legal alongside them (src/action.rs). Finish placing is
+// a fallback (is_fallback: true) with no card/target, the same shape as
+// the lone generic action the auto-shown dialog exists for — reported as
+// an unprompted, undismissable "Choose an action" popup blocking the
+// board as soon as the first Bench Pokémon went down.
+const placingBenchStub = {
+  ...gameStub,
+  legal_actions: () =>
+    JSON.stringify(["Place on Bench: Dreepy", "Place on Bench: Bench Buddy", "Finish placing"]),
+  action_meta: () =>
+    JSON.stringify([
+      { kind: "PlaceOnBench", card: 1, target: null, is_fallback: false },
+      { kind: "PlaceOnBench", card: 2, target: null, is_fallback: false },
+      { kind: "FinishPlacing", card: null, target: null, is_fallback: true },
+    ]),
+  view: () =>
+    JSON.stringify({
+      you: 0,
+      current: 0,
+      turn_number: 0,
+      phase: "PlacingBench",
+      your_hand: [
+        { id: 1, name: "Dreepy", def: 1, print_id: "p1", energy_type: null, category: "pokemon" },
+        {
+          id: 2,
+          name: "Bench Buddy",
+          def: 2,
+          print_id: "p2",
+          energy_type: null,
+          category: "pokemon",
+        },
+      ],
+      stadium: null,
+      deck_in_search: null,
+      counters_to_place: null,
+      sides: [side(), side()],
+    }),
+};
+
+// A fourth stub: an Active with both an Attack and a legal Retreat, and
 // a Bench Pokémon to retreat to. Retreat's own action names the Bench
 // Pokémon it promotes (src/action.rs), not the Active it retreats, so
 // tapping the Active must gather both by kind — reported as no way to
@@ -122,7 +162,7 @@ const activeWithRetreatStub = {
       ],
     }),
 };
-// A fourth stub: only Retreat is legal off the Active (no Attack) — the
+// A fifth stub: only Retreat is legal off the Active (no Attack) — the
 // single-match case that used to auto-apply without any confirmation.
 const retreatOnlyStub = {
   ...activeWithRetreatStub,
@@ -197,12 +237,32 @@ describe("<CodexGameShell> action dialog", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "End turn" })).toBeVisible());
   });
 
-  it("offers the phase's own decline choice instead of a Cancel button", async () => {
+  it("offers the phase's own decline choice as a persistent button, not a Cancel", async () => {
     replayStandard.mockReturnValueOnce(bonusDrawStub);
     render(<CodexGameShell />);
     await screen.findByRole("button", { name: "Take a bonus card" });
-    expect(screen.getByRole("button", { name: "Decline bonus draws" })).toBeInTheDocument();
+    const decline = screen.getByRole("button", { name: "Decline bonus draws" });
+    expect(decline).toBeInTheDocument();
+    // A fallback like this is never a dialog choice — see the
+    // "does not block a second placement" test below for why.
+    expect(decline.closest('[role="dialog"]')).toBeNull();
     expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+  });
+});
+
+describe("<CodexGameShell> a fallback action off the dialog", () => {
+  it("does not block placing a second Pokémon behind an unprompted popup", async () => {
+    replayStandard.mockReturnValueOnce(placingBenchStub);
+    render(<CodexGameShell />);
+
+    // Finish placing is always legal here, but it must render as a
+    // persistent button (like End turn), never as an auto-shown,
+    // undismissable "Choose an action" dialog sitting over the board.
+    await screen.findByRole("button", { name: "Finish placing" });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    // The second Bench Pokémon is still directly tappable underneath.
+    expect(screen.getByRole("button", { name: "Bench Buddy" })).toBeInTheDocument();
   });
 });
 
