@@ -1,0 +1,121 @@
+.page {
+  min-height: 100dvh;
+  padding: 32px max(18px, calc((100vw - 1080px) / 2));
+  background: radial-gradient(circle at 80% 0%, #15506c55, transparent 45%), #051927;
+}
+.page header {
+  margin-bottom: 22px;
+}
+.page header > span {
+  color: #79d2e8;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.18em;
+}
+.page h1 {
+  margin: 9px 0 5px;
+  font-size: clamp(26px, 3vw, 40px);
+  letter-spacing: -0.04em;
+}
+.page h2 {
+  margin: 0 0 16px;
+  font-size: 16px;
+}
+.page p,
+.page figcaption,
+.page span,
+.page output {
+  color: var(--cx-muted);
+  font-size: 12px;
+}
+.page p {
+  margin: 0;
+}
+.panel {
+  min-width: 0;
+  margin-bottom: 16px;
+  padding: 20px;
+  border: 1px solid #285169;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #0c2e4399, #061b29);
+}
+.pokemonRow {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 116px));
+  gap: 34px;
+  justify-content: center;
+}
+.pokemonRow figure {
+  margin: 0;
+  text-align: center;
+}
+.pokemonRow figure > div {
+  margin-bottom: 12px;
+}
+.columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.piles {
+  display: grid;
+  grid-template-columns: repeat(2, 78px);
+  justify-content: center;
+  gap: 54px;
+  padding-top: 8px;
+}
+.prizeExamples {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 42px;
+}
+.prizeExamples > div {
+  display: grid;
+  justify-items: center;
+  gap: 9px;
+}
+.handPanel {
+  padding-inline: 12px;
+}
+.handTitle {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 12px;
+  padding-inline: 8px;
+}
+.handTitle h2 {
+  margin-bottom: 5px;
+}
+.handTitle output {
+  white-space: nowrap;
+}
+@media (max-width: 600px) {
+  .page {
+    padding: 24px 14px;
+  }
+  .panel {
+    padding: 16px 12px;
+  }
+  .pokemonRow {
+    gap: 18px;
+    grid-template-columns: repeat(3, minmax(0, 90px));
+  }
+  .columns {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .piles {
+    gap: 46px;
+  }
+  .prizeExamples {
+    gap: 24px;
+  }
+  .handTitle {
+    align-items: start;
+  }
+  .handTitle output {
+    font-size: 10px;
+  }
+}
