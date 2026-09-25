@@ -25,6 +25,11 @@ import styles from "./game.module.css";
 
 type Status = { kind: "loading" } | { kind: "error"; message: string } | { kind: "playing" };
 const randomSeed = () => Math.floor(Math.random() * 1_000_000_000);
+// Retreat's own action names the Bench Pokémon it promotes (src/action.rs),
+// not a card or a fixed id the dialog already tracks, so it can't share an
+// id with a real action index the way every other choice does. This is
+// that id: picking it never calls `act` directly, only arms retreatArmed.
+const RETREAT_CHOICE_ID = -1;
 
 export function CodexGameShell() {
   const router = useRouter();
@@ -43,6 +48,10 @@ export function CodexGameShell() {
   // list would reopen it on the very next render. This flag suppresses
   // that list until the next legal-action list arrives from a real move.
   const [genericDismissed, setGenericDismissed] = useState(false);
+  // Set only by choosing "Retreat" off the Active's own dialog — the
+  // signal that the next Bench tap should promote that Pokémon, instead
+  // of a Bench tap being able to retreat into itself on its own.
+  const [retreatArmed, setRetreatArmed] = useState(false);
   const [artIndex, setArtIndex] = useState<ArtIndex>({});
   const [artQuality] = useState<ArtQuality>(() => (isInstalled() ? "high" : "low"));
   const [printPrefs] = useState<Record<string, string>>(() => loadPrintPrefs());
@@ -69,6 +78,7 @@ export function CodexGameShell() {
     setSelectedPokemonId(null);
     setDialogIndices([]);
     setGenericDismissed(false);
+    setRetreatArmed(false);
     return nextView;
   }, []);
 
@@ -182,16 +192,37 @@ export function CodexGameShell() {
   const encodedParam = params.get("g");
   const invalidLink = encodedParam !== null && decodeRecipe(encodedParam) === null;
   const chooseCard = (id: number, kind: "hand" | "pokemon") => {
+    const isActiveTap = kind === "pokemon" && view?.sides[view.you].active?.id === id;
+
+    // Retreat is only ever reached by tapping the Active first and
+    // choosing it there (see visibleDialogIndices/RETREAT_CHOICE_ID
+    // below) — this tap is the second step of that flow, so it either
+    // completes the retreat onto the Bench Pokémon tapped or, on any
+    // other tap, just drops back to that tap's own ordinary handling.
+    if (retreatArmed) {
+      setRetreatArmed(false);
+      if (kind === "pokemon" && !isActiveTap) {
+        const retreatIndex = meta.findIndex(
+          (action) => action.kind === "Retreat" && action.target === id,
+        );
+        if (retreatIndex >= 0) {
+          act(retreatIndex);
+          return;
+        }
+      }
+    }
+
     // Retreat's own action names the Bench Pokémon it promotes, not the
     // Active it retreats — so a tap on the Active itself only turns up
     // Retreat here, alongside Attack, by asking for both by kind rather
-    // than by target.
-    const isActiveTap = kind === "pokemon" && view?.sides[view.you].active?.id === id;
+    // than by target. A Bench tap never matches Retreat by target: that
+    // would let tapping a Bench Pokémon retreat into it directly,
+    // without ever touching the Active.
     const indices =
       kind === "hand"
         ? actionIndexForCard(meta, id)
         : meta.flatMap((action, index) =>
-            action.target === id ||
+            (action.target === id && action.kind !== "Retreat") ||
             (isActiveTap && (action.kind === "Attack" || action.kind === "Retreat"))
               ? [index]
               : [],
@@ -248,11 +279,30 @@ export function CodexGameShell() {
       ? [index]
       : [],
   );
-  const visibleDialogIndices = dialogIndices.length
-    ? dialogIndices
-    : generic.length > 0 && !genericDismissed
-      ? generic
-      : [];
+  // While armed, the Active's own dialog must stay closed — clearing
+  // dialogIndices to arm it would otherwise fall through to the generic
+  // list below and reopen it (e.g. with Attack) on the very same render.
+  const visibleDialogIndices = retreatArmed
+    ? []
+    : dialogIndices.length
+      ? dialogIndices
+      : generic.length > 0 && !genericDismissed
+        ? generic
+        : [];
+  // Retreat is offered once per legal Bench target (its own action names
+  // the one it promotes), but the Active-tap dialog shows a single
+  // "Retreat" choice — picking a bench target is the tap that follows,
+  // not a choice made here. Collapse every Retreat index in the dialog
+  // into one synthetic choice; RETREAT_CHOICE_ID arms retreatArmed
+  // instead of applying an index directly.
+  const dialogHasRetreat = visibleDialogIndices.some((index) => meta[index]?.kind === "Retreat");
+  const dialogChoices = [
+    ...actionChoices(
+      actions,
+      visibleDialogIndices.filter((index) => meta[index]?.kind !== "Retreat"),
+    ),
+    ...(dialogHasRetreat ? [{ id: RETREAT_CHOICE_ID, label: "Retreat" }] : []),
+  ];
 
   return (
     <div className={`${theme.theme} ${styles.game}`}>
@@ -264,7 +314,9 @@ export function CodexGameShell() {
         onPokemonSelect={(id) => chooseCard(id, "pokemon")}
       />
       <div className={styles.turnStatus}>
-        Turn {view.turn_number} · {view.phase}
+        {retreatArmed
+          ? "Tap a Benched Pokémon to retreat into it"
+          : `Turn ${view.turn_number} · ${view.phase}`}
       </div>
       {endTurn >= 0 && (
         <button className={styles.endTurn} disabled={busy} onClick={() => act(endTurn)}>
@@ -294,8 +346,15 @@ export function CodexGameShell() {
       {visibleDialogIndices.length > 0 && (
         <ActionDialog
           title="Choose an action"
-          actions={actionChoices(actions, visibleDialogIndices)}
-          onChoose={act}
+          actions={dialogChoices}
+          onChoose={(id) => {
+            if (id === RETREAT_CHOICE_ID) {
+              setDialogIndices([]);
+              setRetreatArmed(true);
+              return;
+            }
+            act(id);
+          }}
           // Canceling a card-tapped dialog is always safe — it only clears
           // the player's own selection, no legal action goes unresolved.
           // An auto-shown (generic) dialog is only cancelable when End
