@@ -150,7 +150,7 @@ impl Game {
         let meta: Vec<ActionMeta> = legal_actions(&self.state)
             .iter()
             .map(|action| {
-                let (card, target) = action_handles(*action);
+                let (card, target) = action_handles(&self.state, *action);
                 ActionMeta {
                     kind: action_kind(*action),
                     is_fallback: is_fallback(*action),
@@ -275,10 +275,20 @@ fn is_fallback(action: Action) -> bool {
 /// The `CardId` and `PokemonId` an action names, as numbers. Wired for
 /// the moves a player makes over the board on an ordinary turn; every
 /// other variant returns `(None, None)` and stays label-only (ADR 0099).
-fn action_handles(action: Action) -> (Option<usize>, Option<usize>) {
+fn action_handles(state: &GameState, action: Action) -> (Option<usize>, Option<usize>) {
     let card = |c: sim::ids::CardId| Some(c.index());
     let mon = |p: sim::ids::PokemonId| Some(p.index());
     match action {
+        // Unlike every other action here, `Attack` names no card or
+        // target of its own — just an index into the current Active's
+        // attack list — so without this it reads as card-and-target-free
+        // the same way an unrecognised action does. That makes a UI's
+        // "no card, no target" rule (its cue to auto-show this action
+        // rather than wait for a board tap) fire for an ordinary attack
+        // too, popping "Choose an action" open on its own the moment one
+        // becomes legal. Naming the Active as the target here lets a UI
+        // route it through the same tap as Retreat, below, instead.
+        Action::Attack { .. } => (None, state.player(state.current).active.map(|p| p.index())),
         Action::PlaceActive { card: c }
         | Action::PlaceOnBench { card: c }
         | Action::PlayBasic { card: c }
@@ -479,6 +489,7 @@ mod tests {
     // shows it. Each variant below is one of those per-card choices.
     #[test]
     fn every_whole_deck_search_choice_carries_its_card_or_target() {
+        let state = &Game::synthetic(1).state;
         let card = CardId(1);
         let target = PokemonId(1);
         let cases = [
@@ -487,11 +498,11 @@ mod tests {
             Action::EvolveWithAscension { card },
         ];
         for action in cases {
-            let (c, t) = action_handles(action);
+            let (c, t) = action_handles(state, action);
             assert!(c.is_some(), "{action:?} names a card");
             assert!(t.is_none(), "{action:?} names no target");
         }
-        let (c, t) = action_handles(Action::AttachSinisterSurgeEnergyTo { target });
+        let (c, t) = action_handles(state, Action::AttachSinisterSurgeEnergyTo { target });
         assert!(c.is_none(), "AttachSinisterSurgeEnergyTo names no card");
         assert!(t.is_some(), "AttachSinisterSurgeEnergyTo names a target");
     }
