@@ -5,7 +5,7 @@ import type { GameAction } from "../_components/dialogs/ActionDialog";
 
 export type ArtResolver = (printId: string) => string | null;
 
-export const deckAssetPath = (key: string) => `/decks/${key.replace(/^2026-worlds\//, "")}.txt`;
+export const deckAssetPath = (key: string) => `/decks/${key}.txt`;
 
 const pokemon = (card: WirePokemon, art: ArtResolver) => ({
   id: card.id,

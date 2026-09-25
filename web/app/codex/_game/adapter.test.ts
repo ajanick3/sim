@@ -82,8 +82,9 @@ describe("codex game adapter", () => {
     expect(actionChoices(["Bite", "End turn"], [0, 1])).toEqual([{ id: 0, label: "Bite" }]);
   });
 
-  it("resolves shared 2026 Worlds recipe keys to the generated flat deck assets", () => {
-    expect(deckAssetPath("2026-worlds/003-brent-tonisson")).toBe("/decks/003-brent-tonisson.txt");
-    expect(deckAssetPath("003-brent-tonisson")).toBe("/decks/003-brent-tonisson.txt");
+  it("builds a deck asset path from a recipe key, same as game-shell.tsx's deckPath", () => {
+    expect(deckAssetPath("2026-worlds/003-brent-tonisson")).toBe(
+      "/decks/2026-worlds/003-brent-tonisson.txt",
+    );
   });
 });
