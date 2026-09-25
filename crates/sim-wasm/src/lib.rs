@@ -291,6 +291,9 @@ fn action_handles(action: Action) -> (Option<usize>, Option<usize>) {
         | Action::TakeBasicPokemonOfTypeForEnergyAttach { card: c }
         | Action::TakeItemFromDeck { card: c }
         | Action::TakeAnyCardFromDeck { card: c }
+        | Action::TakeAnyCardFromDeckForAbility { card: c }
+        | Action::TakeEnergyOfTypeToAttachToChosen { card: c }
+        | Action::EvolveWithAscension { card: c }
         | Action::TakeTrainerCardFromDeck { card: c }
         | Action::TakePokemonOfTypeOrStadiumFromDeck { card: c }
         | Action::TakeEvolutionPokemonOfType { card: c }
@@ -313,9 +316,9 @@ fn action_handles(action: Action) -> (Option<usize>, Option<usize>) {
         // Placing a Phantom Dive-style damage counter, or the plain
         // bench-damage a card like it deals directly: both name only the
         // Bench Pokémon they land on, one tap at a time.
-        Action::PlaceDamageCounter { target } | Action::DamageBenchedPokemon { target } => {
-            (None, mon(target))
-        }
+        Action::PlaceDamageCounter { target }
+        | Action::DamageBenchedPokemon { target }
+        | Action::AttachSinisterSurgeEnergyTo { target } => (None, mon(target)),
         _ => (None, None),
     }
 }
@@ -461,4 +464,35 @@ fn phase_tag(view: &PlayerView) -> String {
         .next()
         .unwrap_or("")
         .to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sim::ids::{CardId, PokemonId};
+
+    // Every whole-deck search offers a fallback ("Stop searching") next
+    // to its per-card choices. If a choice's own `card`/`target` goes
+    // unwired here, the web UI can't tell it apart from that fallback —
+    // it reads as a second, unlabeled "generic" action and leaks into
+    // the auto-shown dialog on top of the search grid that already
+    // shows it. Each variant below is one of those per-card choices.
+    #[test]
+    fn every_whole_deck_search_choice_carries_its_card_or_target() {
+        let card = CardId(1);
+        let target = PokemonId(1);
+        let cases = [
+            Action::TakeAnyCardFromDeckForAbility { card },
+            Action::TakeEnergyOfTypeToAttachToChosen { card },
+            Action::EvolveWithAscension { card },
+        ];
+        for action in cases {
+            let (c, t) = action_handles(action);
+            assert!(c.is_some(), "{action:?} names a card");
+            assert!(t.is_none(), "{action:?} names no target");
+        }
+        let (c, t) = action_handles(Action::AttachSinisterSurgeEnergyTo { target });
+        assert!(c.is_none(), "AttachSinisterSurgeEnergyTo names no card");
+        assert!(t.is_some(), "AttachSinisterSurgeEnergyTo names a target");
+    }
 }
