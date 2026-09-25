@@ -220,24 +220,31 @@ export function CodexGameShell() {
 
   const board = boardFromView(view, art);
   const searchCards = searchCardsFromView(view, meta, art);
-  // The engine itself marks the safe way to stop: EndTurn, or any
-  // Finish*/Decline* action (WireActionMeta.is_fallback). This replaces
-  // guessing from the action's label text for the one case that needs
-  // it — the deck-search drawer's own Done button — without touching
-  // every other Finish*/Decline* action in the game. Most phases have
-  // no deck-search drawer at all, so their own fallback (e.g. "Decline
-  // bonus draws") stays a normal choice inside the generic dialog; only
-  // scope this to the drawer's own action, or a phase with no drawer
-  // could lose its fallback entirely with nowhere left to render it.
   const endTurn = actions.findIndex((label) => /^End turn$/i.test(label));
   const finishSearch =
     searchCards.length > 0
       ? meta.findIndex((action) => action.is_fallback === true && action.kind !== "EndTurn")
       : -1;
-  // The deck-search drawer offers `finishSearch` as its own header button,
-  // so it must not also appear as a floating action choice on top of it.
+  // Any other fallback action — Finish placing, Decline bonus draws, and
+  // the rest (WireActionMeta.is_fallback, ADR 0107) — gets the same
+  // persistent button treatment as End turn, below, instead of the
+  // auto-shown dialog: it's always legal on its own, so popping a modal
+  // for it blocks placing a second Pokémon (or any other real, optional
+  // move) behind an unprompted, undismissable "Choose an action" — the
+  // dialog is for a genuine choice among several actions, not a single
+  // "you may stop now" the engine already guarantees is safe.
+  const otherFallback = meta.findIndex(
+    (action, index) => action.is_fallback && index !== endTurn && index !== finishSearch,
+  );
+  // The deck-search drawer offers `finishSearch` as its own header
+  // button, and otherFallback gets its own persistent button (below),
+  // so neither belongs in the auto-shown dialog's choices either.
   const generic = meta.flatMap((action, index) =>
-    action.card == null && action.target == null && index !== endTurn && index !== finishSearch
+    action.card == null &&
+    action.target == null &&
+    index !== endTurn &&
+    index !== finishSearch &&
+    index !== otherFallback
       ? [index]
       : [],
   );
@@ -262,6 +269,14 @@ export function CodexGameShell() {
       {endTurn >= 0 && (
         <button className={styles.endTurn} disabled={busy} onClick={() => act(endTurn)}>
           End turn
+        </button>
+      )}
+      {/* Each phase pushes at most one fallback other than End turn (its
+          own function returns before End turn's push), so this can never
+          collide with the button above. */}
+      {otherFallback >= 0 && (
+        <button className={styles.endTurn} disabled={busy} onClick={() => act(otherFallback)}>
+          {actions[otherFallback]}
         </button>
       )}
       {over && <div className={styles.gameOver}>Game over</div>}
