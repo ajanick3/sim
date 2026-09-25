@@ -17,11 +17,15 @@ export function DeckSearchDialog({
   maxSelections = 1,
   onConfirm,
   onDone,
+  doneLabel = "Done",
 }: {
   cards: SearchCard[];
   maxSelections?: number;
   onConfirm?: (ids: number[]) => void;
   onDone?: () => void;
+  /** The engine's own label for `onDone` (e.g. "Stop taking cards"), so
+   *  the header button reads the same as the action it sends. */
+  doneLabel?: string;
 }) {
   const [selected, setSelected] = useState<number[]>([]);
   const sortedCards = cards
@@ -41,14 +45,16 @@ export function DeckSearchDialog({
     <DialogFrame
       title="Search your deck"
       description={`Choose ${maxSelections === 1 ? "a card" : `up to ${maxSelections} cards`}. Dimmed cards cannot be taken.`}
+      headerAction={
+        onDone && (
+          <button className={styles.headerButton} onClick={onDone}>
+            {doneLabel}
+          </button>
+        )
+      }
       footer={
         <>
           <span className={styles.selectionCount}>{selected.length} selected</span>
-          {onDone && (
-            <button className={styles.secondaryButton} onClick={onDone}>
-              Done
-            </button>
-          )}
           <button
             className={styles.primaryButton}
             disabled={selected.length === 0}

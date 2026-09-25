@@ -18,6 +18,13 @@ describe("game dialogs", () => {
     expect(screen.getByRole("button", { name: "Blocked" })).toBeDisabled();
   });
 
+  it("puts the finish-search action in the header, not a second dialog", () => {
+    const onDone = vi.fn();
+    render(<DeckSearchDialog cards={cards} onDone={onDone} doneLabel="Stop taking cards" />);
+    fireEvent.click(screen.getByRole("button", { name: "Stop taking cards" }));
+    expect(onDone).toHaveBeenCalled();
+  });
+
   it("sorts eligible cards before ineligible cards without mutating the input", () => {
     const unsorted = [cards[1], cards[0]];
     render(<DeckSearchDialog cards={unsorted} />);

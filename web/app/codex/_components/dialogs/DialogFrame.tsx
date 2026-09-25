@@ -6,12 +6,17 @@ export function DialogFrame({
   description,
   children,
   footer,
+  headerAction,
   compact = false,
 }: {
   title: string;
   description?: string;
   children: ReactNode;
   footer?: ReactNode;
+  /** Rendered top right, across from the title — for an action that closes
+   *  or leaves the dialog, so it stays reachable without a second, floating
+   *  dialog appearing on top of this one. */
+  headerAction?: ReactNode;
   compact?: boolean;
 }) {
   return (
@@ -29,6 +34,7 @@ export function DialogFrame({
             <h1 id="codex-dialog-title">{title}</h1>
             {description && <p id="codex-dialog-description">{description}</p>}
           </div>
+          {headerAction}
         </header>
         <div className={styles.body}>{children}</div>
         {footer && <footer className={styles.footer}>{footer}</footer>}

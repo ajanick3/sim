@@ -206,17 +206,21 @@ export function CodexGameShell() {
   const board = battlefieldFromView(view, art);
   const searchCards = searchCardsFromView(view, meta, art);
   const endTurn = actions.findIndex((label) => /^End turn$/i.test(label));
+  const finishSearch = actions.findIndex((label) =>
+    /^(Stop |Finish|Take no more|Move on)/.test(label),
+  );
+  // The deck-search drawer offers `finishSearch` as its own header button,
+  // so it must not also appear as a floating action choice on top of it.
   const generic = meta.flatMap((action, index) =>
-    action.card == null && action.target == null && index !== endTurn ? [index] : [],
+    action.card == null && action.target == null && index !== endTurn && index !== finishSearch
+      ? [index]
+      : [],
   );
   const visibleDialogIndices = dialogIndices.length
     ? dialogIndices
     : generic.length > 0
       ? generic
       : [];
-  const finishSearch = actions.findIndex((label) =>
-    /^(Stop |Finish|Take no more|Move on)/.test(label),
-  );
 
   return (
     <div className={`${theme.theme} ${styles.game}`}>
@@ -240,6 +244,7 @@ export function CodexGameShell() {
         <DeckSearchDialog
           cards={searchCards}
           onDone={finishSearch >= 0 ? () => act(finishSearch) : undefined}
+          doneLabel={finishSearch >= 0 ? actions[finishSearch] : undefined}
           onConfirm={([id]) => {
             const index = actionIndexForCard(meta, id)[0];
             if (index !== undefined) act(index);
