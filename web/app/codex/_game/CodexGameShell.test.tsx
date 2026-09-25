@@ -117,8 +117,11 @@ const activeWithRetreatStub = {
   legal_actions: () =>
     JSON.stringify(["Attack: Teleportation Attack", "Retreat, promoting Bench Buddy", "End turn"]),
   action_meta: () =>
+    // Attack names the Active (id 10) as its own target, same as the real
+    // engine post-fix — see crates/sim-wasm/src/lib.rs's action_handles —
+    // so it does not also read as a card/target-free generic action here.
     JSON.stringify([
-      { kind: "Attack", card: null, target: null, is_fallback: false },
+      { kind: "Attack", card: null, target: 10, is_fallback: false },
       { kind: "Retreat", card: null, target: 20, is_fallback: false },
       { kind: "EndTurn", card: null, target: null, is_fallback: true },
     ]),
@@ -267,7 +270,7 @@ describe("<CodexGameShell> a fallback action off the dialog", () => {
 });
 
 describe("<CodexGameShell> tapping the Active", () => {
-  it("offers both Attack and Retreat, and does not apply either on tap", async () => {
+  it("offers both Attack and a single Retreat choice, and does not apply either on tap", async () => {
     replayStandard.mockReturnValueOnce(activeWithRetreatStub);
     render(<CodexGameShell />);
     const activeButton = await screen.findByRole("button", { name: "Dreepy, 70 HP remaining" });
@@ -279,9 +282,7 @@ describe("<CodexGameShell> tapping the Active", () => {
     expect(
       screen.getByRole("button", { name: "Attack: Teleportation Attack" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Retreat, promoting Bench Buddy" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retreat" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     expect(activeWithRetreatStub.apply).not.toHaveBeenCalled();
   });
@@ -295,9 +296,7 @@ describe("<CodexGameShell> tapping the Active", () => {
       activeButton.click();
     });
 
-    expect(
-      screen.getByRole("button", { name: "Retreat, promoting Bench Buddy" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retreat" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
     expect(retreatOnlyStub.apply).not.toHaveBeenCalled();
   });
@@ -322,8 +321,67 @@ describe("<CodexGameShell> tapping the Active", () => {
     expect(
       screen.getByRole("button", { name: "Attack: Teleportation Attack" }),
     ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Retreat" })).toBeInTheDocument();
+    expect(activeWithRetreatStub.apply).not.toHaveBeenCalled();
+  });
+});
+
+describe("<CodexGameShell> retreating", () => {
+  it("does not retreat on a direct tap of the Bench, with no Active tap first", async () => {
+    replayStandard.mockReturnValueOnce(activeWithRetreatStub);
+    render(<CodexGameShell />);
+    const benchButton = await screen.findByRole("button", { name: "Bench Buddy, 60 HP remaining" });
+
+    await domAct(async () => {
+      benchButton.click();
+    });
+
+    expect(activeWithRetreatStub.apply).not.toHaveBeenCalled();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("retreats onto the Bench Pokémon tapped after choosing Retreat off the Active", async () => {
+    replayStandard.mockReturnValueOnce(activeWithRetreatStub);
+    render(<CodexGameShell />);
+    const activeButton = await screen.findByRole("button", { name: "Dreepy, 70 HP remaining" });
+
+    await domAct(async () => {
+      activeButton.click();
+    });
+    await domAct(async () => {
+      screen.getByRole("button", { name: "Retreat" }).click();
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(activeWithRetreatStub.apply).not.toHaveBeenCalled();
+
+    const benchButton = await screen.findByRole("button", { name: "Bench Buddy, 60 HP remaining" });
+    await domAct(async () => {
+      benchButton.click();
+    });
+
+    // Retreat is index 1 in activeWithRetreatStub's action_meta/legal_actions.
+    expect(activeWithRetreatStub.apply).toHaveBeenCalledWith(1);
+  });
+
+  it("cancels the armed retreat on a tap elsewhere without applying anything", async () => {
+    replayStandard.mockReturnValueOnce(activeWithRetreatStub);
+    render(<CodexGameShell />);
+    const activeButton = await screen.findByRole("button", { name: "Dreepy, 70 HP remaining" });
+
+    await domAct(async () => {
+      activeButton.click();
+    });
+    await domAct(async () => {
+      screen.getByRole("button", { name: "Retreat" }).click();
+    });
+
+    await domAct(async () => {
+      activeButton.click();
+    });
+
+    // Back to the Active's own dialog, not an applied retreat.
     expect(
-      screen.getByRole("button", { name: "Retreat, promoting Bench Buddy" }),
+      screen.getByRole("button", { name: "Attack: Teleportation Attack" }),
     ).toBeInTheDocument();
     expect(activeWithRetreatStub.apply).not.toHaveBeenCalled();
   });
