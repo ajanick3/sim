@@ -1,0 +1,62 @@
+.hp {
+  position: absolute;
+  z-index: 3;
+  top: 3px;
+  right: 3px;
+}
+.hp :global([class*="health"]) {
+  padding: 2px 5px;
+  font-size: 12px;
+}
+.damage {
+  position: absolute;
+  z-index: 3;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+}
+.pile {
+  position: relative;
+  width: 100%;
+  padding-bottom: 19px;
+}
+.pile::before,
+.pile::after {
+  content: "";
+  position: absolute;
+  inset: -3px 3px auto -3px;
+  aspect-ratio: 245 / 337;
+  border: 1px solid #6d93a9;
+  border-radius: 5%;
+  background: #15394e;
+  z-index: 0;
+}
+.pile::after {
+  inset: -6px 6px auto -6px;
+  z-index: 0;
+}
+.pile > [data-card-frame] {
+  z-index: 1;
+}
+.pileCount {
+  position: absolute;
+  z-index: 4;
+  right: -6px;
+  bottom: 15px;
+}
+.pileLabel {
+  position: absolute;
+  bottom: 0;
+  inset-inline: 0;
+  color: var(--cx-muted);
+  text-align: center;
+  font-size: 10px;
+  line-height: 1;
+}
+.empty {
+  display: grid;
+  height: 100%;
+  place-items: center;
+  color: var(--cx-muted);
+  font-size: 10px;
+}

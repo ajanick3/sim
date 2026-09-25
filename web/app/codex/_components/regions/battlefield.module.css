@@ -1,0 +1,163 @@
+.board {
+  --side-width: 70px;
+  --field-gap: clamp(4px, 1vw, 10px);
+  --field-card-width: min(18vw, 108px);
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--side-width) minmax(0, 1fr) var(--side-width);
+  grid-template-rows: minmax(0, 1fr) minmax(0, 0.78fr) 2px minmax(0, 0.78fr) minmax(0, 1fr) minmax(
+      118px,
+      1.42fr
+    );
+  grid-template-areas:
+    "opponent-bench opponent-bench opponent-bench"
+    "opponent-piles opponent-active opponent-prizes"
+    "center center center"
+    "player-prizes player-active player-piles"
+    "player-bench player-bench player-bench"
+    "hand hand hand";
+  gap: var(--field-gap);
+  width: 100%;
+  height: 100%;
+  min-height: 620px;
+  overflow: hidden;
+  padding: clamp(6px, 1.4vw, 14px);
+  background:
+    radial-gradient(circle at 50% 50%, #17516b55, transparent 35%),
+    linear-gradient(90deg, transparent 49.8%, #5ca1b315 50%, transparent 50.2%), #051927;
+}
+.piles {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 5px;
+  width: 100%;
+  align-self: end;
+}
+.piles > * {
+  min-width: 0;
+}
+.opponentPiles {
+  grid-area: opponent-piles;
+  width: min(50px, 100%);
+  align-self: end;
+  justify-self: start;
+}
+.playerPiles {
+  grid-area: player-piles;
+  width: min(50px, 100%);
+  align-self: start;
+  justify-self: end;
+}
+.prizes {
+  align-self: end;
+}
+.prizes > div {
+  grid-template-columns: repeat(2, 28px);
+  grid-template-rows: repeat(3, 28px);
+  gap: 4px;
+  width: max-content;
+  padding: 5px;
+}
+.prizes svg {
+  width: 100%;
+  height: auto;
+}
+.opponentPrizes {
+  grid-area: opponent-prizes;
+  align-self: start;
+  justify-self: end;
+}
+.playerPrizes {
+  grid-area: player-prizes;
+  align-self: start;
+  justify-self: start;
+  margin-top: 12px;
+}
+.bench {
+  min-width: 0;
+  align-self: end;
+}
+.bench > section {
+  grid-template-columns: repeat(5, var(--field-card-width));
+  justify-content: center;
+}
+.opponentBench {
+  grid-area: opponent-bench;
+  align-self: start;
+}
+.playerBench {
+  grid-area: player-bench;
+}
+.active {
+  width: var(--field-card-width);
+  justify-self: center;
+  align-self: center;
+}
+.opponentActive {
+  grid-area: opponent-active;
+}
+.playerActive {
+  grid-area: player-active;
+}
+.centerLine {
+  grid-area: center;
+  display: flex;
+  align-items: center;
+}
+.centerLine span {
+  display: block;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #56dcef 18%, #56dcef 82%, transparent);
+  box-shadow: 0 0 9px #27e5ff80;
+}
+.hand {
+  grid-area: hand;
+  align-self: stretch;
+  min-height: 0;
+  border-top: 1px solid #48758d66;
+  background: #03131fcc;
+}
+
+@media (max-width: 699px) {
+  .piles :global([class*="pileLabel"]) {
+    display: none;
+  }
+  .piles :global([class*="pile"]) {
+    padding-bottom: 4px;
+  }
+  .piles :global([class*="pileCount"]) {
+    right: -3px;
+    bottom: 1px;
+  }
+  .piles :global([class*="count"]) {
+    padding: 1px 3px;
+    font-size: 12px;
+  }
+}
+
+@media (min-width: 700px) {
+  .board {
+    --side-width: 76px;
+    --field-card-width: min(14vw, 108px);
+    grid-template-rows: minmax(0, 1.08fr) minmax(0, 0.8fr) 2px minmax(0, 0.8fr) minmax(
+        0,
+        1.08fr
+      ) minmax(190px, 1.3fr);
+    min-height: 760px;
+  }
+  .piles {
+    gap: 7px;
+  }
+}
+
+@media (min-width: 1000px) {
+  .board {
+    --side-width: 82px;
+    grid-template-columns: var(--side-width) minmax(500px, 760px) var(--side-width);
+    grid-template-rows: minmax(142px, 1fr) 148px 2px 148px minmax(142px, 1fr) 226px;
+    justify-content: center;
+    min-height: 900px;
+  }
+}

@@ -1,0 +1,20 @@
+.theme {
+  --cx-bg: #051927;
+  --cx-panel: #09273b;
+  --cx-border: #48758d;
+  --cx-text: #f0f7fc;
+  --cx-muted: #b1c6d5;
+  --cx-accent: #27e5ff;
+  --cx-warning: #ffcc24;
+  --cx-card-ratio: 245 / 337;
+  color: var(--cx-text);
+  background: var(--cx-bg);
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+.theme *,
+.theme *::before,
+.theme *::after {
+  box-sizing: border-box;
+}

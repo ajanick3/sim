@@ -1,0 +1,41 @@
+.prizes {
+  display: grid;
+  grid-template-columns: repeat(2, 28px);
+  grid-template-rows: repeat(3, 28px);
+  gap: 6px;
+  width: max-content;
+  padding: 8px;
+  border: 1px solid var(--cx-accent);
+  border-radius: 10px;
+  background: #061d2bd9;
+}
+.bench {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(3px, 0.8vw, 9px);
+  width: 100%;
+}
+.hand {
+  width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  scrollbar-color: var(--cx-accent) transparent;
+}
+.handGrid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(46px, 76px));
+  grid-template-rows: repeat(2, auto);
+  grid-auto-flow: row;
+  gap: 8px;
+  justify-content: center;
+  width: max-content;
+  min-width: 100%;
+  padding: 9px 6px 12px;
+}
+@media (max-width: 430px) {
+  .handGrid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    width: 100%;
+    gap: 5px;
+  }
+}

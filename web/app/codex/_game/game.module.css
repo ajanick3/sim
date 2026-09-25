@@ -1,0 +1,60 @@
+.game {
+  position: relative;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 620px;
+  overflow: hidden;
+}
+.status {
+  display: grid;
+  width: 100vw;
+  height: 100dvh;
+  place-items: center;
+  padding: 24px;
+  text-align: center;
+}
+.turnStatus {
+  position: fixed;
+  z-index: 20;
+  top: 7px;
+  left: 50%;
+  translate: -50% 0;
+  padding: 5px 9px;
+  border: 1px solid #48758d;
+  border-radius: 999px;
+  background: #051927d9;
+  color: var(--cx-muted);
+  font-size: 11px;
+}
+.endTurn {
+  position: fixed;
+  z-index: 20;
+  right: 10px;
+  top: 50%;
+  min-height: 44px;
+  translate: 0 -50%;
+  border: 1px solid #ffcc24;
+  border-radius: 9px;
+  padding: 8px 10px;
+  background: #493509e8;
+  color: #fff4c5;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.endTurn:disabled {
+  opacity: 0.45;
+}
+.gameOver {
+  position: fixed;
+  z-index: 40;
+  inset: 50% auto auto 50%;
+  translate: -50% -50%;
+  padding: 18px 26px;
+  border: 1px solid var(--cx-accent);
+  border-radius: 14px;
+  background: #051927ed;
+  font-size: 22px;
+  font-weight: 800;
+}

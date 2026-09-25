@@ -1,0 +1,213 @@
+.frame,
+.slot {
+  display: block;
+  position: relative;
+  inline-size: 100%;
+  block-size: auto;
+  aspect-ratio: var(--cx-card-ratio, 245 / 337);
+  min-inline-size: 0;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 5%;
+  background: var(--cx-panel, #09273b);
+  color: var(--cx-text, #f0f7fc);
+  box-shadow:
+    0 3px 9px #0007,
+    0 0 0 1px #7295a9;
+  font: inherit;
+  isolation: isolate;
+}
+
+.frame {
+  transition:
+    box-shadow 140ms ease,
+    opacity 140ms ease;
+}
+.frame:not(button) {
+  cursor: default;
+}
+.frame:disabled {
+  opacity: 1;
+  cursor: not-allowed;
+}
+.frame[data-state="unavailable"] .face,
+.frame:disabled .face {
+  opacity: 0.42;
+  filter: saturate(0.45);
+}
+.frame[data-state="selected"],
+.frame[data-state="target"] {
+  box-shadow:
+    0 0 0 2px var(--cx-accent, #27e5ff),
+    0 0 17px #27e5ff70;
+}
+
+.face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.art {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+  object-fit: contain;
+}
+.artFallback {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: 8px;
+  font-size: 11px;
+  text-align: center;
+  color: var(--cx-muted);
+}
+.check {
+  position: absolute;
+  inset-block-start: -6px;
+  inset-inline-end: -6px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid #baf8ff;
+  border-radius: 50%;
+  background: #056181;
+  color: white;
+  font-size: 15px;
+  font-weight: 800;
+}
+.targetLabel {
+  position: absolute;
+  bottom: 4px;
+  left: 3px;
+  right: 3px;
+  padding: 2px;
+  background: #043a4feb;
+  border: 1px solid #27e5ff;
+  border-radius: 4px;
+  font-size: 10px;
+  text-align: center;
+}
+.back {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border: 4px double #83aec9;
+  border-radius: inherit;
+  background: linear-gradient(140deg, #234d69, #082536 70%);
+  color: #79b0d4;
+  box-shadow: inset 0 0 16px #04131d;
+}
+.back svg {
+  width: 52%;
+}
+.slot {
+  display: grid;
+  place-content: center;
+  gap: 2px;
+  text-align: center;
+  box-shadow: inset 0 0 0 2px #6b97af;
+  background: #12364b60;
+}
+.slot[data-target="true"] {
+  box-shadow:
+    inset 0 0 0 2px #27e5ff,
+    0 0 14px #27e5ff40;
+  background: #0e4e6260;
+}
+.slot:disabled {
+  opacity: 0.45;
+}
+.plus {
+  font-size: 24px;
+  line-height: 1;
+  color: #8df3ff;
+}
+.slotLabel {
+  font-size: 10px;
+}
+.prize {
+  display: block;
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+.prize[data-taken="true"] {
+  opacity: 0.4;
+  filter: grayscale(1);
+}
+.count,
+.health {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border: 1px solid #89b6d1;
+  border-radius: 6px;
+  background: #072033;
+  color: #fff;
+  font-size: 16px;
+  line-height: 1.2;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.health {
+  background: linear-gradient(#166598, #072b46);
+}
+.health[data-opponent="true"] {
+  background: linear-gradient(#bd3445, #751c2e);
+  border-color: #ff9da9;
+}
+.damage {
+  display: inline-grid;
+  place-items: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 3px;
+  border: 2px solid #ffe2a1;
+  border-radius: 50%;
+  background: #ffb33b;
+  color: #2c1b08;
+  font-size: 12px;
+  font-weight: 850;
+  box-shadow: 0 2px 5px #0008;
+}
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 8px;
+  border: 1px solid var(--cx-border, #48758d);
+  border-radius: 10px;
+  color: var(--cx-text, #f0f7fc);
+  background: var(--cx-panel, #09273b);
+  font: inherit;
+  cursor: pointer;
+}
+.iconButton svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+.iconButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.frame:focus-visible,
+.slot:focus-visible,
+.iconButton:focus-visible {
+  outline: 3px solid var(--cx-warning, #ffcc24);
+  outline-offset: 5px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .frame {
+    transition: none;
+  }
+}

@@ -1,0 +1,143 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  align-items: end;
+  padding: 12px;
+  background: #01101cb8;
+  backdrop-filter: blur(3px);
+}
+.dialog {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: min(100%, 920px);
+  max-height: min(72dvh, 720px);
+  margin-inline: auto;
+  overflow: hidden;
+  border: 1px solid var(--cx-accent);
+  border-radius: 18px 18px 10px 10px;
+  background: #071f30f5;
+  box-shadow:
+    0 18px 70px #000c,
+    0 0 30px #27e5ff20;
+}
+.header {
+  padding: 16px 18px 12px;
+  border-bottom: 1px solid #48758d80;
+}
+.header h1 {
+  margin: 0;
+  font-size: clamp(19px, 3vw, 27px);
+}
+.header p {
+  margin: 4px 0 0;
+  color: var(--cx-muted);
+  font-size: 12px;
+}
+.body {
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+}
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  min-height: 64px;
+  padding: 10px 14px;
+  border-top: 1px solid #48758d80;
+  background: #051927;
+}
+.searchGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  max-width: 760px;
+  margin-inline: auto;
+}
+.selectionCount {
+  margin-right: auto;
+  color: var(--cx-muted);
+  font-size: 12px;
+}
+.primaryButton,
+.secondaryButton,
+.actionButton {
+  min-height: 44px;
+  border: 1px solid var(--cx-border);
+  border-radius: 9px;
+  padding: 9px 14px;
+  color: var(--cx-text);
+  background: #0b3048;
+  font: inherit;
+  cursor: pointer;
+}
+.primaryButton {
+  border-color: #75f2ff;
+  color: #00141d;
+  background: var(--cx-accent);
+  font-weight: 800;
+}
+.primaryButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.secondaryButton {
+  background: transparent;
+}
+.dialog[data-compact="true"] {
+  width: min(100%, 480px);
+  max-height: min(72dvh, 520px);
+  align-self: center;
+  border-radius: 16px;
+}
+.actionGrid {
+  display: grid;
+  gap: 9px;
+}
+.actionButton {
+  display: grid;
+  justify-items: start;
+  gap: 3px;
+  width: 100%;
+  text-align: left;
+}
+.actionButton:hover {
+  border-color: var(--cx-accent);
+  background: #10405d;
+}
+.actionButton[data-tone="warning"] {
+  border-color: #d7a42f;
+}
+.actionButton span {
+  color: var(--cx-muted);
+  font-size: 11px;
+}
+.primaryButton:focus-visible,
+.secondaryButton:focus-visible,
+.actionButton:focus-visible {
+  outline: 3px solid var(--cx-warning);
+  outline-offset: 3px;
+}
+
+@media (min-width: 700px) {
+  .backdrop {
+    place-items: center;
+    padding: 28px;
+  }
+  .dialog {
+    border-radius: 18px;
+  }
+  .searchGrid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 14px;
+  }
+}
+
+@media (min-width: 1000px) {
+  .searchGrid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
