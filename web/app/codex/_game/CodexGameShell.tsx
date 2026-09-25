@@ -211,10 +211,12 @@ export function CodexGameShell() {
 
   const board = battlefieldFromView(view, art);
   const searchCards = searchCardsFromView(view, meta, art);
+  // The engine itself marks the safe way to stop: EndTurn, or any
+  // Finish*/Decline* action (WireActionMeta.is_fallback). This replaces
+  // guessing from the action's label text, which drifted out of step
+  // with the engine's own phase rules more than once.
   const endTurn = actions.findIndex((label) => /^End turn$/i.test(label));
-  const finishSearch = actions.findIndex((label) =>
-    /^(Stop |Finish|Take no more|Move on)/.test(label),
-  );
+  const finishSearch = meta.findIndex((action) => action.is_fallback === true && action.kind !== "EndTurn");
   // The deck-search drawer offers `finishSearch` as its own header button,
   // so it must not also appear as a floating action choice on top of it.
   const generic = meta.flatMap((action, index) =>

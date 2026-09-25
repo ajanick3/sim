@@ -18,8 +18,8 @@ const gameStub = {
   legal_actions: () => JSON.stringify(["Attack: Teleportation Attack", "End turn"]),
   action_meta: () =>
     JSON.stringify([
-      { kind: "Attack", card: null, target: null },
-      { kind: "Other", card: null, target: null },
+      { kind: "Attack", card: null, target: null, is_fallback: false },
+      { kind: "EndTurn", card: null, target: null, is_fallback: true },
     ]),
   apply: vi.fn(),
   history: vi.fn(() => JSON.stringify([])),
@@ -47,7 +47,8 @@ const gameStub = {
 const bonusDrawStub = {
   ...gameStub,
   legal_actions: () => JSON.stringify(["Take a bonus card"]),
-  action_meta: () => JSON.stringify([{ kind: "Other", card: null, target: null }]),
+  action_meta: () =>
+    JSON.stringify([{ kind: "TakeBonusDraw", card: null, target: null, is_fallback: false }]),
   view: () =>
     JSON.stringify({
       you: 0,
