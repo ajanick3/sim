@@ -24,6 +24,20 @@ fn action_meta_is_index_aligned_with_the_labels() {
 }
 
 #[test]
+fn action_meta_flags_end_turn_and_finish_actions_as_fallbacks() {
+    let game = Game::synthetic(1);
+    let meta: Vec<serde_json::Value> = serde_json::from_str(&game.action_meta()).unwrap();
+    for entry in &meta {
+        let kind = entry["kind"].as_str().unwrap_or("");
+        let expected = kind == "EndTurn" || kind.starts_with("Finish") || kind.starts_with("Decline");
+        assert_eq!(
+            entry["is_fallback"], expected,
+            "{kind} should report is_fallback = {expected}"
+        );
+    }
+}
+
+#[test]
 fn action_meta_names_the_card_a_place_action_plays() {
     let game = Game::synthetic(1);
     let labels: Vec<String> = serde_json::from_str(&game.legal_actions()).unwrap();

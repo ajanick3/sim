@@ -140,10 +140,12 @@ impl Game {
     }
 
     /// What each legal action touches, index-aligned with `legal_actions`.
-    /// Each entry is `{ kind, card, target }` — the `Action` variant's
-    /// name, the `CardId` it names (or null), the `PokemonId` it names
-    /// (or null). See ADR 0099. Actions this does not recognise still
-    /// appear, with `card` and `target` both null.
+    /// Each entry is `{ kind, card, target, is_fallback }` — the `Action`
+    /// variant's name, the `CardId` it names (or null), the `PokemonId`
+    /// it names (or null), and whether it is always legal on its own —
+    /// the safe way to stop a search or decline a prompt. See ADR 0099
+    /// and ADR 0107. Actions this does not recognise still appear, with
+    /// `card` and `target` both null.
     pub fn action_meta(&self) -> String {
         let meta: Vec<ActionMeta> = legal_actions(&self.state)
             .iter()
@@ -151,6 +153,7 @@ impl Game {
                 let (card, target) = action_handles(*action);
                 ActionMeta {
                     kind: action_kind(*action),
+                    is_fallback: is_fallback(*action),
                     card,
                     target,
                     card_face: card.map(|i| {
@@ -232,6 +235,12 @@ struct ActionMeta {
     /// Enough to draw the face of the card this action names — set for
     /// any zone, so a deck-search prompt can show real art.
     card_face: Option<WireCardFace>,
+    /// True when this action is always legal on its own, with no card or
+    /// target required — the safe way to stop a search early or decline
+    /// an optional prompt. A UI may offer this as a Cancel/Done action.
+    /// False does not mean the action is mandatory; it means picking it
+    /// requires a card or target the player must first choose.
+    is_fallback: bool,
 }
 
 #[derive(Serialize)]
@@ -251,6 +260,16 @@ fn action_kind(action: Action) -> String {
         .next()
         .unwrap_or("")
         .to_string()
+}
+
+/// Whether an action is always legal on its own — the engine's own
+/// naming convention for "stop here": `EndTurn`, and every `Finish*` or
+/// `Decline*` variant. Each such variant is pushed by `legal_actions`
+/// alongside the phase's per-card choices, whether or not any of those
+/// choices exist, so it never leaves a player stranded. See ADR 0107.
+fn is_fallback(action: Action) -> bool {
+    let kind = action_kind(action);
+    kind == "EndTurn" || kind.starts_with("Finish") || kind.starts_with("Decline")
 }
 
 /// The `CardId` and `PokemonId` an action names, as numbers. Wired for
