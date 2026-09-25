@@ -26,10 +26,12 @@ export class Game {
     [Symbol.dispose](): void;
     /**
      * What each legal action touches, index-aligned with `legal_actions`.
-     * Each entry is `{ kind, card, target }` — the `Action` variant's
-     * name, the `CardId` it names (or null), the `PokemonId` it names
-     * (or null). See ADR 0099. Actions this does not recognise still
-     * appear, with `card` and `target` both null.
+     * Each entry is `{ kind, card, target, is_fallback }` — the `Action`
+     * variant's name, the `CardId` it names (or null), the `PokemonId`
+     * it names (or null), and whether it is always legal on its own —
+     * the safe way to stop a search or decline a prompt. See ADR 0099
+     * and ADR 0107. Actions this does not recognise still appear, with
+     * `card` and `target` both null.
      */
     action_meta(): string;
     /**
