@@ -25,7 +25,15 @@
 // artifact's own two other bare, unhashed data files) are now
 // network-first below instead. The bump clears every stale copy of
 // them still sitting in an old cache.
-const CACHE_NAME = "sim-v3";
+//
+// v4: the wasm engine itself — `/pkg/sim_wasm_bg.wasm` and its glue
+// `/pkg/sim_wasm.js` — was cache-first under the same wrong assumption
+// as those old deck files: a fixed path, not content-hashed, so a
+// rebuild that fixes an engine bug (like the one this bump ships)
+// never reached a phone that had already cached the old binary. Now
+// network-first, same as the other mutable data above. The bump
+// clears every stale copy still sitting in an old cache.
+const CACHE_NAME = "sim-v4";
 
 /** Data the artifact can change without its URL changing — unlike a
  *  Next.js chunk or a piece of card art, neither hashed nor keyed by an
@@ -36,7 +44,8 @@ function isMutableData(path) {
     path === "/cards.json" ||
     path === "/art-index.json" ||
     path === "/decks/index.json" ||
-    (path.startsWith("/decks/") && path.endsWith(".txt"))
+    (path.startsWith("/decks/") && path.endsWith(".txt")) ||
+    path.startsWith("/pkg/sim_wasm")
   );
 }
 
@@ -100,11 +109,12 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Everything else — JS/CSS/wasm chunks and card art from the TCGdex
+  // Everything else — hashed JS/CSS chunks and card art from the TCGdex
   // CDN — is cache-first: instant and free once seen, and what makes a
   // card viewed once show up offline later. Safe here because each is
   // either content-hashed (a Next.js chunk) or keyed by an id that pins
-  // one immutable value forever (a print's own art).
+  // one immutable value forever (a print's own art). The wasm engine
+  // itself is carved out above, since its path is neither.
   event.respondWith(
     caches.match(request).then(
       (cached) =>
