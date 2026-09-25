@@ -38,6 +38,11 @@ export function CodexGameShell() {
   const [selectedHandId, setSelectedHandId] = useState<number | null>(null);
   const [selectedPokemonId, setSelectedPokemonId] = useState<number | null>(null);
   const [dialogIndices, setDialogIndices] = useState<number[]>([]);
+  // Dismissing the auto-shown (not card-selected) action dialog must not
+  // just clear dialogIndices — it's empty already, so the same "generic"
+  // list would reopen it on the very next render. This flag suppresses
+  // that list until the next legal-action list arrives from a real move.
+  const [genericDismissed, setGenericDismissed] = useState(false);
   const [artIndex, setArtIndex] = useState<ArtIndex>({});
   const [artQuality] = useState<ArtQuality>(() => (isInstalled() ? "high" : "low"));
   const [printPrefs] = useState<Record<string, string>>(() => loadPrintPrefs());
@@ -63,6 +68,7 @@ export function CodexGameShell() {
     setSelectedHandId(null);
     setSelectedPokemonId(null);
     setDialogIndices([]);
+    setGenericDismissed(false);
     return nextView;
   }, []);
 
@@ -218,7 +224,7 @@ export function CodexGameShell() {
   );
   const visibleDialogIndices = dialogIndices.length
     ? dialogIndices
-    : generic.length > 0
+    : generic.length > 0 && !genericDismissed
       ? generic
       : [];
 
@@ -256,11 +262,15 @@ export function CodexGameShell() {
           title="Choose an action"
           actions={actionChoices(actions, visibleDialogIndices)}
           onChoose={act}
-          showCancel={dialogIndices.length > 0}
+          // Cancelable whenever a legal action exists outside this dialog
+          // (another card, End turn) — only a choice that covers every
+          // legal action, with no alternative, is truly mandatory.
+          showCancel={actions.length > visibleDialogIndices.length}
           onCancel={() => {
             setSelectedHandId(null);
             setSelectedPokemonId(null);
             setDialogIndices([]);
+            setGenericDismissed(true);
           }}
         />
       )}
