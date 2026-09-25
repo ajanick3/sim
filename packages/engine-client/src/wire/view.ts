@@ -52,6 +52,11 @@ export interface WireActionMeta {
     energy_type: string | null;
     category: string;
   } | null;
+  /** True when this action is always legal on its own — the safe way to
+   * stop a search or decline a prompt. False does not mean the action
+   * is mandatory; it may still need a card or target chosen first.
+   * Optional because older fixtures predate this field. */
+  is_fallback?: boolean;
 }
 
 export interface WireView {
