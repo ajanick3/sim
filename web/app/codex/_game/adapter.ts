@@ -1,5 +1,5 @@
 import type { WireActionMeta, WireCard, WirePokemon, WireView } from "../../view";
-import type { BattlefieldProps } from "../_components/regions/Battlefield";
+import type { BoardProps } from "../_components/regions/Board";
 import type { SearchCard } from "../_components/dialogs/DeckSearchDialog";
 import type { GameAction } from "../_components/dialogs/ActionDialog";
 
@@ -17,7 +17,7 @@ const pokemon = (card: WirePokemon, art: ArtResolver) => ({
 
 const topCard = (cards: WireCard[]) => cards.at(-1) ?? null;
 
-export function battlefieldFromView(view: WireView, art: ArtResolver): BattlefieldProps {
+export function boardFromView(view: WireView, art: ArtResolver): BoardProps {
   const player = view.sides[view.you];
   const opponent = view.sides[view.you === 0 ? 1 : 0];
   const playerDiscard = topCard(player.discard);

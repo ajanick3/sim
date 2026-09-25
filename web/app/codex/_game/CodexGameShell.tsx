@@ -10,13 +10,13 @@ import { DEFAULT_DECKS, isPastedDeck, pastedDeckText } from "../../decks";
 import { loadPrintPrefs } from "../../printPrefs";
 import { buildPrintIndex, resolveCardPrint, type CatalogCard, type PrintIndex } from "../../prints";
 import type { WireActionMeta, WireView } from "../../view";
-import { Battlefield } from "../_components/regions/Battlefield";
+import { Board } from "../_components/regions/Board";
 import { DeckSearchDialog } from "../_components/dialogs/DeckSearchDialog";
 import { ActionDialog } from "../_components/dialogs/ActionDialog";
 import {
   actionChoices,
   actionIndexForCard,
-  battlefieldFromView,
+  boardFromView,
   deckAssetPath,
   searchCardsFromView,
 } from "./adapter";
@@ -209,7 +209,7 @@ export function CodexGameShell() {
     );
   }
 
-  const board = battlefieldFromView(view, art);
+  const board = boardFromView(view, art);
   const searchCards = searchCardsFromView(view, meta, art);
   // The engine itself marks the safe way to stop: EndTurn, or any
   // Finish*/Decline* action (WireActionMeta.is_fallback). This replaces
@@ -240,7 +240,7 @@ export function CodexGameShell() {
 
   return (
     <div className={`${theme.theme} ${styles.game}`}>
-      <Battlefield
+      <Board
         {...board}
         selectedHandId={selectedHandId}
         selectedPokemonId={selectedPokemonId}
