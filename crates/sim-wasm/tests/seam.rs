@@ -151,6 +151,7 @@ fn action_meta_carries_a_face_for_every_card_it_names() {
 #[test]
 fn a_targeted_action_names_a_pokemon_in_view() {
     let targeted = [
+        "Attack",
         "Retreat",
         "Promote",
         "UseAbility",
