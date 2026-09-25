@@ -12,21 +12,6 @@ const nextConfig = {
       // Storybook is built into `public/storybook` by `prebuild`. Its
       // index uses relative asset paths, so land on the file itself.
       { source: "/storybook", destination: "/storybook/index.html", permanent: false },
-      // packages/ui's own, separate Storybook — a different component
-      // library (MUI, not this app's Tailwind), built into `public/sb`
-      // by the same `prebuild` step. Short name is deliberate — this
-      // one's typed often enough to earn it.
-      { source: "/sb", destination: "/sb/index.html", permanent: false },
-      // packages/chatgpt's own Storybook — the ChatGPT-reviewed board
-      // layouts, on React 18 like packages/ui, built into
-      // `public/chatgpt` by the same `prebuild` step.
-      { source: "/chatgpt", destination: "/chatgpt/index.html", permanent: false },
-      // packages/chatgpt's live-play app (src/live/) — the real engine
-      // played through its actual board components, in complete
-      // isolation from this app (own React, own MUI, own build), built
-      // into `public/chatgpt-live` by the same `prebuild` step. The A/B
-      // comparison against /play; params are `?a=&b=&seed=`.
-      { source: "/chatgpt-live", destination: "/chatgpt-live/index.html", permanent: false },
     ];
   },
 };
