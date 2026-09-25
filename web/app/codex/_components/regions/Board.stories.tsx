@@ -2,7 +2,9 @@ import type { Meta, StoryObj } from "@storybook/nextjs";
 import { Board } from "./Board";
 import { CRUSHING_HAMMER_ART, DREEPY_ART } from "../../_fixtures/cardArt";
 
-const meta = { component: Board, parameters: { layout: "fullscreen" } } satisfies Meta<typeof Board>;
+const meta = { component: Board, parameters: { layout: "fullscreen" } } satisfies Meta<
+  typeof Board
+>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 const pokemon = (id: number) => ({ id, name: "Dreepy", imageUrl: DREEPY_ART, hp: 70 });
