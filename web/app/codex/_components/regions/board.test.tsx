@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import { Battlefield, type BattlefieldProps } from "./Battlefield";
+import { Board, type BoardProps } from "./Board";
 import { CRUSHING_HAMMER_ART, DREEPY_ART } from "../../_fixtures/cardArt";
 
 const pokemon = (id: number) => ({ id, name: "Dreepy", imageUrl: DREEPY_ART, hp: 70 });
-const props: BattlefieldProps = {
+const props: BoardProps = {
   active: pokemon(1),
   opponentActive: pokemon(2),
   bench: [pokemon(3)],
@@ -24,9 +24,9 @@ const props: BattlefieldProps = {
   opponentPrizesRemaining: 5,
 };
 
-describe("Battlefield", () => {
+describe("Board", () => {
   it("renders mirrored zones and ten hand cards", () => {
-    render(<Battlefield {...props} />);
+    render(<Board {...props} />);
     expect(screen.getByLabelText("Your bench")).toBeInTheDocument();
     expect(screen.getByLabelText("Opponent bench")).toBeInTheDocument();
     expect(screen.getByLabelText("4 prizes remaining")).toBeInTheDocument();
@@ -35,7 +35,7 @@ describe("Battlefield", () => {
   });
 
   it("selects a playable hand card", () => {
-    render(<Battlefield {...props} />);
+    render(<Board {...props} />);
     const card = within(screen.getByLabelText("Hand, 10 cards")).getAllByRole("button")[0];
     fireEvent.click(card);
     expect(card).toHaveAttribute("aria-pressed", "true");

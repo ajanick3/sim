@@ -1,4 +1,4 @@
-import { Battlefield } from "../../_components/regions/Battlefield";
+import { Board } from "../../_components/regions/Board";
 import type { BenchPokemon } from "../../_components/regions/BenchRow";
 import type { HandGridCard } from "../../_components/regions/HandGrid";
 import { CRUSHING_HAMMER_ART, DREEPY_ART } from "../../_fixtures/cardArt";
@@ -21,7 +21,7 @@ const hand: HandGridCard[] = Array.from({ length: 10 }, (_, index) => ({
 export function BoardPreview() {
   return (
     <div className={`${theme.theme} ${styles.shell}`}>
-      <Battlefield
+      <Board
         active={pokemon(1, 10)}
         opponentActive={pokemon(2, 30)}
         bench={[pokemon(3), pokemon(4, 20), pokemon(5)]}

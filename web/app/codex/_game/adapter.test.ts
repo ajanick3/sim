@@ -3,7 +3,7 @@ import type { WireActionMeta, WireCard, WirePokemon, WireView } from "../../view
 import {
   actionChoices,
   actionIndexForCard,
-  battlefieldFromView,
+  boardFromView,
   deckAssetPath,
   searchCardsFromView,
 } from "./adapter";
@@ -63,7 +63,7 @@ const meta: WireActionMeta[] = [
 
 describe("codex game adapter", () => {
   it("maps the player-relative board and remaining health", () => {
-    const board = battlefieldFromView(view, (id) => `/art/${id}`);
+    const board = boardFromView(view, (id) => `/art/${id}`);
     expect(board.deckCount).toBe(24);
     expect(board.opponentDeckCount).toBe(30);
     expect(board.active).toMatchObject({ id: 7, hp: 50, damage: 20 });
