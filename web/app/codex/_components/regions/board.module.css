@@ -2,6 +2,10 @@
   --side-width: 70px;
   --field-gap: clamp(4px, 1vw, 10px);
   --field-card-width: min(18vw, 108px);
+  --pile-gap: 5px;
+  /* cards.module.css's .pile adds this much flow height below the card
+     itself, for the "Deck"/"Discard" label strip. */
+  --pile-label-space: 19px;
   position: relative;
   display: grid;
   grid-template-columns: var(--side-width) minmax(0, 1fr) var(--side-width);
@@ -26,27 +30,41 @@
     radial-gradient(circle at 50% 50%, #17516b55, transparent 35%),
     linear-gradient(90deg, transparent 49.8%, #5ca1b315 50%, transparent 50.2%), #051927;
 }
+/* The wrapper stretches to the full row so its height (queried below)
+   is fixed by the row track, not by the piles it holds; two piles are
+   then positioned inside it with flex, near the row's outer edge, the
+   same edge align-self used to reach before this. Sizing the piles
+   from the wrapper's own auto (content-driven) height would be
+   circular — the same reasoning as .bench and .active below. */
 .piles {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: repeat(2, minmax(0, 1fr));
-  gap: 5px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--pile-gap);
   width: 100%;
-  align-self: end;
+  container-type: size;
+  container-name: piles;
+  /* Two piles, the gap between them, and each pile's label strip must
+     fit inside the row's real height — the cause of a pile overlapping
+     the bench or the center line next to it. cards.module.css's .pile
+     reads this custom property for its own width. */
+  --pile-card-width: min(
+    50px,
+    100%,
+    calc((((100cqh - var(--pile-gap)) / 2) - var(--pile-label-space)) * 245 / 337)
+  );
 }
 .piles > * {
   min-width: 0;
+  flex-shrink: 0;
 }
 .opponentPiles {
   grid-area: opponent-piles;
-  width: min(50px, 100%);
-  align-self: end;
+  justify-content: flex-end;
   justify-self: start;
 }
 .playerPiles {
   grid-area: player-piles;
-  width: min(50px, 100%);
-  align-self: start;
+  justify-content: flex-start;
   justify-self: end;
 }
 .prizes {
@@ -74,25 +92,50 @@
   justify-self: start;
   margin-top: 12px;
 }
+/* A card's on-screen size is the smallest of three caps: the px/vw cap
+   below, the row's own resolved height (via container query units, so
+   a card can never render taller than the row that holds it — the
+   cause of the board's card/row overlap), and, on the bench, the
+   width left for five cards side by side. */
 .bench {
   min-width: 0;
-  align-self: end;
+  container-type: size;
+  container-name: bench;
+  display: flex;
 }
 .bench > section {
-  grid-template-columns: repeat(5, var(--field-card-width));
+  grid-template-columns: repeat(
+    5,
+    min(
+      var(--field-card-width),
+      calc(100cqh * 245 / 337),
+      calc((100cqw - 4 * var(--field-gap)) / 5)
+    )
+  );
   justify-content: center;
 }
 .opponentBench {
   grid-area: opponent-bench;
-  align-self: start;
+  align-items: flex-start;
 }
 .playerBench {
   grid-area: player-bench;
+  align-items: flex-end;
 }
+/* The wrapper fills its full grid cell (default stretch) so it has a
+   definite height to query, then centers the card inside itself —
+   restoring the centering the old shrink-to-fit width + align-self:
+   center used to give for free, now that width comes from height. */
 .active {
-  width: var(--field-card-width);
-  justify-self: center;
-  align-self: center;
+  container-type: size;
+  container-name: active-card;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.active > * {
+  width: min(var(--field-card-width), calc(100cqh * 245 / 337));
+  flex-shrink: 0;
 }
 .opponentActive {
   grid-area: opponent-active;
@@ -121,11 +164,14 @@
 }
 
 @media (max-width: 699px) {
+  .board {
+    --pile-label-space: 4px;
+  }
   .piles :global([class*="pileLabel"]) {
     display: none;
   }
   .piles :global([class*="pile"]) {
-    padding-bottom: 4px;
+    padding-bottom: var(--pile-label-space);
   }
   .piles :global([class*="pileCount"]) {
     right: -3px;
@@ -141,14 +187,12 @@
   .board {
     --side-width: 76px;
     --field-card-width: min(14vw, 108px);
+    --pile-gap: 7px;
     grid-template-rows: minmax(0, 1.08fr) minmax(0, 0.8fr) 2px minmax(0, 0.8fr) minmax(
         0,
         1.08fr
       ) minmax(190px, 1.3fr);
     min-height: 760px;
-  }
-  .piles {
-    gap: 7px;
   }
 }
 

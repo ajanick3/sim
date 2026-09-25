@@ -17,7 +17,10 @@
 }
 .pile {
   position: relative;
-  width: 100%;
+  /* board.module.css's .piles sets --pile-card-width so a pile can
+     never grow taller than the row that holds it; elsewhere (e.g. a
+     Storybook file with no .piles ancestor) this falls back to 100%. */
+  width: var(--pile-card-width, 100%);
   padding-bottom: 19px;
 }
 .pile::before,
