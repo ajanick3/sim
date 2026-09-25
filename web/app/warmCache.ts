@@ -38,7 +38,7 @@ export async function warmCache(
 
 // Kept in step with `CACHE_NAME` in `public/sw.js` by hand — bump one,
 // bump the other.
-const CACHE_NAME = "sim-v2";
+const CACHE_NAME = "sim-v4";
 
 /** How many of these URLs the service worker has already cached, or
  *  null if the Cache API isn't reachable here (no service worker, an
