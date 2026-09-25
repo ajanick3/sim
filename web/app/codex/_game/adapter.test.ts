@@ -82,6 +82,22 @@ describe("codex game adapter", () => {
     expect(actionChoices(["Bite", "End turn"], [0, 1])).toEqual([{ id: 0, label: "Bite" }]);
   });
 
+  it("shows the coin-flip choice with Player One first, whoever won the flip", () => {
+    // The engine lists the flip winner's choice first (an action-index
+    // contract, not a display order) — here Player Two won, so index 0
+    // names Two. The dialog must still read Player One above Player Two.
+    expect(
+      actionChoices(
+        ["Player Two takes the first turn", "Player One takes the first turn"],
+        [0, 1],
+        "ChoosingWhoGoesFirst",
+      ),
+    ).toEqual([
+      { id: 1, label: "Player One takes the first turn" },
+      { id: 0, label: "Player Two takes the first turn" },
+    ]);
+  });
+
   it("builds a deck asset path from a recipe key, same as game-shell.tsx's deckPath", () => {
     expect(deckAssetPath("2026-worlds/003-brent-tonisson")).toBe(
       "/decks/2026-worlds/003-brent-tonisson.txt",

@@ -294,7 +294,7 @@ export function CodexGameShell() {
       {visibleDialogIndices.length > 0 && (
         <ActionDialog
           title="Choose an action"
-          actions={actionChoices(actions, visibleDialogIndices)}
+          actions={actionChoices(actions, visibleDialogIndices, view.phase)}
           onChoose={act}
           // Canceling a card-tapped dialog is always safe — it only clears
           // the player's own selection, no legal action goes unresolved.

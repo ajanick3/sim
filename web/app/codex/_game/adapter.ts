@@ -61,8 +61,15 @@ export function actionIndexForCard(meta: WireActionMeta[], cardId: number): numb
   return meta.flatMap((action, index) => (action.card === cardId ? [index] : []));
 }
 
-export function actionChoices(actions: string[], indices: number[]): GameAction[] {
-  return indices
+export function actionChoices(actions: string[], indices: number[], phase?: string): GameAction[] {
+  const choices = indices
     .filter((index) => !/^End turn$/i.test(actions[index] ?? ""))
     .map((index) => ({ id: index, label: actions[index] ?? `Action ${index + 1}` }));
+  // The engine lists the coin-flip winner's choice first (its action
+  // index order is a replay contract — see src/action.rs), which reads
+  // as "Player Two" jumping above "Player One" whenever Two won the
+  // flip. Sorting the display only, by label, keeps each choice's own
+  // action id intact while always showing Player One first.
+  if (phase === "ChoosingWhoGoesFirst") choices.sort((a, b) => a.label.localeCompare(b.label));
+  return choices;
 }

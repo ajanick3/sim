@@ -530,7 +530,11 @@ pub fn legal_actions(state: &GameState) -> Vec<Action> {
 
     match state.phase {
         Phase::ChoosingWhoGoesFirst { winner } => {
-            // Rule 5: the winner chooses, and either seat is a legal answer.
+            // Rule 5: the winner chooses, and either seat is a legal
+            // answer. This order — the winner's choice first — is part
+            // of the action index contract that recorded replays rely
+            // on; a UI wanting a fixed Player One/Two display order
+            // sorts the labels itself instead of changing it here.
             actions.push(Action::ChooseWhoGoesFirst { first: winner });
             actions.push(Action::ChooseWhoGoesFirst {
                 first: winner.opponent(),
@@ -2394,7 +2398,7 @@ pub fn describe(state: &GameState, action: Action) -> String {
         Action::DiscardBenchedPokemon { pokemon } => {
             format!("Discard {} from the Bench", state.pokemon_def(pokemon).name)
         }
-        Action::ChooseWhoGoesFirst { first } => format!("{first:?} takes the first turn"),
+        Action::ChooseWhoGoesFirst { first } => format!("Player {first:?} takes the first turn"),
         Action::TakeBonusDraw => "Take a bonus card".to_string(),
         Action::DeclineBonusDraws => "Take no more bonus cards".to_string(),
         Action::PlaceActive { card } => {
