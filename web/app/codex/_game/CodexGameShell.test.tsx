@@ -67,6 +67,73 @@ const bonusDrawStub = {
     }),
 };
 
+// A third stub: an Active with both an Attack and a legal Retreat, and
+// a Bench Pokémon to retreat to. Retreat's own action names the Bench
+// Pokémon it promotes (src/action.rs), not the Active it retreats, so
+// tapping the Active must gather both by kind — reported as no way to
+// retreat at all, and as an unconfirmed attack when only Attack turned up.
+const activeWithRetreatStub = {
+  ...gameStub,
+  legal_actions: () =>
+    JSON.stringify(["Attack: Teleportation Attack", "Retreat, promoting Bench Buddy", "End turn"]),
+  action_meta: () =>
+    JSON.stringify([
+      { kind: "Attack", card: null, target: null, is_fallback: false },
+      { kind: "Retreat", card: null, target: 20, is_fallback: false },
+      { kind: "EndTurn", card: null, target: null, is_fallback: true },
+    ]),
+  view: () =>
+    JSON.stringify({
+      you: 0,
+      current: 0,
+      turn_number: 1,
+      phase: "Main",
+      your_hand: [],
+      stadium: null,
+      deck_in_search: null,
+      counters_to_place: null,
+      sides: [
+        {
+          ...side(),
+          active: {
+            id: 10,
+            name: "Dreepy",
+            print_id: "p1",
+            hp: 70,
+            damage: 0,
+            remaining_hp: 70,
+            conditions: [],
+            attached: [],
+          },
+          bench: [
+            {
+              id: 20,
+              name: "Bench Buddy",
+              print_id: "p2",
+              hp: 60,
+              damage: 0,
+              remaining_hp: 60,
+              conditions: [],
+              attached: [],
+            },
+          ],
+        },
+        side(),
+      ],
+    }),
+};
+// A fourth stub: only Retreat is legal off the Active (no Attack) — the
+// single-match case that used to auto-apply without any confirmation.
+const retreatOnlyStub = {
+  ...activeWithRetreatStub,
+  legal_actions: () => JSON.stringify(["Retreat, promoting Bench Buddy", "End turn"]),
+  action_meta: () =>
+    JSON.stringify([
+      { kind: "Retreat", card: null, target: 20, is_fallback: false },
+      { kind: "EndTurn", card: null, target: null, is_fallback: true },
+    ]),
+};
+
 const replayStandard = vi.fn(() => gameStub);
 
 vi.mock("../../wasm", () => ({
@@ -136,5 +203,68 @@ describe("<CodexGameShell> action dialog", () => {
     await screen.findByRole("button", { name: "Take a bonus card" });
     expect(screen.getByRole("button", { name: "Decline bonus draws" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
+  });
+});
+
+describe("<CodexGameShell> tapping the Active", () => {
+  it("offers both Attack and Retreat, and does not apply either on tap", async () => {
+    replayStandard.mockReturnValueOnce(activeWithRetreatStub);
+    render(<CodexGameShell />);
+    const activeButton = await screen.findByRole("button", { name: "Dreepy, 70 HP remaining" });
+
+    await domAct(async () => {
+      activeButton.click();
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Attack: Teleportation Attack" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Retreat, promoting Bench Buddy" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(activeWithRetreatStub.apply).not.toHaveBeenCalled();
+  });
+
+  it("still opens a dialog when Retreat is the only option off the Active", async () => {
+    replayStandard.mockReturnValueOnce(retreatOnlyStub);
+    render(<CodexGameShell />);
+    const activeButton = await screen.findByRole("button", { name: "Dreepy, 70 HP remaining" });
+
+    await domAct(async () => {
+      activeButton.click();
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Retreat, promoting Bench Buddy" }),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeInTheDocument();
+    expect(retreatOnlyStub.apply).not.toHaveBeenCalled();
+  });
+
+  it("reopens the same choices after Cancel instead of applying one", async () => {
+    replayStandard.mockReturnValueOnce(activeWithRetreatStub);
+    render(<CodexGameShell />);
+    const activeButton = await screen.findByRole("button", { name: "Dreepy, 70 HP remaining" });
+
+    await domAct(async () => {
+      activeButton.click();
+    });
+    await domAct(async () => {
+      screen.getByRole("button", { name: "Cancel" }).click();
+    });
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+
+    await domAct(async () => {
+      activeButton.click();
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Attack: Teleportation Attack" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Retreat, promoting Bench Buddy" }),
+    ).toBeInTheDocument();
+    expect(activeWithRetreatStub.apply).not.toHaveBeenCalled();
   });
 });

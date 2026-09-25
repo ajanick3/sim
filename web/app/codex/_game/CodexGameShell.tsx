@@ -182,18 +182,27 @@ export function CodexGameShell() {
   const encodedParam = params.get("g");
   const invalidLink = encodedParam !== null && decodeRecipe(encodedParam) === null;
   const chooseCard = (id: number, kind: "hand" | "pokemon") => {
+    // Retreat's own action names the Bench Pokémon it promotes, not the
+    // Active it retreats — so a tap on the Active itself only turns up
+    // Retreat here, alongside Attack, by asking for both by kind rather
+    // than by target.
+    const isActiveTap = kind === "pokemon" && view?.sides[view.you].active?.id === id;
     const indices =
       kind === "hand"
         ? actionIndexForCard(meta, id)
         : meta.flatMap((action, index) =>
             action.target === id ||
-            (view?.sides[view.you].active?.id === id && action.kind === "Attack")
+            (isActiveTap && (action.kind === "Attack" || action.kind === "Retreat"))
               ? [index]
               : [],
           );
     if (kind === "hand") setSelectedHandId(id);
     else setSelectedPokemonId(id);
-    if (indices.length === 1) act(indices[0]);
+    // A tap on the Active can mean either "attack" or "retreat" even
+    // when only one option is currently legal, so it always opens the
+    // dialog rather than committing to that option on the spot — unlike
+    // a hand card or a Bench tap, where a single match is unambiguous.
+    if (indices.length === 1 && !isActiveTap) act(indices[0]);
     else setDialogIndices(indices);
   };
 
