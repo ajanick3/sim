@@ -262,10 +262,15 @@ export function CodexGameShell() {
           title="Choose an action"
           actions={actionChoices(actions, visibleDialogIndices)}
           onChoose={act}
-          // Cancelable whenever a legal action exists outside this dialog
-          // (another card, End turn) — only a choice that covers every
-          // legal action, with no alternative, is truly mandatory.
-          showCancel={actions.length > visibleDialogIndices.length}
+          // Canceling a card-tapped dialog is always safe — it only clears
+          // the player's own selection, no legal action goes unresolved.
+          // An auto-shown (generic) dialog is only cancelable when End
+          // turn is itself legal, a real fallback the engine allows; a
+          // phase like TakingBonusDraws offers no such fallback; without
+          // one, "actions.length > shown" is true (some *other* generic
+          // action exists) but none of them are an escape, so canceling
+          // would strand the player with nothing left to do.
+          showCancel={dialogIndices.length > 0 || endTurn >= 0}
           onCancel={() => {
             setSelectedHandId(null);
             setSelectedPokemonId(null);

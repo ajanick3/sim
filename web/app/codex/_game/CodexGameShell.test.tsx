@@ -40,6 +40,28 @@ const gameStub = {
     }),
   free: vi.fn(),
 };
+// A second stub: the mulligan bonus-draw phase, where "Take a bonus card"
+// is the only legal action and End turn is not legal yet. Nothing here
+// is a safe fallback, so this dialog must not offer Cancel at all —
+// dismissing it would leave the player with no way to proceed.
+const bonusDrawStub = {
+  ...gameStub,
+  legal_actions: () => JSON.stringify(["Take a bonus card"]),
+  action_meta: () => JSON.stringify([{ kind: "Other", card: null, target: null }]),
+  view: () =>
+    JSON.stringify({
+      you: 0,
+      current: 0,
+      turn_number: 0,
+      phase: "TakingBonusDraws",
+      your_hand: [],
+      stadium: null,
+      deck_in_search: null,
+      counters_to_place: null,
+      sides: [side(), side()],
+    }),
+};
+
 const replayStandard = vi.fn(() => gameStub);
 
 vi.mock("../../wasm", () => ({
@@ -101,5 +123,12 @@ describe("<CodexGameShell> action dialog", () => {
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
     // The board underneath, with its own End turn button, stays reachable.
     await waitFor(() => expect(screen.getByRole("button", { name: "End turn" })).toBeVisible());
+  });
+
+  it("offers no Cancel for a mandatory choice with no legal fallback", async () => {
+    replayStandard.mockReturnValueOnce(bonusDrawStub);
+    render(<CodexGameShell />);
+    await screen.findByRole("button", { name: "Take a bonus card" });
+    expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
   });
 });
