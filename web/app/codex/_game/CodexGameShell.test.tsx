@@ -40,15 +40,19 @@ const gameStub = {
     }),
   free: vi.fn(),
 };
-// A second stub: the mulligan bonus-draw phase, where "Take a bonus card"
-// is the only legal action and End turn is not legal yet. Nothing here
-// is a safe fallback, so this dialog must not offer Cancel at all —
-// dismissing it would leave the player with no way to proceed.
+// A second stub: the mulligan bonus-draw phase. The engine always pairs
+// "Take a bonus card" with "Decline bonus draws" (src/action.rs), so the
+// way out is one of the dialog's own choices, not a separate Cancel —
+// End turn is not legal yet, and there must be no Cancel button that
+// merely dismisses the dialog without applying either choice.
 const bonusDrawStub = {
   ...gameStub,
-  legal_actions: () => JSON.stringify(["Take a bonus card"]),
+  legal_actions: () => JSON.stringify(["Take a bonus card", "Decline bonus draws"]),
   action_meta: () =>
-    JSON.stringify([{ kind: "TakeBonusDraw", card: null, target: null, is_fallback: false }]),
+    JSON.stringify([
+      { kind: "TakeBonusDraw", card: null, target: null, is_fallback: false },
+      { kind: "DeclineBonusDraws", card: null, target: null, is_fallback: true },
+    ]),
   view: () =>
     JSON.stringify({
       you: 0,
@@ -126,10 +130,11 @@ describe("<CodexGameShell> action dialog", () => {
     await waitFor(() => expect(screen.getByRole("button", { name: "End turn" })).toBeVisible());
   });
 
-  it("offers no Cancel for a mandatory choice with no legal fallback", async () => {
+  it("offers the phase's own decline choice instead of a Cancel button", async () => {
     replayStandard.mockReturnValueOnce(bonusDrawStub);
     render(<CodexGameShell />);
     await screen.findByRole("button", { name: "Take a bonus card" });
+    expect(screen.getByRole("button", { name: "Decline bonus draws" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Cancel" })).not.toBeInTheDocument();
   });
 });

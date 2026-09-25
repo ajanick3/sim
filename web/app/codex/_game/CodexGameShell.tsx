@@ -213,10 +213,18 @@ export function CodexGameShell() {
   const searchCards = searchCardsFromView(view, meta, art);
   // The engine itself marks the safe way to stop: EndTurn, or any
   // Finish*/Decline* action (WireActionMeta.is_fallback). This replaces
-  // guessing from the action's label text, which drifted out of step
-  // with the engine's own phase rules more than once.
+  // guessing from the action's label text for the one case that needs
+  // it — the deck-search drawer's own Done button — without touching
+  // every other Finish*/Decline* action in the game. Most phases have
+  // no deck-search drawer at all, so their own fallback (e.g. "Decline
+  // bonus draws") stays a normal choice inside the generic dialog; only
+  // scope this to the drawer's own action, or a phase with no drawer
+  // could lose its fallback entirely with nowhere left to render it.
   const endTurn = actions.findIndex((label) => /^End turn$/i.test(label));
-  const finishSearch = meta.findIndex((action) => action.is_fallback === true && action.kind !== "EndTurn");
+  const finishSearch =
+    searchCards.length > 0
+      ? meta.findIndex((action) => action.is_fallback === true && action.kind !== "EndTurn")
+      : -1;
   // The deck-search drawer offers `finishSearch` as its own header button,
   // so it must not also appear as a floating action choice on top of it.
   const generic = meta.flatMap((action, index) =>
