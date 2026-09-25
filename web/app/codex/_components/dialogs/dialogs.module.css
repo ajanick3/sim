@@ -23,8 +23,32 @@
     0 0 30px #27e5ff20;
 }
 .header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   padding: 16px 18px 12px;
   border-bottom: 1px solid #48758d80;
+}
+.headerButton {
+  flex-shrink: 0;
+  min-height: 36px;
+  border: 1px solid var(--cx-border);
+  border-radius: 9px;
+  padding: 6px 12px;
+  color: var(--cx-text);
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.headerButton:hover {
+  border-color: var(--cx-accent);
+  background: #10405d;
+}
+.headerButton:focus-visible {
+  outline: 3px solid var(--cx-warning);
+  outline-offset: 3px;
 }
 .header h1 {
   margin: 0;

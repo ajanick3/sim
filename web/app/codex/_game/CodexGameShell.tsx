@@ -38,6 +38,11 @@ export function CodexGameShell() {
   const [selectedHandId, setSelectedHandId] = useState<number | null>(null);
   const [selectedPokemonId, setSelectedPokemonId] = useState<number | null>(null);
   const [dialogIndices, setDialogIndices] = useState<number[]>([]);
+  // Dismissing the auto-shown (not card-selected) action dialog must not
+  // just clear dialogIndices — it's empty already, so the same "generic"
+  // list would reopen it on the very next render. This flag suppresses
+  // that list until the next legal-action list arrives from a real move.
+  const [genericDismissed, setGenericDismissed] = useState(false);
   const [artIndex, setArtIndex] = useState<ArtIndex>({});
   const [artQuality] = useState<ArtQuality>(() => (isInstalled() ? "high" : "low"));
   const [printPrefs] = useState<Record<string, string>>(() => loadPrintPrefs());
@@ -63,6 +68,7 @@ export function CodexGameShell() {
     setSelectedHandId(null);
     setSelectedPokemonId(null);
     setDialogIndices([]);
+    setGenericDismissed(false);
     return nextView;
   }, []);
 
@@ -206,17 +212,21 @@ export function CodexGameShell() {
   const board = battlefieldFromView(view, art);
   const searchCards = searchCardsFromView(view, meta, art);
   const endTurn = actions.findIndex((label) => /^End turn$/i.test(label));
-  const generic = meta.flatMap((action, index) =>
-    action.card == null && action.target == null && index !== endTurn ? [index] : [],
-  );
-  const visibleDialogIndices = dialogIndices.length
-    ? dialogIndices
-    : generic.length > 0
-      ? generic
-      : [];
   const finishSearch = actions.findIndex((label) =>
     /^(Stop |Finish|Take no more|Move on)/.test(label),
   );
+  // The deck-search drawer offers `finishSearch` as its own header button,
+  // so it must not also appear as a floating action choice on top of it.
+  const generic = meta.flatMap((action, index) =>
+    action.card == null && action.target == null && index !== endTurn && index !== finishSearch
+      ? [index]
+      : [],
+  );
+  const visibleDialogIndices = dialogIndices.length
+    ? dialogIndices
+    : generic.length > 0 && !genericDismissed
+      ? generic
+      : [];
 
   return (
     <div className={`${theme.theme} ${styles.game}`}>
@@ -240,6 +250,7 @@ export function CodexGameShell() {
         <DeckSearchDialog
           cards={searchCards}
           onDone={finishSearch >= 0 ? () => act(finishSearch) : undefined}
+          doneLabel={finishSearch >= 0 ? actions[finishSearch] : undefined}
           onConfirm={([id]) => {
             const index = actionIndexForCard(meta, id)[0];
             if (index !== undefined) act(index);
@@ -251,7 +262,21 @@ export function CodexGameShell() {
           title="Choose an action"
           actions={actionChoices(actions, visibleDialogIndices)}
           onChoose={act}
-          showCancel={dialogIndices.length > 0}
+          // Canceling a card-tapped dialog is always safe — it only clears
+          // the player's own selection, no legal action goes unresolved.
+          // An auto-shown (generic) dialog is only cancelable when End
+          // turn is itself legal, a real fallback the engine allows; a
+          // phase like TakingBonusDraws offers no such fallback; without
+          // one, "actions.length > shown" is true (some *other* generic
+          // action exists) but none of them are an escape, so canceling
+          // would strand the player with nothing left to do.
+          showCancel={dialogIndices.length > 0 || endTurn >= 0}
+          onCancel={() => {
+            setSelectedHandId(null);
+            setSelectedPokemonId(null);
+            setDialogIndices([]);
+            setGenericDismissed(true);
+          }}
         />
       )}
     </div>

@@ -16,19 +16,28 @@ export function ActionDialog({
   actions,
   onChoose,
   showCancel = true,
+  onCancel,
 }: {
   title: string;
   description?: string;
   actions: GameAction[];
   onChoose?: (id: number) => void;
   showCancel?: boolean;
+  onCancel?: () => void;
 }) {
   return (
     <DialogFrame
       title={title}
       description={description}
       compact
-      footer={showCancel ? <button className={styles.secondaryButton}>Cancel</button> : undefined}
+      onDismiss={showCancel ? onCancel : undefined}
+      footer={
+        showCancel ? (
+          <button className={styles.secondaryButton} onClick={onCancel}>
+            Cancel
+          </button>
+        ) : undefined
+      }
     >
       <div className={styles.actionGrid}>
         {actions.map((action) => (
